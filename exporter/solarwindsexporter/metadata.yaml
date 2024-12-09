@@ -1,0 +1,12 @@
+type: solarwinds
+github_project: solarwinds/solarwinds-otel-collector
+
+status:
+  class: exporter
+  stability:
+    development: [traces, metrics, logs]
+
+tests:
+  config:
+    data_center: "na-01"
+    token: "THIS-IS-A-TEST"
