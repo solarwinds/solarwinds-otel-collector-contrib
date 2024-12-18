@@ -16,7 +16,10 @@ package solarwindsexporter
 
 import (
 	"context"
+	"errors"
 	"fmt"
+
+	"github.com/solarwinds/solarwinds-otel-collector/extension/solarwindsextension"
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/exporter"
@@ -34,58 +37,96 @@ const (
 	tracesExporterType
 )
 
+var (
+	ErrSwiExtensionNotFound = errors.New("solarwinds extension not found")
+)
+
 type solarwindsExporter struct {
 	exporterType
 	config   *Config
-	settings component.TelemetrySettings
+	settings exporter.Settings
 	metrics  exporter.Metrics
 	logs     exporter.Logs
 	traces   exporter.Traces
 }
 
 func newExporter(
-	ctx context.Context,
 	cfg *Config,
 	settings exporter.Settings,
 	typ exporterType,
-) *solarwindsExporter {
+) (*solarwindsExporter, error) {
 
 	if err := cfg.Validate(); err != nil {
-		panic(err)
+		return nil, fmt.Errorf("validation of configuration failed: %w", err)
 	}
 
 	swiExporter := &solarwindsExporter{
-		config:   cfg,
-		settings: settings.TelemetrySettings,
-	}
-	if err := swiExporter.initExporterType(ctx, settings, typ); err != nil {
-		panic(err)
+		exporterType: typ,
+		config:       cfg,
+		settings:     settings,
 	}
 
-	return swiExporter
+	return swiExporter, nil
 }
 
-func (e *solarwindsExporter) initExporterType(
+func (swiExporter *solarwindsExporter) initExporterType(
 	ctx context.Context,
 	settings exporter.Settings,
+	host component.Host,
 	typ exporterType,
 ) error {
-	e.exporterType = typ
+	swiExporter.exporterType = typ
+	extensionID, err := swiExporter.config.extensionAsComponent()
+	if err != nil {
+		return fmt.Errorf("failed parsing extension id: %w", err)
+	}
+
+	// Only allow the type of the [solarwindsextension].
+	if extensionID != nil &&
+		extensionID.Type() != solarwindsextension.NewFactory().Type() {
+		return fmt.Errorf("unexpected extension type: %s", extensionID.Type())
+	}
+
+	swiExtension := findExtension(host.GetExtensions(), extensionID)
+	if swiExtension == nil {
+		if extensionID != nil {
+			return fmt.Errorf("solarwinds extension %q not found", extensionID)
+		}
+		return ErrSwiExtensionNotFound
+	}
+
+	endpointCfg := swiExtension.GetEndpointConfig()
+
+	// Get token from the extensions.
+	token := endpointCfg.Token()
+	swiExporter.config.ingestionToken = token
+
+	// Get URL from the extension.
+	url, err := endpointCfg.Url()
+	if err != nil {
+		return fmt.Errorf("URL configuration not available: %w", err)
+	}
+	swiExporter.config.endpointURL = url
+
+	// Get TLS settings for testing.
+	insecure := endpointCfg.Insecure()
+	swiExporter.config.insecure = insecure
+
 	otlpExporter := otlpexporter.NewFactory()
-	otlpCfg, err := e.config.OTLPConfig()
+	otlpCfg, err := swiExporter.config.OTLPConfig()
 	if err != nil {
 		return err
 	}
 
 	switch typ {
 	case metricsExporterType:
-		e.metrics, err = otlpExporter.CreateMetrics(ctx, settings, otlpCfg)
+		swiExporter.metrics, err = otlpExporter.CreateMetrics(ctx, settings, otlpCfg)
 		return err
 	case logsExporterType:
-		e.logs, err = otlpExporter.CreateLogs(ctx, settings, otlpCfg)
+		swiExporter.logs, err = otlpExporter.CreateLogs(ctx, settings, otlpCfg)
 		return err
 	case tracesExporterType:
-		e.traces, err = otlpExporter.CreateTraces(ctx, settings, otlpCfg)
+		swiExporter.traces, err = otlpExporter.CreateTraces(ctx, settings, otlpCfg)
 		return err
 	default:
 		return fmt.Errorf("unknown exporter type: %v", typ)
@@ -93,52 +134,98 @@ func (e *solarwindsExporter) initExporterType(
 
 }
 
-func (e *solarwindsExporter) start(ctx context.Context, host component.Host) error {
-	switch e.exporterType {
+// findExtension returns a found Solarwinds Extension or nil
+// if not found. Respecting these rules:
+//   - If the name is provided and it's found, return it.
+//   - If no name is provided and there's only one Solarwinds Extension,
+//     return it.
+//   - Otherwise, return nil.
+func findExtension(
+	extensions map[component.ID]component.Component,
+	cfgExtensionID *component.ID,
+) *solarwindsextension.SolarwindsExtension {
+	foundExtensions := make([]*solarwindsextension.SolarwindsExtension, 0)
+
+	for foundExtensionID, ext := range extensions {
+		if swiExtension, ok := ext.(*solarwindsextension.SolarwindsExtension); ok {
+			// If configured extension ID is found, return it.
+			if cfgExtensionID != nil && *cfgExtensionID == foundExtensionID {
+				return swiExtension
+			}
+
+			// Otherwise, store it to the slice.
+			foundExtensions = append(foundExtensions, swiExtension)
+		}
+	}
+
+	// If no extension name configured and there is only one
+	// found matching the type, return it.
+	if len(foundExtensions) == 1 && cfgExtensionID == nil {
+		return foundExtensions[0]
+	}
+
+	return nil
+}
+
+func (swiExporter *solarwindsExporter) start(ctx context.Context, host component.Host) error {
+	if err := swiExporter.initExporterType(ctx, swiExporter.settings, host, swiExporter.exporterType); err != nil {
+		return fmt.Errorf("failed to initialiaze exporter: %w", err)
+	}
+
+	switch swiExporter.exporterType {
 	case metricsExporterType:
-		return e.metrics.Start(ctx, host)
+		return swiExporter.metrics.Start(ctx, host)
 	case logsExporterType:
-		return e.logs.Start(ctx, host)
+		return swiExporter.logs.Start(ctx, host)
 	case tracesExporterType:
-		return e.traces.Start(ctx, host)
+		return swiExporter.traces.Start(ctx, host)
 	default:
-		return fmt.Errorf("unknown exporter type: %v", e.exporterType)
+		return fmt.Errorf("unknown exporter type: %v", swiExporter.exporterType)
 	}
 }
 
-func (e *solarwindsExporter) shutdown(ctx context.Context) error {
-	switch e.exporterType {
+func (swiExporter *solarwindsExporter) shutdown(ctx context.Context) error {
+	switch swiExporter.exporterType {
 	case metricsExporterType:
-		return e.metrics.Shutdown(ctx)
+		if swiExporter.metrics == nil {
+			return nil
+		}
+		return swiExporter.metrics.Shutdown(ctx)
 	case logsExporterType:
-		return e.logs.Shutdown(ctx)
+		if swiExporter.logs == nil {
+			return nil
+		}
+		return swiExporter.logs.Shutdown(ctx)
 	case tracesExporterType:
-		return e.traces.Shutdown(ctx)
+		if swiExporter.traces == nil {
+			return nil
+		}
+		return swiExporter.traces.Shutdown(ctx)
 	default:
-		return fmt.Errorf("unknown exporter type: %v", e.exporterType)
+		return fmt.Errorf("unknown exporter type: %v", swiExporter.exporterType)
 	}
 }
 
-func (e *solarwindsExporter) pushMetrics(ctx context.Context, metrics pmetric.Metrics) error {
+func (swiExporter *solarwindsExporter) pushMetrics(ctx context.Context, metrics pmetric.Metrics) error {
 	if metrics.MetricCount() == 0 {
 		return nil
 	}
 
-	return e.metrics.ConsumeMetrics(ctx, metrics)
+	return swiExporter.metrics.ConsumeMetrics(ctx, metrics)
 }
 
-func (e *solarwindsExporter) pushLogs(ctx context.Context, logs plog.Logs) error {
+func (swiExporter *solarwindsExporter) pushLogs(ctx context.Context, logs plog.Logs) error {
 	if logs.LogRecordCount() == 0 {
 		return nil
 	}
 
-	return e.logs.ConsumeLogs(ctx, logs)
+	return swiExporter.logs.ConsumeLogs(ctx, logs)
 }
 
-func (e *solarwindsExporter) pushTraces(ctx context.Context, traces ptrace.Traces) error {
+func (swiExporter *solarwindsExporter) pushTraces(ctx context.Context, traces ptrace.Traces) error {
 	if traces.SpanCount() == 0 {
 		return nil
 	}
 
-	return e.traces.ConsumeTraces(ctx, traces)
+	return swiExporter.traces.ConsumeTraces(ctx, traces)
 }

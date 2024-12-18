@@ -15,35 +15,20 @@
 package solarwindsexporter
 
 import (
-	"fmt"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/collector/config/configopaque"
 	"go.opentelemetry.io/collector/config/configretry"
-	"go.opentelemetry.io/collector/confmap"
-	"go.opentelemetry.io/collector/confmap/confmaptest"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
+
+	"github.com/solarwinds/solarwinds-otel-collector/pkg/testutil"
 )
-
-// loadConfigTestdata is a helper function to load a testdata
-// file by its name.
-func loadConfigTestdata(t *testing.T, name string) *confmap.Conf {
-	t.Helper()
-
-	filename := fmt.Sprintf("%s.yaml", name)
-	cm, err := confmaptest.LoadConf(filepath.Join("testdata", filename))
-	require.NoError(t, err)
-
-	return cm
-}
 
 // TestConfigUnmarshalFull tries to parse a configuration file
 // with all values provided and verifies the configuration.
 func TestConfigUnmarshalFull(t *testing.T) {
-	cfgFile := loadConfigTestdata(t, "full")
+	cfgFile := testutil.LoadConfigTestdata(t, "full")
 
 	// Parse configuration.
 	factory := NewFactory()
@@ -52,9 +37,7 @@ func TestConfigUnmarshalFull(t *testing.T) {
 
 	// Verify the values.
 	assert.Equal(t, &Config{
-		DataCenter:          "na-01",
-		EndpointURLOverride: "127.0.0.1:1234",
-		IngestionToken:      "TOKEN",
+		Extension: "solarwinds/1",
 		BackoffSettings: configretry.BackOffConfig{
 			Enabled:             false,
 			InitialInterval:     15000000000,
@@ -78,7 +61,7 @@ func TestConfigUnmarshalFull(t *testing.T) {
 // file containing only the mandatory values successfully
 // validates.
 func TestConfigValidateOK(t *testing.T) {
-	cfgFile := loadConfigTestdata(t, "minimal")
+	cfgFile := testutil.LoadConfigTestdata(t, "minimal")
 
 	// Parse configuration.
 	factory := NewFactory()
@@ -89,107 +72,32 @@ func TestConfigValidateOK(t *testing.T) {
 	assert.NoError(t, cfg.(*Config).Validate())
 }
 
-// TestConfigValidateMissingToken verifies that
-// the validation of a configuration file with
-// the token missing fails as expected.
-func TestConfigValidateMissingToken(t *testing.T) {
-	cfgFile := loadConfigTestdata(t, "missing_token")
+// TestConfigValidateNOK.
+func TestConfigValidateNOK(t *testing.T) {
+	cfgFile := testutil.LoadConfigTestdata(t, "invalid")
 
 	// Parse configuration.
 	factory := NewFactory()
 	cfg := factory.CreateDefaultConfig()
 	require.NoError(t, cfgFile.Unmarshal(&cfg))
 
+	// Validation should fail with an error.
 	assert.ErrorContains(
 		t,
 		cfg.(*Config).Validate(),
-		"invalid configuration: token must be set",
+		"invalid configuration",
 	)
-}
-
-// TestConfigValidateMissingDataCenter verifies that
-// the validation of a configuration file with
-// the dataCenter ID missing fails as expected.
-func TestConfigValidateMissingDataCenter(t *testing.T) {
-	cfgFile := loadConfigTestdata(t, "missing_dc")
-
-	// Parse configuration.
-	factory := NewFactory()
-	cfg := factory.CreateDefaultConfig()
-	require.NoError(t, cfgFile.Unmarshal(&cfg))
-
-	assert.ErrorContains(
-		t,
-		cfg.(*Config).Validate(),
-		"invalid configuration: data center must be provided",
-	)
-}
-
-// TestConfigValidateDataCenters verifies mappings
-// for data centers (the mapping is case-insensitive).
-func TestConfigValidateDataCenters(t *testing.T) {
-	type test struct {
-		dataCenter string
-		url        string
-		ok         bool
-	}
-
-	tests := []test{
-		{dataCenter: "na-01", url: "otel.collector.na-01.cloud.solarwinds.com:443", ok: true},
-		{dataCenter: "na-02", url: "otel.collector.na-02.cloud.solarwinds.com:443", ok: true},
-		{dataCenter: "eu-01", url: "otel.collector.eu-01.cloud.solarwinds.com:443", ok: true},
-		{dataCenter: "NA-01", url: "otel.collector.na-01.cloud.solarwinds.com:443", ok: true},
-		{dataCenter: "apj-01", url: "", ok: false},
-	}
-
-	for _, tc := range tests {
-		// Try to find a dataCenter URL for its ID.
-		url, err := lookupDataCenterURL(tc.dataCenter)
-
-		if tc.ok { // A URL should be returned.
-			require.NoError(t, err)
-			assert.Equal(t, tc.url, url)
-		} else { // It should fail.
-			assert.ErrorContains(t, err, "unknown data center ID")
-		}
-	}
 }
 
 // TestConfigTokenRedacted checks that the configuration
 // type doesn't leak its secret token unless it is accessed explicitly.
 func TestConfigTokenRedacted(t *testing.T) {
 	cfg := &Config{
-		DataCenter:     "eu-01",
-		IngestionToken: "SECRET",
+		ingestionToken: "SECRET",
 	}
 	// This is the only way of accessing the actual token.
-	require.Equal(t, "SECRET", string(cfg.IngestionToken))
+	require.Equal(t, "SECRET", string(cfg.ingestionToken))
 
 	// It is redacted when printed.
-	assert.Equal(t, "[REDACTED]", cfg.IngestionToken.String())
-}
-
-// TestConfigOTLPWithOverride converts exporter configuration to
-// OTLP gRPC Exporter configuration and verifies that overridden
-// endpoint and token propagate correctly.
-func TestConfigOTLPWithOverride(t *testing.T) {
-	cfgFile := loadConfigTestdata(t, "url_override")
-
-	// Parse configuration.
-	factory := NewFactory()
-	cfg := factory.CreateDefaultConfig()
-	require.NoError(t, cfgFile.Unmarshal(&cfg))
-
-	// Convert it to the OTLP Exporter configuration.
-	otlpCfg, err := cfg.(*Config).OTLPConfig()
-	require.NoError(t, err)
-
-	// Verify that both the token and overridden URL were propagated
-	// to the OTLP configuration.
-	assert.Equal(t, "127.0.0.1:1234", otlpCfg.Endpoint)
-	assert.Equal(
-		t,
-		map[string]configopaque.String{"Authorization": "Bearer YOUR-INGESTION-TOKEN"},
-		otlpCfg.Headers,
-	)
+	assert.Equal(t, "[REDACTED]", cfg.ingestionToken.String())
 }

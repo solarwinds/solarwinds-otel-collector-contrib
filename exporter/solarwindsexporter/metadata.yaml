@@ -7,6 +7,6 @@ status:
     development: [traces, metrics, logs]
 
 tests:
-  config:
-    data_center: "na-01"
-    token: "THIS-IS-A-TEST"
+  # skipped because the exporter requires solarwindsextension to run
+  skip_lifecycle: true
+
