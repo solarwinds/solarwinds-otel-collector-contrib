@@ -31,10 +31,10 @@ func TestConfigValidateDataCenters(t *testing.T) {
 	}
 
 	tests := []test{
-		{dataCenter: "na-01", url: "otel.collector.na-01.cloud.solarwinds.com:4317", ok: true},
-		{dataCenter: "na-02", url: "otel.collector.na-02.cloud.solarwinds.com:4317", ok: true},
-		{dataCenter: "eu-01", url: "otel.collector.eu-01.cloud.solarwinds.com:4317", ok: true},
-		{dataCenter: "NA-01", url: "otel.collector.na-01.cloud.solarwinds.com:4317", ok: true},
+		{dataCenter: "na-01", url: "otel.collector.na-01.cloud.solarwinds.com:443", ok: true},
+		{dataCenter: "na-02", url: "otel.collector.na-02.cloud.solarwinds.com:443", ok: true},
+		{dataCenter: "eu-01", url: "otel.collector.eu-01.cloud.solarwinds.com:443", ok: true},
+		{dataCenter: "NA-01", url: "otel.collector.na-01.cloud.solarwinds.com:443", ok: true},
 		{dataCenter: "apj-01", url: "", ok: false},
 	}
 

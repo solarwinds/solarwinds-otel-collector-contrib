@@ -136,9 +136,9 @@ func (cfg *Config) EndpointUrl() (string, error) {
 // dataCenterToURLMapping maps a data center ID to
 // to its corresponding OTLP endpoint URL.
 var dataCenterToURLMapping = map[string]string{
-	"na-01": "otel.collector.na-01.cloud.solarwinds.com:4317",
-	"na-02": "otel.collector.na-02.cloud.solarwinds.com:4317",
-	"eu-01": "otel.collector.eu-01.cloud.solarwinds.com:4317",
+	"na-01": "otel.collector.na-01.cloud.solarwinds.com:443",
+	"na-02": "otel.collector.na-02.cloud.solarwinds.com:443",
+	"eu-01": "otel.collector.eu-01.cloud.solarwinds.com:443",
 }
 
 // lookupDataCenterURL returns the OTLP endpoint URL
