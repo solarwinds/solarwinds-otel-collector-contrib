@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.113.2
+Fixes OTLP port number used for exporting telemetry.
+
 ## v0.113.1
 Adds [SolarWinds Extension](./extension/solarwindsextension). The [SolarWinds Exporter](./exporter/solarwindsexporter) is now dependent on the extension.
 
