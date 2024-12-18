@@ -1,0 +1,4 @@
+token: "YOUR-INGESTION-TOKEN"
+data_center: "na-02"
+collector_name: "collector"
+insecure: true

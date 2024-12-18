@@ -45,7 +45,10 @@ func createMetricsExporter(
 		return nil, fmt.Errorf("unexpected config type: %T", cfg)
 	}
 
-	metricsExporter := newExporter(ctx, exporterCfg, settings, metricsExporterType)
+	metricsExporter, err := newExporter(exporterCfg, settings, metricsExporterType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create exporter: %w", err)
+	}
 
 	return exporterhelper.NewMetrics(
 		ctx,
@@ -70,7 +73,11 @@ func createLogsExporter(
 		return nil, fmt.Errorf("unexpected config type: %T", cfg)
 	}
 
-	logsExporter := newExporter(ctx, exporterCfg, settings, logsExporterType)
+	logsExporter, err := newExporter(exporterCfg, settings, logsExporterType)
+	if err != nil {
+		return nil, err
+	}
+
 	return exporterhelper.NewLogs(
 		ctx,
 		settings,
@@ -92,7 +99,10 @@ func createTracesExporter(ctx context.Context,
 		return nil, fmt.Errorf("unexpected config type: %T", cfg)
 	}
 
-	tracesExporter := newExporter(ctx, exporterCfg, settings, tracesExporterType)
+	tracesExporter, err := newExporter(exporterCfg, settings, tracesExporterType)
+	if err != nil {
+		return nil, err
+	}
 
 	return exporterhelper.NewTraces(
 		ctx,

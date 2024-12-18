@@ -13,16 +13,16 @@ SolarWinds Exporter is a convenience wrapper around [OTLP gRPC Exporter](https:/
 
 ## Getting Started
 
-You just need to include the SolarWinds Exporter in your exporter definitions and provide the following minimal configuration:
+You just need to include the SolarWinds Exporter in your exporter definitions and no additional configuration is needed. It always needs to be used together with the [Solarwinds Extension](../../extension/solarwindsextension).
 
 ```yaml
 exporters:
   solarwinds:
-    token: "YOUR-INGESTION-TOKEN"
+extensions:
+  solarwinds:
+    token: "TOKEN"
     data_center: "na-01"
 ```
-- `token` (mandatory) - You can generate your token in your SolarWinds Observability SaaS account under _Settings / API Tokens / Create API Token_. The type is "Ingestion". You can find the complete documentation [here](https://documentation.solarwinds.com/en/success_center/observability/content/settings/api-tokens.htm).
-- `data_center` (mandatory) - Data center is the region you picked during the sign-up process. You can easily see in URLs after logging in to SolarWinds Observability SaaS - it's either `na-01`, `na-02` or `eu-01`. Please refer to the [documentation](https://documentation.solarwinds.com/en/success_center/observability/content/system_requirements/endpoints.htm#Find) for details.
 
 ## Full configuration
 
@@ -30,8 +30,7 @@ exporters:
 ```yaml
 exporters:
   solarwinds:
-    token: "YOUR-INGESTION-TOKEN" # No default (mandatory field).
-    data_center: "na-01" # No default (mandatory field).
+    extension: "solarwinds"
     timeout: "10s"
     sending_queue:
       enabled: true
@@ -44,13 +43,42 @@ exporters:
       multiplier: 1.5
       max_interval: "30s"
       max_elapsed_time: "300s"
+extensions:
+  solarwinds:
+    token: "TOKEN"
+    data_center: "na-01"
 ```
-- `timeout` (optional) - Timeout for each attempt to send data to the SaaS service. A timeout of zero disables the timeout. The **default** is `5s`.
+> [!TIP]  
+> You can omit `extension` from the Solarwinds Exporter configuration above if there's only a single instance of the Solarwinds Extension.
+
+- `extension` (optional) - This name identifies an instance of the [Solarwinds Extension](../../extension/solarwindsextension) to be used by this exporter to obtain its configuration. 
+   If there is only a single instance of the extension, the configuration value is optional. The format mimics the identifier as it occurs in the collector configuration - 
+   `type/name`, e.g `solarwinds` or `solarwinds/1` for multiple instances of the extension. You would use multiple instances for publishing your telemetry to 
+   multiple **SolarWinds Observability SaaS** organizations.
+- `timeout` (optional) - Timeout for each attempt to send data to the SaaS service. A timeout of zero disables the timeout. The **default** is `10s`.
 - `retry_on_failure` (optional) - These options configure the retry behavior. Please refer to the [Exporter Helper documentation](https://github.com/open-telemetry/opentelemetry-collector/blob/main/exporter/exporterhelper/README.md).
 - `sending_queue` (optional) - These are the options to set queuing in the exporter. A full descriptions can be similarly found in [Exporter Helper documentation](https://github.com/open-telemetry/opentelemetry-collector/blob/main/exporter/exporterhelper/README.md).
 
 > [!NOTE]  
 > The format of all durations above follow the [time.ParseDuration](https://pkg.go.dev/time#ParseDuration) format of "Duration" strings.
+
+### Example with Multiple Solarwinds Extensions
+```yaml
+exporters:
+  solarwinds:
+    extension: "solarwinds/1"
+extensions:
+  solarwinds/1:
+    token: YOUR-INGESTION-TOKEN1"
+    data_center: "na-01"
+  solarwinds/2:
+    token: YOUR-INGESTION-TOKEN2"
+    data_center: "na-02"
+```
+> [!WARNING]
+> The `extension` configuration value cannot be omitted in the example above. 
+> There are multiple instances of the Solarwinds Extension and you need to
+> configure which instance to use to obtain configuration for the exporter.
 
 ## Development
 - **Tests** can be executed with `make test`.

@@ -15,9 +15,7 @@
 package solarwindsexporter
 
 import (
-	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"go.opentelemetry.io/collector/component"
@@ -29,37 +27,11 @@ import (
 	"go.opentelemetry.io/collector/exporter/otlpexporter"
 )
 
-// dataCenterToURLMapping maps a data center ID to
-// to its corresponding OTLP endpoint URL.
-var dataCenterToURLMapping = map[string]string{
-	"na-01": "otel.collector.na-01.cloud.solarwinds.com:443",
-	"na-02": "otel.collector.na-02.cloud.solarwinds.com:443",
-	"eu-01": "otel.collector.eu-01.cloud.solarwinds.com:443",
-}
-
-// lookupDataCenterURL returns the OTLP endpoint URL
-// for a `dc` data center ID. Matching is case-insensitive.
-// It fails with an error if `dc` doesn't identify a data center.
-func lookupDataCenterURL(dc string) (string, error) {
-	dcLowercase := strings.ToLower(dc)
-
-	url, ok := dataCenterToURLMapping[dcLowercase]
-	if !ok {
-		return "", fmt.Errorf("unknown data center ID: %s", dc)
-	}
-
-	return url, nil
-}
-
 // Config represents a Solarwinds Exporter configuration.
 type Config struct {
-	// DataCenter ID (e.g. na-01).
-	DataCenter string `mapstructure:"data_center"`
-	// EndpointURLOverride sets OTLP endpoint directly.
-	// Warning: Intended for testing use only, use `DataCenter` instead.
-	EndpointURLOverride string `mapstructure:"endpoint_url_override"`
-	// IngestionToken is your secret generated SWO ingestion token.
-	IngestionToken configopaque.String `mapstructure:"token"`
+	// Extension identifies a Solarwinds Extension to
+	// use for obtaining connection credentials in this exporter.
+	Extension string `mapstructure:"extension"`
 	// BackoffSettings configures retry behavior of the exporter.
 	// See [configretry.BackOffConfig] documentation.
 	BackoffSettings configretry.BackOffConfig `mapstructure:"retry_on_failure"`
@@ -68,12 +40,33 @@ type Config struct {
 	QueueSettings exporterhelper.QueueConfig `mapstructure:"sending_queue"`
 	// Timeout configures timeout in the underlying OTLP exporter.
 	Timeout exporterhelper.TimeoutConfig `mapstructure:"timeout,squash"`
+
+	// ingestionToken stores the token provided by the Solarwinds Extension.
+	ingestionToken configopaque.String `mapstructure:"-"`
+	// endpointURL stores the URL provided by the Solarwinds Extension.
+	endpointURL string `mapstructure:"-"`
+	// insecure stores the option to disable TLS provided
+	// by the Solarwinds Extension.
+	insecure bool `mapstructure:"-"`
+}
+
+// extensionAsComponent tries to parse `extension` value of the form 'type/name'
+// or 'type' from the configuration to [component.ID]. If the `extension value is empty,
+// it returns `nil` with a `nil` error.
+//
+// It uses [component.ID.UnmarshalText] and behaves accordingly.
+func (cfg *Config) extensionAsComponent() (*component.ID, error) {
+	if cfg.Extension == "" {
+		return nil, nil
+	}
+
+	parsedID := &component.ID{}
+	err := parsedID.UnmarshalText([]byte(cfg.Extension))
+
+	return parsedID, err
 }
 
 // NewDefaultConfig creates a new default configuration.
-//
-// Warning: it doesn't define mandatory `Token` and `DataCenter`
-// fields that need to be explicitly provided.
 func NewDefaultConfig() component.Config {
 	// Using a higher default than OTLP Exporter does (5s)
 	// based on previous experience with unnecessary timeouts.
@@ -90,16 +83,14 @@ func NewDefaultConfig() component.Config {
 
 // Validate checks the configuration for its validity.
 func (cfg *Config) Validate() error {
-	if cfg.DataCenter == "" && cfg.EndpointURLOverride == "" {
-		return errors.New("invalid configuration: data center must be provided")
-	}
-
-	if _, err := lookupDataCenterURL(cfg.DataCenter); err != nil {
-		return fmt.Errorf("invalid data center ID: %w", err)
-	}
-
-	if cfg.IngestionToken == "" {
-		return errors.New("invalid configuration: token must be set")
+	if len(cfg.Extension) != 0 {
+		_, err := cfg.extensionAsComponent()
+		if err != nil {
+			return fmt.Errorf(
+				"invalid configuration: %q is not a correct value for 'extension'",
+				cfg.Extension,
+			)
+		}
 	}
 
 	return nil
@@ -111,15 +102,8 @@ func (cfg *Config) OTLPConfig() (*otlpexporter.Config, error) {
 		return nil, err
 	}
 
-	// Use overridden URL if provided.
-	endpointURL := cfg.EndpointURLOverride
-	if endpointURL == "" {
-		// Error doesn't need to be checked, it's been validated above.
-		endpointURL, _ = lookupDataCenterURL(cfg.DataCenter)
-	}
-
 	// Headers - set bearer auth.
-	bearer := fmt.Sprintf("Bearer %s", string(cfg.IngestionToken))
+	bearer := fmt.Sprintf("Bearer %s", string(cfg.ingestionToken))
 	headers := map[string]configopaque.String{
 		"Authorization": configopaque.String(bearer),
 	}
@@ -130,7 +114,7 @@ func (cfg *Config) OTLPConfig() (*otlpexporter.Config, error) {
 		Keepalive:    configgrpc.NewDefaultKeepaliveClientConfig(),
 		BalancerName: configgrpc.BalancerName(),
 		Headers:      headers,
-		Endpoint:     endpointURL,
+		Endpoint:     cfg.endpointURL,
 	}
 
 	otlpConfig := &otlpexporter.Config{
@@ -139,6 +123,9 @@ func (cfg *Config) OTLPConfig() (*otlpexporter.Config, error) {
 		TimeoutConfig: cfg.Timeout,
 		ClientConfig:  clientCfg,
 	}
+
+	// Disable TLS for testing.
+	otlpConfig.ClientConfig.TLSSetting.Insecure = cfg.insecure
 
 	if err := otlpConfig.Validate(); err != nil {
 		return nil, err

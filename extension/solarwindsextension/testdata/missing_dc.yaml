@@ -1,1 +1,2 @@
 token: "YOUR-INGESTION-TOKEN"
+collector_name: "mycol"
