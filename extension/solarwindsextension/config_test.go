@@ -42,7 +42,6 @@ func TestConfigUnmarshalFull(t *testing.T) {
 		EndpointURLOverride: "127.0.0.1:1234",
 		IngestionToken:      "TOKEN",
 		CollectorName:       "test-collector",
-		Insecure:            true,
 	}, cfg)
 }
 
@@ -112,23 +111,6 @@ func TestConfigValidateMissingCollectorName(t *testing.T) {
 		t,
 		cfg.(*internal.Config).Validate(),
 		"'collector_name' must be set",
-	)
-}
-
-// TestConfigValidateInsecureInProd tests that 'insecure'
-// cannot be enabled for a production endpoint.
-func TestConfigValidateInsecureInProd(t *testing.T) {
-	cfgFile := testutil.LoadConfigTestdata(t, "insecure_in_prod")
-
-	// Parse configuration.
-	factory := NewFactory()
-	cfg := factory.CreateDefaultConfig()
-	require.NoError(t, cfgFile.Unmarshal(&cfg))
-
-	assert.ErrorContains(
-		t,
-		cfg.(*internal.Config).Validate(),
-		"invalid configuration: 'insecure'",
 	)
 }
 

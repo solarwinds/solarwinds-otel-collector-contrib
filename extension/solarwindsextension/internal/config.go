@@ -36,21 +36,15 @@ type Config struct {
 	IngestionToken configopaque.String `mapstructure:"token"`
 	// CollectorName name of the collector passed in the heartbeat metric
 	CollectorName string `mapstructure:"collector_name"`
-	// Insecure disables TLS in the exporters.
-
 	// ⚠️ Warning: For testing purpose only.
 	// EndpointURLOverride sets OTLP endpoint directly, it overrides the DataCenter configuration.
 	EndpointURLOverride string `mapstructure:"endpoint_url_override"`
-	// ⚠️ Warning: For testing purpose only.
-	// Insecure disables the TLS security. It can be used only together with EndpointURLOverride.
-	Insecure bool `mapstructure:"insecure"`
 }
 
 var (
 	ErrMissingDataCenter    = errors.New("invalid configuration: 'data_center' must be set")
 	ErrMissingToken         = errors.New("invalid configuration: 'token' must be set")
 	ErrMissingCollectorName = errors.New("invalid configuration: 'collector_name' must be set")
-	ErrInsecureInProd       = errors.New("invalid configuration: 'insecure' is not allowed in production mode")
 )
 
 // NewDefaultConfig creates a new default configuration.
@@ -65,10 +59,6 @@ func NewDefaultConfig() component.Config {
 func (cfg *Config) Validate() error {
 	if cfg.DataCenter == "" && cfg.EndpointURLOverride == "" {
 		return ErrMissingDataCenter
-	}
-
-	if cfg.Insecure && cfg.EndpointURLOverride == "" {
-		return ErrInsecureInProd
 	}
 
 	if _, err := cfg.EndpointUrl(); err != nil {
@@ -111,11 +101,6 @@ func (cfg *Config) OTLPConfig() (*otlpexporter.Config, error) {
 			Headers:      headers,
 			Endpoint:     endpointURL,
 		},
-	}
-
-	// Disable TLS for testing.
-	if cfg.Insecure {
-		otlpConfig.ClientConfig.TLSSetting.Insecure = true
 	}
 
 	if err = otlpConfig.Validate(); err != nil {

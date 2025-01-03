@@ -108,10 +108,6 @@ func (swiExporter *solarwindsExporter) initExporterType(
 	}
 	swiExporter.config.endpointURL = url
 
-	// Get TLS settings for testing.
-	insecure := endpointCfg.Insecure()
-	swiExporter.config.insecure = insecure
-
 	otlpExporter := otlpexporter.NewFactory()
 	otlpCfg, err := swiExporter.config.OTLPConfig()
 	if err != nil {
