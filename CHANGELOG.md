@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.113.3
+Removes `insecure` testing configuration parameter for [SolarWinds Extension](./extension/solarwindsextension).
+
 ## v0.113.2
 Fixes OTLP port number used for exporting telemetry.
 
