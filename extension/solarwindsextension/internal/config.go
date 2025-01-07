@@ -38,7 +38,8 @@ type Config struct {
 	CollectorName string `mapstructure:"collector_name"`
 	// ⚠️ Warning: For testing purpose only.
 	// EndpointURLOverride sets OTLP endpoint directly, it overrides the DataCenter configuration.
-	EndpointURLOverride string `mapstructure:"endpoint_url_override"`
+	EndpointURLOverride string            `mapstructure:"endpoint_url_override"`
+	Resource            map[string]string `mapstructure:"resource"`
 }
 
 var (

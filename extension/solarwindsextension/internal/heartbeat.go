@@ -48,6 +48,7 @@ type Heartbeat struct {
 	collectorName string
 
 	beatInterval time.Duration
+	resource     map[string]string
 }
 
 var ErrAlreadyRunning = errors.New("heartbeat already running")
@@ -74,6 +75,7 @@ func newHeartbeatWithExporter(
 		collectorName: cfg.CollectorName,
 		exporter:      exporter,
 		beatInterval:  defaultHeartbeatInterval,
+		resource:      cfg.Resource,
 	}
 }
 
@@ -152,6 +154,12 @@ func (h *Heartbeat) generate(ctx context.Context) error {
 }
 
 func (h *Heartbeat) decorateResourceAttributes(resource pcommon.Resource) error {
+	if h.resource != nil {
+		for key, value := range h.resource {
+			resource.Attributes().PutStr(key, value)
+		}
+	}
+
 	if h.collectorName != "" {
 		resource.Attributes().PutStr("sw.otelcol.collector.name", h.collectorName)
 	}

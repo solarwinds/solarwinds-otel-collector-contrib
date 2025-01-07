@@ -36,12 +36,17 @@ func TestConfigUnmarshalFull(t *testing.T) {
 	cfg := factory.CreateDefaultConfig()
 	require.NoError(t, cfgFile.Unmarshal(&cfg))
 
+	attributeMap := make(map[string]string)
+	attributeMap["att1"] = "custom_attribute_value_1"
+	attributeMap["att2"] = "custom_attribute_value_2"
+
 	// Verify the values.
 	assert.Equal(t, &internal.Config{
 		DataCenter:          "na-01",
 		EndpointURLOverride: "127.0.0.1:1234",
 		IngestionToken:      "TOKEN",
 		CollectorName:       "test-collector",
+		Resource:            attributeMap,
 	}, cfg)
 }
 

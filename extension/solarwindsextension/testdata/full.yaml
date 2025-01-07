@@ -2,3 +2,6 @@ token: "TOKEN"
 data_center: "na-01"
 collector_name: "test-collector"
 endpoint_url_override: "127.0.0.1:1234"
+resource:
+  att1: "custom_attribute_value_1"
+  att2: "custom_attribute_value_2"
