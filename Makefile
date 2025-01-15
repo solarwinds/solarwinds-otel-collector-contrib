@@ -1,6 +1,6 @@
 include Makefile.Common
 
-ALL_SRC := $(shell find . \( -name "*.go" -o -name "*.sh" \) \
+ALL_SRC := $(shell find . \( -name "*.go" \) \
 							-not -path '*generated*' \
 							-type f | sort)
 
