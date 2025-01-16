@@ -5,7 +5,8 @@ GOCMD?= go
 # SRC_ROOT is the top of the source tree
 SRC_ROOT := $(shell git rev-parse --show-toplevel)
 
-EXPECTED_LICENSE_HEADER    := $(SRC_ROOT)/expected-file-header.txt
+EXPECTED_GO_LICENSE_HEADER    := $(SRC_ROOT)/expected-go-file-header.txt
+EXPECTED_SHELL_LICENSE_HEADER    := $(SRC_ROOT)/expected-shell-file-header.txt
 
 TOOLS_MOD_DIR   := $(SRC_ROOT)/internal/tools
 TOOLS_BIN_DIR   := $(SRC_ROOT)/.tools
