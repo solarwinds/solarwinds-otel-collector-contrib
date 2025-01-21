@@ -24,6 +24,10 @@ import (
 	"github.com/solarwinds/solarwinds-otel-collector/extension/solarwindsextension/internal"
 )
 
+// CollectorNameAttribute is a resource attribute
+// representing the configured name of the collector.
+const CollectorNameAttribute = internal.CollectorNameAttribute
+
 type SolarwindsExtension struct {
 	logger    *zap.Logger
 	config    *internal.Config
@@ -47,7 +51,7 @@ func newExtension(ctx context.Context, set extension.Settings, cfg *internal.Con
 	return e, nil
 }
 
-func (e *SolarwindsExtension) GetEndpointConfig() EndpointConfig { return newEndpointConfig(e.config) }
+func (e *SolarwindsExtension) GetCommonConfig() CommonConfig { return newCommonConfig(e.config) }
 
 func (e *SolarwindsExtension) Start(ctx context.Context, host component.Host) error {
 	e.logger.Info("Starting Solarwinds Extension")

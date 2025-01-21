@@ -41,10 +41,13 @@ type Config struct {
 	// Timeout configures timeout in the underlying OTLP exporter.
 	Timeout exporterhelper.TimeoutConfig `mapstructure:"timeout,squash"`
 
-	// ingestionToken stores the token provided by the Solarwinds Extension.
+	// Fields below populated from Solarwinds Extension at runtime:
+	// ingestionToken stores the token used to export telemetry.
 	ingestionToken configopaque.String `mapstructure:"-"`
-	// endpointURL stores the URL provided by the Solarwinds Extension.
+	// endpointURL stores the URL for exporting telemetry.
 	endpointURL string `mapstructure:"-"`
+	// collectorName is added as an attribute to telemetry.
+	collectorName string `mapstructure:"-"`
 }
 
 // extensionAsComponent tries to parse `extension` value of the form 'type/name'

@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.113.6
+Mark all outgoing telemetry from the [SolarWinds Exporter](./exporter/solarwindsexporter) with
+an attribute storing the collector name (`sw.otelcol.collector.name`) as it is configured in the
+[SolarWinds Extension](./extension/solarwindsextension/README.md#getting-started).
+
 ## v0.113.5
 Tags released docker images with `latest` tag.
 

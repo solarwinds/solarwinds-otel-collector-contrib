@@ -69,6 +69,51 @@ func newExporter(
 	return swiExporter, nil
 }
 
+// initCommonCfgFromExtension tries to locate an instance
+// of the SolarWinds Extension. If successful, it obtains
+// the common configuration from the extension and uses
+// the received configuration to initialize the part of exporter's
+// configuration that is common.
+func (swiExporter *solarwindsExporter) initCommonCfgFromExtension(
+	host component.Host,
+	extensionID *component.ID,
+) error {
+	// Only allow the type of the [solarwindsextension].
+	if extensionID != nil &&
+		extensionID.Type() != solarwindsextension.NewFactory().Type() {
+		return fmt.Errorf("unexpected extension type: %s", extensionID.Type())
+	}
+
+	// Find the SolarWinds Extension.
+	swiExtension := findExtension(host.GetExtensions(), extensionID)
+	if swiExtension == nil {
+		if extensionID != nil {
+			return fmt.Errorf("solarwinds extension %q not found", extensionID)
+		}
+		return ErrSwiExtensionNotFound
+	}
+
+	// Obtain common configuration from the extension.
+	commonCfg := swiExtension.GetCommonConfig()
+
+	// Get token from the extension.
+	token := commonCfg.Token()
+	swiExporter.config.ingestionToken = token
+
+	// Get URL from the extension.
+	url, err := commonCfg.Url()
+	if err != nil {
+		return fmt.Errorf("URL configuration not available: %w", err)
+	}
+	swiExporter.config.endpointURL = url
+
+	// Get collector name from the extension.
+	collectorName := commonCfg.CollectorName()
+	swiExporter.config.collectorName = collectorName
+
+	return nil
+}
+
 func (swiExporter *solarwindsExporter) initExporterType(
 	ctx context.Context,
 	settings exporter.Settings,
@@ -81,32 +126,10 @@ func (swiExporter *solarwindsExporter) initExporterType(
 		return fmt.Errorf("failed parsing extension id: %w", err)
 	}
 
-	// Only allow the type of the [solarwindsextension].
-	if extensionID != nil &&
-		extensionID.Type() != solarwindsextension.NewFactory().Type() {
-		return fmt.Errorf("unexpected extension type: %s", extensionID.Type())
-	}
-
-	swiExtension := findExtension(host.GetExtensions(), extensionID)
-	if swiExtension == nil {
-		if extensionID != nil {
-			return fmt.Errorf("solarwinds extension %q not found", extensionID)
-		}
-		return ErrSwiExtensionNotFound
-	}
-
-	endpointCfg := swiExtension.GetEndpointConfig()
-
-	// Get token from the extensions.
-	token := endpointCfg.Token()
-	swiExporter.config.ingestionToken = token
-
-	// Get URL from the extension.
-	url, err := endpointCfg.Url()
+	err = swiExporter.initCommonCfgFromExtension(host, extensionID)
 	if err != nil {
-		return fmt.Errorf("URL configuration not available: %w", err)
+		return fmt.Errorf("failed to init common config from extension: %w", err)
 	}
-	swiExporter.config.endpointURL = url
 
 	otlpExporter := otlpexporter.NewFactory()
 	otlpCfg, err := swiExporter.config.OTLPConfig()
@@ -207,6 +230,15 @@ func (swiExporter *solarwindsExporter) pushMetrics(ctx context.Context, metrics 
 		return nil
 	}
 
+	// Decorate all metrics with a collector name for easy grouping.
+	for i, rms := 0, metrics.ResourceMetrics(); i < rms.Len(); i++ {
+		resource := rms.At(i).Resource()
+		resource.Attributes().PutStr(
+			solarwindsextension.CollectorNameAttribute,
+			swiExporter.config.collectorName,
+		)
+	}
+
 	return swiExporter.metrics.ConsumeMetrics(ctx, metrics)
 }
 
@@ -215,12 +247,30 @@ func (swiExporter *solarwindsExporter) pushLogs(ctx context.Context, logs plog.L
 		return nil
 	}
 
+	// Decorate all logs with a collector name for easy grouping.
+	for i, rls := 0, logs.ResourceLogs(); i < rls.Len(); i++ {
+		resource := rls.At(i).Resource()
+		resource.Attributes().PutStr(
+			solarwindsextension.CollectorNameAttribute,
+			swiExporter.config.collectorName,
+		)
+	}
+
 	return swiExporter.logs.ConsumeLogs(ctx, logs)
 }
 
 func (swiExporter *solarwindsExporter) pushTraces(ctx context.Context, traces ptrace.Traces) error {
 	if traces.SpanCount() == 0 {
 		return nil
+	}
+
+	// Decorate all traces with a collector name for easy grouping.
+	for i, rss := 0, traces.ResourceSpans(); i < rss.Len(); i++ {
+		resource := rss.At(i).Resource()
+		resource.Attributes().PutStr(
+			solarwindsextension.CollectorNameAttribute,
+			swiExporter.config.collectorName,
+		)
 	}
 
 	return swiExporter.traces.ConsumeTraces(ctx, traces)

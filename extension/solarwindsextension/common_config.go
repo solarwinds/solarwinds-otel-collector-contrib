@@ -20,23 +20,28 @@ import (
 	"github.com/solarwinds/solarwinds-otel-collector/extension/solarwindsextension/internal"
 )
 
-type EndpointConfig interface {
+type CommonConfig interface {
 	Url() (string, error)
 	Token() configopaque.String
+	CollectorName() string
 }
 
-type endpointConfig struct{ cfg *internal.Config }
+type commonConfig struct{ cfg *internal.Config }
 
-var _ EndpointConfig = (*endpointConfig)(nil)
+var _ CommonConfig = (*commonConfig)(nil)
 
-func newEndpointConfig(cfg *internal.Config) *endpointConfig {
-	return &endpointConfig{cfg: cfg}
+func newCommonConfig(cfg *internal.Config) *commonConfig {
+	return &commonConfig{cfg: cfg}
 }
 
-func (c *endpointConfig) Url() (string, error) {
+func (c *commonConfig) Url() (string, error) {
 	return c.cfg.EndpointUrl()
 }
 
-func (c *endpointConfig) Token() configopaque.String {
+func (c *commonConfig) Token() configopaque.String {
 	return c.cfg.IngestionToken
+}
+
+func (c *commonConfig) CollectorName() string {
+	return c.cfg.CollectorName
 }
