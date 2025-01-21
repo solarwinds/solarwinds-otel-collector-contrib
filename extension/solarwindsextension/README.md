@@ -40,6 +40,7 @@ extensions:
 - `data_center` (mandatory) - Data center is the region you picked during the sign-up process. You can easily see in URLs after logging in to SolarWinds Observability SaaS - it's either `na-01`, `na-02` or `eu-01`. Please refer to the [documentation](https://documentation.solarwinds.com/en/success_center/observability/content/system_requirements/endpoints.htm#Find) for details.
 - `collector_name` (mandatory) - The collector name passed in the heartbeat metric (as `sw.otelcol.collector.name` resource attribute) to identify the collector. Doesn't have to be unique.
 - `resource` (optional) - You can specify additional attributes to be added to the `sw.otecol.uptime` metric. 
+- `without_entity` (optional) - You can disable Collector entity creation in SolarWinds Observability by setting it to `true`. If not configured, entity creation is enabled by default.
 ## Development
 - **Tests** can be executed with `make test`.
 - After changes to `metadata.yaml` generated files need to be re-generated with `make generate`. The [mdatagen](http://go.opentelemetry.io/collector/cmd/mdatagen) tool has to be in the `PATH`.

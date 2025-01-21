@@ -40,6 +40,7 @@ type Config struct {
 	// EndpointURLOverride sets OTLP endpoint directly, it overrides the DataCenter configuration.
 	EndpointURLOverride string            `mapstructure:"endpoint_url_override"`
 	Resource            map[string]string `mapstructure:"resource"`
+	WithoutEntity       bool              `mapstructure:"without_entity"`
 }
 
 var (

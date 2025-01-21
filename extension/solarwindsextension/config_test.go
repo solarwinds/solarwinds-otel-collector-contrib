@@ -47,6 +47,7 @@ func TestConfigUnmarshalFull(t *testing.T) {
 		IngestionToken:      "TOKEN",
 		CollectorName:       "test-collector",
 		Resource:            attributeMap,
+		WithoutEntity:       true,
 	}, cfg)
 }
 

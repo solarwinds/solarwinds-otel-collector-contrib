@@ -1,0 +1,4 @@
+token: "YOUR-INGESTION-TOKEN"
+data_center: "na-01"
+collector_name: "test-collector"
+without_entity: true
