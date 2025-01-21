@@ -23,6 +23,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/solarwinds/solarwinds-otel-collector/extension/solarwindsextension/internal/metadata"
+	"github.com/solarwinds/solarwinds-otel-collector/pkg/version"
 )
 
 func newUptimeMetric(logger *zap.Logger) *UptimeMetric {
@@ -40,8 +41,9 @@ func (um *UptimeMetric) add(_ context.Context, md pmetric.Metrics) error {
 	res := md.ResourceMetrics().AppendEmpty()
 	scopeMetrics := res.ScopeMetrics().AppendEmpty()
 	scopeMetrics.Scope().SetName(metadata.ScopeName)
-	scopeMetrics.Scope().SetVersion("0.0.1")
+	scopeMetrics.Scope().SetVersion(version.Version)
 	m := scopeMetrics.Metrics().AppendEmpty()
+
 	m.SetName("sw.otelcol.uptime")
 	dataPoint := m.SetEmptyGauge().DataPoints().AppendEmpty()
 	dataPoint.SetTimestamp(pcommon.NewTimestampFromTime(time.Now()))

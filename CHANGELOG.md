@@ -1,9 +1,10 @@
 # Changelog
 
 ## v0.113.6
-Mark all outgoing telemetry from the [SolarWinds Exporter](./exporter/solarwindsexporter) with
+- Mark all outgoing telemetry from the [SolarWinds Exporter](./exporter/solarwindsexporter) with
 an attribute storing the collector name (`sw.otelcol.collector.name`) as it is configured in the
 [SolarWinds Extension](./extension/solarwindsextension/README.md#getting-started).
+- The uptime metric used to signal heartbeat is now decorated with `sw.otelcol.collector.version` which contains collector version
 
 ## v0.113.5
 Tags released docker images with `latest` tag.

@@ -3,7 +3,8 @@ module github.com/solarwinds/solarwinds-otel-collector/extension/solarwindsexten
 go 1.23.4
 
 require (
-	github.com/solarwinds/solarwinds-otel-collector/pkg/testutil v0.0.0-00010101000000-000000000000
+	github.com/solarwinds/solarwinds-otel-collector/pkg/testutil v0.113.0
+	github.com/solarwinds/solarwinds-otel-collector/pkg/version v0.113.0
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/collector/component v0.113.0
 	go.opentelemetry.io/collector/config/configgrpc v0.113.0
@@ -75,3 +76,5 @@ require (
 )
 
 replace github.com/solarwinds/solarwinds-otel-collector/pkg/testutil => ../../pkg/testutil
+
+replace github.com/solarwinds/solarwinds-otel-collector/pkg/version => ../../pkg/version

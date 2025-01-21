@@ -20,6 +20,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/solarwinds/solarwinds-otel-collector/pkg/version"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/extension"
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -164,5 +165,6 @@ func (h *Heartbeat) decorateResourceAttributes(resource pcommon.Resource) error 
 	if h.collectorName != "" {
 		resource.Attributes().PutStr(CollectorNameAttribute, h.collectorName)
 	}
+	resource.Attributes().PutStr("sw.otelcol.collector.version", version.Version)
 	return nil
 }
