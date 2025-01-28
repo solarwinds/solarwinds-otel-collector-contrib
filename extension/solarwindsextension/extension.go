@@ -27,6 +27,7 @@ import (
 // CollectorNameAttribute is a resource attribute
 // representing the configured name of the collector.
 const CollectorNameAttribute = internal.CollectorNameAttribute
+const EntityCreation = internal.EntityCreation
 
 type SolarwindsExtension struct {
 	logger    *zap.Logger

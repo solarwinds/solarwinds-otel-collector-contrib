@@ -31,6 +31,7 @@ import (
 const (
 	defaultHeartbeatInterval = 30 * time.Second
 	CollectorNameAttribute   = "sw.otelcol.collector.name"
+	EntityCreation           = "sw.otelcol.collector.entity_creation"
 )
 
 type MetricsExporter interface {
@@ -167,9 +168,7 @@ func (h *Heartbeat) decorateResourceAttributes(resource pcommon.Resource) error 
 	if h.collectorName != "" {
 		resource.Attributes().PutStr(CollectorNameAttribute, h.collectorName)
 	}
-	if h.withoutEntity {
-		resource.Attributes().PutStr("sw.otelcol.collector.entity_creation", "off")
-	} else {
+	if !h.withoutEntity {
 		resource.Attributes().PutStr("sw.otelcol.collector.entity_creation", "on")
 	}
 	resource.Attributes().PutStr("sw.otelcol.collector.version", version.Version)

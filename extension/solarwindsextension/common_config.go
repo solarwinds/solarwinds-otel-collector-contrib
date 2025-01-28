@@ -24,6 +24,7 @@ type CommonConfig interface {
 	Url() (string, error)
 	Token() configopaque.String
 	CollectorName() string
+	WithoutEntity() bool
 }
 
 type commonConfig struct{ cfg *internal.Config }
@@ -45,3 +46,5 @@ func (c *commonConfig) Token() configopaque.String {
 func (c *commonConfig) CollectorName() string {
 	return c.cfg.CollectorName
 }
+
+func (c *commonConfig) WithoutEntity() bool { return c.cfg.WithoutEntity }
