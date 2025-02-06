@@ -1,0 +1,119 @@
+type: swohostmetricsreceiver/hostinfo
+
+parent: swohostmetrics
+
+sem_conv_version: 1.9.0
+
+attributes:
+  hostdetails.domain:
+    description: Host domain
+    type: string
+  hostdetails.domain.fqdn:
+    description: Fully Qualified Domain Name
+    type: string
+  hostdetails.domain.role:
+    description: Domain role. Available on Windows only.
+    type: int
+  hostdetails.model.serialnumber:
+    description: Model serial number. Available on Windows only.
+    type: string
+  hostdetails.model.manufacturer:
+    description: Model manufacturer. Available on Windows only.
+    type: string  
+  hostdetails.model.name:
+    description: Model name. Available on Windows only.
+    type: string
+  hostdetails.timezone.bias:
+    description: Difference in minutes of between the local time and UTC. Available on Windows only.
+    type: int
+  hostdetails.timezone.caption:
+    description: Caption of the local time zone.
+    type: string
+  hostdetails.timezone.standardname:
+    description: Standard name of the local time zone. Available on Windows only.
+    type: string
+  osdetails.hostname:
+    description: Host name.
+    type: string
+  osdetails.boottime:
+    description: Host boottime in unix format.
+    type: int
+  osdetails.os:
+    description: Operating system.
+    type: string
+  osdetails.platform:
+    description: Operating system platform.
+    type: string
+  osdetails.platform.family:
+    description: Operating system platform family.
+    type: string
+  osdetails.platform.version:
+    description: Operation system platform version.
+    type: string
+  osdetails.kernel.version:
+    description: Kernel version.
+    type: string
+  osdetails.kernel.architecture:
+    description: Kernel architecture.
+    type: string
+  osdetails.virtualization.system:
+    description: Virtualization system.
+    type: string
+  osdetails.virtualization.role:
+    description: Virtualization role.
+    type: string
+  osdetails.host.id:
+    description: Host ID.
+    type: string
+  osdetails.language.lcid:
+    description: Locale ID. Available on Windows only.
+    type: int
+  osdetails.language.name:
+    description: LANGUAGE environment variable.
+    type: string
+  osdetails.language.displayname:
+    description: Language display name. Available on Windows only.
+    type: string
+  user.name:
+    description: user name with domain.
+    type: string
+  user.displayname:
+    description: user display name.
+    type: string
+  firewall.profile.name:
+    description: Firewall's profile name.
+    type: string
+  # CPU attributes here
+
+metrics:
+  swo.hostinfo.uptime:
+    enabled: true
+    description: Host uptime in seconds.
+    unit: s
+    sum:
+      value_type: int
+      aggregation_temporality: cumulative
+      monotonic: true
+    attributes: [hostdetails.domain, hostdetails.domain.fqdn, hostdetails.domain.role, hostdetails.model.serialnumber,
+      hostdetails.model.manufacturer, hostdetails.model.name, hostdetails.timezone.bias, hostdetails.timezone.caption,
+      hostdetails.timezone.standardname, osdetails.hostname, osdetails.boottime, osdetails.os, osdetails.platform,
+      osdetails.platform.family, osdetails.platform.version, osdetails.kernel.version, osdetails.kernel.architecture,
+      osdetails.virtualization.system, osdetails.virtualization.role, osdetails.host.id, osdetails.language.lcid,
+      osdetails.language.name, osdetails.language.displayname]
+
+  swo.hostinfo.user.lastLogged:
+    enabled: false
+    description: Host last logged-in user. Supported for Windows and Linux.
+    unit: "user"
+    gauge:
+      value_type: int
+    attributes: [user.name, user.displayname]
+
+  swo.hostinfo.firewall:
+    enabled: false
+    description: Metric provides firewall profiles statuses. This metric is supported only on Windows.
+    extended_documentation: status values can be 0 or 1, where value 1 means a firewall profile is `enabled` and value 0 means a firewall profile is `disabled`.
+    unit: "status"
+    gauge:
+      value_type: int
+    attributes: [firewall.profile.name]

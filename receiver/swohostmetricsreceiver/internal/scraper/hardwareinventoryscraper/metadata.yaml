@@ -1,0 +1,44 @@
+type: swohostmetricsreceiver/hardwareinventory
+
+parent: swohostmetrics
+
+sem_conv_version: 1.9.0
+
+attributes:
+  processor.name:
+    description: "Processor Name."
+    type: string
+  processor.caption:
+    description: "Short description of the processor."
+    type: string
+  processor.manufacturer:
+    description: "Processor Manufacturer."
+    type: string
+  processor.model:
+    description: "Processor Model."
+    type: string
+  processor.stepping:
+    description: "Revision level of the processor in the processor family."
+    type: string
+  processor.cores:
+    description: "Number of physical cores."
+    type: string
+  processor.threads:
+    description: "Number of logical units (with hyper-threading enabled, the processor will have more threads then cores)."
+    type: string
+
+metrics:
+  swo.hardwareinventory.cpu:
+    enabled: true
+    description: CPU current clock speed in MHz.
+    unit: MHz
+    gauge:
+      value_type: int
+    attributes:
+      - processor.name
+      - processor.caption
+      - processor.manufacturer
+      - processor.model
+      - processor.stepping
+      - processor.cores
+      - processor.threads
