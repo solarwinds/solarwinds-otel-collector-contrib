@@ -22,3 +22,7 @@ add-licenses: $(ADDLICENSE)
 .PHONY: check-licenses
 check-licenses:
 	@build/check-licenses.sh ${EXPECTED_GO_LICENSE_HEADER} ${EXPECTED_SHELL_LICENSE_HEADER}
+
+.PHONY: prepare-release
+prepare-release:
+	@build/prepare-release.sh $(version)
