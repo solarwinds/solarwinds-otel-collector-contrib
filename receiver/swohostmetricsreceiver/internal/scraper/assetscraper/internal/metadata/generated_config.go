@@ -25,7 +25,7 @@ func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
 	return nil
 }
 
-// MetricsConfig provides config for swohostmetricsreceiver/assets metrics.
+// MetricsConfig provides config for asset metrics.
 type MetricsConfig struct {
 	SwoAssetInstalledsoftware MetricConfig `mapstructure:"swo.asset.installedsoftware"`
 	SwoAssetInstalledupdates  MetricConfig `mapstructure:"swo.asset.installedupdates"`
@@ -42,7 +42,7 @@ func DefaultMetricsConfig() MetricsConfig {
 	}
 }
 
-// MetricsBuilderConfig is a configuration for swohostmetricsreceiver/assets metrics builder.
+// MetricsBuilderConfig is a configuration for asset metrics builder.
 type MetricsBuilderConfig struct {
 	Metrics MetricsConfig `mapstructure:"metrics"`
 }

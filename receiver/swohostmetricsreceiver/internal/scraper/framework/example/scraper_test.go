@@ -112,7 +112,7 @@ func Test_OverallScraperTest(t *testing.T) {
 	assert.Nil(t, err, "starting scraper must be errorless")
 
 	// Scraping.
-	metrics, err := sut.Scrape(ctx)
+	metrics, err := sut.ScrapeMetrics(ctx)
 	assert.Nil(t, err, "scraping must be errorless")
 
 	// Datapoints: 2, metrics: 2

@@ -20,10 +20,10 @@ import (
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/receiver"
-	"go.opentelemetry.io/collector/receiver/scraperhelper"
+	"go.opentelemetry.io/collector/scraper"
 	"go.uber.org/zap"
 
-	"github.com/solarwinds/solarwinds-otel-collector/receiver/swohostmetricsreceiver/internal/scraper/framework/scraper"
+	fscraper "github.com/solarwinds/solarwinds-otel-collector/receiver/swohostmetricsreceiver/internal/scraper/framework/scraper"
 )
 
 // CreateScraperExplicitely represents the way how to create scraper with
@@ -32,7 +32,7 @@ func CreateScraperExplicitly(
 	_ context.Context,
 	_ receiver.Settings,
 	cfg component.Config,
-) (scraperhelper.Scraper, error) {
+) (scraper.Metrics, error) {
 	// Create scraper directly through allocating callback.
 	exampleScraper, err := NewExemplaryScraper(cfg.(*ScraperConfig))
 	if err != nil {
@@ -44,11 +44,10 @@ func CreateScraperExplicitly(
 	// In case there is a need to add some more code to be run.
 	//
 	// Create an OTEL scraper.
-	otelScraper, err := scraperhelper.NewScraper(
-		ScraperType(),
+	otelScraper, err := scraper.NewMetrics(
 		exampleScraper.Scrape,
-		scraperhelper.WithStart(exampleScraper.Start),
-		scraperhelper.WithShutdown(exampleScraper.Shutdown),
+		scraper.WithStart(exampleScraper.Start),
+		scraper.WithShutdown(exampleScraper.Shutdown),
 	)
 
 	return otelScraper, err
@@ -58,8 +57,8 @@ func CreateScraperImplicitly(
 	_ context.Context,
 	_ receiver.Settings,
 	cfg component.Config,
-) (scraperhelper.Scraper, error) {
-	return scraper.CreateScraper[ScraperConfig, ExemplaryScraper](
+) (scraper.Metrics, error) {
+	return fscraper.CreateScraper[ScraperConfig, ExemplaryScraper](
 		ScraperType(),
 		cfg,
 		NewExemplaryScraper,

@@ -25,7 +25,7 @@ func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
 	return nil
 }
 
-// MetricsConfig provides config for swohostmetricsreceiver/hostinfo metrics.
+// MetricsConfig provides config for hostinfo metrics.
 type MetricsConfig struct {
 	SwoHostinfoFirewall       MetricConfig `mapstructure:"swo.hostinfo.firewall"`
 	SwoHostinfoUptime         MetricConfig `mapstructure:"swo.hostinfo.uptime"`
@@ -46,7 +46,7 @@ func DefaultMetricsConfig() MetricsConfig {
 	}
 }
 
-// MetricsBuilderConfig is a configuration for swohostmetricsreceiver/hostinfo metrics builder.
+// MetricsBuilderConfig is a configuration for hostinfo metrics builder.
 type MetricsBuilderConfig struct {
 	Metrics MetricsConfig `mapstructure:"metrics"`
 }

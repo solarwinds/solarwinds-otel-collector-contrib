@@ -1,6 +1,9 @@
-type: swohostmetricsreceiver/assets
+type: asset
 
-parent: swohostmetrics
+status:
+  class: scraper
+  stability:
+    development: [metrics]
 
 sem_conv_version: 1.9.0
 

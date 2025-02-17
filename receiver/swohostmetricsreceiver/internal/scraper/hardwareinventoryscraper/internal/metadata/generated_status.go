@@ -7,8 +7,8 @@ import (
 )
 
 var (
-	Type      = component.MustNewType("asset")
-	ScopeName = "github.com/solarwinds/solarwinds-otel-collector/receiver/swohostmetricsreceiver/internal/scraper/assetscraper"
+	Type      = component.MustNewType("hardwareinventory")
+	ScopeName = "github.com/solarwinds/solarwinds-otel-collector/receiver/swohostmetricsreceiver/internal/scraper/hardwareinventoryscraper"
 )
 
 const (

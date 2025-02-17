@@ -25,7 +25,7 @@ func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
 	return nil
 }
 
-// MetricsConfig provides config for swohostmetricsreceiver/hardwareinventory metrics.
+// MetricsConfig provides config for hardwareinventory metrics.
 type MetricsConfig struct {
 	SwoHardwareinventoryCPU MetricConfig `mapstructure:"swo.hardwareinventory.cpu"`
 }
@@ -38,7 +38,7 @@ func DefaultMetricsConfig() MetricsConfig {
 	}
 }
 
-// MetricsBuilderConfig is a configuration for swohostmetricsreceiver/hardwareinventory metrics builder.
+// MetricsBuilderConfig is a configuration for hardwareinventory metrics builder.
 type MetricsBuilderConfig struct {
 	Metrics MetricsConfig `mapstructure:"metrics"`
 }

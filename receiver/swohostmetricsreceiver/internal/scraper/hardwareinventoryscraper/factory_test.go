@@ -22,8 +22,7 @@ import (
 
 	"github.com/solarwinds/solarwinds-otel-collector/receiver/swohostmetricsreceiver/internal/types"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/receiver"
+	"go.opentelemetry.io/collector/scraper"
 )
 
 func Test_SpecificMetricIsEnabledByDefault(t *testing.T) {
@@ -43,11 +42,10 @@ func Test_ScraperIsSuccessfullyCreated(t *testing.T) {
 		},
 		DelayedProcessingConfig: types.DelayedProcessingConfig{},
 	}
-	receiverConfig := receiver.Settings{}
+	receiverConfig := scraper.Settings{}
 
 	sut := NewFactory()
-	scraper, err := sut.CreateScraper(context.TODO(), receiverConfig, config)
+	_, err := sut.CreateMetrics(context.TODO(), receiverConfig, config)
 
 	require.NoErrorf(t, err, "Scraper should be created without any error")
-	require.Equalf(t, component.MustNewType("hardwareinventory"), scraper.ID().Type(), "Scraper type should be 'asset'")
 }

@@ -23,7 +23,8 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/receiver"
-	"go.opentelemetry.io/collector/receiver/scraperhelper"
+	"go.opentelemetry.io/collector/scraper"
+	"go.opentelemetry.io/collector/scraper/scraperhelper"
 	"go.uber.org/zap"
 
 	"github.com/solarwinds/solarwinds-otel-collector/receiver/swohostmetricsreceiver/internal/scraper/assetscraper"
@@ -47,8 +48,8 @@ func ComponentType() component.Type {
 	return componentType
 }
 
-func scraperFactories() map[string]types.ScraperFactory {
-	return map[string]types.ScraperFactory{
+func scraperFactories() map[string]types.MetricsScraperFactory {
+	return map[string]types.MetricsScraperFactory{
 		assetscraper.ScraperType().String():             assetscraper.NewFactory(),
 		hardwareinventoryscraper.ScraperType().String(): hardwareinventoryscraper.NewFactory(),
 		hostinfoscraper.ScraperType().String():          hostinfoscraper.NewFactory(),
@@ -86,16 +87,13 @@ func createMetricsReceiver(
 	const logErrorInclude = ": %w"
 	cfg := config.(*ReceiverConfig)
 
-	scrapers, err := createMetricsScrapers(ctx, settings, cfg)
+	// Way of creating receiver with multiple scrapers - here the single one is added
+	scraperControllerOptions, err := createScraperControllerOptions(ctx, cfg)
 	if err != nil {
-		message := "Failed to create scrapers for swohostmetrics receiver"
-		zap.L().Error(message, zap.Error(err))
-		return nil, fmt.Errorf(message+logErrorInclude, err)
+		return nil, err
 	}
 
-	// Way of creating receiver with multiple scrapers - here the single one is added
-	scraperControllerOptions := createScraperControllerOptions(scrapers)
-	receiver, err := scraperhelper.NewScraperControllerReceiver(
+	receiver, err := scraperhelper.NewMetricsController(
 		&cfg.ControllerConfig,
 		settings,
 		metrics,
@@ -110,13 +108,13 @@ func createMetricsReceiver(
 	return receiver, nil
 }
 
-func createMetricsScrapers(
+func createScraperControllerOptions(
 	ctx context.Context,
-	settings receiver.Settings,
 	receiverConfig *ReceiverConfig,
-) ([]scraperhelper.Scraper, error) {
+) ([]scraperhelper.ControllerOption, error) {
 	scraperFactories := scraperFactories()
-	scrapers := make([]scraperhelper.Scraper, 0, len(scraperFactories))
+	scraperControllerOptions := make([]scraperhelper.ControllerOption, 0, len(scraperFactories))
+
 	for scraperName, scraperFactory := range scraperFactories {
 		// when config is not available it is not utilized in receiver
 		// => skip it
@@ -125,9 +123,9 @@ func createMetricsScrapers(
 			continue
 		}
 
-		scraper, err := scraperFactory.CreateScraper(
+		scraper, err := scraperFactory.CreateMetrics(
 			ctx,
-			settings,
+			scraper.Settings{},
 			scraperConfig,
 		)
 		if err != nil {
@@ -136,26 +134,20 @@ func createMetricsScrapers(
 			return nil, fmt.Errorf(message+": %w", err)
 		}
 
-		scrapers = append(scrapers, scraper)
+		ct, err := component.NewType(scraperName)
+		if err != nil {
+			return nil, fmt.Errorf("invalid scraper key name: %s", scraperName)
+		}
+
+		scraperControllerOptions = append(scraperControllerOptions, scraperhelper.AddScraper(ct, scraper))
 	}
 
-	return scrapers, nil
-}
-
-func createScraperControllerOptions(
-	scrapers []scraperhelper.Scraper,
-) []scraperhelper.ScraperControllerOption {
-	scraperControllerOptions := make([]scraperhelper.ScraperControllerOption, 0, len(scraperFactories()))
-	for _, scraper := range scrapers {
-		scraperControllerOptions = append(scraperControllerOptions, scraperhelper.AddScraper(scraper))
-	}
-
-	return scraperControllerOptions
+	return scraperControllerOptions, nil
 }
 
 // returns scraper factory for its creation or error if no such scraper can be
 // provided.
-func GetScraperFactory(scraperName string) (types.ScraperFactory, error) {
+func GetScraperFactory(scraperName string) (types.MetricsScraperFactory, error) {
 	scraperFactory, found := scraperFactories()[scraperName]
 	if !found {
 		message := fmt.Sprintf("Scraper [%s] is unknown", scraperName)

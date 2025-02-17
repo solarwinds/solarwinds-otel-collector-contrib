@@ -16,6 +16,7 @@ package internal
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
@@ -28,12 +29,14 @@ import (
 )
 
 type mockExporter struct {
-	pushed []pmetric.Metrics
+	mPushed *sync.Mutex
+	pushed  []pmetric.Metrics
 }
 
 func newMockExporter() *mockExporter {
 	return &mockExporter{
-		pushed: []pmetric.Metrics{},
+		mPushed: new(sync.Mutex),
+		pushed:  []pmetric.Metrics{},
 	}
 }
 
@@ -46,9 +49,18 @@ func (m *mockExporter) shutdown(_ context.Context) error {
 }
 
 func (m *mockExporter) push(_ context.Context, metrics pmetric.Metrics) error {
-	m.pushed = append(m.pushed, metrics)
+	defer m.mPushed.Unlock()
 
+	m.mPushed.Lock()
+	m.pushed = append(m.pushed, metrics)
 	return nil
+}
+
+func (m *mockExporter) pushedLen() int {
+	defer m.mPushed.Unlock()
+
+	m.mPushed.Lock()
+	return len(m.pushed)
 }
 
 // TestHeartbeatEmittingMetrics runs the `Hearthbeat`
@@ -80,13 +92,13 @@ func TestHeartbeatEmittingMetrics(t *testing.T) {
 	assert.Eventuallyf(
 		t,
 		func() bool {
-			return len(mockExp.pushed) == expectedCount
+			return mockExp.pushedLen() == expectedCount
 		},
 		testDuration+50*time.Millisecond, // Allow some leeway.
 		10*time.Millisecond,
 		"expected %d metrics, got %d",
 		expectedCount,
-		len(mockExp.pushed),
+		mockExp.pushedLen(),
 	)
 
 	err = hb.Shutdown(ctx)
