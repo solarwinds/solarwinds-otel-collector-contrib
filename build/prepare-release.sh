@@ -27,7 +27,7 @@ if [ ! -f "$CHANGELOG_FILE" ]; then
     exit 1
 fi
 if ! grep -q "## v$VERSION" "$CHANGELOG_FILE"; then
-    sed -i -E "s/^## vNext/## vNext\n\n## v$VERSION/" "$CHANGELOG_FILE"
+    perl -pi -e "s/^## vNext/## vNext\n\n## v$VERSION/" "$CHANGELOG_FILE"
     echo "CHANGELOG.md updated with version v$VERSION"
 else
     echo "CHANGELOG.md already contains 'v$VERSION', no update made."
@@ -36,7 +36,7 @@ fi
 # Update go.mod files
 ALL_GO_MOD=$(find . -name "go.mod" -type f | sort)
 for f in $ALL_GO_MOD; do
-    sed -i -E "s|^(\s+github.com/solarwinds/solarwinds-otel-collector/[^ ]*) v[0-9]+\.[0-9]+\.[0-9]+(\s+// indirect)?$|\1 v$VERSION\2|" "$f"
+    perl -pi -e "s|^(\s+github.com/solarwinds/solarwinds-otel-collector/[^ ]*) v[0-9]+\.[0-9]+\.[0-9]+(\s+// indirect)?$|\1 v$VERSION\2|" "$f"
     echo "References to 'github.com/solarwinds/solarwinds-otel-collector' in $f updated with version v$VERSION"
 done
 
@@ -46,5 +46,5 @@ if [ ! -f "$GO_VERSION_FILE" ]; then
     echo "version.go not found!"
     exit 1
 fi
-sed -i -E "s|^(const Version =) \"[0-9]+\.[0-9]+\.[0-9]+\"$|\1 \"$VERSION\"|" "$GO_VERSION_FILE"
+perl -pi -e "s|^(const Version =) \"[0-9]+\.[0-9]+\.[0-9]+\"$|\1 \"$VERSION\"|" "$GO_VERSION_FILE"
 echo "Version.go updated with version $VERSION"

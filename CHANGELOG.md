@@ -2,6 +2,9 @@
 
 ## vNext
 
+## v0.119.0
+- Consumes OpenTelemetry Collector dependencies v0.119.0.
+
 ## v0.113.8
 - Updates Go build toolchain to 1.23.5.
 - Adds [SWO Host Metrics Receiver](./receiver/swohostmetricsreceiver/README.md) for additional Host metrics monitoring.
@@ -9,14 +12,14 @@
 - Adds Windows architecture for Docker builds.
 
 ## v0.113.7
-- adding `without_entity` to [SolarWinds Extension](./extension/solarwindsextension/README.md#getting-started) configuration, so users can opt out of collector entity creation.
-- tagging all signals with `entity_creation` attribute, except when without_entity is set on [SolarWinds Extension](./extension/solarwindsextension/README.md#getting-started).
+- Adds `without_entity` to [SolarWinds Extension](./extension/solarwindsextension/README.md#getting-started) configuration, so users can opt out of collector entity creation.
+- Tags all signals with `entity_creation` attribute, except when without_entity is set on [SolarWinds Extension](./extension/solarwindsextension/README.md#getting-started).
 
 ## v0.113.6
-- Mark all outgoing telemetry from the [SolarWinds Exporter](./exporter/solarwindsexporter) with
+- Marks all outgoing telemetry from the [SolarWinds Exporter](./exporter/solarwindsexporter) with
 an attribute storing the collector name (`sw.otelcol.collector.name`) as it is configured in the
 [SolarWinds Extension](./extension/solarwindsextension/README.md#getting-started).
-- The uptime metric used to signal heartbeat is now decorated with `sw.otelcol.collector.version` which contains collector version
+- The uptime metric used to signal heartbeat is now decorated with `sw.otelcol.collector.version` which contains collector version.
 
 ## v0.113.5
 Tags released docker images with `latest` tag.
