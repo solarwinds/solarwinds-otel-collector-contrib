@@ -48,7 +48,7 @@ Naming within code should in general follow principles laid out by [Effective Go
 To release a new version of SolarWinds OpenTelemetry Collector:
 
 1. Make sure that the `## vNext` section in [CHANGELOG.md](../CHANGELOG.md) contains all changes.
-1. Run
+2. Run
 
     ```shell
     make prepare-release version=0.113.0
@@ -56,5 +56,5 @@ To release a new version of SolarWinds OpenTelemetry Collector:
 
     replacing `0.113.0` with an actual version to release.
 
-1. Verify the generated changes, prepare a PR and merge it.
-1. This will trigger a build pipeline that will release a new version of the collector.
+3. Verify the generated changes, prepare a PR and merge it.
+4. This will trigger a build pipeline that will release a new version of the collector.
