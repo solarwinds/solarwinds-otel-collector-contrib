@@ -2,6 +2,10 @@
 
 ## vNext
 
+## v0.119.2
+- Fix CVE-2025-22869
+- Fix CVE-2025-22868
+
 ## v0.119.1
 - Utilizes `pdatatest` for specific E2E tests.
 - SolarWinds-specific packages are tagged and can be referenced from other repositories.
