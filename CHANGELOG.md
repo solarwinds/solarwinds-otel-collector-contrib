@@ -2,6 +2,9 @@
 
 ## vNext
 
+## v0.119.3
+- Adds custom `k8sobjectsreceiver` to notify about what sections in manifest were changed 
+
 ## v0.119.2
 - Fix CVE-2025-22869
 - Fix CVE-2025-22868
