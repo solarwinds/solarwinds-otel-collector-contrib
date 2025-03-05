@@ -126,7 +126,7 @@ func TestUnstructuredListToLogData(t *testing.T) {
 		}
 
 		observedAt := time.Now()
-		logs, err := watchObjectsToLogData(event, observedAt, config)
+		logs, err := watchObjectsToLogData(event, observedAt, config, nil)
 		assert.NoError(t, err)
 
 		assert.Equal(t, 1, logs.LogRecordCount())
@@ -177,7 +177,7 @@ func TestUnstructuredListToLogData(t *testing.T) {
 			}},
 		}
 
-		logEntryFromWatchEvent, err := watchObjectsToLogData(watchedEvent, observedTimestamp, config)
+		logEntryFromWatchEvent, err := watchObjectsToLogData(watchedEvent, observedTimestamp, config, nil)
 		assert.NoError(t, err)
 		assert.NotNil(t, logEntryFromWatchEvent)
 

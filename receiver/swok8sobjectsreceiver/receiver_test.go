@@ -133,8 +133,8 @@ func TestWatchObject(t *testing.T) {
 	require.NoError(t, r.Start(ctx, componenttest.NewNopHost()))
 
 	time.Sleep(time.Millisecond * 100)
-	assert.Empty(t, consumer.Logs())
-	assert.Equal(t, 0, consumer.Count())
+	assert.Len(t, consumer.Logs(), 1)
+	assert.Equal(t, 1, consumer.Count())
 
 	mockClient.createPods(
 		generatePod("pod2", "default", map[string]any{
@@ -148,8 +148,8 @@ func TestWatchObject(t *testing.T) {
 		}, "4"),
 	)
 	time.Sleep(time.Millisecond * 100)
-	assert.Len(t, consumer.Logs(), 2)
-	assert.Equal(t, 2, consumer.Count())
+	assert.Len(t, consumer.Logs(), 3)
+	assert.Equal(t, 3, consumer.Count())
 
 	mockClient.deletePods(
 		generatePod("pod2", "default", map[string]any{
@@ -205,8 +205,8 @@ func TestExcludeDeletedTrue(t *testing.T) {
 	require.NoError(t, r.Start(ctx, componenttest.NewNopHost()))
 
 	time.Sleep(time.Millisecond * 100)
-	assert.Empty(t, consumer.Logs())
-	assert.Equal(t, 0, consumer.Count())
+	assert.Len(t, consumer.Logs(), 1)
+	assert.Equal(t, 1, consumer.Count())
 
 	mockClient.deletePods(
 		generatePod("pod1", "default", map[string]any{
@@ -214,8 +214,8 @@ func TestExcludeDeletedTrue(t *testing.T) {
 		}, "1"),
 	)
 	time.Sleep(time.Millisecond * 100)
-	assert.Empty(t, consumer.Logs())
-	assert.Equal(t, 0, consumer.Count())
+	assert.Len(t, consumer.Logs(), 1)
+	assert.Equal(t, 1, consumer.Count())
 
 	assert.NoError(t, r.Shutdown(ctx))
 }

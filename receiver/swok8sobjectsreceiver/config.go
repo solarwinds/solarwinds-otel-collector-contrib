@@ -23,6 +23,7 @@ import (
 	"strings"
 	"time"
 
+	"go.opentelemetry.io/collector/component"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	apiWatch "k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -64,7 +65,8 @@ type K8sObjectsConfig struct {
 type Config struct {
 	k8sconfig.APIConfig `mapstructure:",squash"`
 
-	Objects []*K8sObjectsConfig `mapstructure:"objects"`
+	Objects   []*K8sObjectsConfig `mapstructure:"objects"`
+	StorageID *component.ID       `mapstructure:"storage"`
 
 	// For mocking purposes only.
 	makeDiscoveryClient func() (discovery.ServerResourcesInterface, error)
