@@ -143,8 +143,8 @@ require (
 
 replace github.com/solarwinds/solarwinds-otel-collector/internal/k8sconfig => ../../internal/k8sconfig
 
-// openshift removed all tags from their repo, use the pseudoversion from the release-3.9 branch HEAD
-replace github.com/openshift/api v3.9.0+incompatible => github.com/openshift/api v0.0.0-20180801171038-322a19404e37
+// openshift removed all tags from their repo, use the pseudoversion from the release-4.4, first with go.mod
+replace github.com/openshift/api v3.9.0+incompatible => github.com/openshift/api v0.0.0-20200618202633-7192180f496a
 
 retract (
 	v0.76.2
