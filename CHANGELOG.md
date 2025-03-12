@@ -2,6 +2,9 @@
 
 ## vNext
 
+## v0.119.4
+- Updating `swok8sobjectsreceiver` to report changes in other than `status`, `spec`, and `metadata` sections
+
 ## v0.119.3
 - Adds custom `k8sobjectsreceiver` to notify about what sections in manifest were changed 
 

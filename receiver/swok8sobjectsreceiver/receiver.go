@@ -69,6 +69,7 @@ type objecthashes struct {
 	Metadata string `json:"metadata"`
 	Spec     string `json:"spec"`
 	Status   string `json:"status"`
+	Other    string `json:"other"`
 }
 
 func newReceiver(params receiver.Settings, config *Config, consumer consumer.Logs) (receiver.Logs, error) {
@@ -295,6 +296,9 @@ func (kr *k8sobjectsreceiver) watchEventToLogData(ctx context.Context, event *ap
 		return fmt.Errorf("received data that wasnt unstructure, %v", event)
 	}
 
+	// clear out managed fields
+	udata.SetManagedFields(nil)
+
 	key := getKey(udata)
 	hashes, err := getObjectHashes(udata)
 	if err != nil {
@@ -304,6 +308,7 @@ func (kr *k8sobjectsreceiver) watchEventToLogData(ctx context.Context, event *ap
 	statusChanged := true
 	metadataChanged := true
 	specChanged := true
+	otherChanged := true
 
 	storage.mu.Lock()
 	oldHashes, exists := storage.Objects[key]
@@ -311,6 +316,7 @@ func (kr *k8sobjectsreceiver) watchEventToLogData(ctx context.Context, event *ap
 		metadataChanged = oldHashes.Metadata != hashes.Metadata
 		specChanged = oldHashes.Spec != hashes.Spec
 		statusChanged = oldHashes.Status != hashes.Status
+		otherChanged = oldHashes.Other != hashes.Other
 	}
 	storage.Objects[key] = *hashes
 
@@ -319,7 +325,7 @@ func (kr *k8sobjectsreceiver) watchEventToLogData(ctx context.Context, event *ap
 	}
 	storage.mu.Unlock()
 
-	if !metadataChanged && !statusChanged && !specChanged {
+	if !metadataChanged && !statusChanged && !specChanged && !otherChanged {
 		return nil
 	}
 
@@ -328,6 +334,7 @@ func (kr *k8sobjectsreceiver) watchEventToLogData(ctx context.Context, event *ap
 		attrs.PutBool("sw.metadata.changed", metadataChanged)
 		attrs.PutBool("sw.status.changed", statusChanged)
 		attrs.PutBool("sw.spec.changed", specChanged)
+		attrs.PutBool("sw.other.changed", otherChanged)
 	})
 	if err != nil {
 		return fmt.Errorf("error converting watch objects to log data %w", err)
@@ -384,15 +391,26 @@ func (kr *k8sobjectsreceiver) loadStorage(ctx context.Context, storage *objectst
 }
 
 func getObjectHashes(udata *unstructured.Unstructured) (*objecthashes, error) {
-	metadataHash, err := getHash(udata, "metadata")
+	udataCopy := udata.DeepCopy()
+	udataCopy.SetResourceVersion("") // do not report changes in resource version
+
+	metadataHash, err := getHash(udataCopy, "metadata")
 	if err != nil {
 		return nil, err
 	}
-	specHash, err := getHash(udata, "spec")
+	specHash, err := getHash(udataCopy, "spec")
 	if err != nil {
 		return nil, err
 	}
-	statusHash, err := getHash(udata, "status")
+	statusHash, err := getHash(udataCopy, "status")
+	if err != nil {
+		return nil, err
+	}
+
+	unstructured.RemoveNestedField(udataCopy.Object, "metadata")
+	unstructured.RemoveNestedField(udataCopy.Object, "spec")
+	unstructured.RemoveNestedField(udataCopy.Object, "status")
+	otherHash, err := getHash(udataCopy)
 	if err != nil {
 		return nil, err
 	}
@@ -401,10 +419,21 @@ func getObjectHashes(udata *unstructured.Unstructured) (*objecthashes, error) {
 		Metadata: metadataHash,
 		Spec:     specHash,
 		Status:   statusHash,
+		Other:    otherHash,
 	}, nil
 }
 
+// returns hash of a nested fields or whole object if no fields are provided
 func getHash(udata *unstructured.Unstructured, fields ...string) (string, error) {
+	if len(fields) == 0 {
+		bytes, err := udata.MarshalJSON()
+		if err != nil {
+			return "", err
+		}
+
+		return fmt.Sprintf("%x", sha256.Sum256(bytes)), nil
+	}
+
 	nested, found, err := unstructured.NestedFieldCopy(udata.Object, fields...)
 	if err != nil {
 		return "", err
