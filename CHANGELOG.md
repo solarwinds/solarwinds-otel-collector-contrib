@@ -2,6 +2,9 @@
 
 ## vNext
 
+## v0.119.5
+- Updating `swok8sobjectsreceiver` to remove `managedFields` for both PULL and WATCH objects
+
 ## v0.119.4
 - Updating `swok8sobjectsreceiver` to report changes in other than `status`, `spec`, and `metadata` sections
 
