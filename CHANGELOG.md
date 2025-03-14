@@ -2,6 +2,9 @@
 
 ## vNext
 
+## v0.119.7
+- Fix CVE-2025-22866
+
 ## v0.119.6
 - Updates Go build toolchain to 1.23.6
 
