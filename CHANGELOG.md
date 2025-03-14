@@ -2,6 +2,9 @@
 
 ## vNext
 
+## v0.119.6
+- Updates Go build toolchain to 1.23.6
+
 ## v0.119.5
 - Updating `swok8sobjectsreceiver` to remove `managedFields` for both PULL and WATCH objects
 
