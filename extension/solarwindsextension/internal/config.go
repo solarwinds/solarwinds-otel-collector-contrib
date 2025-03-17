@@ -126,6 +126,7 @@ var dataCenterToURLMapping = map[string]string{
 	"na-01": "otel.collector.na-01.cloud.solarwinds.com:443",
 	"na-02": "otel.collector.na-02.cloud.solarwinds.com:443",
 	"eu-01": "otel.collector.eu-01.cloud.solarwinds.com:443",
+	"ap-01": "otel.collector.ap-01.cloud.solarwinds.com:443",
 }
 
 // lookupDataCenterURL returns the OTLP endpoint URL

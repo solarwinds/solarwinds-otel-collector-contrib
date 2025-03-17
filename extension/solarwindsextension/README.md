@@ -37,7 +37,7 @@ extensions:
         custom_attribute_2: "some optional value 2"
 ```
 - `token` (mandatory) - You can generate your token in your SolarWinds Observability SaaS account under _Settings / API Tokens / Create API Token_. The type is "Ingestion". You can find the complete documentation [here](https://documentation.solarwinds.com/en/success_center/observability/content/settings/api-tokens.htm).
-- `data_center` (mandatory) - Data center is the region you picked during the sign-up process. You can easily see in URLs after logging in to SolarWinds Observability SaaS - it's either `na-01`, `na-02` or `eu-01`. Please refer to the [documentation](https://documentation.solarwinds.com/en/success_center/observability/content/system_requirements/endpoints.htm#Find) for details.
+- `data_center` (mandatory) - Data center is the region you picked during the sign-up process. You can easily see in URLs after logging in to SolarWinds Observability SaaS - it's either `na-01`, `na-02`, `ap-01` or `eu-01`. Please refer to the [documentation](https://documentation.solarwinds.com/en/success_center/observability/content/system_requirements/endpoints.htm#Find) for details.
 - `collector_name` (mandatory) - The collector name passed in the heartbeat metric (as `sw.otelcol.collector.name` resource attribute) to identify the collector. Doesn't have to be unique.
 - `resource` (optional) - You can specify additional attributes to be added to the `sw.otecol.uptime` metric. 
 - `without_entity` (optional) - You can disable Collector entity creation in SolarWinds Observability by setting it to `true`. If not configured, entity creation is enabled by default.
