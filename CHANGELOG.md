@@ -2,6 +2,9 @@
 
 ## vNext
 
+## v0.119.8
+- Adds ap-01 datacell support
+
 ## v0.119.7
 - Fix CVE-2025-22866
 
