@@ -8,7 +8,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.119.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza v0.119.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/xk8stest v0.119.0
-	github.com/solarwinds/solarwinds-otel-collector/internal/k8sconfig v0.119.8
+	github.com/solarwinds/solarwinds-otel-collector/internal/k8sconfig v0.119.9
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/collector/component v0.119.0
 	go.opentelemetry.io/collector/component/componenttest v0.119.0
@@ -37,7 +37,7 @@ require (
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/elastic/lunes v0.1.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
-	github.com/expr-lang/expr v1.16.9 // indirect
+	github.com/expr-lang/expr v1.17.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect

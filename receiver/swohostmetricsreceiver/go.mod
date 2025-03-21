@@ -6,8 +6,8 @@ require (
 	github.com/go-ole/go-ole v1.3.0
 	github.com/google/go-cmp v0.6.0
 	github.com/shirou/gopsutil/v3 v3.24.5
-	github.com/solarwinds/solarwinds-otel-collector/pkg/testutil v0.119.8
-	github.com/solarwinds/solarwinds-otel-collector/pkg/version v0.119.8
+	github.com/solarwinds/solarwinds-otel-collector/pkg/testutil v0.119.9
+	github.com/solarwinds/solarwinds-otel-collector/pkg/version v0.119.9
 	github.com/stretchr/testify v1.10.0
 	github.com/yusufpapurcu/wmi v1.2.4
 	go.opentelemetry.io/collector/component v0.119.0
