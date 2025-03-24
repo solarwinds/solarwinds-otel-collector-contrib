@@ -1,6 +1,7 @@
 # Changelog
 
 ## vNext
+- Ignores any timestamps in all the Kubernetes manifests
 
 ## v0.119.9
 - Fix CVE-2025-29786

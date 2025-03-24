@@ -24,6 +24,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"sync"
 	"time"
 
@@ -397,6 +398,20 @@ func (kr *k8sobjectsreceiver) loadStorage(ctx context.Context, storage *objectst
 func getObjectHashes(udata *unstructured.Unstructured) (*objecthashes, error) {
 	udataCopy := udata.DeepCopy()
 	udataCopy.SetResourceVersion("") // do not report changes in resource version
+
+	udataBytes, err := udataCopy.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	timestampRegex := regexp.MustCompile(`\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})\b?`)
+
+	// do not report changes in any timestamps
+	cleanedBytes := timestampRegex.ReplaceAll(udataBytes, []byte(""))
+
+	if err = json.Unmarshal(cleanedBytes, &udataCopy.Object); err != nil {
+		return nil, err
+	}
 
 	metadataHash, err := getHash(udataCopy, "metadata")
 	if err != nil {

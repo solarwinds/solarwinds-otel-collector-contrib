@@ -27,6 +27,7 @@ import (
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/consumer/consumertest"
 	"go.opentelemetry.io/collector/receiver/receivertest"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apiWatch "k8s.io/apimachinery/pkg/watch"
 )
 
@@ -218,4 +219,56 @@ func TestExcludeDeletedTrue(t *testing.T) {
 	assert.Equal(t, 1, consumer.Count())
 
 	assert.NoError(t, r.Shutdown(ctx))
+}
+
+func TestGetObjectHashesRemovesTimestamps(t *testing.T) {
+	t.Parallel()
+
+	objWithTimestamp := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "ConfigMap",
+			"metadata": map[string]interface{}{
+				"name": "test-configmap",
+				"annotations": map[string]interface{}{
+					"time": "2025-03-04T09:11:59Z",
+				},
+			},
+			"spec": map[string]interface{}{
+				"dummy": "value",
+			},
+			"status": map[string]interface{}{
+				"dummy": "value",
+			},
+		},
+	}
+
+	objWithoutTimestamp := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "ConfigMap",
+			"metadata": map[string]interface{}{
+				"name": "test-configmap",
+				"annotations": map[string]interface{}{
+					"time": "",
+				},
+			},
+			"spec": map[string]interface{}{
+				"dummy": "value",
+			},
+			"status": map[string]interface{}{
+				"dummy": "value",
+			},
+		},
+	}
+
+	hashWith, err := getObjectHashes(objWithTimestamp)
+	require.NoError(t, err)
+	hashWithout, err := getObjectHashes(objWithoutTimestamp)
+	require.NoError(t, err)
+
+	assert.Equal(t, hashWithout.Metadata, hashWith.Metadata)
+	assert.Equal(t, hashWithout.Spec, hashWith.Spec)
+	assert.Equal(t, hashWithout.Status, hashWith.Status)
+	assert.Equal(t, hashWithout.Other, hashWith.Other)
 }
