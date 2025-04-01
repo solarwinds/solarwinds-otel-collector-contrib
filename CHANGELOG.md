@@ -2,6 +2,9 @@
 
 ## vNext
 
+## v0.119.11
+- Fix CVE-2025-27144: Uncontrolled Resource Consumption
+
 ## v0.119.10
 - Ignores any timestamps in all the Kubernetes manifests
 - Fix CVE-2025-30204
