@@ -22,7 +22,7 @@ import (
 	"go.opentelemetry.io/collector/config/configretry"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
 
-	"github.com/solarwinds/solarwinds-otel-collector/pkg/testutil"
+	"github.com/solarwinds/solarwinds-otel-collector-releases/pkg/testutil"
 )
 
 // TestConfigUnmarshalFull tries to parse a configuration file
