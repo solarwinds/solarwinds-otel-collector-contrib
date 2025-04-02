@@ -4,7 +4,7 @@ go 1.24.2
 
 require (
 	github.com/go-ole/go-ole v1.3.0
-	github.com/google/go-cmp v0.6.0
+	github.com/google/go-cmp v0.7.0
 	github.com/shirou/gopsutil/v3 v3.24.5
 	github.com/solarwinds/solarwinds-otel-collector/pkg/testutil v0.119.11
 	github.com/solarwinds/solarwinds-otel-collector/pkg/version v0.119.11
@@ -23,7 +23,7 @@ require (
 	go.opentelemetry.io/otel v1.34.0
 	go.uber.org/goleak v1.3.0
 	go.uber.org/zap v1.27.0
-	golang.org/x/sys v0.30.0
+	golang.org/x/sys v0.31.0
 )
 
 require (
