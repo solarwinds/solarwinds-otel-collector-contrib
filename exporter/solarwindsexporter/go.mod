@@ -1,6 +1,6 @@
 module github.com/solarwinds/solarwinds-otel-collector/exporter/solarwindsexporter
 
-go 1.23.6
+go 1.24.2
 
 require (
 	github.com/solarwinds/solarwinds-otel-collector/extension/solarwindsextension v0.119.11
