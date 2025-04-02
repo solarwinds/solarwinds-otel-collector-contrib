@@ -18,8 +18,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/solarwinds/solarwinds-otel-collector/receiver/swohostmetricsreceiver/internal/scraper/hostinfoscraper/metrics/uptime"
-	"github.com/solarwinds/solarwinds-otel-collector/receiver/swohostmetricsreceiver/internal/types"
+	"github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swohostmetricsreceiver/internal/scraper/hostinfoscraper/metrics/uptime"
+	"github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swohostmetricsreceiver/internal/types"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/scraper"
 )

@@ -18,7 +18,7 @@ import (
 	"strconv"
 
 	"github.com/shirou/gopsutil/v3/cpu"
-	"github.com/solarwinds/solarwinds-otel-collector/receiver/swohostmetricsreceiver/internal/providers"
+	"github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swohostmetricsreceiver/internal/providers"
 )
 
 type cpuExecutor interface {

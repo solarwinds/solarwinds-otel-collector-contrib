@@ -15,8 +15,8 @@
 package hostinfoscraper
 
 import (
-	"github.com/solarwinds/solarwinds-otel-collector/receiver/swohostmetricsreceiver/internal/scraper/hostinfoscraper/metrics/uptime"
-	"github.com/solarwinds/solarwinds-otel-collector/receiver/swohostmetricsreceiver/internal/types"
+	"github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swohostmetricsreceiver/internal/scraper/hostinfoscraper/metrics/uptime"
+	"github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swohostmetricsreceiver/internal/types"
 	"go.opentelemetry.io/collector/component"
 )
 

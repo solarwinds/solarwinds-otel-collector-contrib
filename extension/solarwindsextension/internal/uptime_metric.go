@@ -22,8 +22,8 @@ import (
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.uber.org/zap"
 
-	"github.com/solarwinds/solarwinds-otel-collector/extension/solarwindsextension/internal/metadata"
-	"github.com/solarwinds/solarwinds-otel-collector/pkg/version"
+	"github.com/solarwinds/solarwinds-otel-collector-releases/extension/solarwindsextension/internal/metadata"
+	"github.com/solarwinds/solarwinds-otel-collector-releases/pkg/version"
 )
 
 func newUptimeMetric(logger *zap.Logger) *UptimeMetric {

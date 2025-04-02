@@ -17,7 +17,7 @@ package scope
 import (
 	"testing"
 
-	"github.com/solarwinds/solarwinds-otel-collector/receiver/swohostmetricsreceiver/internal/scraper/framework/metric"
+	"github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swohostmetricsreceiver/internal/scraper/framework/metric"
 	"github.com/stretchr/testify/assert"
 )
 

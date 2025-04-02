@@ -15,4 +15,4 @@
 // Generate a test metrics builder from a sample metrics set covering all configuration options.
 //go:generate mdatagen metadata.yaml
 
-package hostinfoscraper // import "github.com/solarwinds/solarwinds-otel-collector/receiver/swohostmetricsreceiver/internal/scraper/hostinfoscraper"
+package hostinfoscraper // import "github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swohostmetricsreceiver/internal/scraper/hostinfoscraper"

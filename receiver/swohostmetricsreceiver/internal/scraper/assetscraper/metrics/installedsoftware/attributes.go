@@ -14,7 +14,7 @@
 
 package installedsoftware
 
-import "github.com/solarwinds/solarwinds-otel-collector/receiver/swohostmetricsreceiver/internal/providers/installedsoftware"
+import "github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swohostmetricsreceiver/internal/providers/installedsoftware"
 
 // GetAttributes implements types.AttributesProvider.
 func getAttributes(is installedsoftware.InstalledSoftware) map[string]any {

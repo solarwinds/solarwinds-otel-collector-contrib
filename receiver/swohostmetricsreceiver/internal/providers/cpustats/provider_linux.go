@@ -24,7 +24,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/solarwinds/solarwinds-otel-collector/receiver/swohostmetricsreceiver/internal/providers"
+	"github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swohostmetricsreceiver/internal/providers"
 )
 
 const tickerInterval = 5 * time.Second

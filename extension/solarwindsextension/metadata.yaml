@@ -1,5 +1,5 @@
 type: solarwinds
-github_project: solarwinds/solarwinds-otel-collector
+github_project: solarwinds/solarwinds-otel-collector-releases
 
 status:
   class: extension

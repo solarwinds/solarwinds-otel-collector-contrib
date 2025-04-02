@@ -15,7 +15,7 @@
 package installedsoftware
 
 import (
-	"github.com/solarwinds/solarwinds-otel-collector/receiver/swohostmetricsreceiver/internal/providers/installedsoftware/discovery"
+	"github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swohostmetricsreceiver/internal/providers/installedsoftware/discovery"
 	"go.uber.org/zap"
 )
 

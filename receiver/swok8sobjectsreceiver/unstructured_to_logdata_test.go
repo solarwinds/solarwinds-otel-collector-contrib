@@ -15,7 +15,7 @@
 // Source: https://github.com/open-telemetry/opentelemetry-collector-contrib
 // Changes customizing the original source code
 
-package swok8sobjectsreceiver // import "github.com/solarwinds/solarwinds-otel-collector/receiver/swok8sobjectsreceiver"
+package swok8sobjectsreceiver // import "github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swok8sobjectsreceiver"
 
 import (
 	"fmt"

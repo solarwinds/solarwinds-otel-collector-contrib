@@ -22,7 +22,7 @@ import (
 	"go.opentelemetry.io/collector/exporter"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
 
-	"github.com/solarwinds/solarwinds-otel-collector/exporter/solarwindsexporter/internal/metadata"
+	"github.com/solarwinds/solarwinds-otel-collector-releases/exporter/solarwindsexporter/internal/metadata"
 )
 
 // NewFactory creates a factory for Solarwinds Exporter.

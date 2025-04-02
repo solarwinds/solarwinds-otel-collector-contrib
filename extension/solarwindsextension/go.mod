@@ -1,10 +1,10 @@
-module github.com/solarwinds/solarwinds-otel-collector/extension/solarwindsextension
+module github.com/solarwinds/solarwinds-otel-collector-releases/extension/solarwindsextension
 
 go 1.24.2
 
 require (
-	github.com/solarwinds/solarwinds-otel-collector/pkg/testutil v0.119.11
-	github.com/solarwinds/solarwinds-otel-collector/pkg/version v0.119.11
+	github.com/solarwinds/solarwinds-otel-collector-releases/pkg/testutil v0.119.11
+	github.com/solarwinds/solarwinds-otel-collector-releases/pkg/version v0.119.11
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/collector/component v0.119.0
 	go.opentelemetry.io/collector/component/componenttest v0.119.0
@@ -78,6 +78,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/solarwinds/solarwinds-otel-collector/pkg/testutil => ../../pkg/testutil
+replace github.com/solarwinds/solarwinds-otel-collector-releases/pkg/testutil => ../../pkg/testutil
 
-replace github.com/solarwinds/solarwinds-otel-collector/pkg/version => ../../pkg/version
+replace github.com/solarwinds/solarwinds-otel-collector-releases/pkg/version => ../../pkg/version

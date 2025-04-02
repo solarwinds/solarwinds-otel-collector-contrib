@@ -20,7 +20,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/solarwinds/solarwinds-otel-collector/pkg/version"
+	"github.com/solarwinds/solarwinds-otel-collector-releases/pkg/version"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/extension"
 	"go.opentelemetry.io/collector/pdata/pcommon"

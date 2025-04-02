@@ -29,8 +29,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	apiWatch "k8s.io/apimachinery/pkg/watch"
 
-	"github.com/solarwinds/solarwinds-otel-collector/internal/k8sconfig"
-	"github.com/solarwinds/solarwinds-otel-collector/receiver/swok8sobjectsreceiver/internal/metadata"
+	"github.com/solarwinds/solarwinds-otel-collector-releases/internal/k8sconfig"
+	"github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swok8sobjectsreceiver/internal/metadata"
 )
 
 func TestLoadConfig(t *testing.T) {

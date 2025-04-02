@@ -15,7 +15,7 @@
 package example
 
 import (
-	"github.com/solarwinds/solarwinds-otel-collector/receiver/swohostmetricsreceiver/internal/scraper/framework/metric"
+	"github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swohostmetricsreceiver/internal/scraper/framework/metric"
 )
 
 func NewMetricEmitterS1M1() metric.Emitter {

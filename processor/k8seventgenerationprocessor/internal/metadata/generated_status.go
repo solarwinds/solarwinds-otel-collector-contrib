@@ -8,7 +8,7 @@ import (
 
 var (
 	Type      = component.MustNewType("k8seventgeneration")
-	ScopeName = "github.com/solarwinds/solarwinds-otel-collector/processor/k8seventgenerationprocessor"
+	ScopeName = "github.com/solarwinds/solarwinds-otel-collector-releases/processor/k8seventgenerationprocessor"
 )
 
 const (

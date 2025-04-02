@@ -17,7 +17,7 @@ package infostat
 import (
 	"fmt"
 
-	"github.com/solarwinds/solarwinds-otel-collector/receiver/swohostmetricsreceiver/internal/providers"
+	"github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swohostmetricsreceiver/internal/providers"
 
 	"github.com/shirou/gopsutil/v3/host"
 	"go.uber.org/zap"

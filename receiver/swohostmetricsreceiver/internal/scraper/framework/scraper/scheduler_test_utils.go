@@ -15,8 +15,8 @@
 package scraper
 
 import (
-	"github.com/solarwinds/solarwinds-otel-collector/pkg/testutil"
-	"github.com/solarwinds/solarwinds-otel-collector/receiver/swohostmetricsreceiver/internal/types"
+	"github.com/solarwinds/solarwinds-otel-collector-releases/pkg/testutil"
+	"github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swohostmetricsreceiver/internal/types"
 )
 
 type SchedulerMock struct {

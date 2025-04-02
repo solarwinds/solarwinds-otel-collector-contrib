@@ -14,7 +14,7 @@
 
 package scraper
 
-import "github.com/solarwinds/solarwinds-otel-collector/receiver/swohostmetricsreceiver/internal/scraper/framework/metric"
+import "github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swohostmetricsreceiver/internal/scraper/framework/metric"
 
 const (
 	// Scraper name definition.

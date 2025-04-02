@@ -15,7 +15,7 @@
 package scope
 
 import (
-	"github.com/solarwinds/solarwinds-otel-collector/receiver/swohostmetricsreceiver/internal/scraper/framework/metric"
+	"github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swohostmetricsreceiver/internal/scraper/framework/metric"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 )
 

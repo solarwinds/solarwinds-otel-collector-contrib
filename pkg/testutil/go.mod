@@ -1,4 +1,4 @@
-module github.com/solarwinds/solarwinds-otel-collector/pkg/testutil
+module github.com/solarwinds/solarwinds-otel-collector-releases/pkg/testutil
 
 go 1.24.2
 

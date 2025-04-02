@@ -36,7 +36,7 @@ fi
 # Update go.mod files
 ALL_GO_MOD=$(find . -name "go.mod" -type f | sort)
 for f in $ALL_GO_MOD; do
-    perl -pi -e "s|^(\s+github.com/solarwinds/solarwinds-otel-collector/[^ ]*) v[0-9]+\.[0-9]+\.[0-9]+(\s+// indirect)?$|\1 v$VERSION\2|" "$f"
+    perl -pi -e "s|^(\s+github.com/solarwinds/solarwinds-otel-collector-releases/[^ ]*) v[0-9]+\.[0-9]+\.[0-9]+(\s+// indirect)?$|\1 v$VERSION\2|" "$f"
     echo "References to 'github.com/solarwinds/solarwinds-otel-collector' in $f updated with version v$VERSION"
 done
 
