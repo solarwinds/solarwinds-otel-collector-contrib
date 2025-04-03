@@ -2,6 +2,10 @@
 
 ## vNext
 
+## v0.119.12
+- Updates non-opentelemetry dependencies to latest possible version
+- Sets metrics scope name to `github.com/solarwinds/solarwinds-otel-collector-releases`
+
 ## v0.119.11
 - Fix CVE-2025-27144: Uncontrolled Resource Consumption
 
