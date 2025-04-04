@@ -120,7 +120,7 @@ require (
 	golang.org/x/oauth2 v0.24.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/term v0.29.0 // indirect
-	golang.org/x/text v0.22.0 // indirect
+	golang.org/x/text v0.23.0 // indirect
 	golang.org/x/time v0.7.0 // indirect
 	gonum.org/v1/gonum v0.15.1 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250102185135-69823020774d // indirect
@@ -141,8 +141,18 @@ require (
 
 replace github.com/solarwinds/solarwinds-otel-collector-releases/internal/k8sconfig => ../../internal/k8sconfig
 
+// Dependabot fails on this indirect dependency.
 // openshift removed all tags from their repo, use the pseudoversion from the release-4.4, first with go.mod
 replace github.com/openshift/api v3.9.0+incompatible => github.com/openshift/api v0.0.0-20200618202633-7192180f496a
+
+// Dependabot fails on this indirect dependency.
+// https://gonum.org/v1/gonum?go-get=1 returns 404, and dependabot gives up and fails.
+// Using the latest version from go.sum or go.mod when run without this replace.
+replace gonum.org/v1/gonum => github.com/gonum/gonum v0.15.1
+
+// Also breaks dependabot, dependency of the one github.com/openshift/api.
+// Using the latest version from go.sum or go.mod when run without this replace.
+replace gonum.org/v1/netlib => github.com/gonum/netlib v0.0.0-20190331212654-76723241ea4e
 
 retract (
 	v0.76.2
