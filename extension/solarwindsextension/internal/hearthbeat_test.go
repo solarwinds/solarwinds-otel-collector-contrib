@@ -16,13 +16,13 @@ package internal
 
 import (
 	"context"
+	"go.opentelemetry.io/collector/component"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/extension/extensiontest"
 	"go.opentelemetry.io/collector/pdata/pmetric"
@@ -75,7 +75,7 @@ func TestHeartbeatEmittingMetrics(t *testing.T) {
 
 	mockExp := newMockExporter()
 	hb := newHeartbeatWithExporter(
-		extensiontest.NewNopSettings(),
+		extensiontest.NewNopSettings(extensiontest.NopType),
 		&Config{},
 		mockExp,
 	)

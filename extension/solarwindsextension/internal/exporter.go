@@ -16,6 +16,7 @@ package internal
 
 import (
 	"context"
+	"fmt"
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/exporter"
@@ -58,7 +59,7 @@ func (e *Exporter) shutdown(ctx context.Context) error {
 
 func toExporterSettings(set extension.Settings) exporter.Settings {
 	return exporter.Settings{
-		ID:                set.ID,
+		ID:                component.NewIDWithName(component.MustNewType("otlp"), fmt.Sprintf("%s-%s", set.ID.Type(), set.ID.Name())),
 		TelemetrySettings: set.TelemetrySettings,
 		BuildInfo:         set.BuildInfo,
 	}

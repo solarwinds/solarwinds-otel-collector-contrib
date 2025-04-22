@@ -34,7 +34,7 @@ func TestCreateDefaultConfig(t *testing.T) {
 func TestCreateProcessor(t *testing.T) {
 	factory := NewFactory()
 	cfg := factory.CreateDefaultConfig()
-	params := processortest.NewNopSettings()
+	params := processortest.NewNopSettings(factory.Type())
 
 	lp, err := factory.CreateLogs(context.Background(), params, cfg, consumertest.NewNop())
 	assert.NotNil(t, lp)

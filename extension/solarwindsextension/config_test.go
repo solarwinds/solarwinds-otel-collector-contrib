@@ -151,10 +151,10 @@ func TestConfigOTLPWithOverride(t *testing.T) {
 
 	// Verify that both the token and overridden URL were propagated
 	// to the OTLP configuration.
-	assert.Equal(t, "127.0.0.1:1234", otlpCfg.Endpoint)
+	assert.Equal(t, "127.0.0.1:1234", otlpCfg.ClientConfig.Endpoint)
 	assert.Equal(
 		t,
 		map[string]configopaque.String{"Authorization": "Bearer YOUR-INGESTION-TOKEN"},
-		otlpCfg.Headers,
+		otlpCfg.ClientConfig.Headers,
 	)
 }

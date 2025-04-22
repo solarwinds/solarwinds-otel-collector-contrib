@@ -18,6 +18,7 @@
 package swok8sobjectsreceiver
 
 import (
+	"go.opentelemetry.io/collector/confmap/xconfmap"
 	"path/filepath"
 	"testing"
 	"time"
@@ -167,11 +168,11 @@ func TestLoadConfig(t *testing.T) {
 			require.NoError(t, sub.Unmarshal(cfg))
 
 			if tt.expected == nil {
-				err = component.ValidateConfig(cfg)
+				err = xconfmap.Validate(cfg)
 				assert.Error(t, err)
 				return
 			}
-			assert.NoError(t, component.ValidateConfig(cfg))
+			assert.NoError(t, xconfmap.Validate(cfg))
 			assert.Equal(t, tt.expected.AuthType, cfg.AuthType)
 			assert.Equal(t, tt.expected.Objects, cfg.Objects)
 		})

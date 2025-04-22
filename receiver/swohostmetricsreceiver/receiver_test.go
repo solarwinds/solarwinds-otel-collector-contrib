@@ -50,7 +50,7 @@ func Test_NewFactory_ReceiverSupportMetrics(t *testing.T) {
 	sut := NewFactory()
 	metricReceiver, err := sut.CreateMetrics(
 		context.TODO(),
-		receivertest.NewNopSettings(), // for testing purposes provided receiver settings object
+		receivertest.NewNopSettings(sut.Type()), // for testing purposes provided receiver settings object
 		&ReceiverConfig{
 			ControllerConfig: scraperhelper.ControllerConfig{
 				CollectionInterval: 10,

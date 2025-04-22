@@ -66,7 +66,7 @@ func TestEmptyResourceLogs(t *testing.T) {
 	// processor does not decorate empty Log structure
 	ctx := context.Background()
 	consumer := new(consumertest.LogsSink)
-	processor, err := createLogsProcessor(ctx, processortest.NewNopSettings(), createDefaultConfig(), consumer)
+	processor, err := createLogsProcessor(ctx, processortest.NewNopSettings(processortest.NopType), createDefaultConfig(), consumer)
 	assert.Nil(t, err)
 
 	err = processor.Start(ctx, componenttest.NewNopHost())
@@ -83,7 +83,7 @@ func TestEmptyLogRecords(t *testing.T) {
 	// processor does not decorate empty Log Records
 	ctx := context.Background()
 	consumer := new(consumertest.LogsSink)
-	processor, err := createLogsProcessor(ctx, processortest.NewNopSettings(), createDefaultConfig(), consumer)
+	processor, err := createLogsProcessor(ctx, processortest.NewNopSettings(processortest.NopType), createDefaultConfig(), consumer)
 	assert.Nil(t, err)
 
 	err = processor.Start(ctx, componenttest.NewNopHost())
@@ -100,7 +100,7 @@ func TestDifferentKindBody(t *testing.T) {
 	// processor does not decorate Log Records with different kind than Pod
 	ctx := context.Background()
 	consumer := new(consumertest.LogsSink)
-	processor, err := createLogsProcessor(ctx, processortest.NewNopSettings(), createDefaultConfig(), consumer)
+	processor, err := createLogsProcessor(ctx, processortest.NewNopSettings(processortest.NopType), createDefaultConfig(), consumer)
 	assert.Nil(t, err)
 
 	err = processor.Start(ctx, componenttest.NewNopHost())
@@ -117,7 +117,7 @@ func TestDifferentKindBody(t *testing.T) {
 func TestEmptyPodLogBody(t *testing.T) {
 	ctx := context.Background()
 	consumer := new(consumertest.LogsSink)
-	processor, err := createLogsProcessor(ctx, processortest.NewNopSettings(), createDefaultConfig(), consumer)
+	processor, err := createLogsProcessor(ctx, processortest.NewNopSettings(processortest.NopType), createDefaultConfig(), consumer)
 	assert.Nil(t, err)
 
 	err = processor.Start(ctx, componenttest.NewNopHost())
@@ -134,7 +134,7 @@ func TestPodLogBody(t *testing.T) {
 	l := generatePodLogs(body)
 	ctx := context.Background()
 	consumer := new(consumertest.LogsSink)
-	processor, err := createLogsProcessor(ctx, processortest.NewNopSettings(), createDefaultConfig(), consumer)
+	processor, err := createLogsProcessor(ctx, processortest.NewNopSettings(processortest.NopType), createDefaultConfig(), consumer)
 	assert.Nil(t, err)
 
 	err = processor.Start(ctx, componenttest.NewNopHost())
