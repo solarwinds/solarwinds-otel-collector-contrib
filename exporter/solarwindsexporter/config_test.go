@@ -50,6 +50,7 @@ func TestConfigUnmarshalFull(t *testing.T) {
 			Enabled:      true,
 			NumConsumers: 20,
 			QueueSize:    2000,
+			Sizer:        exporterhelper.RequestSizerTypeRequests,
 		},
 		Timeout: exporterhelper.TimeoutConfig{
 			Timeout: 20000000000,

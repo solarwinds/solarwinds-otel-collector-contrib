@@ -139,15 +139,21 @@ func (swiExporter *solarwindsExporter) initExporterType(
 		return err
 	}
 
+	otlpSettings := exporter.Settings{
+		ID:                component.NewIDWithName(component.MustNewType("otlp"), fmt.Sprintf("%s-%s", settings.ID.Type(), settings.ID.Name())),
+		TelemetrySettings: settings.TelemetrySettings,
+		BuildInfo:         settings.BuildInfo,
+	}
+
 	switch typ {
 	case metricsExporterType:
-		swiExporter.metrics, err = otlpExporter.CreateMetrics(ctx, settings, otlpCfg)
+		swiExporter.metrics, err = otlpExporter.CreateMetrics(ctx, otlpSettings, otlpCfg)
 		return err
 	case logsExporterType:
-		swiExporter.logs, err = otlpExporter.CreateLogs(ctx, settings, otlpCfg)
+		swiExporter.logs, err = otlpExporter.CreateLogs(ctx, otlpSettings, otlpCfg)
 		return err
 	case tracesExporterType:
-		swiExporter.traces, err = otlpExporter.CreateTraces(ctx, settings, otlpCfg)
+		swiExporter.traces, err = otlpExporter.CreateTraces(ctx, otlpSettings, otlpCfg)
 		return err
 	default:
 		return fmt.Errorf("unknown exporter type: %v", typ)
