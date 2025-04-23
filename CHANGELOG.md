@@ -2,6 +2,10 @@
 
 ## vNext
 
+## v0.123.0
+- Consumes OpenTelemetry Collector dependencies v0.123.0.
+- SolarWinds exporter is now reported as otlp/solarwinds-<name> in collector's telemetry.
+
 ## v0.119.12
 - Updates non-opentelemetry dependencies to latest possible version
 - Sets metrics scope name to `github.com/solarwinds/solarwinds-otel-collector-releases`
