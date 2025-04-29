@@ -1,0 +1,11 @@
+type: swok8sworkloadtype
+github_project: solarwinds/solarwinds-otel-collector-releases
+
+status:
+  class: processor
+  stability:
+    development: [ metrics ]
+
+tests:
+  config:
+  skip_lifecycle: true

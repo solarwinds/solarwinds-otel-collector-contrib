@@ -1,0 +1,41 @@
+swok8sworkloadtype/invalid_api_config:
+  auth_type: "invalid_auth_type"
+  workload_mappings:
+    - name_attr: "source_workload"
+      namespace_attr: "source_workload_namespace"
+      workload_type_attr: "source_workload_type"
+      expected_types:
+        - deployments
+swok8sworkloadtype/missing_expected_types:
+  workload_mappings:
+    - name_attr: "source_workload"
+      namespace_attr: "source_workload_namespace"
+      workload_type_attr: "source_workload_type"
+swok8sworkloadtype/invalid_expected_types:
+  workload_mappings:
+    - name_attr: "source_workload"
+      namespace_attr: "source_workload_namespace"
+      workload_type_attr: "source_workload_type"
+      expected_types:
+        - invalid
+swok8sworkloadtype/expected_type_has_empty_kind:
+  workload_mappings:
+    - name_attr: "source_workload"
+      namespace_attr: "source_workload_namespace"
+      workload_type_attr: "source_workload_type"
+      expected_types:
+        - withinvalidkinds
+swok8sworkloadtype/missing_workload_mappings:
+swok8sworkloadtype/valid_config:
+  workload_mappings:
+    - name_attr: "source_workload"
+      namespace_attr: "source_workload_namespace"
+      workload_type_attr: "source_workload_type"
+      expected_types:
+        - deployments
+    - name_attr: "dest_workload"
+      namespace_attr: "dest_workload_namespace"
+      workload_type_attr: "dest_workload_type"
+      expected_types:
+        - services
+        - pods
