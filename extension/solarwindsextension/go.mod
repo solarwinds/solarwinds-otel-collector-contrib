@@ -3,8 +3,8 @@ module github.com/solarwinds/solarwinds-otel-collector-releases/extension/solarw
 go 1.24.2
 
 require (
-	github.com/solarwinds/solarwinds-otel-collector-releases/pkg/testutil v0.123.1
-	github.com/solarwinds/solarwinds-otel-collector-releases/pkg/version v0.123.1
+	github.com/solarwinds/solarwinds-otel-collector-releases/pkg/testutil v0.123.2
+	github.com/solarwinds/solarwinds-otel-collector-releases/pkg/version v0.123.2
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/collector/component v1.29.0
 	go.opentelemetry.io/collector/component/componenttest v0.123.0
