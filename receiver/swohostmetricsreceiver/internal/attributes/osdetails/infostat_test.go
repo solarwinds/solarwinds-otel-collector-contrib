@@ -19,10 +19,10 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swohostmetricsreceiver/internal/attributes/shared"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/attributes/shared"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swohostmetricsreceiver/internal/providers/infostat"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers/infostat"
 )
 
 func Test_InfoStatAttributesGenerator_Functional(t *testing.T) {

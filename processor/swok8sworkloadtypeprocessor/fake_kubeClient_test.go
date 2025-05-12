@@ -15,7 +15,7 @@
 package swok8sworkloadtypeprocessor
 
 import (
-	"github.com/solarwinds/solarwinds-otel-collector-releases/internal/k8sconfig"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfig"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/discovery"
 	fakeDiscovery "k8s.io/client-go/discovery/fake"

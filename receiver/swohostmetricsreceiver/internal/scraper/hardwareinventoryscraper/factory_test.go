@@ -20,7 +20,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swohostmetricsreceiver/internal/types"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/types"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/scraper"
 )

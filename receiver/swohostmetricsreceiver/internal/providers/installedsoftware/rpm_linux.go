@@ -20,7 +20,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swohostmetricsreceiver/internal/cli"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/cli"
 	"go.uber.org/zap"
 )
 

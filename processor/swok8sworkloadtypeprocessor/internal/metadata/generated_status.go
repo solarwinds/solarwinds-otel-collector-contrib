@@ -8,7 +8,7 @@ import (
 
 var (
 	Type      = component.MustNewType("swok8sworkloadtype")
-	ScopeName = "github.com/solarwinds/solarwinds-otel-collector-releases/processor/swok8sworkloadtypeprocessor"
+	ScopeName = "github.com/solarwinds/solarwinds-otel-collector-contrib/processor/swok8sworkloadtypeprocessor"
 )
 
 const (

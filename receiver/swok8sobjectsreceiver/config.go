@@ -15,7 +15,7 @@
 // Source: https://github.com/open-telemetry/opentelemetry-collector-contrib
 // Changes customizing the original source code
 
-package swok8sobjectsreceiver // import "github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swok8sobjectsreceiver"
+package swok8sobjectsreceiver // import "github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swok8sobjectsreceiver"
 
 import (
 	"errors"
@@ -29,7 +29,7 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 
-	"github.com/solarwinds/solarwinds-otel-collector-releases/internal/k8sconfig"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfig"
 )
 
 type mode string

@@ -17,7 +17,7 @@ package features
 import (
 	"time"
 
-	"github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swohostmetricsreceiver/internal/types"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/types"
 )
 
 // DelayedProcessing prescribes how implementation of delayed processing will

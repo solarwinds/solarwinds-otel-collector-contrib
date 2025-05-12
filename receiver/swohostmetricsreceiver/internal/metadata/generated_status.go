@@ -8,7 +8,7 @@ import (
 
 var (
 	Type      = component.MustNewType("swohostmetrics")
-	ScopeName = "github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swohostmetricsreceiver"
+	ScopeName = "github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver"
 )
 
 const (

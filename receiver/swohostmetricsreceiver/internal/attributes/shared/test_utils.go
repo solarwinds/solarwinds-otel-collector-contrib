@@ -15,7 +15,7 @@
 package shared
 
 import (
-	"github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swohostmetricsreceiver/internal/providers"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
 )
 
 type generatingAttributeGenerator struct {

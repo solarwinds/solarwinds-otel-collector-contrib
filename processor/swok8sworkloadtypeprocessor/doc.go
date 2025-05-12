@@ -14,4 +14,4 @@
 
 //go:generate mdatagen metadata.yaml
 
-package swok8sworkloadtypeprocessor // import "github.com/solarwinds/solarwinds-otel-collector-releases/processor/swok8sworkloadtypeprocessor"
+package swok8sworkloadtypeprocessor // import "github.com/solarwinds/solarwinds-otel-collector-contrib/processor/swok8sworkloadtypeprocessor"

@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package swok8sworkloadtypeprocessor // import "github.com/solarwinds/solarwinds-otel-collector-releases/processor/swok8sworkloadtypeprocessor"
+package swok8sworkloadtypeprocessor // import "github.com/solarwinds/solarwinds-otel-collector-contrib/processor/swok8sworkloadtypeprocessor"
 
 import (
-	"github.com/solarwinds/solarwinds-otel-collector-releases/internal/k8sconfig"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfig"
 	"k8s.io/client-go/kubernetes"
 )
 

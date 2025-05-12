@@ -17,7 +17,7 @@ package scraper
 import (
 	"go.opentelemetry.io/collector/component"
 
-	"github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swohostmetricsreceiver/internal/scraper/framework/scope"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/scope"
 )
 
 // Descriptor represents description of scraper.

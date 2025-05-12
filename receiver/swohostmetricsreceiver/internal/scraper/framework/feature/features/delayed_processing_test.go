@@ -18,7 +18,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swohostmetricsreceiver/internal/types"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/types"
 	"github.com/stretchr/testify/assert"
 )
 

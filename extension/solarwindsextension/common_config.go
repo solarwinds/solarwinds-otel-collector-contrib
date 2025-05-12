@@ -17,7 +17,7 @@ package solarwindsextension
 import (
 	"go.opentelemetry.io/collector/config/configopaque"
 
-	"github.com/solarwinds/solarwinds-otel-collector-releases/extension/solarwindsextension/internal"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension/internal"
 )
 
 type CommonConfig interface {

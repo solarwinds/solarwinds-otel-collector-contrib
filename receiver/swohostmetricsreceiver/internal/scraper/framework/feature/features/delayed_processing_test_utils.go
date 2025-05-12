@@ -17,8 +17,8 @@ package features
 import (
 	"time"
 
-	"github.com/solarwinds/solarwinds-otel-collector-releases/pkg/testutil"
-	"github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swohostmetricsreceiver/internal/types"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/types"
 )
 
 type DelayedProcessingMock struct {

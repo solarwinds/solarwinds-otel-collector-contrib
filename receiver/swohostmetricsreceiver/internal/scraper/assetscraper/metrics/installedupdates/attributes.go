@@ -15,7 +15,7 @@
 package installedupdates
 
 import (
-	"github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swohostmetricsreceiver/internal/providers/installedupdates"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers/installedupdates"
 )
 
 // GetAttributes implements types.AttributesProvider.

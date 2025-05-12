@@ -21,8 +21,8 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/extension"
 
-	"github.com/solarwinds/solarwinds-otel-collector-releases/extension/solarwindsextension/internal"
-	"github.com/solarwinds/solarwinds-otel-collector-releases/extension/solarwindsextension/internal/metadata"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension/internal"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension/internal/metadata"
 )
 
 func NewFactory() extension.Factory {

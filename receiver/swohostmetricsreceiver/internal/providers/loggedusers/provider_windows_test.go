@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swohostmetricsreceiver/internal/registry"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/registry"
 
 	"github.com/stretchr/testify/assert"
 )

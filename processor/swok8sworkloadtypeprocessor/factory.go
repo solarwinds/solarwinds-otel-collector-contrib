@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package swok8sworkloadtypeprocessor // import "github.com/solarwinds/solarwinds-otel-collector-releases/processor/swok8sworkloadtypeprocessor"
+package swok8sworkloadtypeprocessor // import "github.com/solarwinds/solarwinds-otel-collector-contrib/processor/swok8sworkloadtypeprocessor"
 
 import (
 	"context"
 	"time"
 
-	"github.com/solarwinds/solarwinds-otel-collector-releases/internal/k8sconfig"
-	"github.com/solarwinds/solarwinds-otel-collector-releases/processor/swok8sworkloadtypeprocessor/internal/metadata"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfig"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/swok8sworkloadtypeprocessor/internal/metadata"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/processor"

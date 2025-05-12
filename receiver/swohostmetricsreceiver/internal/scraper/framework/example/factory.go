@@ -23,7 +23,7 @@ import (
 	"go.opentelemetry.io/collector/scraper"
 	"go.uber.org/zap"
 
-	fscraper "github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swohostmetricsreceiver/internal/scraper/framework/scraper"
+	fscraper "github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/scraper"
 )
 
 // CreateScraperExplicitely represents the way how to create scraper with

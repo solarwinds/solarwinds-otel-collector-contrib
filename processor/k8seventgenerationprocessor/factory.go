@@ -17,7 +17,7 @@ package k8seventgenerationprocessor
 import (
 	"context"
 
-	"github.com/solarwinds/solarwinds-otel-collector-releases/processor/k8seventgenerationprocessor/internal/metadata"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/k8seventgenerationprocessor/internal/metadata"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/processor"

@@ -15,7 +15,7 @@
 package discovery
 
 import (
-	"github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swohostmetricsreceiver/internal/cli"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/cli"
 )
 
 type rpmDiscovery struct {

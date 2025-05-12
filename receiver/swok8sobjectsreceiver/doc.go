@@ -17,4 +17,4 @@
 
 //go:generate mdatagen metadata.yaml
 
-package swok8sobjectsreceiver // import "github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swok8sobjectsreceiver"
+package swok8sobjectsreceiver // import "github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swok8sobjectsreceiver"

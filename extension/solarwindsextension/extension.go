@@ -21,7 +21,7 @@ import (
 	"go.opentelemetry.io/collector/extension"
 	"go.uber.org/zap"
 
-	"github.com/solarwinds/solarwinds-otel-collector-releases/extension/solarwindsextension/internal"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension/internal"
 )
 
 // CollectorNameAttribute is a resource attribute

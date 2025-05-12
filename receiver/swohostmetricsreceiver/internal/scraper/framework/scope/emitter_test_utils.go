@@ -14,7 +14,7 @@
 
 package scope
 
-import "github.com/solarwinds/solarwinds-otel-collector-releases/pkg/testutil"
+import "github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil"
 
 type EmitterMock struct {
 	emitResult *Result

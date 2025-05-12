@@ -18,10 +18,11 @@
 package swok8sobjectsreceiver
 
 import (
-	"go.opentelemetry.io/collector/confmap/xconfmap"
 	"path/filepath"
 	"testing"
 	"time"
+
+	"go.opentelemetry.io/collector/confmap/xconfmap"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -30,8 +31,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	apiWatch "k8s.io/apimachinery/pkg/watch"
 
-	"github.com/solarwinds/solarwinds-otel-collector-releases/internal/k8sconfig"
-	"github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swok8sobjectsreceiver/internal/metadata"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfig"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swok8sobjectsreceiver/internal/metadata"
 )
 
 func TestLoadConfig(t *testing.T) {

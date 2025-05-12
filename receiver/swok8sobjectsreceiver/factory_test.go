@@ -27,8 +27,8 @@ import (
 	"go.opentelemetry.io/collector/consumer/consumertest"
 	"go.opentelemetry.io/collector/receiver/receivertest"
 
-	"github.com/solarwinds/solarwinds-otel-collector-releases/internal/k8sconfig"
-	"github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swok8sobjectsreceiver/internal/metadata"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfig"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swok8sobjectsreceiver/internal/metadata"
 )
 
 func TestDefaultConfig(t *testing.T) {

@@ -14,7 +14,7 @@
 
 package internal
 
-import "github.com/solarwinds/solarwinds-otel-collector-releases/receiver/swohostmetricsreceiver/internal/types"
+import "github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/types"
 
 const (
 	ArtificialMetricName = "swo.artifial.metric"

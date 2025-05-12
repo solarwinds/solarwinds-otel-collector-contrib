@@ -1,4 +1,4 @@
-module github.com/solarwinds/solarwinds-otel-collector-releases/processor/k8seventgenerationprocessor
+module github.com/solarwinds/solarwinds-otel-collector-contrib/processor/k8seventgenerationprocessor
 
 go 1.24.2
 

@@ -1,10 +1,10 @@
-module github.com/solarwinds/solarwinds-otel-collector-releases/exporter/solarwindsexporter
+module github.com/solarwinds/solarwinds-otel-collector-contrib/exporter/solarwindsexporter
 
 go 1.24.2
 
 require (
-	github.com/solarwinds/solarwinds-otel-collector-releases/extension/solarwindsextension v0.123.2
-	github.com/solarwinds/solarwinds-otel-collector-releases/pkg/testutil v0.123.2
+	github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension v0.123.2
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil v0.123.2
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/collector/component v1.29.0
 	go.opentelemetry.io/collector/component/componenttest v0.123.0
@@ -42,7 +42,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/mostynb/go-grpc-compression v1.2.3 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/solarwinds/solarwinds-otel-collector-releases/pkg/version v0.123.2 // indirect
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.123.2 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/collector v0.123.0 // indirect
 	go.opentelemetry.io/collector/client v1.29.0 // indirect
@@ -86,8 +86,8 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/solarwinds/solarwinds-otel-collector-releases/extension/solarwindsextension => ../../extension/solarwindsextension
+replace github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension => ../../extension/solarwindsextension
 
-replace github.com/solarwinds/solarwinds-otel-collector-releases/pkg/testutil => ../../pkg/testutil
+replace github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil => ../../pkg/testutil
 
-replace github.com/solarwinds/solarwinds-otel-collector-releases/pkg/version => ../../pkg/version
+replace github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version => ../../pkg/version

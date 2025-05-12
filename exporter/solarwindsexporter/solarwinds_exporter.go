@@ -19,7 +19,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/solarwinds/solarwinds-otel-collector-releases/extension/solarwindsextension"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension"
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/exporter"
