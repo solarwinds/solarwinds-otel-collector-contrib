@@ -25,8 +25,8 @@ import (
 	"go.opentelemetry.io/collector/confmap/xconfmap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfig"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/swok8sworkloadtypeprocessor/internal/metadata"
-	"github.com/solarwinds/solarwinds-otel-collector-contribinternal/k8sconfig"
 )
 
 func TestInvalidConfig(t *testing.T) {

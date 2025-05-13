@@ -1,4 +1,4 @@
-module github.com/solarwinds/solarwinds-otel-collector-releases/internal/k8sconfig
+module github.com/solarwinds/solarwinds-otel-collector-config/internal/k8sconfig
 
 go 1.24.2
 

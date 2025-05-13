@@ -13,8 +13,8 @@ _Example:_ `chore/#12-update-dependency-version`
 As for individual parts of the branch name:
 
 - _type_ should reflect the types described in [Commits](#commits) section
-- _issue-number_ should refer to related [GitHub Issue](https://github.com/solarwinds/solarwinds-otel-collector-releases/issues) number. If such issue does not exist (i.e. for immediate fixes) this part starting with hash should be omitted
-- _description-of-changes_ should provide meaningful description of changes the branch holds, with words separated by dashes (i.e. title of related [GitHub Issue](https://github.com/solarwinds/solarwinds-otel-collector-releases/issues), or its respective sub-part)
+- _issue-number_ should refer to related [GitHub Issue](https://github.com/solarwinds/solarwinds-otel-collector-contrib/issues) number. If such issue does not exist (i.e. for immediate fixes) this part starting with hash should be omitted
+- _description-of-changes_ should provide meaningful description of changes the branch holds, with words separated by dashes (i.e. title of related [GitHub Issue](https://github.com/solarwinds/solarwinds-otel-collector-contrib/issues), or its respective sub-part)
 
 ### Commits
 

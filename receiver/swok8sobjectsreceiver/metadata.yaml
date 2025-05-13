@@ -1,5 +1,5 @@
 type: swok8sobjects
-github_project: solarwinds/solarwinds-otel-collector-releases
+github_project: solarwinds/solarwinds-otel-collector-contrib
 
 status:
   class: receiver
