@@ -13,13 +13,18 @@ on:
   workflow_dispatch:
   workflow_call:
 
-jobs:
-  # job stub only  
+jobs:  
   checks:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Check licenses
+        run: make ci-check-licenses
+      - name: Check that the release version is synced across the repo
+        run: |
+          make prepare-release version=$(grep -oP '(?<=const Version = ")[^"]+' "./pkg/version/version.go")
+          git diff --exit-code
       
   # job stub only
   build_and_test:
