@@ -45,11 +45,11 @@ jobs:
           has_failure=false
           orig_dir=$(pwd)
 
-          find . -name go.mod | while read -r modfile; do
+          while read -r modfile; do
+
+            echo "$modfile"
             cd $(dirname "$modfile")
-
             output=$(go test -v ./...)
-
             echo "$output" | grep -q "FAIL"
 
             if [ $? -eq 0 ]; then
@@ -59,8 +59,7 @@ jobs:
 
             echo "$output"
             cd "$orig_dir"
-
-          done
+          done < <(find . -name go.mod)
 
           if [ "$has_failure" = true ]; then
             exit 1
