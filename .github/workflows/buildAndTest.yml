@@ -120,7 +120,7 @@ jobs:
             cd $(dirname "$modfile")
             echo "$(pwd)"
             output=$(go test -v ./...)
-            echo "$output"
+            #echo "$output"
             # echo "$output" | grep -q "FAIL"
 
             # if [ $? -eq 0 ]; then
