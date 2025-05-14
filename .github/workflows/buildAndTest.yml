@@ -119,7 +119,8 @@ jobs:
             echo "$modfile"
             cd $(dirname "$modfile")
             echo "$(pwd)"
-            output=$(go test -v ./...)
+            #output=$(go test -v ./...)
+            go test -v ./...
             go_test_exit_code=$?
             echo "Go Test Exit Code: $go_test_exit_code"
             #echo "$output"
