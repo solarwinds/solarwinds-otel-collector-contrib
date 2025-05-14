@@ -42,7 +42,7 @@ jobs:
           cache: false
       - name: Run Tests
         run: |
-          find . -name go.mod -execdir go test -v ./... \;
+          find . -name go.mod -execdir go test -v ./... \; | (! grep FAIL)
 
   build_and_test_windows:
     runs-on: windows-latest
@@ -63,9 +63,8 @@ jobs:
               Push-Location $_.Directory
               
               $output = go test -v ./...
-              Write-Host $output
               $exitCode = $LASTEXITCODE
-              # $output | ForEach-Object { if ($_ -notmatch 'FAIL') { $_ } }
+              $output | ForEach-Object { if ($_ -notmatch 'FAIL') { $_ } }
               if ($exitCode -ne 0) {
                   $hasFailure = $true
               }
@@ -90,4 +89,4 @@ jobs:
           cache: false
       - name: Run Tests
         run: |
-          find . -name go.mod -execdir go test -v ./... \;
+          find . -name go.mod -execdir go test -v ./... \; | (! grep FAIL)
