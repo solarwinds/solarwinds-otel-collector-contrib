@@ -113,7 +113,8 @@ jobs:
           has_failure=false
           orig_dir=$(pwd)
 
-          find . -name go.mod | while read -r modfile; do
+          go_mod_files=$(find . -name go.mod)
+          for modfile in $go_mod_files; do
 
             echo "$modfile"
             cd $(dirname "$modfile")
