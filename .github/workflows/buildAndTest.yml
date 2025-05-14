@@ -118,6 +118,7 @@ jobs:
             echo "$modfile"
             cd $(dirname "$modfile")
             output=$(go test -v ./...)
+            echo "$output"
             echo "$output" | grep -q "FAIL"
 
             if [ $? -eq 0 ]; then
@@ -125,10 +126,12 @@ jobs:
               echo "Exit code: $?"
             fi
 
-            echo "$output"
             cd "$orig_dir"
           done < <(find . -name go.mod)
 
           if [ "$has_failure" = true ]; then
+            echo "Tests failed"
             exit 1
           fi
+
+          echo "Tests passed"
