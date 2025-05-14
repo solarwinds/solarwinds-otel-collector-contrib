@@ -110,4 +110,25 @@ jobs:
           cache: false
       - name: Run Tests
         run: |
-          find . -name go.mod -execdir go test -v ./... \; | (! grep FAIL)
+          has_failure=false
+          orig_dir=$(pwd)
+
+          while read -r modfile; do
+
+            echo "$modfile"
+            cd $(dirname "$modfile")
+            output=$(go test -v ./...)
+            echo "$output" | grep -q "FAIL"
+
+            if [ $? -eq 0 ]; then
+              has_failure=true
+              echo "Exit code: $?"
+            fi
+
+            echo "$output"
+            cd "$orig_dir"
+          done < <(find . -name go.mod)
+
+          if [ "$has_failure" = true ]; then
+            exit 1
+          fi
