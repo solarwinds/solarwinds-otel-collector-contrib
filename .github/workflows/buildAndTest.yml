@@ -39,6 +39,7 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
+          cache: false
       - name: Run Tests
         run: |
           find . -name go.mod -execdir go test -v ./... \;
@@ -53,6 +54,7 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
+          cache: false
       - name: Run Tests
         run: |
           $hasFailure = $false
@@ -61,8 +63,9 @@ jobs:
               Push-Location $_.Directory
               
               $output = go test -v ./...
+              Write-Host $output
               $exitCode = $LASTEXITCODE
-              $output | ForEach-Object { if ($_ -notmatch 'FAIL') { $_ } }
+              # $output | ForEach-Object { if ($_ -notmatch 'FAIL') { $_ } }
               if ($exitCode -ne 0) {
                   $hasFailure = $true
               }
@@ -84,6 +87,7 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
+          cache: false
       - name: Run Tests
         run: |
           find . -name go.mod -execdir go test -v ./... \;
