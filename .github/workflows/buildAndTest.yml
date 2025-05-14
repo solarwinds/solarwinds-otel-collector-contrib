@@ -64,7 +64,7 @@ jobs:
               
               $output = go test -v ./...
               $exitCode = $LASTEXITCODE
-              $output | ForEach-Object { if ($_ -notmatch 'FAIL') { $_ } }
+              $output | ForEach-Object { if ($_ -match 'FAIL') { $_ } }
               if ($exitCode -ne 0) {
                   $hasFailure = $true
               }
