@@ -73,7 +73,7 @@ func (provider *windowsProvider) GetSoftware() ([]InstalledSoftware, error) {
 	if len(provider.registryReaders) == 0 {
 		m := "no register reader registred"
 		zap.L().Error(m)
-		return make([]InstalledSoftware, 0), fmt.Errorf(m)
+		return make([]InstalledSoftware, 0), fmt.Errorf("%s", m)
 	}
 
 	values := []InstalledSoftware{}
