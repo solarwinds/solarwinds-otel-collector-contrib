@@ -55,10 +55,22 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
       - name: Run Tests
         run: |
+          $hasFailure = $false
+
           Get-ChildItem -Recurse -Filter 'go.mod' | ForEach-Object {
-            Push-Location $_.Directory
-            go test -v ./... | Where-Object { $_ -notmatch 'FAIL' }
-            Pop-Location
+              Push-Location $_.Directory
+              
+              $output = go test -v ./...
+              $exitCode = $LASTEXITCODE
+              # $output | ForEach-Object { if ($_ -notmatch 'FAIL') { $_ } }
+              if ($exitCode -ne 0) {
+                  $hasFailure = $true
+              }
+              Pop-Location
+          }
+
+          if ($hasFailure) {
+              exit 1
           }
         
   build_and_test_darwin_arm64:
