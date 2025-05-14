@@ -113,7 +113,7 @@ jobs:
           has_failure=false
           orig_dir=$(pwd)
 
-          while read -r modfile; do
+          find . -name go.mod | while read -r modfile; do
 
             echo "$modfile"
             cd $(dirname "$modfile")
@@ -126,10 +126,10 @@ jobs:
               echo "Exit code: $?"
             fi
 
-            echo 
+            echo "Has Failure: $has_failure"
 
             cd "$orig_dir"
-          done < <(find . -name go.mod)
+          done
 
           if [ "$has_failure" = true ]; then
             echo "Tests failed"
