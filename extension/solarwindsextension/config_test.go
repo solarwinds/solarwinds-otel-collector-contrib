@@ -40,7 +40,7 @@ func TestConfigUnmarshalFull(t *testing.T) {
 	attributeMap["att1"] = "custom_attribute_value_1"
 	attributeMap["att2"] = "custom_attribute_value_2"
 
-	assert.Fail(t, "die"
+	assert.Fail(t, "die")
 
 	// Verify the values.
 	assert.Equal(t, &internal.Config{
