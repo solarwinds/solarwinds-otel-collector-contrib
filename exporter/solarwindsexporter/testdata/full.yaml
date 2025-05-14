@@ -1,0 +1,13 @@
+extension: "solarwinds/1"
+timeout: "20s"
+sending_queue:
+  enabled: true
+  num_consumers: 20
+  queue_size: 2000
+retry_on_failure:
+  enabled: false
+  initial_interval: "15s"
+  randomization_factor: 0.7
+  multiplier: 2.4
+  max_interval: "40s"
+  max_elapsed_time: "400s"

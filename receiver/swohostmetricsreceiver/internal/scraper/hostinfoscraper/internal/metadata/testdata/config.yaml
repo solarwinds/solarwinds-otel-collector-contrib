@@ -1,0 +1,17 @@
+default:
+all_set:
+  metrics:
+    swo.hostinfo.firewall:
+      enabled: true
+    swo.hostinfo.uptime:
+      enabled: true
+    swo.hostinfo.user.lastLogged:
+      enabled: true
+none_set:
+  metrics:
+    swo.hostinfo.firewall:
+      enabled: false
+    swo.hostinfo.uptime:
+      enabled: false
+    swo.hostinfo.user.lastLogged:
+      enabled: false

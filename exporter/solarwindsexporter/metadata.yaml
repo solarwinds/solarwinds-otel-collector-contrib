@@ -1,0 +1,12 @@
+type: solarwinds
+github_project: solarwinds/solarwinds-otel-collector-contrib
+
+status:
+  class: exporter
+  stability:
+    development: [traces, metrics, logs]
+
+tests:
+  # skipped because the exporter requires solarwindsextension to run
+  skip_lifecycle: true
+

@@ -1,0 +1,65 @@
+type: asset
+
+status:
+  class: scraper
+  stability:
+    development: [metrics]
+
+sem_conv_version: 1.9.0
+
+attributes:
+  installedupdate.caption:
+    description: "A short textual description of the update."
+    type: string
+  installedupdate.description:
+    description: "A textual description of the update."
+    type: string
+  installedupdate.hotfixid:
+    description: "Unique identifier associated with a particular update."
+    type: string
+  installedupdate.installedby:
+    description: "Person who installed the update."
+    type: string
+  installedupdate.installedon:
+    description: "Date when the update was installed."
+    type: string
+  installedsoftware.date:
+    description: "The date of the installation."
+    type: string
+  installedsoftware.name:
+    description: "The name of the installed software."
+    type: string
+  installedsoftware.publisher:
+    description: "The publisher of the installed software."
+    type: string
+  installedsoftware.version:
+    description: "The version of the installed software."
+    type: string
+
+metrics:
+  swo.asset.installedsoftware:
+    enabled: true
+    description: Currently installed software.
+    unit: s
+    sum:
+      value_type: int
+      aggregation_temporality: cumulative
+      monotonic: true
+    attributes:
+      - installedsoftware.date
+      - installedsoftware.name
+      - installedsoftware.publisher
+      - installedsoftware.version
+  
+  swo.asset.installedupdates:
+    enabled: false
+    description: Currently installed OS updates.
+    unit: "1"
+    gauge:
+      value_type: int
+    attributes:
+      - installedupdate.caption
+      - installedupdate.description
+      - installedupdate.hotfixid
+      - installedupdate.installedby
+      - installedupdate.installedon

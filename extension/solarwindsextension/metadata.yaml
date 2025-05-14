@@ -1,0 +1,13 @@
+type: solarwinds
+github_project: solarwinds/solarwinds-otel-collector-contrib
+
+status:
+  class: extension
+  stability:
+    development: [ extension ]
+
+tests:
+  config:
+    data_center: "na-01"
+    token: "THIS-IS-A-TEST"
+    collector_name: "test-name"
