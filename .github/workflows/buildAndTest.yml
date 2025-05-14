@@ -117,7 +117,7 @@ jobs:
           for modfile in $go_mod_files; do
 
             echo "$modfile"
-            # cd $(dirname "$modfile")
+            cd $(dirname "$modfile")
             # output=$(go test -v ./...)
             # echo "$output"
             # echo "$output" | grep -q "FAIL"
@@ -129,7 +129,8 @@ jobs:
 
             # echo "Has Failure: $has_failure"
 
-            # cd "$orig_dir"
+            cd "$orig_dir"
+            echo "$(pwd)"
           done
 
           if [ "$has_failure" = true ]; then
