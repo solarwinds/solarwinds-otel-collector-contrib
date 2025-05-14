@@ -121,10 +121,9 @@ jobs:
             echo "$(pwd)"
             #output=$(go test -v ./...)
             go test -v ./... > test_output.txt 2>&1 || true
-            go_test_exit_code=$?
-            echo "Go Test Exit Code: $go_test_exit_code"
-            #echo "$output"
-            # echo "$output" | grep -q "FAIL"
+            output=$(cat test_output.txt)
+            echo "$output"
+            echo "$output" | grep -q "FAIL"
 
             # if [ $? -eq 0 ]; then
             #   has_failure=true
