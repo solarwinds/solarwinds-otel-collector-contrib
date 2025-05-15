@@ -54,6 +54,7 @@ jobs:
             echo "Processing tests for module $modfile"
             go test -v ./...
             if [[ $? != 0 ]]; then
+              echo "Test suit failed for module $modfile"
               has_failure=true
             fi           
 
@@ -66,6 +67,7 @@ jobs:
           fi
 
           echo "All tests passed"
+          exit 0
         shell: bash
 
   build_and_test_windows:
@@ -89,6 +91,7 @@ jobs:
               Write-Host "Processing tests for module $($_.FullName)"        
               go test -v ./...
               if ($LASTEXITCODE -ne 0) {
+                Write-Host "Test suite failed for module $modfile"
                 $hasFailure = $true
               }
 
@@ -101,6 +104,7 @@ jobs:
           }
 
           Write-Host "All tests passed"
+          exit 0
         shell: pwsh
         
   build_and_test_darwin_arm64:
@@ -129,6 +133,7 @@ jobs:
             echo "Processing tests for module $modfile"
             go test -v ./...
             if [[ $? != 0 ]]; then
+              echo "Tests failed for module $modfile"
               has_failure=true
             fi           
 
@@ -141,4 +146,5 @@ jobs:
           fi
 
           echo "All tests passed"
+          exit 0
         shell: bash
