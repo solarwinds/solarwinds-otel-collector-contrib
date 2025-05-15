@@ -1,0 +1,81 @@
+name: Release Components
+
+on:
+  push:
+    paths:
+      - 'pkg/version/version.go'
+    branches:
+      - main
+      - 'release/**'
+      # temporary for testing - to be removed
+      - 'chore/establish-releasing'
+
+  workflow_dispatch:
+
+jobs:
+  release_checks:
+    name: Release Checks
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.get-tag.outputs.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Get Current Tag
+        id: get-tag
+        run: echo "tag=$(grep -oP '(?<=const Version = ")[^"]+' "./pkg/version/version.go")" >> $GITHUB_OUTPUT
+      - name: Verify that release does not already exist
+        env:
+          # for gh cli
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ! gh release view "v${{ steps.get-tag.outputs.tag }}" 2>&1 | grep -q "^release not found$"; then
+            echo "Release v${{ steps.get-tag.outputs.tag }} already exists on GitHub."
+            exit 1
+          fi
+
+  build_and_test:
+    name: Build and Test
+    uses: ./.github/workflows/buildAndTest.yml
+    secrets: inherit
+
+  create_release:
+    runs-on: ubuntu-latest
+    name: Create GitHub Release
+    needs:
+      - release_checks
+      - build_and_test
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Find Previous Tag
+        run: |
+          PREVIOUS_TAG=$(git tag --sort=version:refname | grep -P "^v\d+\.\d+\.\d+$" | tail -n 1)
+          echo "Previous tag: $PREVIOUS_TAG"
+          echo "PREVIOUS_TAG=$PREVIOUS_TAG" >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        env:
+          # for gh cli
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create v${{ needs.release_checks.outputs.image_tag }} \
+            --title v${{ needs.release_checks.outputs.image_tag }} \
+            --generate-notes \
+            --notes-start-tag ${{ env.PREVIOUS_TAG }}
+      - name: Tag Go packages on GitHub
+        run: |
+          folders=("./exporter" "./extension" "./pkg" "./receiver" "./connector" "./processor")
+
+          for folder in "${folders[@]}"; do
+              for package_folder in $folder/*/; do
+                  if [ -f "$package_folder/go.mod" ]; then
+                      git tag ${package_folder#./}v${{ needs.release_checks.outputs.image_tag }}
+                      git push origin ${package_folder#./}v${{ needs.release_checks.outputs.image_tag }}
+                      echo "Pushed tag ${package_folder#./}v${{ needs.release_checks.outputs.image_tag }}"
+                  fi
+              done
+          done
