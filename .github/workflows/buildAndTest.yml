@@ -60,17 +60,28 @@ jobs:
 
             count=$(find . -name '*_test.go' | wc -l)
             if [[ "$count" -eq 0 ]]; then
-              echo "No test files found for module $modfile"
-              cd "$orig_dir"
-              continue
-            fi
+              
+              # Build needs to be excluded for tools module.
+              if [[ "$modfile" == */tools/go.mod ]]; then
+                echo "No buildable files found for module $modfile"
+                cd "$orig_dir"
+                continue
+              fi
 
-            echo "Processing tests for module $modfile"
-            go test -v ./...
-            if [[ $? != 0 ]]; then
-              echo "Test suit failed for module $modfile"
-              has_failure=true
-            fi           
+              echo "Processing build for module $modfile"
+              go build .
+              if [[ $? != 0 ]]; then
+                echo "Build failed for module $modfile"
+                has_failure=true
+              fi
+            else
+              echo "Processing tests for module $modfile"
+              go test -v ./...
+              if [[ $? != 0 ]]; then
+                echo "Test suite failed for module $modfile"
+                has_failure=true
+              fi
+            fi                       
 
             cd "$orig_dir"
           done
@@ -161,7 +172,7 @@ jobs:
             echo "Processing tests for module $modfile"
             go test -v ./...
             if [[ $? != 0 ]]; then
-              echo "Tests failed for module $modfile"
+              echo "Test suite failed for module $modfile"
               has_failure=true
             fi           
 
