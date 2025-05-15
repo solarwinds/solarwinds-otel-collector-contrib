@@ -119,12 +119,12 @@ jobs:
             echo "$modfile"
             cd $(dirname "$modfile")
             echo "$(pwd)"
-            #output=$(go test -v ./...)
-            go test -v ./... > test_output.txt 2>&1 || true
-            output=$(cat test_output.txt)
-            echo "$output"
-            echo "$output" | grep -q "FAIL"
 
+            go test -v ./... > test_output.txt 2>&1 || true
+            
+            echo $(cat test_output.txt)
+            
+            cat test_output.txt | (! grep -q "FAIL")
             if [ $? -eq 0 ]; then
               has_failure=true
               echo "Exit code: $?"
