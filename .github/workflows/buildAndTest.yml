@@ -29,41 +29,49 @@ jobs:
   #         make prepare-release version=$(grep -oP '(?<=const Version = ")[^"]+' "./pkg/version/version.go")
   #         git diff --exit-code
       
-  # build_and_test_linux:
-  #   runs-on: ubuntu-latest
-  #   needs: checks
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
-  #     - name: Setup Go
-  #       uses: actions/setup-go@v4
-  #       with:
-  #         go-version: ${{ env.GO_VERSION }}
-  #         cache: false
-  #     - name: Run Tests
-  #       run: |
-  #         has_failure=false
-  #         orig_dir=$(pwd)
+  build_and_test_linux:
+    runs-on: ubuntu-latest
+    # needs: checks
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: false
+      - name: Run Tests
+        run: |
+          set +e
+          
+          has_failure=false
+          orig_dir=$(pwd)
 
-  #         while read -r modfile; do
+          go_mod_files=$(find . -name go.mod)
+          for modfile in $go_mod_files; do
+            cd $(dirname "$modfile")
 
-  #           echo "$modfile"
-  #           cd $(dirname "$modfile")
-  #           output=$(go test -v ./...)
-  #           echo "$output" | grep -q "FAIL"
+            echo "Processing tests for module $modfile"
+            go test -v ./... > test_output.txt 2>&1
+            
+            # Reporting test output.
+            cat test_output.txt
+            
+            cat test_output.txt | (grep -q "FAIL")
+            if [ $? -eq 0 ]; then
+              has_failure=true
+            fi
 
-  #           if [ $? -eq 0 ]; then
-  #             has_failure=true
-  #             echo "Exit code: $?"
-  #           fi
+            cd "$orig_dir"
+          done
 
-  #           echo "$output"
-  #           cd "$orig_dir"
-  #         done < <(find . -name go.mod)
+          if [ "$has_failure" = true ]; then
+            echo "Some tests failed"
+            exit 1
+          fi
 
-  #         if [ "$has_failure" = true ]; then
-  #           exit 1
-  #         fi
+          echo "All tests passed"
+        shell: bash
 
   # build_and_test_windows:
   #   runs-on: windows-latest
