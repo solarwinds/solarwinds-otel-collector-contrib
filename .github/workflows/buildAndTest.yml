@@ -79,7 +79,7 @@ jobs:
 
   build_and_test_windows:
     runs-on: windows-latest
-    # needs: checks
+    needs: checks
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -98,6 +98,7 @@ jobs:
               $testFiles = Get-ChildItem -Recurse -Filter '*_test.go'
               if ($testFiles.Count -eq 0) {
                 Write-Host "No test files found for module $modfile"
+                Pop-Location
                 continue
               }
 
@@ -123,7 +124,7 @@ jobs:
   build_and_test_darwin_arm64:
     # Based on https://docs.github.com/en/actions/using-github-hosted-runners/using-github-hosted-runners/about-github-hosted-runners#standard-github-hosted-runners-for-public-repositories
     runs-on: macos-latest
-    # needs: checks
+    needs: checks
     steps:
       - name: Checkout
         uses: actions/checkout@v4
