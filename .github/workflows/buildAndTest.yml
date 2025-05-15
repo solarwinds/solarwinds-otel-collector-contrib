@@ -31,7 +31,7 @@ jobs:
       
   build_and_test_linux:
     runs-on: ubuntu-latest
-    # needs: checks
+    needs: checks
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -51,9 +51,10 @@ jobs:
           for modfile in $go_mod_files; do
             cd $(dirname "$modfile")
 
-            find . -name '*.test.go' | wc -l
-            if [[ $? != 0 ]]; then
+            count=$(find . -name '*_test.go' | wc -l)
+            if [[ "$count" -eq 0 ]]; then
               echo "No test files found for module $modfile"
+              cd "$orig_dir"
               continue
             fi
 
@@ -94,7 +95,7 @@ jobs:
           Get-ChildItem -Recurse -Filter 'go.mod' | ForEach-Object {
               Push-Location $_.Directory
 
-              $testFiles = Get-ChildItem -Recurse -Filter '*.test.go'
+              $testFiles = Get-ChildItem -Recurse -Filter '*_test.go'
               if ($testFiles.Count -eq 0) {
                 Write-Host "No test files found for module $modfile"
                 continue
@@ -142,9 +143,10 @@ jobs:
           for modfile in $go_mod_files; do
             cd $(dirname "$modfile")
 
-            find . -name '*.test.go' | wc -l
-            if [[ $? != 0 ]]; then
+            count=$(find . -name '*_test.go' | wc -l)
+            if [[ "$count" -eq 0 ]]; then
               echo "No test files found for module $modfile"
+              cd "$orig_dir"
               continue
             fi
 
