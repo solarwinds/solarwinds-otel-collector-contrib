@@ -92,19 +92,14 @@ jobs:
               Push-Location $_.Directory
 
               Write-Host "Processing tests for module $($_.FullName)"        
-              $output = go test -v ./...
+              #$output = go test -v ./...
+              go test -v ./...
               if ($LASTEXITCODE -ne 0) {
                 $hasFailure = $true
               }
 
               # Reporting test output.
-              Write-Output $output
-              
-              # Check on explicit FAIL in test output.
-              $output | ForEach-Object { if ($_ -match 'FAIL') { $_ } }
-              if ($LASTEXITCODE -eq 0) {
-                $hasFailure = $true
-              }
+              #Write-Output $output
               
               Pop-Location
           }
