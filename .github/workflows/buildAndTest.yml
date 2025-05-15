@@ -17,17 +17,17 @@ env:
   GO_VERSION: '1.24'
 
 jobs:  
-  # checks:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
-  #     - name: Check licenses
-  #       run: make ci-check-licenses
-  #     - name: Check that the release version is synced across the repo
-  #       run: |
-  #         make prepare-release version=$(grep -oP '(?<=const Version = ")[^"]+' "./pkg/version/version.go")
-  #         git diff --exit-code
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Check licenses
+        run: make ci-check-licenses
+      - name: Check that the release version is synced across the repo
+        run: |
+          make prepare-release version=$(grep -oP '(?<=const Version = ")[^"]+' "./pkg/version/version.go")
+          git diff --exit-code
       
   build_and_test_linux:
     runs-on: ubuntu-latest
