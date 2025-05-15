@@ -2,6 +2,10 @@
 
 ## vNext
 
+## v0.0.2
+- Creating some artificial content here.
+- To have something in our changelog report.
+
 ## v0.0.1
 
 ## v0.123.2
