@@ -52,8 +52,9 @@ jobs:
             cd $(dirname "$modfile")
 
             find . -name '*.test.go' | wc -l
-            if [[ $? != 0 ]]; then
+            if [[ $? = 0 ]]; then
               echo "No test files found for module $modfile"
+              cd "$orig_dir"
               continue
             fi
 
@@ -143,8 +144,9 @@ jobs:
             cd $(dirname "$modfile")
 
             find . -name '*.test.go' | wc -l
-            if [[ $? != 0 ]]; then
+            if [[ $? = 0 ]]; then
               echo "No test files found for module $modfile"
+              cd "$orig_dir"
               continue
             fi
 
