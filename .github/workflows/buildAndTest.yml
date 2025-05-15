@@ -125,7 +125,8 @@ jobs:
             cat test_output.txt
             
             cat test_output.txt | (! grep -q "FAIL")
-            if [ $? -eq 0 ]; then
+            exit_code=$?
+            if [ $exit_code -eq 0 ]; then
               has_failure=true
               echo "Exit code: $?"
             fi
