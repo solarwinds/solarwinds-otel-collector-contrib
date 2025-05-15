@@ -1,0 +1,50 @@
+name: Check Pull Request Semantics
+
+on:
+  pull_request:
+    branches:
+      - main
+      - 'release/**'
+    types:
+      - opened
+      - edited
+
+  workflow_dispatch:
+
+jobs:
+  check_semantics:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR title format
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          if [[ ! ${PR_TITLE} =~ ^(build|ci|chore|docs|feature|fix|perf|refactor|style|test):[[:space:]](#[[:digit:]]+[[:space:]]){0,1}([^ ,#].*)$ ]]; then
+            echo "::error::Invalid Pull Request title. Please update it according to guidelines: https://github.com/solarwinds/solarwinds-otel-collector-contrib/blob/main/docs/development-guidelines.md#pull-requests"
+            exit 1
+          fi
+      - name: Require valid Issue number in PR title for some PR types
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+            PR_TYPE=$(echo "$PR_TITLE" | grep -oP '^([[:word:]]+):[[:space:]]')
+            if [[ "$PR_TYPE" == "feature: " || "$PR_TYPE" == "fix: " ]]; then
+              ISSUE_NUMBER=$(echo "$PR_TITLE" | grep -oP '^([[:word:]]+):[[:space:]]#\K[[:digit:]]+' || echo "")
+              if [ -z "$ISSUE_NUMBER" ]; then
+                echo "::error::Pull Request title must include an issue number for PRs of type 'feature' or 'fix'."
+                exit 1
+              fi
+            fi
+      - name: Validate Issue number in PR title (if used)
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ISSUE_NUMBER=$(echo "$PR_TITLE" | grep -oP '^([[:word:]]+):[[:space:]]#\K[[:digit:]]+' || echo "")
+          if [ -n "$ISSUE_NUMBER" ]; then
+            ISSUE_URL=$(gh issue view "$ISSUE_NUMBER" --repo ${{ github.repository }} --json url -q .url || echo "")
+            if [[ ! "$ISSUE_URL" =~ .*/issues/[[:digit:]]+$ ]]; then
+              echo "::error::Referenced issue #$ISSUE_NUMBER does not exist."
+              exit 1
+            fi
+          fi
