@@ -124,11 +124,11 @@ jobs:
             
             cat test_output.txt
             
-            # cat test_output.txt | (! grep -q "FAIL")
-            # if [ $? -eq 0 ]; then
-            #   has_failure=true
-            #   echo "Exit code: $?"
-            # fi
+            cat test_output.txt | (! grep -q "FAIL")
+            if [ $? -eq 0 ]; then
+              has_failure=true
+              echo "Exit code: $?"
+            fi
 
             # echo "Has Failure: $has_failure"
 
