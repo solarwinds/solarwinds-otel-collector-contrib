@@ -63,7 +63,7 @@ jobs:
               
               # Build needs to be excluded for tools module.
               if [[ "$modfile" == */tools/go.mod ]]; then
-                echo "No buildable files found for module $modfile"
+                echo "Skipping build for tools module"
                 cd "$orig_dir"
                 continue
               fi
@@ -115,17 +115,28 @@ jobs:
 
               $testFiles = Get-ChildItem -Recurse -Filter '*_test.go'
               if ($testFiles.Count -eq 0) {
-                Write-Host "No test files found for module $modfile"
-                Pop-Location
-                return
-              }
 
-              Write-Host "Processing tests for module $($_.FullName)"        
-              go test -v ./...
-              if ($LASTEXITCODE -ne 0) {
-                Write-Host "Test suite failed for module $modfile"
-                $hasFailure = $true
-              }
+                # Build needs to be excluded for tools module.
+                if ($_.FullName -like '*\tools\go.mod') {
+                  Write-Host "Skipping build for tools module"
+                  Pop-Location
+                  return
+                }
+
+                Write-Host "Processing build for module $($_.FullName)"
+                go build .
+                if ($LASTEXITCODE -ne 0) {
+                  Write-Host "Build failed for module $modfile"
+                  $hasFailure = $true
+                }                
+              } else {
+                Write-Host "Processing tests for module $($_.FullName)"        
+                go test -v ./...
+                if ($LASTEXITCODE -ne 0) {
+                  Write-Host "Test suite failed for module $modfile"
+                  $hasFailure = $true
+                }
+              }          
 
               Pop-Location
           }
@@ -164,17 +175,28 @@ jobs:
 
             count=$(find . -name '*_test.go' | wc -l)
             if [[ "$count" -eq 0 ]]; then
-              echo "No test files found for module $modfile"
-              cd "$orig_dir"
-              continue
-            fi
+              
+              # Build needs to be excluded for tools module.
+              if [[ "$modfile" == */tools/go.mod ]]; then
+                echo "Skipping build for tools module"
+                cd "$orig_dir"
+                continue
+              fi
 
-            echo "Processing tests for module $modfile"
-            go test -v ./...
-            if [[ $? != 0 ]]; then
-              echo "Test suite failed for module $modfile"
-              has_failure=true
-            fi           
+              echo "Processing build for module $modfile"
+              go build .
+              if [[ $? != 0 ]]; then
+                echo "Build failed for module $modfile"
+                has_failure=true
+              fi
+            else
+              echo "Processing tests for module $modfile"
+              go test -v ./...
+              if [[ $? != 0 ]]; then
+                echo "Test suite failed for module $modfile"
+                has_failure=true
+              fi
+            fi                       
 
             cd "$orig_dir"
           done
