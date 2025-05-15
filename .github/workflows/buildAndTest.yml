@@ -51,7 +51,7 @@ jobs:
           for modfile in $go_mod_files; do
             cd $(dirname "$modfile")
 
-            find . -name '*.test.go' | wc -l
+            find . -name '*_test.go' | wc -l
             if [[ $? = 0 ]]; then
               echo "No test files found for module $modfile"
               cd "$orig_dir"
@@ -95,7 +95,7 @@ jobs:
           Get-ChildItem -Recurse -Filter 'go.mod' | ForEach-Object {
               Push-Location $_.Directory
 
-              $testFiles = Get-ChildItem -Recurse -Filter '*.test.go'
+              $testFiles = Get-ChildItem -Recurse -Filter '*_test.go'
               if ($testFiles.Count -eq 0) {
                 Write-Host "No test files found for module $modfile"
                 continue
@@ -143,7 +143,7 @@ jobs:
           for modfile in $go_mod_files; do
             cd $(dirname "$modfile")
 
-            find . -name '*.test.go' | wc -l
+            find . -name '*_test.go' | wc -l
             if [[ $? = 0 ]]; then
               echo "No test files found for module $modfile"
               cd "$orig_dir"
