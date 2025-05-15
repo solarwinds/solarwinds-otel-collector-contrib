@@ -17,8 +17,12 @@ env:
   GO_VERSION: '1.24'
 
 jobs:  
+  # To be removed after org config is merged.
   build_and_test:
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
   checks:
     runs-on: ubuntu-latest
