@@ -99,7 +99,7 @@ jobs:
               if ($testFiles.Count -eq 0) {
                 Write-Host "No test files found for module $modfile"
                 Pop-Location
-                continue
+                return
               }
 
               Write-Host "Processing tests for module $($_.FullName)"        
