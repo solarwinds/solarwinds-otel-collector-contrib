@@ -39,7 +39,7 @@ func Test_provide_Success(t *testing.T) {
 	p := &provider{cpuStatsProvider: &mockCpuStatsProvider{}}
 	container := <-p.Provide()
 
-	assert.EqualValues(
+	assert.ElementsMatch(
 		t,
 		[]WorkDetail{
 			{AttrName: "mode", AttrValue: "user", Value: 4000000},

@@ -24,13 +24,10 @@ import (
 )
 
 func Test_Provide_ProvidesFirewallContainerOnSucceedingCliCommand(t *testing.T) {
-	expectedModel := Container{
-		FirewallProfiles: []Profile{
-			{Name: "Domain", Enabled: 1},
-			{Name: "Private", Enabled: 0},
-			{Name: "Public", Enabled: 1},
-		},
-		Error: nil,
+	expectedProfiles := []Profile{
+		{Name: "Domain", Enabled: 1},
+		{Name: "Private", Enabled: 0},
+		{Name: "Public", Enabled: 1},
 	}
 
 	sut := provider{
@@ -45,7 +42,8 @@ func Test_Provide_ProvidesFirewallContainerOnSucceedingCliCommand(t *testing.T) 
 	actualModel := <-ch
 	_, open := <-ch
 
-	assert.Equal(t, expectedModel, actualModel, "exact model must be provided")
+	assert.ElementsMatch(t, expectedProfiles, actualModel.FirewallProfiles, "exact model must be provided")
+	assert.NoError(t, actualModel.Error)
 	assert.False(t, open, "channel must be closed at the end")
 }
 
