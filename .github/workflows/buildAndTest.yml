@@ -93,21 +93,29 @@ jobs:
 
               Write-Host "Processing tests for module $($_.FullName)"        
               $output = go test -v ./...
+              if ($LASTEXITCODE -ne 0) {
+                $hasFailure = $true
+              }
 
               # Reporting test output.
-              Write-Host $output
+              Write-Output $output
               
-              #$exitCode = $LASTEXITCODE
-              #$output | ForEach-Object { if ($_ -match 'FAIL') { $_ } }
-              #if ($exitCode -ne 0) {
-              #    $hasFailure = $true
-              #}
+              # Check on explicit FAIL in test output.
+              $output | ForEach-Object { if ($_ -match 'FAIL') { $_ } }
+              if ($LASTEXITCODE -eq 0) {
+                $hasFailure = $true
+              }
+              
               Pop-Location
           }
 
           if ($hasFailure) {
-              exit 1
+            "Some tests failed"
+            exit 1
           }
+
+          Write-Host "All tests passed"
+        shell: pwsh
         
   # build_and_test_darwin_arm64:
   #   # Based on https://docs.github.com/en/actions/using-github-hosted-runners/using-github-hosted-runners/about-github-hosted-runners#standard-github-hosted-runners-for-public-repositories
