@@ -111,36 +111,32 @@ jobs:
       - name: Run Tests
         run: |
           set +e
+          
           has_failure=false
           orig_dir=$(pwd)
 
           go_mod_files=$(find . -name go.mod)
           for modfile in $go_mod_files; do
-
-            echo "$modfile"
             cd $(dirname "$modfile")
-            echo "$(pwd)"
 
-            go test -v ./... > test_output.txt 2>&1 || true
+            echo "Processing tests for module $modfile"
+            go test -v ./... > test_output.txt 2>&1
             
+            # Reporting test output.
             cat test_output.txt
             
             cat test_output.txt | (grep -q "FAIL")
             if [ $? -eq 0 ]; then
               has_failure=true
-              echo "Exit code: $?"
             fi
 
-            # echo "Has Failure: $has_failure"
-
             cd "$orig_dir"
-            echo "$(pwd)"
           done
 
           if [ "$has_failure" = true ]; then
-            echo "Tests failed"
+            echo "Some tests failed"
             exit 1
           fi
 
-          echo "Tests passed"
+          echo "All tests passed"
         shell: bash
