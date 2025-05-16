@@ -1,0 +1,4 @@
+resourceLogs:
+  - resource:
+      attributes: [ { "key": "id1-broken", "value":{"stringValue": "test-id1"}},
+                    { "key": "attr1-broken", "value":{"stringValue": "test-attr1"}} ]
