@@ -2,6 +2,9 @@
 
 ## vNext
 
+## v0.0.3
+- Final release before clean up.
+
 ## v0.0.2
 - Creating some artificial content here.
 - To have something in our changelog report.
