@@ -15,11 +15,12 @@
 package internal
 
 import (
-	"github.com/solarwinds/solarwinds-otel-collector-releases/connector/solarwindsentityconnector/config"
+	"time"
+
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.uber.org/zap"
-	"time"
 )
 
 func AppendEntityUpdateEvent(lrs *plog.LogRecordSlice, entity config.Entity, resourceAttrs pcommon.Map) {

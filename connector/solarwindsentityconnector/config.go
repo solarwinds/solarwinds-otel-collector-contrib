@@ -15,7 +15,7 @@
 package solarwindsentityconnector
 
 import (
-	"github.com/solarwinds/solarwinds-otel-collector-releases/connector/solarwindsentityconnector/config"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"go.opentelemetry.io/collector/component"
 )
 

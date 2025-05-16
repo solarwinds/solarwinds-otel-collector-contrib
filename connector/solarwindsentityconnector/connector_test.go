@@ -16,13 +16,14 @@ package solarwindsentityconnector
 
 import (
 	"context"
-	"github.com/solarwinds/solarwinds-otel-collector-releases/connector/solarwindsentityconnector/config"
 	"path/filepath"
 	"testing"
 
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
+
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest/plogtest"
-	"github.com/solarwinds/solarwinds-otel-collector-releases/connector/solarwindsentityconnector/internal/metadata"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal/metadata"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component/componenttest"

@@ -4,7 +4,7 @@ package solarwindsentityconnector
 
 import (
 	"context"
-	"github.com/solarwinds/solarwinds-otel-collector-releases/connector/solarwindsentityconnector/internal/metadata"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal/metadata"
 	"testing"
 
 	"github.com/stretchr/testify/require"

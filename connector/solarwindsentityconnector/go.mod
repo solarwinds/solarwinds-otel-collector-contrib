@@ -1,4 +1,4 @@
-module github.com/solarwinds/solarwinds-otel-collector-releases/connector/solarwindsentityconnector
+module github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector
 
 go 1.24
 
