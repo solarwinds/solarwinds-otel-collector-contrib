@@ -8,7 +8,7 @@ import (
 
 var (
 	Type      = component.MustNewType("solarwindsentity")
-	ScopeName = "github.com/solarwinds/solarwinds-otel-collector-releases/connector/solarwindsentityconnector"
+	ScopeName = "github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector"
 )
 
 const (

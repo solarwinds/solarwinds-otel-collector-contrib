@@ -16,10 +16,11 @@ package internal
 
 import (
 	"fmt"
-	"github.com/solarwinds/solarwinds-otel-collector-releases/connector/solarwindsentityconnector/config"
+	"time"
+
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
-	"time"
 )
 
 // BuildEventLog prepares a clean LogRecordSlice, where log records representing events should be appended.
