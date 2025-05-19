@@ -1,0 +1,99 @@
+resourceLogs:
+  - resource: {}
+    scopeLogs:
+      - logRecords:
+          - attributes:
+              - key: otel.entity.type
+                value:
+                  stringValue: Snowflake
+              - key: otel.entity.id
+                value:
+                  kvlistValue:
+                    values:
+                      - key: snowflake.id
+                        value:
+                          stringValue: snowflake-instance-id
+              - key: otel.entity.attributes
+                value:
+                  kvlistValue: {}
+              - key: otel.entity.event.type
+                value:
+                  stringValue: entity_state
+            body: {}
+            observedTimeUnixNano: "1747408699106019000"
+            spanId: ""
+            traceId: ""
+          - attributes:
+              - key: otel.entity.type
+                value:
+                  stringValue: Kubernetes Pod
+              - key: otel.entity.id
+                value:
+                  kvlistValue:
+                    values:
+                      - key: k8s.pod.id
+                        value:
+                          stringValue: k8s-instance-id
+                      - key: k8s.pod.name
+                        value:
+                          stringValue: k8s-instance-name
+              - key: otel.entity.attributes
+                value:
+                  kvlistValue:
+                    values:
+                      - key: k8s.pod.port
+                        value:
+                          stringValue: "8080"
+              - key: otel.entity.event.type
+                value:
+                  stringValue: entity_state
+            body: {}
+            observedTimeUnixNano: "1747408699106039000"
+            spanId: ""
+            traceId: ""
+          - attributes:
+              - key: otel.entity_relationship.source_entity.id
+                value:
+                  kvlistValue:
+                    values:
+                      - key: snowflake.id
+                        value:
+                          stringValue: snowflake-instance-id
+              - key: otel.entity_relationship.destination_entity.id
+                value:
+                  kvlistValue:
+                    values:
+                      - key: k8s.pod.id
+                        value:
+                          stringValue: k8s-instance-id
+                      - key: k8s.pod.name
+                        value:
+                          stringValue: k8s-instance-name
+              - key: otel.entity_relationship.attributes
+                value:
+                  kvlistValue:
+                    values:
+                      - key: k8s.pod.port
+                        value:
+                          stringValue: "8080"
+              - key: otel.entity_relationship.type
+                value:
+                  stringValue: MemberOf
+              - key: otel.entity_relationship.source_entity.type
+                value:
+                  stringValue: Snowflake
+              - key: otel.entity_relationship.destination_entity.type
+                value:
+                  stringValue: Kubernetes Pod
+              - key: otel.entity.event.type
+                value:
+                  stringValue: entity_relationship_state
+            body: {}
+            observedTimeUnixNano: "1747408699106045000"
+            spanId: ""
+            traceId: ""
+        scope:
+          attributes:
+            - key: otel.entity.event_as_log
+              value:
+                boolValue: true

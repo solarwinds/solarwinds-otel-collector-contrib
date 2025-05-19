@@ -1,0 +1,14 @@
+resourceLogs:
+  - resource:
+      attributes: [ { "key": "k8s.pod.id", "value":{"stringValue": "k8s-instance-id-first"}},
+                    { "key": "k8s.pod.name", "value":{"stringValue": "k8s-instance-name-first"}}]
+  - resource:
+      attributes: [ { "key": "k8s.pod.id", "value":{"stringValue": "k8s-instance-id-second"}},
+                    { "key": "k8s.pod.name", "value":{"stringValue": "k8s-instance-name-second"}}]
+
+  - resource:
+      attributes: [ { "key": "src.k8s.pod.id", "value":{"stringValue": "k8s-instance-id-first"}},
+                    { "key": "src.k8s.pod.name", "value":{"stringValue": "k8s-instance-name-first"}},
+                    { "key": "dst.k8s.pod.id", "value":{"stringValue": "k8s-instance-id-second"}},
+                    { "key": "dst.k8s.pod.name", "value":{"stringValue": "k8s-instance-name-second"}},
+                    {"key": "k8s.pod.port", "value": {"stringValue": "8080"}}]

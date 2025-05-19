@@ -1,0 +1,8 @@
+resourceMetrics:
+  - resource:
+      attributes: [ { "key": "k8s.pod.id", "value":{"stringValue": "k8s-instance-id"}},
+                    { "key": "k8s.pod.name", "value":{"stringValue": "k8s-instance-name"}},
+                    { "key": "snowflake.id", "value":{"stringValue": "snowflake-instance-id"}},
+                    {"key": "k8s.pod.port", "value": {"stringValue": "8080"}}]
+      scopeMetrics:
+        - metrics:

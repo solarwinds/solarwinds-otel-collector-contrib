@@ -1,0 +1,20 @@
+resourceMetrics:
+  - resource:
+      attributes: [ { "key": "aws.ec2.id", "value":{"stringValue": "aws-instance-id-first"}},
+                    { "key": "aws.ec2.name", "value":{"stringValue": "aws-instance-name-first"}}]
+    scopeMetrics:
+      - metrics:
+  - resource:
+      attributes: [ { "key": "aws.ec2.id", "value":{"stringValue": "aws-instance-id-second"}},
+                    { "key": "aws.ec2.name", "value":{"stringValue": "aws-instance-name-second"}}]
+      
+  - resource:                          
+      scopeMetrics:
+        - metrics:
+  - resource:
+      attributes: [ { "key": "src.aws.ec2.id", "value":{"stringValue": "aws-instance-id-first"}},
+                    { "key": "src.aws.ec2.name", "value":{"stringValue": "aws-instance-name-first"}},
+                    { "key": "dst.aws.ec2.id", "value":{"stringValue": "aws-instance-id-second"}},
+                    { "key": "dst.aws.ec2.name", "value":{"stringValue": "aws-instance-name-second"}}]
+      scopeMetrics:
+        - metrics:

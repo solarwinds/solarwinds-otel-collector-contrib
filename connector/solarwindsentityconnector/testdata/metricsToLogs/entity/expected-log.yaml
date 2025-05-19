@@ -7,9 +7,9 @@ resourceLogs:
                 value:
                   kvlistValue:
                     values:
-                      - key: id1
+                      - key: snowflake.id
                         value:
-                          stringValue: test-id1
+                          stringValue: test-snowflake-id
               - key: otel.entity.event.type
                 value:
                   stringValue: entity_state
@@ -32,7 +32,7 @@ resourceLogs:
                 value:
                   kvlistValue:
                     values:
-                      - key: id1
+                      - key: snowflake.id
                         value:
                           stringValue: test-id2
               - key: otel.entity.event.type

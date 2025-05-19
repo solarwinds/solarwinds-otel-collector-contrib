@@ -1,11 +1,11 @@
 resourceMetrics:
   - resource:
-      attributes: [ { "key": "id1", "value":{"stringValue": "test-id1"}},
+      attributes: [ { "key": "snowflake.id", "value":{"stringValue": "test-snowflake-id"}},
                     { "key": "attr1", "value":{"stringValue": "test-attr1"}} ]
     scopeMetrics:
       - metrics:
   - resource:
-      attributes: [ { "key": "id1", "value":{"stringValue": "test-id2"}},
+      attributes: [ { "key": "snowflake.id", "value":{"stringValue": "test-id2"}},
                     { "key": "attr1", "value":{"stringValue": "test-attr2"}} ]
     scopeMetrics:
       - metrics:
