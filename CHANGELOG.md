@@ -2,6 +2,9 @@
 
 ## vNext
 
+## v0.123.4
+- Release of ./internal/k8sconfig.
+
 ## v0.123.3
 - Fixing module name for SolarWinds entity connector.
 
