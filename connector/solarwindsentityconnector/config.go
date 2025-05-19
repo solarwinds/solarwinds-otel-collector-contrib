@@ -20,7 +20,9 @@ import (
 )
 
 type Config struct {
-	Schema config.Schema `mapstructure:"schema"`
+	Schema            config.Schema `mapstructure:"schema"`
+	SourcePrefix      string        `mapstructure:"source_prefix"`
+	DestinationPrefix string        `mapstructure:"destination_prefix"`
 }
 
 func NewDefaultConfig() component.Config {

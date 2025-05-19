@@ -16,23 +16,9 @@ package internal
 
 import (
 	"fmt"
-	"time"
 
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"go.opentelemetry.io/collector/pdata/pcommon"
-	"go.opentelemetry.io/collector/pdata/plog"
 )
-
-// BuildEventLog prepares a clean LogRecordSlice, where log records representing events should be appended.
-// In given plog.Logs creates a resource log with one scope log and set attributes needed by SWO ingestion.
-func BuildEventLog(logs *plog.Logs) *plog.LogRecordSlice {
-	resourceLog := logs.ResourceLogs().AppendEmpty()
-	scopeLog := resourceLog.ScopeLogs().AppendEmpty()
-	scopeLog.Scope().Attributes().PutBool(entityEventAsLog, true)
-	lrs := scopeLog.LogRecords()
-
-	return &lrs
-}
 
 // setIdAttributes sets the entity id attributes in the log record as needed by SWO.
 // Attributes are used to infer the entity in the system.
@@ -41,18 +27,49 @@ func BuildEventLog(logs *plog.Logs) *plog.LogRecordSlice {
 // If any ID attribute is missing, the entity would not be inferred.
 func setIdAttributes(attrs pcommon.Map, entityIds []string, resourceAttrs pcommon.Map, name string) error {
 	if len(entityIds) == 0 {
-		return fmt.Errorf("entity id attributes are empty")
+		return fmt.Errorf("entity ID attributes are empty")
 	}
 
 	logIds := attrs.PutEmptyMap(name)
 	for _, id := range entityIds {
+
 		value, exists := findAttribute(id, resourceAttrs)
 		if !exists {
-			return fmt.Errorf("failed to find entity id attribute %s", id)
+			return fmt.Errorf("missing entity ID attribute: %s", id)
 		}
+
 		putAttribute(&logIds, id, value)
 	}
 	return nil
+}
+
+// setIdAttributesWithPrefix sets the entity id attributes in the log record as needed by SWO for same type relationships.
+// Verifies that prefix is present in the resource attributes at least once within entity IDs.
+func setIdAttributesWithPrefix(attrs pcommon.Map, entityIds []string, resourceAttrs pcommon.Map, name, prefix string) (bool, error) {
+	if len(entityIds) == 0 {
+		return false, fmt.Errorf("entity ID attributes are empty")
+	}
+
+	hasPrefix := false
+	logIds := attrs.PutEmptyMap(name)
+	for _, id := range entityIds {
+
+		value, exists := findAttribute(prefix+id, resourceAttrs)
+		if exists {
+			putAttribute(&logIds, id, value)
+			hasPrefix = true
+			continue
+		}
+
+		value, exists = findAttribute(id, resourceAttrs)
+		if exists {
+			putAttribute(&logIds, id, value)
+			continue
+		}
+
+		return false, fmt.Errorf("missing entity ID attribute: %s", id)
+	}
+	return hasPrefix, nil
 }
 
 // setEntityAttributes sets the entity attributes in the log record as needed by SWO.
@@ -93,42 +110,4 @@ func putAttribute(dest *pcommon.Map, key string, attrValue pcommon.Value) {
 	default:
 		dest.PutStr(key, attrValue.Str())
 	}
-}
-
-func CreateEntityEvent(resourceAttrs pcommon.Map, entity config.Entity) (plog.LogRecord, error) {
-	lr := plog.NewLogRecord()
-	attrs := lr.Attributes()
-	attrs.PutStr(entityType, entity.Type)
-
-	if err := setIdAttributes(attrs, entity.IDs, resourceAttrs, entityIds); err != nil {
-		return plog.LogRecord{}, err
-	}
-
-	setAttributes(attrs, entity.Attributes, resourceAttrs, entityAttributes)
-
-	lr.SetObservedTimestamp(pcommon.NewTimestampFromTime(time.Now()))
-
-	return lr, nil
-}
-
-func CreateRelationshipEvent(resourceAttrs pcommon.Map, relationship config.Relationship, source, dest config.Entity) (plog.LogRecord, error) {
-	lr := plog.NewLogRecord()
-	attrs := lr.Attributes()
-
-	attrs.PutStr(relationshipType, relationship.Type)
-	attrs.PutStr(srcEntityType, source.Type)
-	attrs.PutStr(destEntityType, dest.Type)
-
-	if err := setIdAttributes(attrs, source.IDs, resourceAttrs, relationshipSrcEntityIds); err != nil {
-		return plog.LogRecord{}, fmt.Errorf("source entity: %w", err)
-	}
-
-	if err := setIdAttributes(attrs, dest.IDs, resourceAttrs, relationshipDestEntityIds); err != nil {
-		return plog.LogRecord{}, fmt.Errorf("destination entity: %w", err)
-	}
-
-	setAttributes(attrs, relationship.Attributes, resourceAttrs, relationshipAttributes)
-
-	lr.SetObservedTimestamp(pcommon.NewTimestampFromTime(time.Now()))
-	return lr, nil
 }

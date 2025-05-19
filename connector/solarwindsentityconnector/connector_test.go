@@ -46,26 +46,101 @@ func (t *testLogsConsumer) ConsumeLogs(ctx context.Context, ld plog.Logs) error 
 
 var _ consumer.Logs = (*testLogsConsumer)(nil)
 
+// Test configuration for the entites, relationships and events.
 var (
-	expectedEntities = []config.Entity{
-		{Type: "Snowflake", IDs: []string{"id1"}, Attributes: []string{"attr1"}},
+	configuredEntities = []config.Entity{
+		{Type: "Snowflake", IDs: []string{"snowflake.id"}, Attributes: []string{"attr1"}},
+		{Type: "AWS EC2", IDs: []string{"aws.ec2.id", "aws.ec2.name"}, Attributes: []string{"attr2"}},
+		{Type: "Kubernetes Pod", IDs: []string{"k8s.pod.id", "k8s.pod.name"}, Attributes: []string{"k8s.pod.port"}},
+	}
+
+	configuredRelationships = []config.Relationship{
+		{
+			Type:        "MemberOf",
+			Source:      "Snowflake",
+			Destination: "AWS EC2",
+			Attributes:  []string{},
+		},
+		{
+			Type:        "TestRelationshipType",
+			Source:      "AWS EC2",
+			Destination: "AWS EC2",
+			Attributes:  []string{},
+		},
+		{
+			Type:        "TestRelationshipType",
+			Source:      "Kubernetes Pod",
+			Destination: "Kubernetes Pod",
+			Attributes:  []string{"k8s.pod.port"},
+		},
+		{
+			Type:        "MemberOf",
+			Source:      "Snowflake",
+			Destination: "Kubernetes Pod",
+			Attributes:  []string{"k8s.pod.port"},
+		},
+	}
+
+	configuredEvents = config.Events{
+		Relationships: configuredRelationships,
 	}
 )
 
 func TestLogsToLogs(t *testing.T) {
+
 	testCases := []struct {
 		name         string
 		inputFile    string
 		expectedFile string
 	}{
 		{
+			name:         "when relationship for different type is inferred log event is sent",
+			inputFile:    "relationship/different-types-relationship/input-log-different-type-relationship.yaml",
+			expectedFile: "relationship/different-types-relationship/expected-log-different-type-relationship.yaml",
+		},
+		{
+			name:         "when relationship for same type is inferred log event is sent",
+			inputFile:    "relationship/same-type-relationship/input-log-same-type-relationship.yaml",
+			expectedFile: "relationship/same-type-relationship/expected-log-same-type-relationship.yaml",
+		},
+		{
+			name:         "when relationship for same type is not inferred no log is sent",
+			inputFile:    "relationship/same-type-relationship/input-log-same-type-relationship-nomatch.yaml",
+			expectedFile: "relationship/same-type-relationship/expected-log-same-type-relationship-nomatch.yaml",
+		},
+		{
 			name:         "when entity is inferred log event is sent",
-			inputFile:    "input-log.yaml",
-			expectedFile: "expected-log.yaml",
+			inputFile:    "entity/input-log.yaml",
+			expectedFile: "entity/expected-log.yaml",
 		},
 		{
 			name:      "when entity is not inferred no log is sent",
-			inputFile: "input-log-nomatch.yaml",
+			inputFile: "entity/input-log-nomatch.yaml",
+		},
+		{
+			name:         "when relationship for same type and having common id attributes is inferred log event is sent",
+			inputFile:    "relationship/same-type-relationship/input-log-same-type-relationship-common-atr.yaml",
+			expectedFile: "relationship/same-type-relationship/expected-log-same-type-relationship-common-atr.yaml",
+		},
+		{
+			name:         "when log for different type relationship has redundant attributes, log event is sent",
+			inputFile:    "relationship/different-types-relationship/input-log-different-type-relationship-redundant-atr.yaml",
+			expectedFile: "relationship/different-types-relationship/expected-log-different-type-relationship-redundant-atr.yaml",
+		},
+		{
+			name:         "when log for different type relationship hasn't all necessary id attributes, log event is sent",
+			inputFile:    "relationship/different-types-relationship/input-log-different-type-relationship-missing-atr.yaml",
+			expectedFile: "relationship/different-types-relationship/expected-log-different-type-relationship-missing-atr.yaml",
+		},
+		{
+			name:         "when log for same type relationship, log event is sent with relationship attributes",
+			inputFile:    "relationship/same-type-relationship/input-log-same-type-relationship-res-atr.yaml",
+			expectedFile: "relationship/same-type-relationship/expected-log-same-type-relationship-res-atr.yaml",
+		},
+		{
+			name:         "when log for different type relationship, log event is sent with relationship attributes",
+			inputFile:    "relationship/different-types-relationship/input-log-different-type-relationship-res-atr.yaml",
+			expectedFile: "relationship/different-types-relationship/expected-log-different-type-relationship-res-atr.yaml",
 		},
 	}
 
@@ -74,7 +149,14 @@ func TestLogsToLogs(t *testing.T) {
 			factory := NewFactory()
 			sink := &consumertest.LogsSink{}
 			conn, err := factory.CreateLogsToLogs(context.Background(),
-				connectortest.NewNopSettings(metadata.Type), &Config{config.Schema{Entities: expectedEntities}}, sink)
+				connectortest.NewNopSettings(metadata.Type), &Config{
+					Schema: config.Schema{
+						Entities: configuredEntities,
+						Events:   configuredEvents,
+					},
+					SourcePrefix:      "src.",
+					DestinationPrefix: "dst.",
+				}, sink)
 			require.NoError(t, err)
 			require.NotNil(t, conn)
 
@@ -84,6 +166,7 @@ func TestLogsToLogs(t *testing.T) {
 			}()
 
 			testLogs, err := golden.ReadLogs(filepath.Join("testdata", "logsToLogs", tc.inputFile))
+
 			assert.NoError(t, err)
 			assert.NoError(t, conn.ConsumeLogs(context.Background(), testLogs))
 
@@ -94,6 +177,7 @@ func TestLogsToLogs(t *testing.T) {
 			}
 
 			expected, err := golden.ReadLogs(filepath.Join("testdata", "logsToLogs", tc.expectedFile))
+
 			assert.NoError(t, err)
 			assert.Equal(t, allLogs[0].LogRecordCount(), expected.LogRecordCount())
 			assert.NoError(t, plogtest.CompareLogs(expected, allLogs[0], plogtest.IgnoreObservedTimestamp()))
@@ -109,12 +193,53 @@ func TestMetricsToLogs(t *testing.T) {
 	}{
 		{
 			name:         "when entity is inferred, log event is sent",
-			inputFile:    "input-metric.yaml",
-			expectedFile: "expected-log.yaml",
+			inputFile:    "entity/input-metric.yaml",
+			expectedFile: "entity/expected-log.yaml",
 		},
 		{
 			name:      "when entity is not inferred, no log is sent",
-			inputFile: "input-metric-nomatch.yaml",
+			inputFile: "entity/input-metric-nomatch.yaml",
+		},
+		{
+			name:         "when relationship for different type is inferred log event is sent",
+			inputFile:    "relationship/different-types-relationship/input-metric-different-type-relationship.yaml",
+			expectedFile: "relationship/different-types-relationship/expected-metric-different-type-relationship.yaml",
+		},
+		{
+			name:         "when relationship for same type is inferred log event is sent",
+			inputFile:    "relationship/same-type-relationship/input-metric-same-type-relationship.yaml",
+			expectedFile: "relationship/same-type-relationship/expected-metric-same-type-relationship.yaml",
+		},
+		{
+			name:         "when relationship for same type is not inferred no log is sent",
+			inputFile:    "relationship/same-type-relationship/input-metric-same-type-relationship-nomatch.yaml",
+			expectedFile: "relationship/same-type-relationship/expected-metric-same-type-relationship-nomatch.yaml",
+		},
+
+		{
+			name:         "when relationship for same type and having common id attributes is inferred log event is sent",
+			inputFile:    "relationship/same-type-relationship/input-metric-same-type-relationship-common-atr.yaml",
+			expectedFile: "relationship/same-type-relationship/expected-metric-same-type-relationship-common-atr.yaml",
+		},
+		{
+			name:         "when metric for different type relationship has redundant attributes, log event is sent",
+			inputFile:    "relationship/different-types-relationship/input-metric-different-type-relationship-redundant-atr.yaml",
+			expectedFile: "relationship/different-types-relationship/expected-metric-different-type-relationship-redundant-atr.yaml",
+		},
+		{
+			name:         "when metric for different type relationship hasn't all necessary id attributes, log event is sent",
+			inputFile:    "relationship/different-types-relationship/input-metric-different-type-relationship-missing-atr.yaml",
+			expectedFile: "relationship/different-types-relationship/expected-metric-different-type-relationship-missing-atr.yaml",
+		},
+		{
+			name:         "when metric for same type relationship, log event is sent with relationship attributes",
+			inputFile:    "relationship/same-type-relationship/input-metric-same-type-relationship-res-atr.yaml",
+			expectedFile: "relationship/same-type-relationship/expected-metric-same-type-relationship-res-atr.yaml",
+		},
+		{
+			name:         "when metric for different type relationship, log event is sent with relationship attributes",
+			inputFile:    "relationship/different-types-relationship/input-metric-different-type-relationship-res-atr.yaml",
+			expectedFile: "relationship/different-types-relationship/expected-metric-different-type-relationship-res-atr.yaml",
 		},
 	}
 
@@ -123,7 +248,14 @@ func TestMetricsToLogs(t *testing.T) {
 			factory := NewFactory()
 			sink := &consumertest.LogsSink{}
 			conn, err := factory.CreateMetricsToLogs(context.Background(),
-				connectortest.NewNopSettings(metadata.Type), &Config{config.Schema{Entities: expectedEntities}}, sink)
+				connectortest.NewNopSettings(metadata.Type), &Config{
+					Schema: config.Schema{
+						Entities: configuredEntities,
+						Events:   configuredEvents,
+					},
+					SourcePrefix:      "src.",
+					DestinationPrefix: "dst.",
+				}, sink)
 			require.NoError(t, err)
 			require.NotNil(t, conn)
 
@@ -142,7 +274,9 @@ func TestMetricsToLogs(t *testing.T) {
 				return
 			}
 
+			// err = golden.WriteLogs(t, filepath.Join("testdata", "metricsToLogs", "actual.yaml"), allLogs[0])
 			expected, err := golden.ReadLogs(filepath.Join("testdata", "metricsToLogs", tc.expectedFile))
+
 			assert.NoError(t, err)
 			assert.Equal(t, allLogs[0].LogRecordCount(), expected.LogRecordCount())
 			assert.NoError(t, plogtest.CompareLogs(expected, allLogs[0], plogtest.IgnoreObservedTimestamp()))

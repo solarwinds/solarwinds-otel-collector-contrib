@@ -7,9 +7,9 @@ resourceLogs:
                 value:
                   kvlistValue:
                     values:
-                      - key: id1
+                      - key: snowflake.id
                         value:
-                          stringValue: test-id1
+                          stringValue: test-snowflake-id
               - key: otel.entity.event.type
                 value:
                   stringValue: entity_state
@@ -24,7 +24,7 @@ resourceLogs:
                         value:
                           stringValue: test-attr1
             body: {}
-            observedTimeUnixNano: "1745488726999834000"
+            observedTimeUnixNano: "1745488809224774000"
             spanId: ""
             traceId: ""
           - attributes:
@@ -32,7 +32,7 @@ resourceLogs:
                 value:
                   kvlistValue:
                     values:
-                      - key: id1
+                      - key: snowflake.id
                         value:
                           stringValue: test-id2
               - key: otel.entity.event.type
