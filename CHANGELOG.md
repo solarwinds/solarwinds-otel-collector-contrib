@@ -2,6 +2,10 @@
 
 ## vNext
 
+## v0.123.7
+- Aligning version with [solarwinds-otel-collector-releases](https://github.com/solarwinds/solarwinds-otel-collector-releases) repository.
+- Latest version of `solarwindsentityconnector` moved to this repository from [solarwinds-otel-collector-releases](https://github.com/solarwinds/solarwinds-otel-collector-releases).
+
 ## v0.123.4
 - Release of ./internal/k8sconfig.
 
