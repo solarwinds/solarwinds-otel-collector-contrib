@@ -202,6 +202,28 @@ func TestProcessorMetricsPipeline(t *testing.T) {
 				"src_type":      "Pod",
 			},
 		},
+		{
+			name:         "mapping does not overwrite existing workload type",
+			existingPods: []*corev1.Pod{testPod},
+			workloadMappings: []K8sWorkloadMappingConfig{
+				{
+					NameAttr:         "src_workload",
+					NamespaceAttr:    "src_namespace",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"pods"},
+				},
+			},
+			receivedMetricAttrs: map[string]string{
+				"src_workload":  testPod.Name,
+				"src_namespace": testPod.Namespace,
+				"src_type":      "already_set",
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_workload":  testPod.Name,
+				"src_namespace": testPod.Namespace,
+				"src_type":      "already_set",
+			},
+		},
 	}
 
 	for _, tt := range tests {

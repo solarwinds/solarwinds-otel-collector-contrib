@@ -55,6 +55,10 @@ func processDatapoints[DPS dataPointSlice[DP], DP dataPoint](cp *swok8sworkloadt
 	for _, dp := range datapoints.All() {
 		attributes := dp.Attributes()
 		for _, workloadMapping := range cp.config.WorkloadMappings {
+			if cp.getAttribute(attributes, workloadMapping.WorkloadTypeAttr) != "" {
+				// Skip if the workload type attribute is already set
+				continue
+			}
 			name := cp.getAttribute(attributes, workloadMapping.NameAttr)
 			if name == "" {
 				continue
