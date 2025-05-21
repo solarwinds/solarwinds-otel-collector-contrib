@@ -11,6 +11,12 @@ swok8sworkloadtype/missing_expected_types:
     - name_attr: "source_workload"
       namespace_attr: "source_workload_namespace"
       workload_type_attr: "source_workload_type"
+swok8sworkloadtype/missing_workload_type:
+  workload_mappings:
+    - name_attr: "source_workload"
+      namespace_attr: "source_workload_namespace"
+      expected_types:
+        - deployments
 swok8sworkloadtype/invalid_expected_types:
   workload_mappings:
     - name_attr: "source_workload"
@@ -39,3 +45,10 @@ swok8sworkloadtype/valid_config:
       expected_types:
         - services
         - pods
+swok8sworkloadtype/inconsistent_attribute_context:
+  workload_mappings:
+    - name_attr: "datapoint.source_workload"
+      namespace_attr: "source_workload_namespace"
+      workload_type_attr: "source_workload_type"
+      expected_types:
+        - deployments

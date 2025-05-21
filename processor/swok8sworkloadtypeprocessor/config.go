@@ -29,8 +29,8 @@ import (
 
 type Config struct {
 	k8sconfig.APIConfig `mapstructure:",squash"`
-	WorkloadMappings    []K8sWorkloadMappingConfig `mapstructure:"workload_mappings"`
-	WatchSyncPeriod     time.Duration              `mapstructure:"watch_sync_period"`
+	WorkloadMappings    []*K8sWorkloadMappingConfig `mapstructure:"workload_mappings"`
+	WatchSyncPeriod     time.Duration               `mapstructure:"watch_sync_period"`
 	mappedExpectedTypes map[string]groupVersionResourceKind
 }
 
@@ -44,7 +44,17 @@ type K8sWorkloadMappingConfig struct {
 	NamespaceAttr    string   `mapstructure:"namespace_attr"`
 	WorkloadTypeAttr string   `mapstructure:"workload_type_attr"`
 	ExpectedTypes    []string `mapstructure:"expected_types"`
+	context          statementContext
 }
+
+type statementContext string
+
+const (
+	ResourceContext  statementContext = "resource"
+	ScopeContext     statementContext = "scope"
+	MetricContext    statementContext = "metric"
+	DataPointContext statementContext = "datapoint"
+)
 
 func (c *Config) Validate() error {
 	if len(c.WorkloadMappings) == 0 {
@@ -57,6 +67,9 @@ func (c *Config) Validate() error {
 	}
 
 	for _, mapping := range c.WorkloadMappings {
+		if mapping == nil {
+			return fmt.Errorf("workload_mapping cannot be nil")
+		}
 		if err := mapping.validate(validObjects, c.mappedExpectedTypes); err != nil {
 			return err
 		}
@@ -72,6 +85,32 @@ func (m *K8sWorkloadMappingConfig) validate(validObjects map[string][]groupVersi
 	if m.WorkloadTypeAttr == "" {
 		return fmt.Errorf("workload_type_attr cannot be empty")
 	}
+
+	extractContext := func(attrName *string) statementContext {
+		if before, after, found := strings.Cut(*attrName, "."); found {
+			ctx := statementContext(before)
+			if ctx == DataPointContext || ctx == MetricContext || ctx == ScopeContext || ctx == ResourceContext {
+				*attrName = after
+				return ctx
+			}
+		}
+		return ""
+	}
+
+	nameCtx := extractContext(&m.NameAttr)
+	workloadTypeCtx := extractContext(&m.WorkloadTypeAttr)
+	namespaceCtx := extractContext(&m.NamespaceAttr)
+
+	if (nameCtx != workloadTypeCtx) || (m.NamespaceAttr != "" && namespaceCtx != nameCtx) {
+		return fmt.Errorf("inconsistent context in workload mapping")
+	}
+
+	m.context = nameCtx
+
+	if m.context == "" {
+		m.context = DataPointContext
+	}
+
 	if len(m.ExpectedTypes) == 0 {
 		return fmt.Errorf("expected_types cannot be empty")
 	}
