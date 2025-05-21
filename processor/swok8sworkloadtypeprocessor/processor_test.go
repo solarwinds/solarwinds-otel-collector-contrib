@@ -16,7 +16,6 @@ package swok8sworkloadtypeprocessor
 
 import (
 	"context"
-	"maps"
 	"testing"
 	"time"
 
@@ -50,14 +49,14 @@ func TestProcessorMetricsPipeline(t *testing.T) {
 		name                string
 		existingPods        []*corev1.Pod
 		existingDeployments []*appsv1.Deployment
-		workloadMappings    []K8sWorkloadMappingConfig
-		receivedMetricAttrs map[string]string
+		workloadMappings    []*K8sWorkloadMappingConfig
+		receivedMetricAttrs map[string]any
 		expectedMetricAttrs map[string]any
 	}{
 		{
 			name:         "mapping matches existing pod",
 			existingPods: []*corev1.Pod{testPod},
-			workloadMappings: []K8sWorkloadMappingConfig{
+			workloadMappings: []*K8sWorkloadMappingConfig{
 				{
 					NameAttr:         "src_workload",
 					NamespaceAttr:    "src_namespace",
@@ -65,7 +64,7 @@ func TestProcessorMetricsPipeline(t *testing.T) {
 					ExpectedTypes:    []string{"pods"},
 				},
 			},
-			receivedMetricAttrs: map[string]string{
+			receivedMetricAttrs: map[string]any{
 				"src_workload":  testPod.Name,
 				"src_namespace": testPod.Namespace,
 			},
@@ -78,7 +77,7 @@ func TestProcessorMetricsPipeline(t *testing.T) {
 		{
 			name:         "mapping does not match existing pod because of different name",
 			existingPods: []*corev1.Pod{testPod},
-			workloadMappings: []K8sWorkloadMappingConfig{
+			workloadMappings: []*K8sWorkloadMappingConfig{
 				{
 					NameAttr:         "src_workload",
 					NamespaceAttr:    "src_namespace",
@@ -86,7 +85,7 @@ func TestProcessorMetricsPipeline(t *testing.T) {
 					ExpectedTypes:    []string{"pods"},
 				},
 			},
-			receivedMetricAttrs: map[string]string{
+			receivedMetricAttrs: map[string]any{
 				"src_workload":  "other_pod",
 				"src_namespace": testPod.Namespace,
 			},
@@ -98,7 +97,7 @@ func TestProcessorMetricsPipeline(t *testing.T) {
 		{
 			name:         "mapping does not match existing pod because of different namespace",
 			existingPods: []*corev1.Pod{testPod},
-			workloadMappings: []K8sWorkloadMappingConfig{
+			workloadMappings: []*K8sWorkloadMappingConfig{
 				{
 					NameAttr:         "src_workload",
 					NamespaceAttr:    "src_namespace",
@@ -106,7 +105,7 @@ func TestProcessorMetricsPipeline(t *testing.T) {
 					ExpectedTypes:    []string{"pods"},
 				},
 			},
-			receivedMetricAttrs: map[string]string{
+			receivedMetricAttrs: map[string]any{
 				"src_workload":  testPod.Name,
 				"src_namespace": "other_pod_namespace",
 			},
@@ -118,7 +117,7 @@ func TestProcessorMetricsPipeline(t *testing.T) {
 		{
 			name:         "mapping does not match existing pod because of missing name attribute",
 			existingPods: []*corev1.Pod{testPod},
-			workloadMappings: []K8sWorkloadMappingConfig{
+			workloadMappings: []*K8sWorkloadMappingConfig{
 				{
 					NameAttr:         "src_workload",
 					NamespaceAttr:    "src_namespace",
@@ -126,7 +125,7 @@ func TestProcessorMetricsPipeline(t *testing.T) {
 					ExpectedTypes:    []string{"pods"},
 				},
 			},
-			receivedMetricAttrs: map[string]string{
+			receivedMetricAttrs: map[string]any{
 				"src_namespace": testPod.Namespace,
 			},
 			expectedMetricAttrs: map[string]any{
@@ -136,7 +135,7 @@ func TestProcessorMetricsPipeline(t *testing.T) {
 		{
 			name:         "mapping does not match existing pod because of missing namespace attribute",
 			existingPods: []*corev1.Pod{testPod},
-			workloadMappings: []K8sWorkloadMappingConfig{
+			workloadMappings: []*K8sWorkloadMappingConfig{
 				{
 					NameAttr:         "src_workload",
 					NamespaceAttr:    "src_namespace",
@@ -144,7 +143,7 @@ func TestProcessorMetricsPipeline(t *testing.T) {
 					ExpectedTypes:    []string{"pods"},
 				},
 			},
-			receivedMetricAttrs: map[string]string{
+			receivedMetricAttrs: map[string]any{
 				"src_workload": testPod.Name,
 			},
 			expectedMetricAttrs: map[string]any{
@@ -155,7 +154,7 @@ func TestProcessorMetricsPipeline(t *testing.T) {
 			name:                "mapping matches existing deployment",
 			existingPods:        []*corev1.Pod{testPod},
 			existingDeployments: []*appsv1.Deployment{testDeployment},
-			workloadMappings: []K8sWorkloadMappingConfig{
+			workloadMappings: []*K8sWorkloadMappingConfig{
 				{
 					NameAttr:         "src_workload",
 					NamespaceAttr:    "src_namespace",
@@ -163,7 +162,7 @@ func TestProcessorMetricsPipeline(t *testing.T) {
 					ExpectedTypes:    []string{"pods", "deployments"},
 				},
 			},
-			receivedMetricAttrs: map[string]string{
+			receivedMetricAttrs: map[string]any{
 				"src_workload":  testDeployment.Name,
 				"src_namespace": testDeployment.Namespace,
 			},
@@ -184,7 +183,7 @@ func TestProcessorMetricsPipeline(t *testing.T) {
 				},
 			},
 			existingDeployments: []*appsv1.Deployment{testDeployment},
-			workloadMappings: []K8sWorkloadMappingConfig{
+			workloadMappings: []*K8sWorkloadMappingConfig{
 				{
 					NameAttr:         "src_workload",
 					NamespaceAttr:    "src_namespace",
@@ -192,7 +191,7 @@ func TestProcessorMetricsPipeline(t *testing.T) {
 					ExpectedTypes:    []string{"pods", "deployments"},
 				},
 			},
-			receivedMetricAttrs: map[string]string{
+			receivedMetricAttrs: map[string]any{
 				"src_workload":  "shared_name",
 				"src_namespace": "shared_namespace",
 			},
@@ -205,7 +204,7 @@ func TestProcessorMetricsPipeline(t *testing.T) {
 		{
 			name:         "mapping does not overwrite existing workload type",
 			existingPods: []*corev1.Pod{testPod},
-			workloadMappings: []K8sWorkloadMappingConfig{
+			workloadMappings: []*K8sWorkloadMappingConfig{
 				{
 					NameAttr:         "src_workload",
 					NamespaceAttr:    "src_namespace",
@@ -213,7 +212,7 @@ func TestProcessorMetricsPipeline(t *testing.T) {
 					ExpectedTypes:    []string{"pods"},
 				},
 			},
-			receivedMetricAttrs: map[string]string{
+			receivedMetricAttrs: map[string]any{
 				"src_workload":  testPod.Name,
 				"src_namespace": testPod.Namespace,
 				"src_type":      "already_set",
@@ -300,8 +299,7 @@ func TestProcessorMetricsPipelineForDifferentMetricTypes(t *testing.T) {
 
 	tests := []struct {
 		name                   string
-		existingDeployments    []*appsv1.Deployment
-		receivedMetricProvider func(map[string]string) pmetric.Metrics
+		receivedMetricProvider func(map[string]any) pmetric.Metrics
 		actualAttrsProvider    func(pmetric.Metrics) map[string]any
 	}{
 		{
@@ -362,7 +360,7 @@ func TestProcessorMetricsPipelineForDifferentMetricTypes(t *testing.T) {
 			factory := NewFactory()
 
 			cfg := factory.CreateDefaultConfig().(*Config)
-			cfg.WorkloadMappings = []K8sWorkloadMappingConfig{
+			cfg.WorkloadMappings = []*K8sWorkloadMappingConfig{
 				{
 					NameAttr:         "src_workload",
 					NamespaceAttr:    "src_namespace",
@@ -383,7 +381,7 @@ func TestProcessorMetricsPipelineForDifferentMetricTypes(t *testing.T) {
 
 			require.NotPanics(t, func() {
 				metric := tt.receivedMetricProvider(
-					map[string]string{
+					map[string]any{
 						"src_workload":  testPod.Name,
 						"src_namespace": testPod.Namespace,
 					})
@@ -408,56 +406,247 @@ func TestProcessorMetricsPipelineForDifferentMetricTypes(t *testing.T) {
 	}
 }
 
-func generateGaugeForTestProcessorMetricsPipeline(attrs map[string]string) pmetric.Metrics {
+func TestProcessorMetricsPipelineForDifferentContexts(t *testing.T) {
+
+	testPod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test_pod",
+			Namespace: "test_pod_namespace",
+		},
+	}
+	testDeployment := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test_deployment",
+			Namespace: "test_deployment_namespace",
+		},
+	}
+	testStatefulSet := &appsv1.StatefulSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test_statefulset",
+			Namespace: "test_statefulset_namespace",
+		},
+	}
+	testDaemonSet := &appsv1.DaemonSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test_daemonset",
+			Namespace: "test_daemonset_namespace",
+		},
+	}
+
+	tests := []struct {
+		name                   string
+		existingPods           []*corev1.Pod
+		existingDeployments    []*appsv1.Deployment
+		existingStatefulSets   []*appsv1.StatefulSet
+		existingDaemonSets     []*appsv1.DaemonSet
+		workloadMappings       []*K8sWorkloadMappingConfig
+		receivedResourceAttrs  map[string]any
+		expectedResourceAttrs  map[string]any
+		receivedScopeAttrs     map[string]any
+		expectedScopeAttrs     map[string]any
+		receivedMetricAttrs    map[string]any
+		expectedMetricAttrs    map[string]any
+		receivedDatapointAttrs map[string]any
+		expectedDatapointAttrs map[string]any
+	}{
+		{
+			name:                 "mapping matches existing all workload types defined in all scopes",
+			existingPods:         []*corev1.Pod{testPod},
+			existingDeployments:  []*appsv1.Deployment{testDeployment},
+			existingStatefulSets: []*appsv1.StatefulSet{testStatefulSet},
+			existingDaemonSets:   []*appsv1.DaemonSet{testDaemonSet},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					NameAttr:         "resource.src_workload",
+					NamespaceAttr:    "resource.src_namespace",
+					WorkloadTypeAttr: "resource.src_type",
+					ExpectedTypes:    []string{"pods"},
+				},
+				{
+					NameAttr:         "metric.src_workload",
+					NamespaceAttr:    "metric.src_namespace",
+					WorkloadTypeAttr: "metric.src_type",
+					ExpectedTypes:    []string{"daemonsets"},
+				},
+				{
+					NameAttr:         "scope.src_workload",
+					NamespaceAttr:    "scope.src_namespace",
+					WorkloadTypeAttr: "scope.src_type",
+					ExpectedTypes:    []string{"statefulsets"},
+				},
+				{
+					NameAttr:         "datapoint.src_workload",
+					NamespaceAttr:    "datapoint.src_namespace",
+					WorkloadTypeAttr: "datapoint.src_type",
+					ExpectedTypes:    []string{"deployments"},
+				},
+			},
+			receivedResourceAttrs: map[string]any{
+				"src_workload":  testPod.Name,
+				"src_namespace": testPod.Namespace,
+			},
+			expectedResourceAttrs: map[string]any{
+				"src_workload":  testPod.Name,
+				"src_namespace": testPod.Namespace,
+				"src_type":      "Pod",
+			},
+			receivedScopeAttrs: map[string]any{
+				"src_workload":  testStatefulSet.Name,
+				"src_namespace": testStatefulSet.Namespace,
+			},
+			expectedScopeAttrs: map[string]any{
+				"src_workload":  testStatefulSet.Name,
+				"src_namespace": testStatefulSet.Namespace,
+				"src_type":      "StatefulSet",
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_workload":  testDaemonSet.Name,
+				"src_namespace": testDaemonSet.Namespace,
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_workload":  testDaemonSet.Name,
+				"src_namespace": testDaemonSet.Namespace,
+				"src_type":      "DaemonSet",
+			},
+			receivedDatapointAttrs: map[string]any{
+				"src_workload":  testDeployment.Name,
+				"src_namespace": testDeployment.Namespace,
+			},
+			expectedDatapointAttrs: map[string]any{
+				"src_workload":  testDeployment.Name,
+				"src_namespace": testDeployment.Namespace,
+				"src_type":      "Deployment",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock, reset := MockKubeClient()
+			defer reset()
+			mock.MockedServerPreferredResources = []*metav1.APIResourceList{
+				{
+					GroupVersion: "v1",
+					APIResources: []metav1.APIResource{
+						{
+							Name: "pods",
+							Kind: "Pod",
+						},
+					},
+				},
+				{
+					GroupVersion: "apps/v1",
+					APIResources: []metav1.APIResource{
+						{
+							Name: "deployments",
+							Kind: "Deployment",
+						},
+						{
+							Name: "statefulsets",
+							Kind: "StatefulSet",
+						},
+						{
+							Name: "daemonsets",
+							Kind: "DaemonSet",
+						},
+					},
+				},
+			}
+
+			for _, pod := range tt.existingPods {
+				mock.CoreV1().Pods(pod.Namespace).Create(context.Background(), pod, metav1.CreateOptions{})
+			}
+			for _, deployment := range tt.existingDeployments {
+				mock.AppsV1().Deployments(deployment.Namespace).Create(context.Background(), deployment, metav1.CreateOptions{})
+			}
+			for _, statefulSet := range tt.existingStatefulSets {
+				mock.AppsV1().StatefulSets(statefulSet.Namespace).Create(context.Background(), statefulSet, metav1.CreateOptions{})
+			}
+			for _, daemonSet := range tt.existingDaemonSets {
+				mock.AppsV1().DaemonSets(daemonSet.Namespace).Create(context.Background(), daemonSet, metav1.CreateOptions{})
+			}
+
+			factory := NewFactory()
+
+			cfg := factory.CreateDefaultConfig().(*Config)
+			cfg.WorkloadMappings = tt.workloadMappings
+			err := cfg.Validate()
+			require.NoError(t, err)
+
+			sink := new(consumertest.MetricsSink)
+
+			c, err := factory.CreateMetrics(context.Background(), processortest.NewNopSettings(factory.Type()), cfg, sink)
+			require.NoError(t, err)
+
+			err = c.Start(context.Background(), componenttest.NewNopHost())
+			require.NoError(t, err)
+
+			require.NotPanics(t, func() {
+				metric := generateGaugeWithAllAttributesForTestProcessorMetricsPipeline(tt.receivedResourceAttrs, tt.receivedScopeAttrs, tt.receivedMetricAttrs, tt.receivedDatapointAttrs)
+				err = c.ConsumeMetrics(context.Background(), metric)
+			})
+
+			require.NoError(t, err)
+			err = c.Shutdown(context.Background())
+			require.NoError(t, err)
+
+			sentMetrics := sink.AllMetrics()
+
+			resourceAttrs := sentMetrics[0].ResourceMetrics().At(0).Resource().Attributes().AsRaw()
+			require.Equal(t, tt.expectedResourceAttrs, resourceAttrs, "Expected attributes should match the actual resource attributes on metric exiting the processor")
+
+			scopeAttrs := sentMetrics[0].ResourceMetrics().At(0).ScopeMetrics().At(0).Scope().Attributes().AsRaw()
+			require.Equal(t, tt.expectedScopeAttrs, scopeAttrs, "Expected attributes should match the actual scope attributes on metric exiting the processor")
+
+			metricAttrs := sentMetrics[0].ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics().At(0).Metadata().AsRaw()
+			require.Equal(t, tt.expectedMetricAttrs, metricAttrs, "Expected attributes should match the actual metric attributes on metric exiting the processor")
+
+			datapointAttrs := sentMetrics[0].ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics().At(0).Gauge().DataPoints().At(0).Attributes().AsRaw()
+			require.Equal(t, tt.expectedDatapointAttrs, datapointAttrs, "Expected attributes should match the actual datapoint attributes on metric exiting the processor")
+		})
+	}
+}
+
+func generateGaugeForTestProcessorMetricsPipeline(attrs map[string]any) pmetric.Metrics {
 	metrics, m := generateEmptyMetricForTestProcessorMetricsPipeline()
 	dp := m.SetEmptyGauge().DataPoints().AppendEmpty()
-	for k, v := range maps.All(attrs) {
-		dp.Attributes().PutStr(k, v)
-	}
+	dp.Attributes().FromRaw(attrs)
 	dp.SetIntValue(123)
 	dp.SetTimestamp(pcommon.NewTimestampFromTime(time.Now()))
 	return metrics
 }
 
-func generateSumForTestProcessorMetricsPipeline(attrs map[string]string) pmetric.Metrics {
+func generateSumForTestProcessorMetricsPipeline(attrs map[string]any) pmetric.Metrics {
 	metrics, m := generateEmptyMetricForTestProcessorMetricsPipeline()
 	dp := m.SetEmptySum().DataPoints().AppendEmpty()
-	for k, v := range maps.All(attrs) {
-		dp.Attributes().PutStr(k, v)
-	}
+	dp.Attributes().FromRaw(attrs)
 	dp.SetIntValue(123)
 	dp.SetTimestamp(pcommon.NewTimestampFromTime(time.Now()))
 	return metrics
 }
 
-func generateHistogramForTestProcessorMetricsPipeline(attrs map[string]string) pmetric.Metrics {
+func generateHistogramForTestProcessorMetricsPipeline(attrs map[string]any) pmetric.Metrics {
 	metrics, m := generateEmptyMetricForTestProcessorMetricsPipeline()
 	dp := m.SetEmptyHistogram().DataPoints().AppendEmpty()
-	for k, v := range maps.All(attrs) {
-		dp.Attributes().PutStr(k, v)
-	}
+	dp.Attributes().FromRaw(attrs)
 	dp.SetCount(123)
 	dp.SetTimestamp(pcommon.NewTimestampFromTime(time.Now()))
 	return metrics
 }
 
-func generateExponentialHistogramForTestProcessorMetricsPipeline(attrs map[string]string) pmetric.Metrics {
+func generateExponentialHistogramForTestProcessorMetricsPipeline(attrs map[string]any) pmetric.Metrics {
 	metrics, m := generateEmptyMetricForTestProcessorMetricsPipeline()
 	dp := m.SetEmptyExponentialHistogram().DataPoints().AppendEmpty()
-	for k, v := range maps.All(attrs) {
-		dp.Attributes().PutStr(k, v)
-	}
+	dp.Attributes().FromRaw(attrs)
 	dp.SetCount(123)
 	dp.SetTimestamp(pcommon.NewTimestampFromTime(time.Now()))
 	return metrics
 }
 
-func generateSummaryForTestProcessorMetricsPipeline(attrs map[string]string) pmetric.Metrics {
+func generateSummaryForTestProcessorMetricsPipeline(attrs map[string]any) pmetric.Metrics {
 	metrics, m := generateEmptyMetricForTestProcessorMetricsPipeline()
 	dp := m.SetEmptySummary().DataPoints().AppendEmpty()
-	for k, v := range maps.All(attrs) {
-		dp.Attributes().PutStr(k, v)
-	}
+	dp.Attributes().FromRaw(attrs)
 	dp.SetCount(123)
 	dp.SetTimestamp(pcommon.NewTimestampFromTime(time.Now()))
 	return metrics
@@ -469,4 +658,12 @@ func generateEmptyMetricForTestProcessorMetricsPipeline() (pmetric.Metrics, pmet
 	m := rm.ScopeMetrics().AppendEmpty().Metrics().AppendEmpty()
 	m.SetName("test_metric")
 	return metrics, m
+}
+
+func generateGaugeWithAllAttributesForTestProcessorMetricsPipeline(resourceAttrs map[string]any, scopeAttrs map[string]any, metricAttrs map[string]any, datapointAttrs map[string]any) pmetric.Metrics {
+	metrics := generateGaugeForTestProcessorMetricsPipeline(datapointAttrs)
+	metrics.ResourceMetrics().At(0).Resource().Attributes().FromRaw(resourceAttrs)
+	metrics.ResourceMetrics().At(0).ScopeMetrics().At(0).Scope().Attributes().FromRaw(scopeAttrs)
+	metrics.ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics().At(0).Metadata().FromRaw(metricAttrs)
+	return metrics
 }
