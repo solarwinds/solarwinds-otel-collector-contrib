@@ -229,61 +229,13 @@ func TestProcessorMetricsPipeline(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mock, reset := MockKubeClient()
 			defer reset()
-			mock.MockedServerPreferredResources = []*metav1.APIResourceList{
-				{
-					GroupVersion: "v1",
-					APIResources: []metav1.APIResource{
-						{
-							Name: "pods",
-							Kind: "Pod",
-						},
-					},
-				},
-				{
-					GroupVersion: "apps/v1",
-					APIResources: []metav1.APIResource{
-						{
-							Name: "deployments",
-							Kind: "Deployment",
-						},
-					},
-				},
-			}
 
-			for _, pod := range tt.existingPods {
-				mock.CoreV1().Pods(pod.Namespace).Create(context.Background(), pod, metav1.CreateOptions{})
-			}
-			for _, deployment := range tt.existingDeployments {
-				mock.AppsV1().Deployments(deployment.Namespace).Create(context.Background(), deployment, metav1.CreateOptions{})
-			}
+			MockExistingObjectsInKubeClient(mock, tt.existingPods)
+			MockExistingObjectsInKubeClient(mock, tt.existingDeployments)
 
-			factory := NewFactory()
+			output := runProcessorMetricsPipelineTest(t, tt.workloadMappings, generateGaugeForTestProcessorMetricsPipeline(tt.receivedMetricAttrs))
 
-			cfg := factory.CreateDefaultConfig().(*Config)
-			cfg.WorkloadMappings = tt.workloadMappings
-			err := cfg.Validate()
-			require.NoError(t, err)
-
-			sink := new(consumertest.MetricsSink)
-
-			c, err := factory.CreateMetrics(context.Background(), processortest.NewNopSettings(factory.Type()), cfg, sink)
-			require.NoError(t, err)
-
-			err = c.Start(context.Background(), componenttest.NewNopHost())
-			require.NoError(t, err)
-
-			require.NotPanics(t, func() {
-				metric := generateGaugeForTestProcessorMetricsPipeline(tt.receivedMetricAttrs)
-				err = c.ConsumeMetrics(context.Background(), metric)
-			})
-
-			require.NoError(t, err)
-			err = c.Shutdown(context.Background())
-			require.NoError(t, err)
-
-			sentMetrics := sink.AllMetrics()
-
-			attrs := sentMetrics[0].ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics().At(0).Gauge().DataPoints().At(0).Attributes().AsRaw()
+			attrs := output[0].ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics().At(0).Gauge().DataPoints().At(0).Attributes().AsRaw()
 			require.Equal(t, tt.expectedMetricAttrs, attrs, "Expected attributes should match the actual attributes on metric exiting the processor")
 		})
 	}
@@ -343,56 +295,21 @@ func TestProcessorMetricsPipelineForDifferentMetricTypes(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mock, reset := MockKubeClient()
 			defer reset()
-			mock.MockedServerPreferredResources = []*metav1.APIResourceList{
-				{
-					GroupVersion: "v1",
-					APIResources: []metav1.APIResource{
-						{
-							Name: "pods",
-							Kind: "Pod",
-						},
-					},
-				},
-			}
 
-			mock.CoreV1().Pods(testPod.Namespace).Create(context.Background(), testPod, metav1.CreateOptions{})
+			MockExistingObjectsInKubeClient(mock, []*corev1.Pod{testPod})
 
-			factory := NewFactory()
-
-			cfg := factory.CreateDefaultConfig().(*Config)
-			cfg.WorkloadMappings = []*K8sWorkloadMappingConfig{
+			output := runProcessorMetricsPipelineTest(t, []*K8sWorkloadMappingConfig{
 				{
 					NameAttr:         "src_workload",
 					NamespaceAttr:    "src_namespace",
 					WorkloadTypeAttr: "src_type",
 					ExpectedTypes:    []string{"pods"},
 				},
-			}
-			err := cfg.Validate()
-			require.NoError(t, err)
-
-			sink := new(consumertest.MetricsSink)
-
-			c, err := factory.CreateMetrics(context.Background(), processortest.NewNopSettings(factory.Type()), cfg, sink)
-			require.NoError(t, err)
-
-			err = c.Start(context.Background(), componenttest.NewNopHost())
-			require.NoError(t, err)
-
-			require.NotPanics(t, func() {
-				metric := tt.receivedMetricProvider(
-					map[string]any{
-						"src_workload":  testPod.Name,
-						"src_namespace": testPod.Namespace,
-					})
-				err = c.ConsumeMetrics(context.Background(), metric)
-			})
-
-			require.NoError(t, err)
-			err = c.Shutdown(context.Background())
-			require.NoError(t, err)
-
-			sentMetrics := sink.AllMetrics()
+			}, tt.receivedMetricProvider(
+				map[string]any{
+					"src_workload":  testPod.Name,
+					"src_namespace": testPod.Namespace,
+				}))
 
 			require.Equal(t,
 				map[string]any{
@@ -400,7 +317,7 @@ func TestProcessorMetricsPipelineForDifferentMetricTypes(t *testing.T) {
 					"src_namespace": testPod.Namespace,
 					"src_type":      "Pod",
 				},
-				tt.actualAttrsProvider(sentMetrics[0]),
+				tt.actualAttrsProvider(output[0]),
 				"Expected attributes should match the actual attributes on metric exiting the processor")
 		})
 	}
@@ -450,7 +367,7 @@ func TestProcessorMetricsPipelineForDifferentContexts(t *testing.T) {
 		expectedDatapointAttrs map[string]any
 	}{
 		{
-			name:                 "mapping matches existing all workload types defined in all scopes",
+			name:                 "mapping matches all existing workload types defined in all scopes",
 			existingPods:         []*corev1.Pod{testPod},
 			existingDeployments:  []*appsv1.Deployment{testDeployment},
 			existingStatefulSets: []*appsv1.StatefulSet{testStatefulSet},
@@ -524,84 +441,24 @@ func TestProcessorMetricsPipelineForDifferentContexts(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mock, reset := MockKubeClient()
 			defer reset()
-			mock.MockedServerPreferredResources = []*metav1.APIResourceList{
-				{
-					GroupVersion: "v1",
-					APIResources: []metav1.APIResource{
-						{
-							Name: "pods",
-							Kind: "Pod",
-						},
-					},
-				},
-				{
-					GroupVersion: "apps/v1",
-					APIResources: []metav1.APIResource{
-						{
-							Name: "deployments",
-							Kind: "Deployment",
-						},
-						{
-							Name: "statefulsets",
-							Kind: "StatefulSet",
-						},
-						{
-							Name: "daemonsets",
-							Kind: "DaemonSet",
-						},
-					},
-				},
-			}
 
-			for _, pod := range tt.existingPods {
-				mock.CoreV1().Pods(pod.Namespace).Create(context.Background(), pod, metav1.CreateOptions{})
-			}
-			for _, deployment := range tt.existingDeployments {
-				mock.AppsV1().Deployments(deployment.Namespace).Create(context.Background(), deployment, metav1.CreateOptions{})
-			}
-			for _, statefulSet := range tt.existingStatefulSets {
-				mock.AppsV1().StatefulSets(statefulSet.Namespace).Create(context.Background(), statefulSet, metav1.CreateOptions{})
-			}
-			for _, daemonSet := range tt.existingDaemonSets {
-				mock.AppsV1().DaemonSets(daemonSet.Namespace).Create(context.Background(), daemonSet, metav1.CreateOptions{})
-			}
+			MockExistingObjectsInKubeClient(mock, tt.existingPods)
+			MockExistingObjectsInKubeClient(mock, tt.existingDeployments)
+			MockExistingObjectsInKubeClient(mock, tt.existingStatefulSets)
+			MockExistingObjectsInKubeClient(mock, tt.existingDaemonSets)
 
-			factory := NewFactory()
+			output := runProcessorMetricsPipelineTest(t, tt.workloadMappings, generateGaugeWithAllAttributesForTestProcessorMetricsPipeline(tt.receivedResourceAttrs, tt.receivedScopeAttrs, tt.receivedMetricAttrs, tt.receivedDatapointAttrs))
 
-			cfg := factory.CreateDefaultConfig().(*Config)
-			cfg.WorkloadMappings = tt.workloadMappings
-			err := cfg.Validate()
-			require.NoError(t, err)
-
-			sink := new(consumertest.MetricsSink)
-
-			c, err := factory.CreateMetrics(context.Background(), processortest.NewNopSettings(factory.Type()), cfg, sink)
-			require.NoError(t, err)
-
-			err = c.Start(context.Background(), componenttest.NewNopHost())
-			require.NoError(t, err)
-
-			require.NotPanics(t, func() {
-				metric := generateGaugeWithAllAttributesForTestProcessorMetricsPipeline(tt.receivedResourceAttrs, tt.receivedScopeAttrs, tt.receivedMetricAttrs, tt.receivedDatapointAttrs)
-				err = c.ConsumeMetrics(context.Background(), metric)
-			})
-
-			require.NoError(t, err)
-			err = c.Shutdown(context.Background())
-			require.NoError(t, err)
-
-			sentMetrics := sink.AllMetrics()
-
-			resourceAttrs := sentMetrics[0].ResourceMetrics().At(0).Resource().Attributes().AsRaw()
+			resourceAttrs := output[0].ResourceMetrics().At(0).Resource().Attributes().AsRaw()
 			require.Equal(t, tt.expectedResourceAttrs, resourceAttrs, "Expected attributes should match the actual resource attributes on metric exiting the processor")
 
-			scopeAttrs := sentMetrics[0].ResourceMetrics().At(0).ScopeMetrics().At(0).Scope().Attributes().AsRaw()
+			scopeAttrs := output[0].ResourceMetrics().At(0).ScopeMetrics().At(0).Scope().Attributes().AsRaw()
 			require.Equal(t, tt.expectedScopeAttrs, scopeAttrs, "Expected attributes should match the actual scope attributes on metric exiting the processor")
 
-			metricAttrs := sentMetrics[0].ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics().At(0).Metadata().AsRaw()
+			metricAttrs := output[0].ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics().At(0).Metadata().AsRaw()
 			require.Equal(t, tt.expectedMetricAttrs, metricAttrs, "Expected attributes should match the actual metric attributes on metric exiting the processor")
 
-			datapointAttrs := sentMetrics[0].ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics().At(0).Gauge().DataPoints().At(0).Attributes().AsRaw()
+			datapointAttrs := output[0].ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics().At(0).Gauge().DataPoints().At(0).Attributes().AsRaw()
 			require.Equal(t, tt.expectedDatapointAttrs, datapointAttrs, "Expected attributes should match the actual datapoint attributes on metric exiting the processor")
 		})
 	}
@@ -666,4 +523,32 @@ func generateGaugeWithAllAttributesForTestProcessorMetricsPipeline(resourceAttrs
 	metrics.ResourceMetrics().At(0).ScopeMetrics().At(0).Scope().Attributes().FromRaw(scopeAttrs)
 	metrics.ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics().At(0).Metadata().FromRaw(metricAttrs)
 	return metrics
+}
+
+func runProcessorMetricsPipelineTest(t *testing.T, workloadMappings []*K8sWorkloadMappingConfig, input pmetric.Metrics) []pmetric.Metrics {
+	factory := NewFactory()
+
+	cfg := factory.CreateDefaultConfig().(*Config)
+	cfg.WorkloadMappings = workloadMappings
+	err := cfg.Validate()
+	require.NoError(t, err)
+
+	sink := new(consumertest.MetricsSink)
+
+	c, err := factory.CreateMetrics(context.Background(), processortest.NewNopSettings(factory.Type()), cfg, sink)
+	require.NoError(t, err)
+
+	err = c.Start(context.Background(), componenttest.NewNopHost())
+	require.NoError(t, err)
+
+	require.NotPanics(t, func() {
+		metric := input
+		err = c.ConsumeMetrics(context.Background(), metric)
+	})
+
+	require.NoError(t, err)
+	err = c.Shutdown(context.Background())
+	require.NoError(t, err)
+
+	return sink.AllMetrics()
 }
