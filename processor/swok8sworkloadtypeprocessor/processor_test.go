@@ -229,26 +229,9 @@ func TestProcessorMetricsPipeline(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mock, reset := MockKubeClient()
 			defer reset()
-			mock.MockedServerPreferredResources = []*metav1.APIResourceList{
-				{
-					GroupVersion: "v1",
-					APIResources: []metav1.APIResource{
-						{
-							Name: "pods",
-							Kind: "Pod",
-						},
-					},
-				},
-				{
-					GroupVersion: "apps/v1",
-					APIResources: []metav1.APIResource{
-						{
-							Name: "deployments",
-							Kind: "Deployment",
-						},
-					},
-				},
-			}
+
+			mock.MockServerPreferredResources("v1", "pods", "Pod")
+			mock.MockServerPreferredResources("apps/v1", "deployments", "Deployment")
 
 			for _, pod := range tt.existingPods {
 				mock.CoreV1().Pods(pod.Namespace).Create(context.Background(), pod, metav1.CreateOptions{})
@@ -343,17 +326,8 @@ func TestProcessorMetricsPipelineForDifferentMetricTypes(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mock, reset := MockKubeClient()
 			defer reset()
-			mock.MockedServerPreferredResources = []*metav1.APIResourceList{
-				{
-					GroupVersion: "v1",
-					APIResources: []metav1.APIResource{
-						{
-							Name: "pods",
-							Kind: "Pod",
-						},
-					},
-				},
-			}
+
+			mock.MockServerPreferredResources("v1", "pods", "Pod")
 
 			mock.CoreV1().Pods(testPod.Namespace).Create(context.Background(), testPod, metav1.CreateOptions{})
 
@@ -524,34 +498,11 @@ func TestProcessorMetricsPipelineForDifferentContexts(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mock, reset := MockKubeClient()
 			defer reset()
-			mock.MockedServerPreferredResources = []*metav1.APIResourceList{
-				{
-					GroupVersion: "v1",
-					APIResources: []metav1.APIResource{
-						{
-							Name: "pods",
-							Kind: "Pod",
-						},
-					},
-				},
-				{
-					GroupVersion: "apps/v1",
-					APIResources: []metav1.APIResource{
-						{
-							Name: "deployments",
-							Kind: "Deployment",
-						},
-						{
-							Name: "statefulsets",
-							Kind: "StatefulSet",
-						},
-						{
-							Name: "daemonsets",
-							Kind: "DaemonSet",
-						},
-					},
-				},
-			}
+
+			mock.MockServerPreferredResources("v1", "pods", "Pod")
+			mock.MockServerPreferredResources("apps/v1", "deployments", "Deployment")
+			mock.MockServerPreferredResources("apps/v1", "statefulsets", "StatefulSet")
+			mock.MockServerPreferredResources("apps/v1", "daemonsets", "DaemonSet")
 
 			for _, pod := range tt.existingPods {
 				mock.CoreV1().Pods(pod.Namespace).Create(context.Background(), pod, metav1.CreateOptions{})

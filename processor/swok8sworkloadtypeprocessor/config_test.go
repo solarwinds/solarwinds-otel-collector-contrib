@@ -23,7 +23,6 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/confmap/confmaptest"
 	"go.opentelemetry.io/collector/confmap/xconfmap"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfig"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/swok8sworkloadtypeprocessor/internal/metadata"
@@ -84,34 +83,11 @@ func TestInvalidConfig(t *testing.T) {
 		t.Run(tt.id.String(), func(t *testing.T) {
 			mock, reset := MockKubeClient()
 			defer reset()
-			mock.MockedServerPreferredResources = []*metav1.APIResourceList{
-				{
-					GroupVersion: "v1",
-					APIResources: []metav1.APIResource{
-						{
-							Name: "pods",
-							Kind: "Pod",
-						},
-						{
-							Name: "services",
-							Kind: "Service",
-						},
-						{
-							Name: "withinvalidkinds",
-							Kind: "",
-						},
-					},
-				},
-				{
-					GroupVersion: "apps/v1",
-					APIResources: []metav1.APIResource{
-						{
-							Name: "deployments",
-							Kind: "Deployment",
-						},
-					},
-				},
-			}
+
+			mock.MockServerPreferredResources("v1", "pods", "Pod")
+			mock.MockServerPreferredResources("v1", "services", "Service")
+			mock.MockServerPreferredResources("apps/v1", "deployments", "Deployment")
+			mock.MockServerPreferredResources("v1", "withinvalidkinds", "")
 
 			cm, err := confmaptest.LoadConf(filepath.Join("testdata", "config.yaml"))
 			require.NoError(t, err)

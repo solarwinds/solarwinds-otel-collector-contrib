@@ -15,6 +15,8 @@
 package swok8sworkloadtypeprocessor
 
 import (
+	"slices"
+
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfig"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/discovery"
@@ -48,4 +50,29 @@ func (c *FakeKubeClient) Discovery() discovery.DiscoveryInterface {
 
 func (c *FakeKubeClient) ServerPreferredResources() ([]*metav1.APIResourceList, error) {
 	return c.MockedServerPreferredResources, nil
+}
+
+// MockServerPreferredResources extends the mocked ServerPreferredResources with an additional kind, if it's not already there.
+func (c *FakeKubeClient) MockServerPreferredResources(groupVersion string, name string, kind string) {
+	var resourceList *metav1.APIResourceList
+	for _, resList := range c.MockedServerPreferredResources {
+		if resList.GroupVersion == groupVersion {
+			resourceList = resList
+			break
+		}
+	}
+
+	if resourceList == nil {
+		resourceList = &metav1.APIResourceList{GroupVersion: groupVersion}
+		c.MockedServerPreferredResources = append(c.MockedServerPreferredResources, resourceList)
+	}
+
+	if !slices.ContainsFunc(resourceList.APIResources, func(r metav1.APIResource) bool {
+		return r.Name == name
+	}) {
+		resourceList.APIResources = append(resourceList.APIResources, metav1.APIResource{
+			Name: name,
+			Kind: kind,
+		})
+	}
 }
