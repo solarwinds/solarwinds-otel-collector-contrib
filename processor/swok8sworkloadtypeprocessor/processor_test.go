@@ -241,6 +241,566 @@ func TestProcessorMetricsPipeline(t *testing.T) {
 	}
 }
 
+func TestProcessorMetricsPipelineWhenSearchingByAddress(t *testing.T) {
+
+	testPod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test_pod",
+			Namespace: "test_pod_namespace",
+		},
+	}
+	testService := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test_service",
+			Namespace: "test_service_namespace",
+		},
+	}
+
+	tests := []struct {
+		name                string
+		existingPods        []*corev1.Pod
+		existingServices    []*corev1.Service
+		workloadMappings    []*K8sWorkloadMappingConfig
+		receivedMetricAttrs map[string]any
+		expectedMetricAttrs map[string]any
+	}{
+		{
+			name:         "mapping matches existing pod - <podname> and defined namespace",
+			existingPods: []*corev1.Pod{testPod},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					NamespaceAttr:    "src_namespace",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"pods"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address":   testPod.Name,
+				"src_namespace": testPod.Namespace,
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address":   testPod.Name,
+				"src_namespace": testPod.Namespace,
+				"src_type":      "Pod",
+			},
+		},
+		{
+			name:         "mapping matches existing pod - <podname.namespace> and defined namespace",
+			existingPods: []*corev1.Pod{testPod},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					NamespaceAttr:    "src_namespace",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"pods"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address":   testPod.Name + "." + testPod.Namespace,
+				"src_namespace": testPod.Namespace,
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address":   testPod.Name + "." + testPod.Namespace,
+				"src_namespace": testPod.Namespace,
+				"src_type":      "Pod",
+			},
+		},
+		{
+			name:         "mapping matches existing pod - <podname.namespace> only",
+			existingPods: []*corev1.Pod{testPod},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"pods"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address": testPod.Name + "." + testPod.Namespace,
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address": testPod.Name + "." + testPod.Namespace,
+				"src_type":    "Pod",
+			},
+		},
+		{
+			name:         "mapping matches existing pod - <podname.namespace.pod> and defined namespace",
+			existingPods: []*corev1.Pod{testPod},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					NamespaceAttr:    "src_namespace",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"pods"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address":   testPod.Name + "." + testPod.Namespace + ".pod",
+				"src_namespace": testPod.Namespace,
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address":   testPod.Name + "." + testPod.Namespace + ".pod",
+				"src_namespace": testPod.Namespace,
+				"src_type":      "Pod",
+			},
+		},
+		{
+			name:         "mapping matches existing pod - <podname.namespace.pod> only",
+			existingPods: []*corev1.Pod{testPod},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"pods"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address": testPod.Name + "." + testPod.Namespace + ".pod",
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address": testPod.Name + "." + testPod.Namespace + ".pod",
+				"src_type":    "Pod",
+			},
+		},
+		{
+			name:         "mapping matches existing pod - <podname.namespace.pod.cluster.local> and defined namespace",
+			existingPods: []*corev1.Pod{testPod},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					NamespaceAttr:    "src_namespace",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"pods"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address":   testPod.Name + "." + testPod.Namespace + ".pod.cluster.local",
+				"src_namespace": testPod.Namespace,
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address":   testPod.Name + "." + testPod.Namespace + ".pod.cluster.local",
+				"src_namespace": testPod.Namespace,
+				"src_type":      "Pod",
+			},
+		},
+		{
+			name:         "mapping matches existing pod - <podname.namespace.pod.cluster.local> only",
+			existingPods: []*corev1.Pod{testPod},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"pods"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address": testPod.Name + "." + testPod.Namespace + ".pod.cluster.local",
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address": testPod.Name + "." + testPod.Namespace + ".pod.cluster.local",
+				"src_type":    "Pod",
+			},
+		},
+		{
+			name:         "mapping matches existing pods - <http://podname.namespace.pod.cluster.local> only",
+			existingPods: []*corev1.Pod{testPod},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"pods"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address": "http://" + testPod.Name + "." + testPod.Namespace + ".pod.cluster.local",
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address": "http://" + testPod.Name + "." + testPod.Namespace + ".pod.cluster.local",
+				"src_type":    "Pod",
+			},
+		},
+		{
+			name:         "mapping matches existing pods - <podname.namespace.pod.cluster.local:8080> only",
+			existingPods: []*corev1.Pod{testPod},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"pods"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address": testPod.Name + "." + testPod.Namespace + ".pod.cluster.local:8080",
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address": testPod.Name + "." + testPod.Namespace + ".pod.cluster.local:8080",
+				"src_type":    "Pod",
+			},
+		},
+		{
+			name:         "mapping matches existing pods - <http://podname.namespace.pod.cluster.local:8080> only",
+			existingPods: []*corev1.Pod{testPod},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"pods"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address": "http://" + testPod.Name + "." + testPod.Namespace + ".pod.cluster.local:8080",
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address": "http://" + testPod.Name + "." + testPod.Namespace + ".pod.cluster.local:8080",
+				"src_type":    "Pod",
+			},
+		},
+		{
+			name:         "mapping does not match existing pod because of different name",
+			existingPods: []*corev1.Pod{testPod},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					NamespaceAttr:    "src_namespace",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"pods"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address":   "other_pod",
+				"src_namespace": testPod.Namespace,
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address":   "other_pod",
+				"src_namespace": testPod.Namespace,
+			},
+		},
+		{
+			name:         "mapping does not match existing pod because of different namespace - <podname> and defined namespace",
+			existingPods: []*corev1.Pod{testPod},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					NamespaceAttr:    "src_namespace",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"pods"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address":   testPod.Name,
+				"src_namespace": "other_pod_namespace",
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address":   testPod.Name,
+				"src_namespace": "other_pod_namespace",
+			},
+		},
+		{
+			name:         "mapping does not match existing pod because of different namespace - <podname.namespace> only",
+			existingPods: []*corev1.Pod{testPod},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"pods"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address": testPod.Name + ".other_pod_namespace",
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address": testPod.Name + ".other_pod_namespace",
+			},
+		},
+		{
+			name:         "mapping does not match existing pod because of conflicting namespace",
+			existingPods: []*corev1.Pod{testPod},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					NamespaceAttr:    "src_namespace",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"pods"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address":   testPod.Name + "." + testPod.Namespace,
+				"src_namespace": "other_pod_namespace",
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address":   testPod.Name + "." + testPod.Namespace,
+				"src_namespace": "other_pod_namespace",
+			},
+		},
+		{
+			name:         "mapping does not match existing pod because of missing address attribute",
+			existingPods: []*corev1.Pod{testPod},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					NamespaceAttr:    "src_namespace",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"pods"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_namespace": testPod.Namespace,
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_namespace": testPod.Namespace,
+			},
+		},
+		{
+			name:         "mapping does not match existing pod because of missing namespace attribute",
+			existingPods: []*corev1.Pod{testPod},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					NamespaceAttr:    "src_namespace",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"pods"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address": testPod.Name,
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address": testPod.Name,
+			},
+		},
+		{
+			name:         "mapping does not overwrite existing workload type",
+			existingPods: []*corev1.Pod{testPod},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					NamespaceAttr:    "src_namespace",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"pods"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address":   testPod.Name,
+				"src_namespace": testPod.Namespace,
+				"src_type":      "already_set",
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address":   testPod.Name,
+				"src_namespace": testPod.Namespace,
+				"src_type":      "already_set",
+			},
+		},
+		{
+			name:             "mapping matches existing service - <servicename> and defined namespace",
+			existingServices: []*corev1.Service{testService},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					NamespaceAttr:    "src_namespace",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"services"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address":   testService.Name,
+				"src_namespace": testService.Namespace,
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address":   testService.Name,
+				"src_namespace": testService.Namespace,
+				"src_type":      "Service",
+			},
+		},
+		{
+			name:             "mapping matches existing service - <servicename.namespace> and defined namespace",
+			existingServices: []*corev1.Service{testService},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					NamespaceAttr:    "src_namespace",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"services"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address":   testService.Name + "." + testService.Namespace,
+				"src_namespace": testService.Namespace,
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address":   testService.Name + "." + testService.Namespace,
+				"src_namespace": testService.Namespace,
+				"src_type":      "Service",
+			},
+		},
+		{
+			name:             "mapping matches existing service - <servicename.namespace> only",
+			existingServices: []*corev1.Service{testService},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"services"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address": testService.Name + "." + testService.Namespace,
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address": testService.Name + "." + testService.Namespace,
+				"src_type":    "Service",
+			},
+		},
+		{
+			name:             "mapping matches existing service - <servicename.namespace.svc> and defined namespace",
+			existingServices: []*corev1.Service{testService},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					NamespaceAttr:    "src_namespace",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"services"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address":   testService.Name + "." + testService.Namespace + ".svc",
+				"src_namespace": testService.Namespace,
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address":   testService.Name + "." + testService.Namespace + ".svc",
+				"src_namespace": testService.Namespace,
+				"src_type":      "Service",
+			},
+		},
+		{
+			name:             "mapping matches existing service - <servicename.namespace.svc> only",
+			existingServices: []*corev1.Service{testService},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"services"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address": testService.Name + "." + testService.Namespace + ".svc",
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address": testService.Name + "." + testService.Namespace + ".svc",
+				"src_type":    "Service",
+			},
+		},
+		{
+			name:             "mapping matches existing service - <servicename.namespace.svc.cluster.local> and defined namespace",
+			existingServices: []*corev1.Service{testService},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					NamespaceAttr:    "src_namespace",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"services"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address":   testService.Name + "." + testService.Namespace + ".svc.cluster.local",
+				"src_namespace": testService.Namespace,
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address":   testService.Name + "." + testService.Namespace + ".svc.cluster.local",
+				"src_namespace": testService.Namespace,
+				"src_type":      "Service",
+			},
+		},
+		{
+			name:             "mapping matches existing service - <servicename.namespace.svc.cluster.local> only",
+			existingServices: []*corev1.Service{testService},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"services"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address": testService.Name + "." + testService.Namespace + ".svc.cluster.local",
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address": testService.Name + "." + testService.Namespace + ".svc.cluster.local",
+				"src_type":    "Service",
+			},
+		},
+		{
+			name:             "mapping matches existing service - <http://servicename.namespace.svc.cluster.local> only",
+			existingServices: []*corev1.Service{testService},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"services"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address": "http://" + testService.Name + "." + testService.Namespace + ".svc.cluster.local",
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address": "http://" + testService.Name + "." + testService.Namespace + ".svc.cluster.local",
+				"src_type":    "Service",
+			},
+		},
+		{
+			name:             "mapping matches existing service - <servicename.namespace.svc.cluster.local:8080> only",
+			existingServices: []*corev1.Service{testService},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"services"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address": testService.Name + "." + testService.Namespace + ".svc.cluster.local:8080",
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address": testService.Name + "." + testService.Namespace + ".svc.cluster.local:8080",
+				"src_type":    "Service",
+			},
+		},
+		{
+			name:             "mapping matches existing service - <http://servicename.namespace.svc.cluster.local:8080> only",
+			existingServices: []*corev1.Service{testService},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"services"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address": "http://" + testService.Name + "." + testService.Namespace + ".svc.cluster.local:8080",
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address": "http://" + testService.Name + "." + testService.Namespace + ".svc.cluster.local:8080",
+				"src_type":    "Service",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock, reset := MockKubeClient()
+			defer reset()
+
+			MockExistingObjectsInKubeClient(mock, tt.existingPods)
+			MockExistingObjectsInKubeClient(mock, tt.existingServices)
+
+			output := runProcessorMetricsPipelineTest(t, tt.workloadMappings, generateGaugeForTestProcessorMetricsPipeline(tt.receivedMetricAttrs))
+
+			attrs := output[0].ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics().At(0).Gauge().DataPoints().At(0).Attributes().AsRaw()
+			require.Equal(t, tt.expectedMetricAttrs, attrs, "Expected attributes should match the actual attributes on metric exiting the processor")
+		})
+	}
+}
+
 func TestProcessorMetricsPipelineForDifferentMetricTypes(t *testing.T) {
 	testPod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -457,6 +1017,89 @@ func TestProcessorMetricsPipelineForDifferentContexts(t *testing.T) {
 
 			metricAttrs := output[0].ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics().At(0).Metadata().AsRaw()
 			require.Equal(t, tt.expectedMetricAttrs, metricAttrs, "Expected attributes should match the actual metric attributes on metric exiting the processor")
+
+			datapointAttrs := output[0].ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics().At(0).Gauge().DataPoints().At(0).Attributes().AsRaw()
+			require.Equal(t, tt.expectedDatapointAttrs, datapointAttrs, "Expected attributes should match the actual datapoint attributes on metric exiting the processor")
+		})
+	}
+}
+
+func TestProcessorMetricsPipelineForDifferentContextsWhenSearchingByAddress(t *testing.T) {
+
+	testPod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test_pod",
+			Namespace: "test_pod_namespace",
+		},
+	}
+	testService := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test_service",
+			Namespace: "test_service_namespace",
+		},
+	}
+
+	tests := []struct {
+		name                   string
+		existingPods           []*corev1.Pod
+		existingServices       []*corev1.Service
+		workloadMappings       []*K8sWorkloadMappingConfig
+		receivedResourceAttrs  map[string]any
+		expectedResourceAttrs  map[string]any
+		receivedDatapointAttrs map[string]any
+		expectedDatapointAttrs map[string]any
+	}{
+		{
+			name:             "mapping matches all existing workload types defined in all scopes",
+			existingPods:     []*corev1.Pod{testPod},
+			existingServices: []*corev1.Service{testService},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "resource.src_address",
+					NamespaceAttr:    "resource.src_namespace",
+					WorkloadTypeAttr: "resource.src_type",
+					ExpectedTypes:    []string{"pods"},
+				},
+				{
+					AddressAttr:      "datapoint.src_address",
+					NamespaceAttr:    "datapoint.src_namespace",
+					WorkloadTypeAttr: "datapoint.src_type",
+					ExpectedTypes:    []string{"services"},
+				},
+			},
+			receivedResourceAttrs: map[string]any{
+				"src_address":   testPod.Name,
+				"src_namespace": testPod.Namespace,
+			},
+			expectedResourceAttrs: map[string]any{
+				"src_address":   testPod.Name,
+				"src_namespace": testPod.Namespace,
+				"src_type":      "Pod",
+			},
+			receivedDatapointAttrs: map[string]any{
+				"src_address":   testService.Name,
+				"src_namespace": testService.Namespace,
+			},
+			expectedDatapointAttrs: map[string]any{
+				"src_address":   testService.Name,
+				"src_namespace": testService.Namespace,
+				"src_type":      "Service",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock, reset := MockKubeClient()
+			defer reset()
+
+			MockExistingObjectsInKubeClient(mock, tt.existingPods)
+			MockExistingObjectsInKubeClient(mock, tt.existingServices)
+
+			output := runProcessorMetricsPipelineTest(t, tt.workloadMappings, generateGaugeWithAllAttributesForTestProcessorMetricsPipeline(tt.receivedResourceAttrs, nil, nil, tt.receivedDatapointAttrs))
+
+			resourceAttrs := output[0].ResourceMetrics().At(0).Resource().Attributes().AsRaw()
+			require.Equal(t, tt.expectedResourceAttrs, resourceAttrs, "Expected attributes should match the actual resource attributes on metric exiting the processor")
 
 			datapointAttrs := output[0].ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics().At(0).Gauge().DataPoints().At(0).Attributes().AsRaw()
 			require.Equal(t, tt.expectedDatapointAttrs, datapointAttrs, "Expected attributes should match the actual datapoint attributes on metric exiting the processor")
