@@ -54,7 +54,7 @@ var (
 		{Type: "Kubernetes Pod", IDs: []string{"k8s.pod.id", "k8s.pod.name"}, Attributes: []string{"k8s.pod.port"}},
 	}
 
-	configuredRelationships = []config.Relationship{
+	configuredRelationships = []config.RelationshipEvent{
 		{
 			Type:        "MemberOf",
 			Source:      "Snowflake",
