@@ -28,6 +28,10 @@ func (s *Schema) NewEntities() map[string]Entity {
 	return entities
 }
 
-func (s *Schema) NewRelationships() []Relationship {
+func (s *Schema) NewRelationships() []RelationshipEvent {
 	return s.Events.Relationships
+}
+
+func (s *Schema) NewEntityEvents() []EntityEvent {
+	return s.Events.Entities
 }
