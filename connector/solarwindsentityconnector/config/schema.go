@@ -28,10 +28,23 @@ func (s *Schema) NewEntities() map[string]Entity {
 	return entities
 }
 
-func (s *Schema) NewRelationships() []RelationshipEvent {
-	return s.Events.Relationships
-}
+func (s *Schema) NewEvents() map[string]Events {
+	eventMap := map[string]Events{
+		"metric": {},
+		"log":    {},
+	}
 
-func (s *Schema) NewEntityEvents() []EntityEvent {
-	return s.Events.Entities
+	for _, event := range s.Events.Entities {
+		group := eventMap[event.Context]
+		group.Entities = append(group.Entities, event)
+		eventMap[event.Context] = group
+	}
+
+	for _, event := range s.Events.Relationships {
+		group := eventMap[event.Context]
+		group.Relationships = append(group.Relationships, event)
+		eventMap[event.Context] = group
+	}
+
+	return eventMap
 }

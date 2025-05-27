@@ -34,30 +34,30 @@ func NewFactory() connector.Factory {
 
 func createMetricsToLogsConnector(ctx context.Context, settings connector.Settings, config component.Config, logs consumer.Logs) (connector.Metrics, error) {
 	cfg := config.(*Config)
-	// TODO: think of better way to create the struct, when condition handling is introduced
-	return &solarwindsentity{
+	solarwindsentity := &solarwindsentity{
 		telemetrySettings: settings.TelemetrySettings,
 		logger:            settings.Logger,
 		sourcePrefix:      cfg.SourcePrefix,
 		destinationPrefix: cfg.DestinationPrefix,
 		entities:          cfg.Schema.NewEntities(),
-		relationships:     cfg.Schema.NewRelationships(),
-		entityEvents:      cfg.Schema.NewEntityEvents(),
+		events:            cfg.Schema.NewEvents(),
 		logsConsumer:      logs,
-	}, nil
+	}
+	solarwindsentity.createParserMetrics()
+	return solarwindsentity, nil
 }
 
 func createLogsToLogsConnector(ctx context.Context, settings connector.Settings, config component.Config, logs consumer.Logs) (connector.Logs, error) {
 	cfg := config.(*Config)
-	// TODO: think of better way to create the struct, when condition handling is introduced
-	return &solarwindsentity{
+	solarwindsentity := &solarwindsentity{
 		telemetrySettings: settings.TelemetrySettings,
 		logger:            settings.Logger,
 		sourcePrefix:      cfg.SourcePrefix,
 		destinationPrefix: cfg.DestinationPrefix,
 		entities:          cfg.Schema.NewEntities(),
-		relationships:     cfg.Schema.NewRelationships(),
-		entityEvents:      cfg.Schema.NewEntityEvents(),
+		events:            cfg.Schema.NewEvents(),
 		logsConsumer:      logs,
-	}, nil
+	}
+	solarwindsentity.createParserLogs()
+	return solarwindsentity, nil
 }
