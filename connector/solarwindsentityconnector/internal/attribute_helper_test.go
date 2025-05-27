@@ -257,7 +257,7 @@ func TestCreateRelationshipEvent(t *testing.T) {
 		Attributes: []string{"attr2"},
 	}
 
-	relationship := config.Relationship{
+	relationship := config.RelationshipEvent{
 		Type:        "MemberOf",
 		Source:      "KubernetesCluster",
 		Destination: "KubernetesNode",
@@ -305,7 +305,7 @@ func TestCreateRelationshipEventWithNoAttributes(t *testing.T) {
 		IDs:  []string{},
 	}
 
-	relationship := config.Relationship{
+	relationship := config.RelationshipEvent{
 		Type:        "MemberOf",
 		Source:      "KubernetesCluster",
 		Destination: "KubernetesNode",
@@ -341,7 +341,7 @@ func TestCreateRelationshipEventWithoutResourceAttributes(t *testing.T) {
 		IDs:  []string{"id2"},
 	}
 
-	relationship := config.Relationship{
+	relationship := config.RelationshipEvent{
 		Type:        "MemberOf",
 		Source:      "KubernetesCluster",
 		Destination: "KubernetesNode",
@@ -376,7 +376,7 @@ func TestCreateSameTypeRelationshipEvent(t *testing.T) {
 		Attributes: []string{"attr1"},
 	}
 
-	relationship := config.Relationship{
+	relationship := config.RelationshipEvent{
 		Type:        "VirtualizationTopologyConnection",
 		Source:      "KubernetesCluster",
 		Destination: "KubernetesCluster",
@@ -418,7 +418,7 @@ func TestCreateSameTypeRelationshipEventWithNoAttributesSameType(t *testing.T) {
 		IDs:  []string{},
 	}
 
-	relationship := config.Relationship{
+	relationship := config.RelationshipEvent{
 		Type:        "VirtualizationTopologyConnection",
 		Source:      "KubernetesCluster",
 		Destination: "KubernetesCluster",
@@ -448,7 +448,7 @@ func TestCreateSameTypeRelationshipEventWithoutResourceAttributes(t *testing.T) 
 		IDs:  []string{"id"},
 	}
 
-	relationship := config.Relationship{
+	relationship := config.RelationshipEvent{
 		Type:        "VirtualizationTopologyConnection",
 		Source:      "KubernetesCluster",
 		Destination: "KubernetesCluster",
