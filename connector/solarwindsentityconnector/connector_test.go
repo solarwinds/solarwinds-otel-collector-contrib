@@ -16,6 +16,7 @@ package solarwindsentityconnector
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"testing"
 
@@ -54,35 +55,109 @@ var (
 		{Type: "Kubernetes Pod", IDs: []string{"k8s.pod.id", "k8s.pod.name"}, Attributes: []string{"k8s.pod.port"}},
 	}
 
-	configuredRelationships = []config.RelationshipEvent{
+	configuredRelationshipsEvent = []config.RelationshipEvent{
 		{
 			Type:        "MemberOf",
 			Source:      "Snowflake",
 			Destination: "AWS EC2",
 			Attributes:  []string{},
+			Conditions:  []string{"true"},
+			Context:     "log",
+		},
+		{
+			Type:        "MemberOf",
+			Source:      "Snowflake",
+			Destination: "AWS EC2",
+			Attributes:  []string{},
+			Conditions:  []string{"true"},
+			Context:     "metric",
 		},
 		{
 			Type:        "TestRelationshipType",
 			Source:      "AWS EC2",
 			Destination: "AWS EC2",
 			Attributes:  []string{},
+			Conditions:  []string{"true"},
+			Context:     "log",
+		},
+		{
+			Type:        "TestRelationshipType",
+			Source:      "AWS EC2",
+			Destination: "AWS EC2",
+			Attributes:  []string{},
+			Conditions:  []string{"true"},
+			Context:     "metric",
 		},
 		{
 			Type:        "TestRelationshipType",
 			Source:      "Kubernetes Pod",
 			Destination: "Kubernetes Pod",
 			Attributes:  []string{"k8s.pod.port"},
+			Conditions:  []string{"true"},
+			Context:     "log",
+		},
+		{
+			Type:        "TestRelationshipType",
+			Source:      "Kubernetes Pod",
+			Destination: "Kubernetes Pod",
+			Attributes:  []string{"k8s.pod.port"},
+			Conditions:  []string{"true"},
+			Context:     "metric",
 		},
 		{
 			Type:        "MemberOf",
 			Source:      "Snowflake",
 			Destination: "Kubernetes Pod",
 			Attributes:  []string{"k8s.pod.port"},
+			Conditions:  []string{"true"},
+			Context:     "log",
+		},
+		{
+			Type:        "MemberOf",
+			Source:      "Snowflake",
+			Destination: "Kubernetes Pod",
+			Attributes:  []string{"k8s.pod.port"},
+			Conditions:  []string{"true"},
+			Context:     "metric",
+		},
+	}
+
+	configuredEntitiesEvent = []config.EntityEvent{
+		{
+			Type:       "Snowflake",
+			Conditions: []string{"true"},
+			Context:    "log",
+		},
+		{
+			Type:       "Snowflake",
+			Conditions: []string{"true"},
+			Context:    "metric",
+		},
+		{
+			Type:       "AWS EC2",
+			Conditions: []string{"true"},
+			Context:    "log",
+		},
+		{
+			Type:       "AWS EC2",
+			Conditions: []string{"true"},
+			Context:    "metric",
+		},
+		{
+			Type:       "Kubernetes Pod",
+			Conditions: []string{"true"},
+			Context:    "log",
+		},
+		{
+			Type:       "Kubernetes Pod",
+			Conditions: []string{"true"},
+			Context:    "metric",
 		},
 	}
 
 	configuredEvents = config.Events{
-		Relationships: configuredRelationships,
+		Relationships: configuredRelationshipsEvent,
+		Entities:      configuredEntitiesEvent,
 	}
 )
 
@@ -148,6 +223,7 @@ func TestLogsToLogs(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			factory := NewFactory()
 			sink := &consumertest.LogsSink{}
+			fmt.Println("Configured entities:")
 			conn, err := factory.CreateLogsToLogs(context.Background(),
 				connectortest.NewNopSettings(metadata.Type), &Config{
 					Schema: config.Schema{

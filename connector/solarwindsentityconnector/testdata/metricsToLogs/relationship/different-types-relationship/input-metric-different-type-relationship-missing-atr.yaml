@@ -4,3 +4,6 @@ resourceMetrics:
                     { "key": "snowflake.id", "value":{"stringValue": "snowflake-instance-id"}}]
     scopeMetrics:
       - metrics:
+        - name: "test-metric"
+          description: "test metric description"
+          unit: "1"
