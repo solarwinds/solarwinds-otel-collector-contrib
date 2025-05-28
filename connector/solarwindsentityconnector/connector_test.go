@@ -16,7 +16,6 @@ package solarwindsentityconnector
 
 import (
 	"context"
-	"fmt"
 	"path/filepath"
 	"testing"
 
@@ -269,7 +268,6 @@ func TestLogsToLogs(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			factory := NewFactory()
 			sink := &consumertest.LogsSink{}
-			fmt.Println("Configured entities:")
 			conn, err := factory.CreateLogsToLogs(context.Background(),
 				connectortest.NewNopSettings(metadata.Type), &Config{
 					Schema: config.Schema{
