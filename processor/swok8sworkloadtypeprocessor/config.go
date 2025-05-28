@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfig"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/swok8sworkloadtypeprocessor/internal"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/kubernetes"
@@ -29,8 +30,8 @@ import (
 
 type Config struct {
 	k8sconfig.APIConfig `mapstructure:",squash"`
-	WorkloadMappings    []K8sWorkloadMappingConfig `mapstructure:"workload_mappings"`
-	WatchSyncPeriod     time.Duration              `mapstructure:"watch_sync_period"`
+	WorkloadMappings    []*K8sWorkloadMappingConfig `mapstructure:"workload_mappings"`
+	WatchSyncPeriod     time.Duration               `mapstructure:"watch_sync_period"`
 	mappedExpectedTypes map[string]groupVersionResourceKind
 }
 
@@ -42,9 +43,20 @@ type groupVersionResourceKind struct {
 type K8sWorkloadMappingConfig struct {
 	NameAttr         string   `mapstructure:"name_attr"`
 	NamespaceAttr    string   `mapstructure:"namespace_attr"`
+	AddressAttr      string   `mapstructure:"address_attr"`
 	WorkloadTypeAttr string   `mapstructure:"workload_type_attr"`
 	ExpectedTypes    []string `mapstructure:"expected_types"`
+	context          statementContext
 }
+
+type statementContext string
+
+const (
+	ResourceContext  statementContext = "resource"
+	ScopeContext     statementContext = "scope"
+	MetricContext    statementContext = "metric"
+	DataPointContext statementContext = "datapoint"
+)
 
 func (c *Config) Validate() error {
 	if len(c.WorkloadMappings) == 0 {
@@ -57,6 +69,9 @@ func (c *Config) Validate() error {
 	}
 
 	for _, mapping := range c.WorkloadMappings {
+		if mapping == nil {
+			return fmt.Errorf("workload_mapping cannot be nil")
+		}
 		if err := mapping.validate(validObjects, c.mappedExpectedTypes); err != nil {
 			return err
 		}
@@ -66,12 +81,50 @@ func (c *Config) Validate() error {
 }
 
 func (m *K8sWorkloadMappingConfig) validate(validObjects map[string][]groupVersionResourceKind, mappedExpectedTypes map[string]groupVersionResourceKind) error {
-	if m.NameAttr == "" {
-		return fmt.Errorf("name_attr cannot be empty")
-	}
 	if m.WorkloadTypeAttr == "" {
 		return fmt.Errorf("workload_type_attr cannot be empty")
 	}
+
+	extractContext := func(attrName *string) statementContext {
+		if before, after, found := strings.Cut(*attrName, "."); found {
+			ctx := statementContext(before)
+			if ctx == DataPointContext || ctx == MetricContext || ctx == ScopeContext || ctx == ResourceContext {
+				*attrName = after
+				return ctx
+			}
+		}
+		return ""
+	}
+
+	nameCtx := extractContext(&m.NameAttr)
+	workloadTypeCtx := extractContext(&m.WorkloadTypeAttr)
+	namespaceCtx := extractContext(&m.NamespaceAttr)
+	addressCtx := extractContext(&m.AddressAttr)
+
+	switch {
+	case len(m.NameAttr) == 0 && len(m.AddressAttr) == 0:
+		return fmt.Errorf("name_attr or address_attr must be set")
+	case len(m.NameAttr) > 0 && len(m.AddressAttr) > 0:
+		return fmt.Errorf("name_attr and address_attr cannot be set at the same time")
+	case len(m.NameAttr) > 0:
+		m.context = nameCtx
+	case len(m.AddressAttr) > 0:
+		for _, v := range m.ExpectedTypes {
+			if v != internal.PodsWorkloadType && v != internal.ServicesWorkloadType {
+				return fmt.Errorf("address_attr is only supported for pods and services, but got: %s", v)
+			}
+		}
+		m.context = addressCtx
+	}
+
+	if (m.context != workloadTypeCtx) || (m.NamespaceAttr != "" && namespaceCtx != m.context) {
+		return fmt.Errorf("inconsistent context in workload mapping")
+	}
+
+	if m.context == "" {
+		m.context = DataPointContext
+	}
+
 	if len(m.ExpectedTypes) == 0 {
 		return fmt.Errorf("expected_types cannot be empty")
 	}
