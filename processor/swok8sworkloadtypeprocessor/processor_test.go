@@ -801,6 +801,154 @@ func TestProcessorMetricsPipelineWhenSearchingByAddress(t *testing.T) {
 	}
 }
 
+func TestProcessorMetricsPipelineWhenSearchingByIpAddress(t *testing.T) {
+	testPodIp := "127.0.0.1"
+	testServiceIp := "127.0.0.2"
+
+	testPod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test_pod",
+			Namespace: "test_pod_namespace",
+		},
+		Status: corev1.PodStatus{
+			PodIPs: []corev1.PodIP{
+				{
+					IP: testPodIp,
+				},
+			},
+		},
+	}
+	testService := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test_service",
+			Namespace: "test_service_namespace",
+		},
+		Spec: corev1.ServiceSpec{
+			ClusterIPs: []string{testServiceIp},
+		},
+	}
+
+	tests := []struct {
+		name                string
+		existingPods        []*corev1.Pod
+		existingServices    []*corev1.Service
+		workloadMappings    []*K8sWorkloadMappingConfig
+		receivedMetricAttrs map[string]any
+		expectedMetricAttrs map[string]any
+	}{
+		{
+			name:             "mapping matches existing pod IP",
+			existingPods:     []*corev1.Pod{testPod},
+			existingServices: []*corev1.Service{testService},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"pods", "services"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address": testPodIp,
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address": testPodIp,
+				"src_type":    "Pod",
+			},
+		},
+		{
+			name:             "mapping matches existing service IP",
+			existingPods:     []*corev1.Pod{testPod},
+			existingServices: []*corev1.Service{testService},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"pods", "services"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address": testServiceIp,
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address": testServiceIp,
+				"src_type":    "Service",
+			},
+		},
+		{
+			name:             "mapping matches existing pod IP - <http://<ip>:8080>",
+			existingPods:     []*corev1.Pod{testPod},
+			existingServices: []*corev1.Service{testService},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"pods", "services"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address": "http://" + testPodIp + ":8080",
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address": "http://" + testPodIp + ":8080",
+				"src_type":    "Pod",
+			},
+		},
+		{
+			name:             "mapping matches existing pod IP - <http://<ip>:8080>",
+			existingPods:     []*corev1.Pod{testPod},
+			existingServices: []*corev1.Service{testService},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"pods", "services"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address": "http://" + testServiceIp + ":8080",
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address": "http://" + testServiceIp + ":8080",
+				"src_type":    "Service",
+			},
+		},
+		{
+			name:         "mapping does not overwrite existing workload type",
+			existingPods: []*corev1.Pod{testPod},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"pods"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address": testPodIp,
+				"src_type":    "already_set",
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address": testPodIp,
+				"src_type":    "already_set",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock, reset := MockKubeClient()
+			defer reset()
+
+			MockExistingObjectsInKubeClient(mock, tt.existingPods)
+			MockExistingObjectsInKubeClient(mock, tt.existingServices)
+
+			output := runProcessorMetricsPipelineTest(t, tt.workloadMappings, generateGaugeForTestProcessorMetricsPipeline(tt.receivedMetricAttrs))
+
+			attrs := output[0].ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics().At(0).Gauge().DataPoints().At(0).Attributes().AsRaw()
+			require.Equal(t, tt.expectedMetricAttrs, attrs, "Expected attributes should match the actual attributes on metric exiting the processor")
+		})
+	}
+}
+
 func TestProcessorMetricsPipelineForDifferentMetricTypes(t *testing.T) {
 	testPod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
