@@ -16,6 +16,7 @@ package solarwindsentityconnector
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal/metadata"
 	"go.opentelemetry.io/collector/component"
@@ -32,23 +33,20 @@ func NewFactory() connector.Factory {
 	)
 }
 
-func createMetricsToLogsConnector(ctx context.Context, settings connector.Settings, config component.Config, logs consumer.Logs) (connector.Metrics, error) {
-	cfg := config.(*Config)
-	solarwindsentity := &solarwindsentity{
-		telemetrySettings: settings.TelemetrySettings,
-		logger:            settings.Logger,
-		sourcePrefix:      cfg.SourcePrefix,
-		destinationPrefix: cfg.DestinationPrefix,
-		entities:          cfg.Schema.NewEntities(),
-		events:            cfg.Schema.NewEvents(),
-		logsConsumer:      logs,
-	}
-	solarwindsentity.createParserMetrics()
-	return solarwindsentity, nil
+func createLogsToLogsConnector(ctx context.Context, settings connector.Settings, config component.Config, logs consumer.Logs) (connector.Logs, error) {
+	return createConnector(settings, config, logs)
 }
 
-func createLogsToLogsConnector(ctx context.Context, settings connector.Settings, config component.Config, logs consumer.Logs) (connector.Logs, error) {
-	cfg := config.(*Config)
+func createMetricsToLogsConnector(ctx context.Context, settings connector.Settings, config component.Config, logs consumer.Logs) (connector.Metrics, error) {
+	return createConnector(settings, config, logs)
+}
+
+func createConnector(settings connector.Settings, config component.Config, logs consumer.Logs) (*solarwindsentity, error) {
+	cfg, ok := config.(*Config)
+	if !ok {
+		return nil, fmt.Errorf("expected config of type *Config, got %T", config)
+	}
+
 	solarwindsentity := &solarwindsentity{
 		telemetrySettings: settings.TelemetrySettings,
 		logger:            settings.Logger,
@@ -58,6 +56,5 @@ func createLogsToLogsConnector(ctx context.Context, settings connector.Settings,
 		events:            cfg.Schema.NewEvents(),
 		logsConsumer:      logs,
 	}
-	solarwindsentity.createParserLogs()
 	return solarwindsentity, nil
 }

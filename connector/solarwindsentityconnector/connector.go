@@ -40,8 +40,6 @@ type solarwindsentity struct {
 	destinationPrefix string
 	telemetrySettings component.TelemetrySettings
 	events            map[string]config.Events
-	parserLogs        ottl.Parser[ottllog.TransformContext]
-	parserMetrics     ottl.Parser[ottlmetric.TransformContext]
 
 	component.StartFunc
 	component.ShutdownFunc
@@ -59,30 +57,18 @@ func (s *solarwindsentity) Capabilities() consumer.Capabilities {
 	return consumer.Capabilities{MutatesData: false}
 }
 
-func (s *solarwindsentity) createParserLogs() {
-	logParser, err := ottllog.NewParser(nil, s.telemetrySettings)
-	if err != nil {
-		s.logger.Error("Failed to create logs parser", zap.Error(err))
-		return
-	}
-	s.parserLogs = logParser
-}
-
-func (s *solarwindsentity) createParserMetrics() {
-	metricParser, err := ottlmetric.NewParser(nil, s.telemetrySettings)
-	if err != nil {
-		s.logger.Error("Failed to create metrics parser", zap.Error(err))
-		return
-	}
-	s.parserMetrics = metricParser
-}
-
 func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.Metrics) error {
 	eventLogs := plog.NewLogs()
 	metricsEvents := s.events[constMetric]
 	relationships := metricsEvents.Relationships
 	entities := metricsEvents.Entities
 	eventBuilder := internal.NewEventBuilder(s.entities, relationships, s.sourcePrefix, s.destinationPrefix, &eventLogs, s.logger)
+
+	parser, err := ottlmetric.NewParser(nil, s.telemetrySettings)
+	if err != nil {
+		s.logger.Error("Failed to create metrics parser", zap.Error(err))
+		return err
+	}
 
 	for i := range metrics.ResourceMetrics().Len() {
 		resourceMetric := metrics.ResourceMetrics().At(i)
@@ -95,7 +81,7 @@ func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.M
 				metric := scopeMetric.Metrics().At(k)
 				tc := ottlmetric.NewTransformContext(metric, scopeMetric.Metrics(), scopeMetric.Scope(), resourceMetric.Resource(), scopeMetric, resourceMetric)
 
-				err := s.processMetricCondition(ctx, eventBuilder, entities, relationships, resourceAttrs, tc)
+				err = processCondition(ctx, eventBuilder, entities, relationships, resourceAttrs, s, &parser, tc)
 				if err != nil {
 					s.logger.Error("Failed to process metric condition", zap.Error(err))
 					return err
@@ -117,6 +103,11 @@ func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) erro
 	relationships := logEvents.Relationships
 	entities := logEvents.Entities
 	eventBuilder := internal.NewEventBuilder(s.entities, relationships, s.sourcePrefix, s.destinationPrefix, &eventLogs, s.logger)
+	parser, err := ottllog.NewParser(nil, s.telemetrySettings)
+	if err != nil {
+		s.logger.Error("Failed to create logs parser", zap.Error(err))
+		return err
+	}
 
 	for i := range logs.ResourceLogs().Len() {
 		resourceLog := logs.ResourceLogs().At(i)
@@ -128,7 +119,7 @@ func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) erro
 			for k := range scopeLog.LogRecords().Len() {
 				logRecord := scopeLog.LogRecords().At(k)
 				tc := ottllog.NewTransformContext(logRecord, scopeLog.Scope(), resourceLog.Resource(), scopeLog, resourceLog)
-				err := s.processLogsCondition(ctx, eventBuilder, entities, relationships, resourceAttrs, tc)
+				err = processCondition(ctx, eventBuilder, entities, relationships, resourceAttrs, s, &parser, tc)
 				if err != nil {
 					s.logger.Error("Failed to process logs condition", zap.Error(err))
 					return err
@@ -144,6 +135,73 @@ func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) erro
 	return s.logsConsumer.ConsumeLogs(ctx, eventLogs)
 }
 
+// processCondition evaluates the conditions for entities and relationships.
+// If the conditions are met, it appends the corresponding entity or relationship update event to the event builder.
+func processCondition[C any](
+	ctx context.Context,
+	eventBuilder *internal.EventBuilder,
+	entities []config.EntityEvent,
+	relationships []config.RelationshipEvent,
+	resourceAttrs pcommon.Map,
+	s *solarwindsentity,
+	parser *ottl.Parser[C],
+	tc C) error {
+
+	for _, entityEvent := range entities {
+
+		condition := entityEvent.Conditions
+		seq, err := newConditionSeq(
+			*parser,
+			s.telemetrySettings,
+			condition,
+		)
+
+		if err != nil {
+			s.logger.Error("Failed to create condition sequence", zap.Error(err))
+			return err
+		}
+
+		ok, err := seq.Eval(ctx, tc)
+		if err != nil {
+			s.logger.Error("Failed to evaluate condition", zap.Error(err))
+			return err
+		}
+
+		if ok {
+			entity := s.entities[entityEvent.Type]
+			eventBuilder.AppendEntityUpdateEvent(entity, resourceAttrs)
+		}
+	}
+
+	for _, relationship := range relationships {
+
+		conditions := relationship.Conditions
+		seq, err := newConditionSeq(
+			*parser,
+			s.telemetrySettings,
+			conditions,
+		)
+
+		if err != nil {
+			s.logger.Error("Failed to create condition sequence", zap.Error(err))
+			return err
+		}
+
+		ok, err := seq.Eval(ctx, tc)
+		if err != nil {
+			s.logger.Error("Failed to evaluate condition", zap.Error(err))
+			return err
+		}
+
+		if ok {
+			eventBuilder.AppendRelationshipUpdateEvent(relationship, resourceAttrs)
+		}
+	}
+	return nil
+}
+
+// newConditionSeq creates a new condition sequence from the provided conditions.
+// If no conditions are provided, it defaults to a sequence that always evaluates to true.
 func newConditionSeq[C any](
 	parser ottl.Parser[C],
 	settings component.TelemetrySettings,
@@ -160,127 +218,4 @@ func newConditionSeq[C any](
 
 	seq := ottl.NewConditionSequence(stmts, settings)
 	return &seq, nil
-}
-
-func (s *solarwindsentity) processMetricCondition(
-	ctx context.Context,
-	eventBuilder *internal.EventBuilder,
-	entities []config.EntityEvent,
-	relationships []config.RelationshipEvent,
-	resourceAttrs pcommon.Map,
-	tc ottlmetric.TransformContext) error {
-
-	for _, entityEvent := range entities {
-
-		condition := entityEvent.Conditions
-		seq, err := newConditionSeq(
-			s.parserMetrics,
-			s.telemetrySettings,
-			condition,
-		)
-
-		if err != nil {
-			s.logger.Error("Failed to create condition sequence", zap.Error(err))
-			return err
-		}
-
-		ok, err := seq.Eval(ctx, tc)
-		if err != nil {
-			s.logger.Error("Failed to evaluate condition", zap.Error(err))
-			return err
-		}
-
-		if ok {
-			entity := s.entities[entityEvent.Type]
-			eventBuilder.AppendEntityUpdateEvent(entity, resourceAttrs)
-		}
-	}
-
-	for _, relationship := range relationships {
-
-		conditions := relationship.Conditions
-		seq, err := newConditionSeq(
-			s.parserMetrics,
-			s.telemetrySettings,
-			conditions,
-		)
-
-		if err != nil {
-			s.logger.Error("Failed to create condition sequence", zap.Error(err))
-			return err
-		}
-
-		ok, err := seq.Eval(ctx, tc)
-		if err != nil {
-			s.logger.Error("Failed to evaluate condition", zap.Error(err))
-			return err
-		}
-
-		if ok {
-			eventBuilder.AppendRelationshipUpdateEvent(relationship, resourceAttrs)
-		}
-	}
-	return nil
-}
-
-func (s *solarwindsentity) processLogsCondition(
-	ctx context.Context,
-	eventBuilder *internal.EventBuilder,
-	entities []config.EntityEvent,
-	relationships []config.RelationshipEvent,
-	resourceAttrs pcommon.Map,
-	tc ottllog.TransformContext) error {
-	for _, entityEvent := range entities {
-
-		condition := entityEvent.Conditions
-		seq, err := newConditionSeq(
-			s.parserLogs,
-			s.telemetrySettings,
-			condition,
-		)
-
-		if err != nil {
-			s.logger.Error("Failed to create condition sequence", zap.Error(err))
-			return err
-		}
-
-		ok, err := seq.Eval(ctx, tc)
-		if err != nil {
-			s.logger.Error("Failed to evaluate condition", zap.Error(err))
-			return err
-		}
-
-		if ok {
-			entity := s.entities[entityEvent.Type]
-			eventBuilder.AppendEntityUpdateEvent(entity, resourceAttrs)
-		}
-
-	}
-
-	for _, relationship := range relationships {
-
-		conditions := relationship.Conditions
-		seq, err := newConditionSeq(
-			s.parserLogs,
-			s.telemetrySettings,
-			conditions,
-		)
-
-		if err != nil {
-			s.logger.Error("Failed to create condition sequence", zap.Error(err))
-			return err
-		}
-
-		ok, err := seq.Eval(ctx, tc)
-		if err != nil {
-			s.logger.Error("Failed to evaluate condition", zap.Error(err))
-			return err
-		}
-
-		if ok {
-			eventBuilder.AppendRelationshipUpdateEvent(relationship, resourceAttrs)
-		}
-
-	}
-	return nil
 }
