@@ -53,6 +53,7 @@ var (
 		{Type: "Snowflake", IDs: []string{"snowflake.id"}, Attributes: []string{"attr1"}},
 		{Type: "AWS EC2", IDs: []string{"aws.ec2.id", "aws.ec2.name"}, Attributes: []string{"attr2"}},
 		{Type: "Kubernetes Pod", IDs: []string{"k8s.pod.id", "k8s.pod.name"}, Attributes: []string{"k8s.pod.port"}},
+		{Type: "Kubernetes Cluster", IDs: []string{"k8s.cluster.id", "k8s.cluster.name"}, Attributes: []string{"k8s.cluster.port"}},
 	}
 
 	configuredRelationshipsEvent = []config.RelationshipEvent{
@@ -120,17 +121,33 @@ var (
 			Conditions:  []string{"true"},
 			Context:     "metric",
 		},
+		{
+			Type:        "MemberOf",
+			Source:      "Kubernetes Cluster",
+			Destination: "Kubernetes Pod",
+			Attributes:  []string{"k8s.cluster.port"},
+			Conditions:  []string{`attributes["k8s.cluster.port"] == "8080" or attributes["k8s.cluster.port"] == "9090" and attributes["k8s.cluster.name"] == "test-cluster-name"`},
+			Context:     "log",
+		},
+		{
+			Type:        "MemberOf",
+			Source:      "Kubernetes Cluster",
+			Destination: "Kubernetes Pod",
+			Attributes:  []string{"k8s.cluster.port"},
+			Conditions:  []string{`metric.name == "k8s.tcp.bytes" or metric.name == "k8s.tcp.connections" and metric.unit == "bytes"`},
+			Context:     "metric",
+		},
 	}
 
 	configuredEntitiesEvent = []config.EntityEvent{
 		{
 			Type:       "Snowflake",
-			Conditions: []string{"true"},
+			Conditions: []string{""},
 			Context:    "log",
 		},
 		{
 			Type:       "Snowflake",
-			Conditions: []string{"true"},
+			Conditions: []string{""},
 			Context:    "metric",
 		},
 		{
@@ -151,6 +168,16 @@ var (
 		{
 			Type:       "Kubernetes Pod",
 			Conditions: []string{"true"},
+			Context:    "metric",
+		},
+		{
+			Type:       "Kubernetes Cluster",
+			Conditions: []string{`attributes["k8s.cluster.port"] == "8080" or attributes["k8s.cluster.port"] == "9090" and attributes["k8s.cluster.name"] == "test-cluster-name"`},
+			Context:    "log",
+		},
+		{
+			Type:       "Kubernetes Cluster",
+			Conditions: []string{`metric.name == "k8s.tcp.bytes" or metric.name == "k8s.tcp.connections" and metric.unit == "bytes"`},
 			Context:    "metric",
 		},
 	}
@@ -217,6 +244,25 @@ func TestLogsToLogs(t *testing.T) {
 			inputFile:    "relationship/different-types-relationship/input-log-different-type-relationship-res-atr.yaml",
 			expectedFile: "relationship/different-types-relationship/expected-log-different-type-relationship-res-atr.yaml",
 		},
+		{
+			name:      "when log for entity has no valid condition, no log event is sent",
+			inputFile: "entity/input-log-no-valid-condition.yaml",
+		},
+		{
+			name:         "when log for entity has valid condition, log event is sent",
+			inputFile:    "entity/input-log-valid-condition.yaml",
+			expectedFile: "entity/expected-log-valid-condition.yaml",
+		},
+		{
+			name:         "when log for different type relationship has no valid condition, no log relationship event is sent",
+			inputFile:    "relationship/different-types-relationship/input-log-different-type-relationship-no-valid-condition.yaml",
+			expectedFile: "relationship/different-types-relationship/expected-log-different-type-relationship-no-valid-condition.yaml",
+		},
+		{
+			name:         "when log for different type relationship has valid condition, log relationship event is sent",
+			inputFile:    "relationship/different-types-relationship/input-log-different-type-relationship-valid-condition.yaml",
+			expectedFile: "relationship/different-types-relationship/expected-log-different-type-relationship-valid-condition.yaml",
+		},
 	}
 
 	for _, tc := range testCases {
@@ -270,7 +316,7 @@ func TestMetricsToLogs(t *testing.T) {
 		{
 			name:         "when entity is inferred, log event is sent",
 			inputFile:    "entity/input-metric.yaml",
-			expectedFile: "entity/expected-log.yaml",
+			expectedFile: "entity/expected-metric.yaml",
 		},
 		{
 			name:      "when entity is not inferred, no log is sent",
@@ -316,6 +362,25 @@ func TestMetricsToLogs(t *testing.T) {
 			name:         "when metric for different type relationship, log event is sent with relationship attributes",
 			inputFile:    "relationship/different-types-relationship/input-metric-different-type-relationship-res-atr.yaml",
 			expectedFile: "relationship/different-types-relationship/expected-metric-different-type-relationship-res-atr.yaml",
+		},
+		{
+			name:      "when metric for entity has no valid condition, no log event is sent",
+			inputFile: "entity/input-metric-no-valid-condition.yaml",
+		},
+		{
+			name:         "when metric for entity has valid condition, log event is sent",
+			inputFile:    "entity/input-metric-valid-condition.yaml",
+			expectedFile: "entity/expected-metric-valid-condition.yaml",
+		},
+		{
+			name:         "when metric for different type relationship has no valid condition, no log relationship event is sent",
+			inputFile:    "relationship/different-types-relationship/input-metric-different-type-relationship-no-valid-condition.yaml",
+			expectedFile: "relationship/different-types-relationship/expected-metric-different-type-relationship-no-valid-condition.yaml",
+		},
+		{
+			name:         "when metric for different type relationship has valid condition, log relationship event is sent",
+			inputFile:    "relationship/different-types-relationship/input-metric-different-type-relationship-valid-condition.yaml",
+			expectedFile: "relationship/different-types-relationship/expected-metric-different-type-relationship-valid-condition.yaml",
 		},
 	}
 
