@@ -52,7 +52,19 @@ func TestInvalidConfig(t *testing.T) {
 			id: component.NewIDWithName(metadata.Type, "missing_workload_mappings"),
 		},
 		{
-			id: component.NewIDWithName(metadata.Type, "inconsistent_attribute_context"),
+			id: component.NewIDWithName(metadata.Type, "inconsistent_attribute_context_when_using_name_attribute"),
+		},
+		{
+			id: component.NewIDWithName(metadata.Type, "inconsistent_attribute_context_when_using_address_attribute"),
+		},
+		{
+			id: component.NewIDWithName(metadata.Type, "using_both_name_and_addr_attributes"),
+		},
+		{
+			id: component.NewIDWithName(metadata.Type, "unsupported_workload_type_when_using_address_attribute"),
+		},
+		{
+			id: component.NewIDWithName(metadata.Type, "using_neither_name_nor_addr_attributes"),
 		},
 		{
 			id: component.NewIDWithName(metadata.Type, "valid_config"),
@@ -72,6 +84,12 @@ func TestInvalidConfig(t *testing.T) {
 						NamespaceAttr:    "dest_workload_namespace",
 						WorkloadTypeAttr: "dest_workload_type",
 						ExpectedTypes:    []string{"services", "pods"},
+					},
+					{
+						AddressAttr:      "dest_address",
+						NamespaceAttr:    "dest_workload_namespace",
+						WorkloadTypeAttr: "dest_workload_type",
+						ExpectedTypes:    []string{"services"},
 					},
 				},
 				WatchSyncPeriod: time.Minute * 5,
