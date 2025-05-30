@@ -45,7 +45,6 @@ func (s *Schema) NewEvents() map[string]*Events {
 			continue
 		}
 		contextGroup.Entities = append(contextGroup.Entities, event)
-		eventMap[event.Context] = contextGroup
 	}
 
 	for _, event := range s.Events.Relationships {
@@ -54,7 +53,6 @@ func (s *Schema) NewEvents() map[string]*Events {
 			continue
 		}
 		contextGroup.Relationships = append(contextGroup.Relationships, event)
-		eventMap[event.Context] = contextGroup
 	}
 
 	return eventMap
