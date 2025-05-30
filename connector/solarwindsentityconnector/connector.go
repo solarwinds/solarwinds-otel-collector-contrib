@@ -17,7 +17,6 @@ package solarwindsentityconnector
 import (
 	"context"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottlmetric"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
@@ -25,7 +24,6 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/connector"
 	"go.opentelemetry.io/collector/consumer"
-	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.uber.org/zap"
@@ -81,7 +79,7 @@ func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.M
 				metric := scopeMetric.Metrics().At(k)
 				tc := ottlmetric.NewTransformContext(metric, scopeMetric.Metrics(), scopeMetric.Scope(), resourceMetric.Resource(), scopeMetric, resourceMetric)
 
-				err = processEvents(ctx, eventBuilder, metricEntityEvents, metricRelationshipEvents, resourceAttrs, s, &parser, tc)
+				err = internal.ProcessEvents(ctx, eventBuilder, metricEntityEvents, metricRelationshipEvents, resourceAttrs, s.logger, s.entitiesDefinitions, s.telemetrySettings, &parser, tc)
 				if err != nil {
 					s.logger.Error("Failed to process metric condition", zap.Error(err))
 					return err
@@ -120,7 +118,7 @@ func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) erro
 				logRecord := scopeLog.LogRecords().At(k)
 				tc := ottllog.NewTransformContext(logRecord, scopeLog.Scope(), resourceLog.Resource(), scopeLog, resourceLog)
 
-				err = processEvents(ctx, eventBuilder, logEntityEvents, logRelationshipEvents, resourceAttrs, s, &parser, tc)
+				err = internal.ProcessEvents(ctx, eventBuilder, logEntityEvents, logRelationshipEvents, resourceAttrs, s.logger, s.entitiesDefinitions, s.telemetrySettings, &parser, tc)
 				if err != nil {
 					s.logger.Error("Failed to process logs condition", zap.Error(err))
 					return err
@@ -134,89 +132,4 @@ func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) erro
 	}
 
 	return s.logsConsumer.ConsumeLogs(ctx, eventLogs)
-}
-
-// processCondition evaluates the conditions for entities and relationships.
-// If the conditions are met, it appends the corresponding entity or relationship update event to the event builder.
-func processEvents[C any](
-	ctx context.Context,
-	eventBuilder *internal.EventBuilder,
-	contextEntityEvents []config.EntityEvent,
-	contextRelationshipEvents []config.RelationshipEvent,
-	resourceAttrs pcommon.Map,
-	s *solarwindsentity,
-	parser *ottl.Parser[C],
-	tc C) error {
-
-	for _, entityEvent := range contextEntityEvents {
-
-		condition := entityEvent.Conditions
-		seq, err := newConditionSeq(
-			*parser,
-			s.telemetrySettings,
-			condition,
-		)
-
-		if err != nil {
-			s.logger.Error("Failed to create condition sequence", zap.Error(err))
-			return err
-		}
-
-		ok, err := seq.Eval(ctx, tc)
-		if err != nil {
-			s.logger.Error("Failed to evaluate condition", zap.Error(err))
-			return err
-		}
-
-		if ok {
-			entity := s.entitiesDefinitions[entityEvent.Type]
-			eventBuilder.AppendEntityUpdateEvent(entity, resourceAttrs)
-		}
-	}
-
-	for _, relationshipEvent := range contextRelationshipEvents {
-
-		conditions := relationshipEvent.Conditions
-		seq, err := newConditionSeq(
-			*parser,
-			s.telemetrySettings,
-			conditions,
-		)
-
-		if err != nil {
-			s.logger.Error("Failed to create condition sequence", zap.Error(err))
-			return err
-		}
-
-		ok, err := seq.Eval(ctx, tc)
-		if err != nil {
-			s.logger.Error("Failed to evaluate condition", zap.Error(err))
-			return err
-		}
-
-		if ok {
-			eventBuilder.AppendRelationshipUpdateEvent(relationshipEvent, resourceAttrs)
-		}
-	}
-	return nil
-}
-
-// newConditionSeq creates a new condition sequence from the provided conditions.
-// If no conditions are provided, it defaults to a sequence that always evaluates to true.
-func newConditionSeq[C any](
-	parser ottl.Parser[C],
-	settings component.TelemetrySettings,
-	conditions []string,
-) (*ottl.ConditionSequence[C], error) {
-	if len(conditions) == 0 {
-		conditions = []string{"true"}
-	}
-
-	stmts, err := parser.ParseConditions(conditions)
-	if err != nil {
-		return nil, err
-	}
-
-	seq := ottl.NewConditionSequence(stmts, settings)
-	return &seq, nil
 }
