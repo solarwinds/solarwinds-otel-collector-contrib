@@ -24,13 +24,12 @@ import (
 	"go.uber.org/zap"
 )
 
-// processCondition evaluates the conditions for entities and relationships.
+// processCondition evaluates the conditions for entities and relationships events.
 // If the conditions are met, it appends the corresponding entity or relationship update event to the event builder.
 func ProcessEvents[C any](
 	ctx context.Context,
 	eventBuilder *EventBuilder,
-	contextEntityEvents []config.EntityEvent,
-	contextRelationshipEvents []config.RelationshipEvent,
+	events config.Events,
 	resourceAttrs pcommon.Map,
 	logger *zap.Logger,
 	entityDefinitions map[string]config.Entity,
@@ -38,7 +37,7 @@ func ProcessEvents[C any](
 	parser *ottl.Parser[C],
 	tc C) error {
 
-	for _, entityEvent := range contextEntityEvents {
+	for _, entityEvent := range events.Entities {
 		condition := entityEvent.Conditions
 		ok, err := evaluateConditions(ctx, telemetrySettings, condition, parser, tc)
 		if err != nil {
@@ -50,7 +49,7 @@ func ProcessEvents[C any](
 		}
 	}
 
-	for _, relationshipEvent := range contextRelationshipEvents {
+	for _, relationshipEvent := range events.Relationships {
 		condition := relationshipEvent.Conditions
 		ok, err := evaluateConditions(ctx, telemetrySettings, condition, parser, tc)
 		if err != nil {

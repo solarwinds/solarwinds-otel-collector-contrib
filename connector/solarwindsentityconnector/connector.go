@@ -46,20 +46,14 @@ type solarwindsentity struct {
 var _ connector.Metrics = (*solarwindsentity)(nil)
 var _ connector.Logs = (*solarwindsentity)(nil)
 
-const (
-	constMetric = ottlmetric.ContextName
-	constLog    = ottllog.ContextName
-)
-
 func (s *solarwindsentity) Capabilities() consumer.Capabilities {
 	return consumer.Capabilities{MutatesData: false}
 }
 
 func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.Metrics) error {
 	eventLogs := plog.NewLogs()
-	metricsEvents := s.events[constMetric]
+	metricsEvents := s.events[ottlmetric.ContextName]
 	metricRelationshipEvents := metricsEvents.Relationships
-	metricEntityEvents := metricsEvents.Entities
 	eventBuilder := internal.NewEventBuilder(s.entitiesDefinitions, metricRelationshipEvents, s.sourcePrefix, s.destinationPrefix, &eventLogs, s.logger)
 
 	parser, err := ottlmetric.NewParser(nil, s.telemetrySettings)
@@ -79,7 +73,7 @@ func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.M
 				metric := scopeMetric.Metrics().At(k)
 				tc := ottlmetric.NewTransformContext(metric, scopeMetric.Metrics(), scopeMetric.Scope(), resourceMetric.Resource(), scopeMetric, resourceMetric)
 
-				err = internal.ProcessEvents(ctx, eventBuilder, metricEntityEvents, metricRelationshipEvents, resourceAttrs, s.logger, s.entitiesDefinitions, s.telemetrySettings, &parser, tc)
+				err = internal.ProcessEvents(ctx, eventBuilder, *metricsEvents, resourceAttrs, s.logger, s.entitiesDefinitions, s.telemetrySettings, &parser, tc)
 				if err != nil {
 					s.logger.Error("Failed to process metric condition", zap.Error(err))
 					return err
@@ -97,10 +91,10 @@ func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.M
 
 func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) error {
 	eventLogs := plog.NewLogs()
-	logEvents := s.events[constLog]
+	logEvents := s.events[ottllog.ContextName]
 	logRelationshipEvents := logEvents.Relationships
-	logEntityEvents := logEvents.Entities
 	eventBuilder := internal.NewEventBuilder(s.entitiesDefinitions, logRelationshipEvents, s.sourcePrefix, s.destinationPrefix, &eventLogs, s.logger)
+
 	parser, err := ottllog.NewParser(nil, s.telemetrySettings)
 	if err != nil {
 		s.logger.Error("Failed to create logs parser", zap.Error(err))
@@ -118,7 +112,7 @@ func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) erro
 				logRecord := scopeLog.LogRecords().At(k)
 				tc := ottllog.NewTransformContext(logRecord, scopeLog.Scope(), resourceLog.Resource(), scopeLog, resourceLog)
 
-				err = internal.ProcessEvents(ctx, eventBuilder, logEntityEvents, logRelationshipEvents, resourceAttrs, s.logger, s.entitiesDefinitions, s.telemetrySettings, &parser, tc)
+				err = internal.ProcessEvents(ctx, eventBuilder, *logEvents, resourceAttrs, s.logger, s.entitiesDefinitions, s.telemetrySettings, &parser, tc)
 				if err != nil {
 					s.logger.Error("Failed to process logs condition", zap.Error(err))
 					return err
