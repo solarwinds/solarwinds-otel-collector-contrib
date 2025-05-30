@@ -14,7 +14,7 @@ on:
   workflow_call:
 
 env:
-  GO_VERSION: '1.24'
+  GO_VERSION: '1.24.3'
 
 jobs:  
   # To be removed after org config is merged.
