@@ -2,6 +2,9 @@
 
 ## vNext
 
+## v0.127.0
+- Consumes OpenTelemetry Collector dependencies v0.127.0.
+
 ## v0.123.7
 - Aligning version with [solarwinds-otel-collector-releases](https://github.com/solarwinds/solarwinds-otel-collector-releases) repository.
 - Latest version of `solarwindsentityconnector` moved to this repository from [solarwinds-otel-collector-releases](https://github.com/solarwinds/solarwinds-otel-collector-releases).
