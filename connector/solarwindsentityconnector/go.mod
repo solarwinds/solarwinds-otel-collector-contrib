@@ -1,6 +1,6 @@
 module github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector
 
-go 1.24
+go 1.24.3
 
 require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.127.0

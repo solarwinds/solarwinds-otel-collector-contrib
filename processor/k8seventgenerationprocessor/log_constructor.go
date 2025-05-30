@@ -77,14 +77,14 @@ func addContainerAttributes(attrs pcommon.Map, md Metadata, c Container) {
 
 	// Telemetry mappings
 	tm := attrs.PutEmptyMap(otelEntityId)
-	tm.PutStr(conventions.AttributeK8SPodName, md.PodName)
-	tm.PutStr(conventions.AttributeK8SNamespaceName, md.Namespace)
-	tm.PutStr(conventions.AttributeK8SContainerName, c.Name)
+	tm.PutStr(string(conventions.K8SPodNameKey), md.PodName)
+	tm.PutStr(string(conventions.K8SNamespaceNameKey), md.Namespace)
+	tm.PutStr(string(conventions.K8SContainerNameKey), c.Name)
 	tm.PutStr(swK8sClusterUid, os.Getenv(clusterUidEnv))
 
 	// Entity attributes
 	ea := attrs.PutEmptyMap(otelEntityAttributes)
-	ea.PutStr(conventions.AttributeContainerID, c.ContainerId)
+	ea.PutStr(string(conventions.ContainerIDKey), c.ContainerId)
 	ea.PutStr(k8sContainerStatus, c.State)
 	ea.PutBool(k8sContainerInit, c.IsInitContainer)
 	ea.PutBool(k8sContainerSidecar, c.IsSidecarContainer)
