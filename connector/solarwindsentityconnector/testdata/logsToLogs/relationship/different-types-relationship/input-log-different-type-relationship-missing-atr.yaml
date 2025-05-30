@@ -2,3 +2,8 @@ resourceLogs:
   - resource:
       attributes: [ { "key": "aws.ec2.id", "value":{"stringValue": "aws-instance-id"}},
                     { "key": "snowflake.id", "value":{"stringValue": "snowflake-instance-id"}}]
+    scope_logs:
+    - log_records:
+        - body: { "stringValue": "test-log-body" }
+          attributes: [ { "key": "env", "value":{"stringValue": "test"}} ]
+          time_unix_nano: 1234567890

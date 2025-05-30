@@ -1,0 +1,37 @@
+resourceLogs:
+  - resource: {}
+    scopeLogs:
+      - logRecords:
+          - attributes:
+              - key: otel.entity.type
+                value:
+                  stringValue: Kubernetes Cluster
+              - key: otel.entity.id
+                value:
+                  kvlistValue:
+                    values:
+                      - key: k8s.cluster.id
+                        value:
+                          stringValue: test-cluster-id
+                      - key: k8s.cluster.name
+                        value:
+                          stringValue: test-cluster-name
+              - key: otel.entity.attributes
+                value:
+                  kvlistValue:
+                    values:
+                      - key: k8s.cluster.port
+                        value:
+                          stringValue: test-cluster-port
+              - key: otel.entity.event.type
+                value:
+                  stringValue: entity_state
+            body: {}
+            observedTimeUnixNano: "1748421891668732000"
+            spanId: ""
+            traceId: ""
+        scope:
+          attributes:
+            - key: otel.entity.event_as_log
+              value:
+                boolValue: true

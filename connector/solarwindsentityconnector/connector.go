@@ -16,27 +16,28 @@ package solarwindsentityconnector
 
 import (
 	"context"
-	"sort"
 
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottlmetric"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal"
-	"go.uber.org/zap"
-
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/connector"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/pdata/pmetric"
+	"go.uber.org/zap"
 )
 
 type solarwindsentity struct {
 	logger *zap.Logger
 
-	logsConsumer      consumer.Logs
-	entities          map[string]config.Entity
-	relationships     []config.Relationship
-	sourcePrefix      string
-	destinationPrefix string
+	logsConsumer        consumer.Logs
+	entitiesDefinitions map[string]config.Entity
+	sourcePrefix        string
+	destinationPrefix   string
+	telemetrySettings   component.TelemetrySettings
+	events              map[string]*config.Events
 
 	component.StartFunc
 	component.ShutdownFunc
@@ -49,35 +50,35 @@ func (s *solarwindsentity) Capabilities() consumer.Capabilities {
 	return consumer.Capabilities{MutatesData: false}
 }
 
-// Will be removed when condition logic is added.
-// getReverseSortKeys returns the entity types in reverse sorted order.
-func getReverseSortKeys(m map[string]config.Entity) []string {
-	entityTypes := make([]string, 0, len(m))
-	for k := range m {
-		entityTypes = append(entityTypes, k)
-	}
-	sort.Sort(sort.Reverse(sort.StringSlice(entityTypes)))
-	return entityTypes
-}
-
 func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.Metrics) error {
 	eventLogs := plog.NewLogs()
-	eventBuilder := internal.NewEventBuilder(s.entities, s.relationships, s.sourcePrefix, s.destinationPrefix, &eventLogs, s.logger)
+	metricsEvents := s.events[ottlmetric.ContextName]
+	metricRelationshipEvents := metricsEvents.Relationships
+	eventBuilder := internal.NewEventBuilder(s.entitiesDefinitions, metricRelationshipEvents, s.sourcePrefix, s.destinationPrefix, &eventLogs, s.logger)
+
+	parser, err := ottlmetric.NewParser(nil, s.telemetrySettings)
+	if err != nil {
+		s.logger.Error("Failed to create metrics parser", zap.Error(err))
+		return err
+	}
 
 	for i := 0; i < metrics.ResourceMetrics().Len(); i++ {
 		resourceMetric := metrics.ResourceMetrics().At(i)
 		resourceAttrs := resourceMetric.Resource().Attributes()
 
-		// This will be replaced with actual logic when conditions are introduced
-		entityTypes := getReverseSortKeys(s.entities) // Will be removed when condition logic is added. Prevents random entity type order
-		for _, k := range entityTypes {
-			entity := s.entities[k]
-			eventBuilder.AppendEntityUpdateEvent(entity, resourceAttrs)
-		}
+		for j := 0; j < resourceMetric.ScopeMetrics().Len(); j++ {
+			scopeMetric := resourceMetric.ScopeMetrics().At(j)
 
-		// This will be replaced with actual logic when conditions are introduced
-		for _, relationship := range s.relationships {
-			eventBuilder.AppendRelationshipUpdateEvent(relationship, resourceAttrs)
+			for k := 0; k < scopeMetric.Metrics().Len(); k++ {
+				metric := scopeMetric.Metrics().At(k)
+				tc := ottlmetric.NewTransformContext(metric, scopeMetric.Metrics(), scopeMetric.Scope(), resourceMetric.Resource(), scopeMetric, resourceMetric)
+
+				err = internal.ProcessEvents(ctx, eventBuilder, *metricsEvents, resourceAttrs, s.logger, s.entitiesDefinitions, s.telemetrySettings, &parser, tc)
+				if err != nil {
+					s.logger.Error("Failed to process metric condition", zap.Error(err))
+					return err
+				}
+			}
 		}
 	}
 
@@ -90,22 +91,33 @@ func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.M
 
 func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) error {
 	eventLogs := plog.NewLogs()
-	eventBuilder := internal.NewEventBuilder(s.entities, s.relationships, s.sourcePrefix, s.destinationPrefix, &eventLogs, s.logger)
+	logEvents := s.events[ottllog.ContextName]
+	logRelationshipEvents := logEvents.Relationships
+	eventBuilder := internal.NewEventBuilder(s.entitiesDefinitions, logRelationshipEvents, s.sourcePrefix, s.destinationPrefix, &eventLogs, s.logger)
+
+	parser, err := ottllog.NewParser(nil, s.telemetrySettings)
+	if err != nil {
+		s.logger.Error("Failed to create logs parser", zap.Error(err))
+		return err
+	}
 
 	for i := 0; i < logs.ResourceLogs().Len(); i++ {
 		resourceLog := logs.ResourceLogs().At(i)
 		resourceAttrs := resourceLog.Resource().Attributes()
 
-		// This will be replaced with actual logic when conditions are introduced
-		entityTypes := getReverseSortKeys(s.entities) // Will be removed when condition logic is added. Prevents random entity type order
-		for _, k := range entityTypes {
-			entity := s.entities[k]
-			eventBuilder.AppendEntityUpdateEvent(entity, resourceAttrs)
-		}
+		for j := 0; j < resourceLog.ScopeLogs().Len(); j++ {
+			scopeLog := resourceLog.ScopeLogs().At(j)
 
-		// This will be replaced with actual logic when conditions are introduced
-		for _, relationship := range s.relationships {
-			eventBuilder.AppendRelationshipUpdateEvent(relationship, resourceAttrs)
+			for k := 0; k < scopeLog.LogRecords().Len(); k++ {
+				logRecord := scopeLog.LogRecords().At(k)
+				tc := ottllog.NewTransformContext(logRecord, scopeLog.Scope(), resourceLog.Resource(), scopeLog, resourceLog)
+
+				err = internal.ProcessEvents(ctx, eventBuilder, *logEvents, resourceAttrs, s.logger, s.entitiesDefinitions, s.telemetrySettings, &parser, tc)
+				if err != nil {
+					s.logger.Error("Failed to process logs condition", zap.Error(err))
+					return err
+				}
+			}
 		}
 	}
 

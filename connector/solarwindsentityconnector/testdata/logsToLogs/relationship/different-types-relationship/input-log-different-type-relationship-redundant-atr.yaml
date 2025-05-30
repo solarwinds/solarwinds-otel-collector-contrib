@@ -4,3 +4,8 @@ resourceLogs:
                     { "key": "aws.ec2.name", "value":{"stringValue": "aws-instance-name"}},
                     { "key": "snowflake.id", "value":{"stringValue": "snowflake-instance-id"}},
                     { "key": "k8s.pod.name", "value":{"stringValue": "k8s-pod-name"}}]
+    scope_logs:
+    - log_records:
+      - body: { "stringValue": "test-log-body" }
+        attributes: [ { "key": "env", "value":{"stringValue": "test"}} ]
+        time_unix_nano: 1234567890

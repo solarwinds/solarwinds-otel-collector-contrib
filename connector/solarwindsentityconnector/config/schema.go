@@ -14,6 +14,11 @@
 
 package config
 
+import (
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottlmetric"
+)
+
 type Schema struct {
 	Entities []Entity `mapstructure:"entities"`
 	Events   Events   `mapstructure:"events"`
@@ -28,6 +33,27 @@ func (s *Schema) NewEntities() map[string]Entity {
 	return entities
 }
 
-func (s *Schema) NewRelationships() []Relationship {
-	return s.Events.Relationships
+func (s *Schema) NewEvents() map[string]*Events {
+	eventMap := map[string]*Events{
+		ottlmetric.ContextName: {},
+		ottllog.ContextName:    {},
+	}
+
+	for _, event := range s.Events.Entities {
+		contextGroup, ok := eventMap[event.Context]
+		if !ok {
+			continue
+		}
+		contextGroup.Entities = append(contextGroup.Entities, event)
+	}
+
+	for _, event := range s.Events.Relationships {
+		contextGroup, ok := eventMap[event.Context]
+		if !ok {
+			continue
+		}
+		contextGroup.Relationships = append(contextGroup.Relationships, event)
+	}
+
+	return eventMap
 }
