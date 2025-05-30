@@ -53,6 +53,7 @@ var (
 		{Type: "AWS EC2", IDs: []string{"aws.ec2.id", "aws.ec2.name"}, Attributes: []string{"attr2"}},
 		{Type: "Kubernetes Pod", IDs: []string{"k8s.pod.id", "k8s.pod.name"}, Attributes: []string{"k8s.pod.port"}},
 		{Type: "Kubernetes Cluster", IDs: []string{"k8s.cluster.id", "k8s.cluster.name"}, Attributes: []string{"k8s.cluster.port"}},
+		{Type: "Kubernetes Node", IDs: []string{"k8s.node.id"}, Attributes: []string{}},
 	}
 
 	configuredRelationshipsEvent = []config.RelationshipEvent{
@@ -136,7 +137,24 @@ var (
 			Conditions:  []string{`metric.name == "k8s.tcp.bytes" or metric.name == "k8s.tcp.connections" and metric.unit == "bytes"`},
 			Context:     "metric",
 		},
+		{
+			Type:        "TestRelationshipType",
+			Source:      "Kubernetes Node",
+			Destination: "Kubernetes Node",
+			Attributes:  []string{},
+			Conditions:  []string{`instrumentation_scope.name == "NodeScope" and resource.attributes["service.name"] == "NodeService" and log.body == "test-log-body"`},
+			Context:     "log",
+		},
+		{
+			Type:        "TestRelationshipType",
+			Source:      "Kubernetes Node",
+			Destination: "Kubernetes Node",
+			Attributes:  []string{},
+			Conditions:  []string{`instrumentation_scope.name == "NodeScope" and resource.attributes["service.name"] == "NodeService" and metric.unit == "bytes"`},
+			Context:     "metric",
+		},
 	}
+	//`instrumentation_scope.name == "NodeScope" and resource.attributes["service.name"] == "NodeService" and log.body == "test-log-body"`
 
 	configuredEntitiesEvent = []config.EntityEvent{
 		{
@@ -179,6 +197,16 @@ var (
 			Conditions: []string{`metric.name == "k8s.tcp.bytes" or metric.name == "k8s.tcp.connections" and metric.unit == "bytes"`},
 			Context:    "metric",
 		},
+		{
+			Type:       "Kubernetes Node",
+			Conditions: []string{`instrumentation_scope.name == "NodeScope" and resource.attributes["service.name"] == "NodeService" and log.body == "test-log-body"`},
+			Context:    "log",
+		},
+		{
+			Type:       "Kubernetes Node",
+			Conditions: []string{`instrumentation_scope.name == "NodeScope" and resource.attributes["service.name"] == "NodeService" and metric.unit == "bytes"`},
+			Context:    "metric",
+		},
 	}
 
 	configuredEvents = config.Events{
@@ -194,6 +222,11 @@ func TestLogsToLogs(t *testing.T) {
 		inputFile    string
 		expectedFile string
 	}{
+		{
+			name:         "when same type relationship has valid advanced condition, log event is sent",
+			inputFile:    "relationship/same-type-relationship/input-log-same-type-relationship-advanced-conditions.yaml",
+			expectedFile: "relationship/same-type-relationship/expected-log-same-type-relationship-advanced-conditions.yaml",
+		},
 		{
 			name:         "when relationship for different type is inferred log event is sent",
 			inputFile:    "relationship/different-types-relationship/input-log-different-type-relationship.yaml",
@@ -311,6 +344,11 @@ func TestMetricsToLogs(t *testing.T) {
 		inputFile    string
 		expectedFile string
 	}{
+		{
+			name:         "when same type relationship has valid advanced condition, log event is sent",
+			inputFile:    "relationship/same-type-relationship/input-metric-same-type-relationship-advanced-conditions.yaml",
+			expectedFile: "relationship/same-type-relationship/expected-metric-same-type-relationship-advanced-conditions.yaml",
+		},
 		{
 			name:         "when entity is inferred, log event is sent",
 			inputFile:    "entity/input-metric.yaml",
