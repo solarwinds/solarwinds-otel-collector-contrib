@@ -48,13 +48,13 @@ func createConnector(settings connector.Settings, config component.Config, logs 
 	}
 
 	solarwindsentity := &solarwindsentity{
-		telemetrySettings: settings.TelemetrySettings,
-		logger:            settings.Logger,
-		sourcePrefix:      cfg.SourcePrefix,
-		destinationPrefix: cfg.DestinationPrefix,
-		entities:          cfg.Schema.NewEntities(),
-		events:            cfg.Schema.NewEvents(),
-		logsConsumer:      logs,
+		telemetrySettings:   settings.TelemetrySettings,
+		logger:              settings.Logger,
+		sourcePrefix:        cfg.SourcePrefix,
+		destinationPrefix:   cfg.DestinationPrefix,
+		entitiesDefinitions: cfg.Schema.NewEntities(),
+		events:              cfg.Schema.NewEvents(),
+		logsConsumer:        logs,
 	}
 	return solarwindsentity, nil
 }

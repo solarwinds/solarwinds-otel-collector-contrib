@@ -141,12 +141,12 @@ var (
 	configuredEntitiesEvent = []config.EntityEvent{
 		{
 			Type:       "Snowflake",
-			Conditions: []string{""},
+			Conditions: []string{},
 			Context:    "log",
 		},
 		{
 			Type:       "Snowflake",
-			Conditions: []string{""},
+			Conditions: []string{},
 			Context:    "metric",
 		},
 		{
