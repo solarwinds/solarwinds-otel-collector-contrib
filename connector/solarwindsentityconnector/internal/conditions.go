@@ -21,18 +21,15 @@ import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/pcommon"
-	"go.uber.org/zap"
 )
 
-// processCondition evaluates the conditions for entities and relationships events.
+// ProcessCondition evaluates the conditions for entities and relationships events.
 // If the conditions are met, it appends the corresponding entity or relationship update event to the event builder.
 func ProcessEvents[C any](
 	ctx context.Context,
 	eventBuilder *EventBuilder,
 	events config.Events,
 	resourceAttrs pcommon.Map,
-	logger *zap.Logger,
-	entityDefinitions map[string]config.Entity,
 	telemetrySettings component.TelemetrySettings,
 	parser *ottl.Parser[C],
 	tc C) error {
@@ -41,10 +38,11 @@ func ProcessEvents[C any](
 		condition := entityEvent.Conditions
 		ok, err := evaluateConditions(ctx, telemetrySettings, condition, parser, tc)
 		if err != nil {
-			logger.Error("Failed to evaluate entity condition", zap.Error(err))
+			return err
 		}
+
 		if ok {
-			entity := entityDefinitions[entityEvent.Type]
+			entity := eventBuilder.entitiesDefinitions[entityEvent.Type]
 			eventBuilder.AppendEntityUpdateEvent(entity, resourceAttrs)
 		}
 	}
@@ -53,7 +51,6 @@ func ProcessEvents[C any](
 		condition := relationshipEvent.Conditions
 		ok, err := evaluateConditions(ctx, telemetrySettings, condition, parser, tc)
 		if err != nil {
-			logger.Error("Failed to evaluate relationship condition", zap.Error(err))
 			return err
 		}
 
