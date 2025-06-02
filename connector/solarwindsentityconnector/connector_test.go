@@ -154,7 +154,6 @@ var (
 			Context:     "metric",
 		},
 	}
-	//`instrumentation_scope.name == "NodeScope" and resource.attributes["service.name"] == "NodeService" and log.body == "test-log-body"`
 
 	configuredEntitiesEvent = []config.EntityEvent{
 		{
@@ -451,7 +450,6 @@ func TestMetricsToLogs(t *testing.T) {
 				return
 			}
 
-			// err = golden.WriteLogs(t, filepath.Join("testdata", "metricsToLogs", "actual.yaml"), allLogs[0])
 			expected, err := golden.ReadLogs(filepath.Join("testdata", "metricsToLogs", tc.expectedFile))
 
 			assert.NoError(t, err)

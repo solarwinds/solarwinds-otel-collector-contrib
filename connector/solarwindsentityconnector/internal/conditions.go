@@ -25,6 +25,7 @@ import (
 
 // ProcessCondition evaluates the conditions for entities and relationships events.
 // If the conditions are met, it appends the corresponding entity or relationship update event to the event builder.
+// Multiple condition items are evaluated using OR logic.
 func ProcessEvents[C any](
 	ctx context.Context,
 	eventBuilder *EventBuilder,
