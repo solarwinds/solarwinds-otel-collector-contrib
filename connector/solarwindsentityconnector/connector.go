@@ -17,6 +17,7 @@ package solarwindsentityconnector
 import (
 	"context"
 
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottlmetric"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
@@ -54,8 +55,9 @@ func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.M
 	eventLogs := plog.NewLogs()
 	metricEvents := s.events[ottlmetric.ContextName]
 	eventBuilder := internal.NewEventBuilder(s.entitiesDefinitions, s.sourcePrefix, s.destinationPrefix, &eventLogs, s.logger)
-
+	parsedConditions := make(map[string][]*ottl.Condition[ottlmetric.TransformContext])
 	parser, err := ottlmetric.NewParser(nil, s.telemetrySettings)
+
 	if err != nil {
 		s.logger.Error("Failed to create metrics parser", zap.Error(err))
 		return err
@@ -72,7 +74,7 @@ func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.M
 				metric := scopeMetric.Metrics().At(k)
 				tc := ottlmetric.NewTransformContext(metric, scopeMetric.Metrics(), scopeMetric.Scope(), resourceMetric.Resource(), scopeMetric, resourceMetric)
 
-				err = internal.ProcessEvents(ctx, eventBuilder, *metricEvents, resourceAttrs, s.telemetrySettings, &parser, tc)
+				err = internal.ProcessEvents(ctx, eventBuilder, *metricEvents, resourceAttrs, s.telemetrySettings, &parser, tc, &parsedConditions)
 				if err != nil {
 					s.logger.Error("Failed to process metric condition", zap.Error(err))
 					return err
@@ -92,8 +94,9 @@ func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) erro
 	eventLogs := plog.NewLogs()
 	logEvents := s.events[ottllog.ContextName]
 	eventBuilder := internal.NewEventBuilder(s.entitiesDefinitions, s.sourcePrefix, s.destinationPrefix, &eventLogs, s.logger)
-
+	parsedConditions := make(map[string][]*ottl.Condition[ottllog.TransformContext])
 	parser, err := ottllog.NewParser(nil, s.telemetrySettings)
+
 	if err != nil {
 		s.logger.Error("Failed to create logs parser", zap.Error(err))
 		return err
@@ -110,7 +113,7 @@ func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) erro
 				logRecord := scopeLog.LogRecords().At(k)
 				tc := ottllog.NewTransformContext(logRecord, scopeLog.Scope(), resourceLog.Resource(), scopeLog, resourceLog)
 
-				err = internal.ProcessEvents(ctx, eventBuilder, *logEvents, resourceAttrs, s.telemetrySettings, &parser, tc)
+				err = internal.ProcessEvents(ctx, eventBuilder, *logEvents, resourceAttrs, s.telemetrySettings, &parser, tc, &parsedConditions)
 				if err != nil {
 					s.logger.Error("Failed to process logs condition", zap.Error(err))
 					return err

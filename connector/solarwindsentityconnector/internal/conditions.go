@@ -16,6 +16,7 @@ package internal
 
 import (
 	"context"
+	"strings"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
@@ -33,11 +34,13 @@ func ProcessEvents[C any](
 	resourceAttrs pcommon.Map,
 	telemetrySettings component.TelemetrySettings,
 	parser *ottl.Parser[C],
-	tc C) error {
+	tc C,
+	parsedConditions *map[string][]*ottl.Condition[C],
+) error {
 
 	for _, entityEvent := range events.Entities {
 		condition := entityEvent.Conditions
-		ok, err := evaluateConditions(ctx, telemetrySettings, condition, parser, tc)
+		ok, err := evaluateConditions(ctx, telemetrySettings, condition, parser, tc, parsedConditions)
 		if err != nil {
 			return err
 		}
@@ -50,7 +53,7 @@ func ProcessEvents[C any](
 
 	for _, relationshipEvent := range events.Relationships {
 		condition := relationshipEvent.Conditions
-		ok, err := evaluateConditions(ctx, telemetrySettings, condition, parser, tc)
+		ok, err := evaluateConditions(ctx, telemetrySettings, condition, parser, tc, parsedConditions)
 		if err != nil {
 			return err
 		}
@@ -70,11 +73,13 @@ func evaluateConditions[C any](
 	condition []string,
 	parser *ottl.Parser[C],
 	tc C,
+	parsedConditions *map[string][]*ottl.Condition[C],
 ) (bool, error) {
 	seq, err := newConditionSeq(
 		*parser,
 		telemetrySettings,
 		condition,
+		parsedConditions,
 	)
 
 	if err != nil {
@@ -90,13 +95,21 @@ func evaluateConditions[C any](
 
 // newConditionSeq creates a new condition sequence from the provided conditions.
 // If no conditions are provided, it defaults to a sequence that always evaluates to true.
+// It caches the parsed conditions to avoid re-parsing the same conditions multiple times.
 func newConditionSeq[C any](
 	parser ottl.Parser[C],
 	settings component.TelemetrySettings,
 	conditions []string,
+	parsedConditions *map[string][]*ottl.Condition[C],
 ) (*ottl.ConditionSequence[C], error) {
 	if len(conditions) == 0 {
 		conditions = []string{"true"}
+	}
+
+	key := strings.Join(conditions, "")
+	if stmts, ok := (*parsedConditions)[key]; ok {
+		seq := ottl.NewConditionSequence(stmts, settings)
+		return &seq, nil
 	}
 
 	stmts, err := parser.ParseConditions(conditions)
@@ -104,6 +117,7 @@ func newConditionSeq[C any](
 		return nil, err
 	}
 
+	(*parsedConditions)[key] = stmts
 	seq := ottl.NewConditionSequence(stmts, settings)
 	return &seq, nil
 }

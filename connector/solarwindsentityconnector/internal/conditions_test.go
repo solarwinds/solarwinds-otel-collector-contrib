@@ -18,6 +18,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component/componenttest"
@@ -38,8 +39,9 @@ func TestEvaluateConditionsTrueCondition(t *testing.T) {
 	resource := rLogs.Resource()
 	scope := scopeLogs.Scope()
 	tc := ottllog.NewTransformContext(logRecord, scope, resource, scopeLogs, rLogs)
+	parsedConditions := make(map[string][]*ottl.Condition[ottllog.TransformContext])
 
-	ok, err := evaluateConditions(ctx, settings, []string{"true"}, &parser, tc)
+	ok, err := evaluateConditions(ctx, settings, []string{"true"}, &parser, tc, &parsedConditions)
 	require.NoError(t, err)
 	require.True(t, ok)
 }
@@ -57,8 +59,9 @@ func TestEvaluateConditionsFalseCondition(t *testing.T) {
 	resource := rLogs.Resource()
 	scope := scopeLogs.Scope()
 	tc := ottllog.NewTransformContext(logRecord, scope, resource, scopeLogs, rLogs)
+	parsedConditions := make(map[string][]*ottl.Condition[ottllog.TransformContext])
 
-	ok, err := evaluateConditions(ctx, settings, []string{"false"}, &parser, tc)
+	ok, err := evaluateConditions(ctx, settings, []string{"false"}, &parser, tc, &parsedConditions)
 	require.NoError(t, err)
 	require.False(t, ok)
 }
@@ -76,8 +79,9 @@ func TestEvaluateConditionsEmptyCondition(t *testing.T) {
 	resource := rLogs.Resource()
 	scope := scopeLogs.Scope()
 	tc := ottllog.NewTransformContext(logRecord, scope, resource, scopeLogs, rLogs)
+	parsedConditions := make(map[string][]*ottl.Condition[ottllog.TransformContext])
 
-	ok, err := evaluateConditions(ctx, settings, []string{}, &parser, tc)
+	ok, err := evaluateConditions(ctx, settings, []string{}, &parser, tc, &parsedConditions)
 	require.NoError(t, err)
 	require.True(t, ok)
 }
@@ -95,8 +99,9 @@ func TestEvaluateConditionsInvalidCondition(t *testing.T) {
 	resource := rLogs.Resource()
 	scope := scopeLogs.Scope()
 	tc := ottllog.NewTransformContext(logRecord, scope, resource, scopeLogs, rLogs)
+	parsedConditions := make(map[string][]*ottl.Condition[ottllog.TransformContext])
 
-	ok, err := evaluateConditions(ctx, settings, []string{"invalid syntax"}, &parser, tc)
+	ok, err := evaluateConditions(ctx, settings, []string{"invalid syntax"}, &parser, tc, &parsedConditions)
 	require.Error(t, err)
 	require.False(t, ok)
 }
