@@ -25,22 +25,20 @@ import (
 )
 
 type EventBuilder struct {
-	entities      map[string]config.Entity
-	relationships []config.RelationshipEvent
-	sourcePrefix  string
-	destPrefix    string
-	eventLogs     *plog.LogRecordSlice
-	logger        *zap.Logger
+	entitiesDefinitions map[string]config.Entity
+	sourcePrefix        string
+	destPrefix          string
+	eventLogs           *plog.LogRecordSlice
+	logger              *zap.Logger
 }
 
-func NewEventBuilder(entities map[string]config.Entity, relationships []config.RelationshipEvent, sourcePrefix string, destPrefix string, events *plog.Logs, logger *zap.Logger) *EventBuilder {
+func NewEventBuilder(entities map[string]config.Entity, sourcePrefix string, destPrefix string, events *plog.Logs, logger *zap.Logger) *EventBuilder {
 	return &EventBuilder{
-		entities:      entities,
-		relationships: relationships,
-		sourcePrefix:  sourcePrefix,
-		destPrefix:    destPrefix,
-		eventLogs:     createEventLog(events),
-		logger:        logger,
+		entitiesDefinitions: entities,
+		sourcePrefix:        sourcePrefix,
+		destPrefix:          destPrefix,
+		eventLogs:           createEventLog(events),
+		logger:              logger,
 	}
 }
 
@@ -100,12 +98,12 @@ func (e *EventBuilder) AppendRelationshipUpdateEvent(relationship config.Relatio
 }
 
 func (e *EventBuilder) createRelationshipEvent(relationship config.RelationshipEvent, resourceAttrs pcommon.Map) (plog.LogRecord, error) {
-	source, ok := e.entities[relationship.Source]
+	source, ok := e.entitiesDefinitions[relationship.Source]
 	if !ok {
 		return plog.NewLogRecord(), fmt.Errorf("bad source entity")
 	}
 
-	dest, ok := e.entities[relationship.Destination]
+	dest, ok := e.entitiesDefinitions[relationship.Destination]
 	if !ok {
 		return plog.NewLogRecord(), fmt.Errorf("bad destination entity")
 	}

@@ -204,7 +204,7 @@ func TestCreateEntityEvent(t *testing.T) {
 
 	// Create the event builder with a new logs instance
 	logs := plog.NewLogs()
-	eventBuilder := NewEventBuilder(nil, nil, "", "", &logs, nil)
+	eventBuilder := NewEventBuilder(nil, "", "", &logs, nil)
 
 	logRecord, err := eventBuilder.createEntityEvent(resourceAttrs, entity)
 	assert.Nil(t, err)
@@ -234,7 +234,7 @@ func TestCreateEntityEventWithNoAttributes(t *testing.T) {
 	}
 
 	logs := plog.NewLogs()
-	eventBuilder := NewEventBuilder(nil, nil, "", "", &logs, nil)
+	eventBuilder := NewEventBuilder(nil, "", "", &logs, nil)
 	_, err := eventBuilder.createEntityEvent(resourceAttrs, entity)
 	assert.NotNil(t, err)
 }
@@ -269,7 +269,6 @@ func TestCreateRelationshipEvent(t *testing.T) {
 			"KubernetesCluster": srcEntity,
 			"KubernetesNode":    destEntity,
 		},
-		nil,
 		"",
 		"",
 		&logs,
@@ -317,7 +316,6 @@ func TestCreateRelationshipEventWithNoAttributes(t *testing.T) {
 			"KubernetesCluster": srcEntity,
 			"KubernetesNode":    destEntity,
 		},
-		nil,
 		"",
 		"",
 		&logs,
@@ -353,7 +351,6 @@ func TestCreateRelationshipEventWithoutResourceAttributes(t *testing.T) {
 			"KubernetesCluster": srcEntity,
 			"KubernetesNode":    destEntity,
 		},
-		nil,
 		"",
 		"",
 		&logs,
@@ -387,7 +384,6 @@ func TestCreateSameTypeRelationshipEvent(t *testing.T) {
 		map[string]config.Entity{
 			"KubernetesCluster": entity,
 		},
-		nil,
 		"src.",
 		"dst.",
 		&logs,
@@ -429,7 +425,6 @@ func TestCreateSameTypeRelationshipEventWithNoAttributesSameType(t *testing.T) {
 		map[string]config.Entity{
 			"KubernetesCluster": entity,
 		},
-		nil,
 		"src.",
 		"dst.",
 		&logs,
@@ -459,7 +454,6 @@ func TestCreateSameTypeRelationshipEventWithoutResourceAttributes(t *testing.T) 
 		map[string]config.Entity{
 			"KubernetesCluster": entity,
 		},
-		nil,
 		"src.",
 		"dst.",
 		&logs,
