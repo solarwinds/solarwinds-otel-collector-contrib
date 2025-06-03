@@ -17,9 +17,7 @@ package internal
 import (
 	"context"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
-	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 )
 
@@ -31,12 +29,10 @@ func ProcessEvents[C any](
 	eventBuilder *EventBuilder,
 	events config.EventsGroup[C],
 	resourceAttrs pcommon.Map,
-	telemetrySettings component.TelemetrySettings,
 	tc C) error {
 
 	for _, entityEvent := range events.Entities {
-		condition := entityEvent.Conditions
-		ok, err := evaluateConditions(ctx, telemetrySettings, condition, tc)
+		ok, err := entityEvent.ConditionSeq.Eval(ctx, tc)
 		if err != nil {
 			return err
 		}
@@ -48,8 +44,7 @@ func ProcessEvents[C any](
 	}
 
 	for _, relationshipEvent := range events.Relationships {
-		condition := relationshipEvent.Conditions
-		ok, err := evaluateConditions(ctx, telemetrySettings, condition, tc)
+		ok, err := relationshipEvent.ConditionSeq.Eval(ctx, tc)
 		if err != nil {
 			return err
 		}
@@ -59,21 +54,4 @@ func ProcessEvents[C any](
 		}
 	}
 	return nil
-}
-
-// evaluateConditions evaluates the provided conditions.
-// It returns true if the conditions are met, otherwise false.
-func evaluateConditions[C any](
-	ctx context.Context,
-	telemetrySettings component.TelemetrySettings,
-	stmts []*ottl.Condition[C],
-	tc C,
-) (bool, error) {
-	seq := ottl.NewConditionSequence(stmts, telemetrySettings)
-
-	ok, err := seq.Eval(ctx, tc)
-	if err != nil {
-		return false, err
-	}
-	return ok, nil
 }

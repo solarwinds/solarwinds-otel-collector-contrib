@@ -33,13 +33,13 @@ type EventsGroup[C any] struct {
 }
 
 type ParsedRelationshipEvent[C any] struct {
-	Definition *RelationshipEvent
-	Conditions []*ottl.Condition[C]
+	Definition   *RelationshipEvent
+	ConditionSeq ottl.ConditionSequence[C]
 }
 
 type ParsedEntityEvent[C any] struct {
-	Definition *EntityEvent
-	Conditions []*ottl.Condition[C]
+	Definition   *EntityEvent
+	ConditionSeq ottl.ConditionSequence[C]
 }
 
 // CreateParsedEvents initializes and returns a ParsedEvents structure containing parsed entity and relationship events.
@@ -69,9 +69,9 @@ func CreateParsedEvents(s Schema, settings component.TelemetrySettings) ParsedEv
 		}
 		switch event.Context {
 		case ottlmetric.ContextName:
-			addEntityEvent(&metricGroup, event)
+			addEntityEvent(&metricGroup, event, settings)
 		case ottllog.ContextName:
-			addEntityEvent(&logGroup, event)
+			addEntityEvent(&logGroup, event, settings)
 		}
 	}
 
@@ -81,9 +81,9 @@ func CreateParsedEvents(s Schema, settings component.TelemetrySettings) ParsedEv
 		}
 		switch event.Context {
 		case ottlmetric.ContextName:
-			addRelationshipEvent(&metricGroup, event)
+			addRelationshipEvent(&metricGroup, event, settings)
 		case ottllog.ContextName:
-			addRelationshipEvent(&logGroup, event)
+			addRelationshipEvent(&logGroup, event, settings)
 		}
 	}
 
@@ -93,24 +93,26 @@ func CreateParsedEvents(s Schema, settings component.TelemetrySettings) ParsedEv
 	}
 }
 
-func addEntityEvent[C any](group *EventsGroup[C], event EntityEvent) {
+func addEntityEvent[C any](group *EventsGroup[C], event EntityEvent, settings component.TelemetrySettings) {
 	stmts, err := group.Parser.ParseConditions(event.Conditions)
+	seq := ottl.NewConditionSequence(stmts, settings)
 	if err != nil {
 		panic("failed to parse conditions for entity event")
 	}
 	group.Entities = append(group.Entities, ParsedEntityEvent[C]{
-		Definition: &event,
-		Conditions: stmts,
+		Definition:   &event,
+		ConditionSeq: seq,
 	})
 }
 
-func addRelationshipEvent[C any](group *EventsGroup[C], event RelationshipEvent) {
+func addRelationshipEvent[C any](group *EventsGroup[C], event RelationshipEvent, settings component.TelemetrySettings) {
 	stmts, err := group.Parser.ParseConditions(event.Conditions)
+	seq := ottl.NewConditionSequence(stmts, settings)
 	if err != nil {
 		panic("failed to parse conditions for relationship event")
 	}
 	group.Relationships = append(group.Relationships, ParsedRelationshipEvent[C]{
-		Definition: &event,
-		Conditions: stmts,
+		Definition:   &event,
+		ConditionSeq: seq,
 	})
 }

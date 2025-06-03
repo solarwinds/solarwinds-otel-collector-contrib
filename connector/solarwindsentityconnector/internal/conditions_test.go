@@ -18,20 +18,47 @@ import (
 	"context"
 	"testing"
 
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component/componenttest"
+	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
 )
 
-func TestEvaluateConditionsTrueCondition(t *testing.T) {
-	settings := componenttest.NewNopTelemetrySettings()
-
-	parser, err := ottllog.NewParser(nil, settings)
-	require.NoError(t, err)
-
+func TestConditionTrue(t *testing.T) {
+	// Initialize test data
 	ctx := context.Background()
+	resourceAttrs := pcommon.NewMap()
+	settings := componenttest.NewNopTelemetrySettings()
 	logs := plog.NewLogs()
+
+	parserLog, err := ottllog.NewParser(nil, settings)
+	require.NoError(t, err)
+	stmts, err := parserLog.ParseConditions([]string{"true"})
+	require.NoError(t, err)
+	seq := ottl.NewConditionSequence(stmts, settings)
+
+	entityEvent := config.ParsedEntityEvent[ottllog.TransformContext]{
+		Definition:   &config.EntityEvent{Type: "test-entity"},
+		ConditionSeq: seq,
+	}
+	relationshipEvent := config.ParsedRelationshipEvent[ottllog.TransformContext]{
+		Definition:   &config.RelationshipEvent{Type: "test-rel"},
+		ConditionSeq: seq,
+	}
+	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
+		Entities:      []config.ParsedEntityEvent[ottllog.TransformContext]{entityEvent},
+		Relationships: []config.ParsedRelationshipEvent[ottllog.TransformContext]{relationshipEvent},
+		Parser:        &parserLog,
+	}
+
+	entitiesDefinitions := map[string]config.Entity{
+		"test-entity": {Type: "test-entity"},
+	}
+	eventBuilder := NewEventBuilder(entitiesDefinitions, "source", "destination", &logs, componenttest.NewNopTelemetrySettings().Logger)
+
 	rLogs := logs.ResourceLogs().AppendEmpty()
 	scopeLogs := rLogs.ScopeLogs().AppendEmpty()
 	logRecord := scopeLogs.LogRecords().AppendEmpty()
@@ -39,56 +66,53 @@ func TestEvaluateConditionsTrueCondition(t *testing.T) {
 	scope := scopeLogs.Scope()
 	tc := ottllog.NewTransformContext(logRecord, scope, resource, scopeLogs, rLogs)
 
-	conditions := []string{"true"}
-	stmts, err := parser.ParseConditions(conditions)
+	// Tested function
+	err = ProcessEvents(ctx, eventBuilder, eventsGroup, resourceAttrs, tc)
 	require.NoError(t, err)
 
-	ok, err := evaluateConditions(ctx, settings, stmts, tc)
-	require.NoError(t, err)
-	require.True(t, ok)
 }
 
-func TestEvaluateConditionsFalseCondition(t *testing.T) {
-	settings := componenttest.NewNopTelemetrySettings()
-	parser, err := ottllog.NewParser(nil, settings)
-	require.NoError(t, err)
-
+func TestConditionFalse(t *testing.T) {
+	// Initialize test data
 	ctx := context.Background()
+	resourceAttrs := pcommon.NewMap()
+	settings := componenttest.NewNopTelemetrySettings()
 	logs := plog.NewLogs()
+
+	parserLog, err := ottllog.NewParser(nil, settings)
+	require.NoError(t, err)
+	stmts, err := parserLog.ParseConditions([]string{"false"})
+	require.NoError(t, err)
+	seq := ottl.NewConditionSequence(stmts, settings)
+
+	entityEvent := config.ParsedEntityEvent[ottllog.TransformContext]{
+		Definition:   &config.EntityEvent{Type: "test-entity"},
+		ConditionSeq: seq,
+	}
+	relationshipEvent := config.ParsedRelationshipEvent[ottllog.TransformContext]{
+		Definition:   &config.RelationshipEvent{Type: "test-rel"},
+		ConditionSeq: seq,
+	}
+	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
+		Entities:      []config.ParsedEntityEvent[ottllog.TransformContext]{entityEvent},
+		Relationships: []config.ParsedRelationshipEvent[ottllog.TransformContext]{relationshipEvent},
+		Parser:        &parserLog,
+	}
+
+	entitiesDefinitions := map[string]config.Entity{
+		"test-entity": {Type: "test-entity"},
+	}
+	eventBuilder := NewEventBuilder(entitiesDefinitions, "source", "destination", &logs, componenttest.NewNopTelemetrySettings().Logger)
+
 	rLogs := logs.ResourceLogs().AppendEmpty()
 	scopeLogs := rLogs.ScopeLogs().AppendEmpty()
 	logRecord := scopeLogs.LogRecords().AppendEmpty()
 	resource := rLogs.Resource()
 	scope := scopeLogs.Scope()
 	tc := ottllog.NewTransformContext(logRecord, scope, resource, scopeLogs, rLogs)
-	conditions := []string{"false"}
-	stmts, err := parser.ParseConditions(conditions)
+
+	// Tested function
+	err = ProcessEvents(ctx, eventBuilder, eventsGroup, resourceAttrs, tc)
 	require.NoError(t, err)
 
-	ok, err := evaluateConditions(ctx, settings, stmts, tc)
-	require.NoError(t, err)
-	require.False(t, ok)
-}
-
-func TestEvaluateConditionsInvalidCondition(t *testing.T) {
-	settings := componenttest.NewNopTelemetrySettings()
-	parser, err := ottllog.NewParser(nil, settings)
-	require.NoError(t, err)
-
-	ctx := context.Background()
-	logs := plog.NewLogs()
-	rLogs := logs.ResourceLogs().AppendEmpty()
-	scopeLogs := rLogs.ScopeLogs().AppendEmpty()
-	logRecord := scopeLogs.LogRecords().AppendEmpty()
-	resource := rLogs.Resource()
-	scope := scopeLogs.Scope()
-	tc := ottllog.NewTransformContext(logRecord, scope, resource, scopeLogs, rLogs)
-
-	conditions := []string{"invalid condition"}
-	stmts, err := parser.ParseConditions(conditions)
-	require.Error(t, err)
-
-	ok, err := evaluateConditions(ctx, settings, stmts, tc)
-	require.NoError(t, err)
-	require.False(t, ok)
 }

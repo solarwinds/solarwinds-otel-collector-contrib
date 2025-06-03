@@ -36,7 +36,6 @@ type solarwindsentity struct {
 	entitiesDefinitions map[string]config.Entity
 	sourcePrefix        string
 	destinationPrefix   string
-	telemetrySettings   component.TelemetrySettings
 	events              config.ParsedEvents
 
 	component.StartFunc
@@ -52,7 +51,6 @@ func (s *solarwindsentity) Capabilities() consumer.Capabilities {
 
 func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.Metrics) error {
 	eventLogs := plog.NewLogs()
-	metricEvents := s.events.MetricEvents
 	eventBuilder := internal.NewEventBuilder(s.entitiesDefinitions, s.sourcePrefix, s.destinationPrefix, &eventLogs, s.logger)
 
 	for i := 0; i < metrics.ResourceMetrics().Len(); i++ {
@@ -63,9 +61,9 @@ func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.M
 
 			for k := 0; k < scopeMetric.Metrics().Len(); k++ {
 				metric := scopeMetric.Metrics().At(k)
-				tc := ottlmetric.NewTransformContext(metric, scopeMetric.Metrics(), scopeMetric.Scope(), resourceMetric.Resource(), scopeMetric, resourceMetric)
 
-				err := internal.ProcessEvents(ctx, eventBuilder, metricEvents, resourceAttrs, s.telemetrySettings, tc)
+				tc := ottlmetric.NewTransformContext(metric, scopeMetric.Metrics(), scopeMetric.Scope(), resourceMetric.Resource(), scopeMetric, resourceMetric)
+				err := internal.ProcessEvents(ctx, eventBuilder, s.events.MetricEvents, resourceAttrs, tc)
 				if err != nil {
 					s.logger.Error("Failed to process metric condition", zap.Error(err))
 					return err
@@ -83,7 +81,6 @@ func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.M
 
 func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) error {
 	eventLogs := plog.NewLogs()
-	logEvents := s.events.LogEvents
 	eventBuilder := internal.NewEventBuilder(s.entitiesDefinitions, s.sourcePrefix, s.destinationPrefix, &eventLogs, s.logger)
 
 	for i := 0; i < logs.ResourceLogs().Len(); i++ {
@@ -95,8 +92,9 @@ func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) erro
 
 			for k := 0; k < scopeLog.LogRecords().Len(); k++ {
 				logRecord := scopeLog.LogRecords().At(k)
+
 				tc := ottllog.NewTransformContext(logRecord, scopeLog.Scope(), resourceLog.Resource(), scopeLog, resourceLog)
-				err := internal.ProcessEvents(ctx, eventBuilder, logEvents, resourceAttrs, s.telemetrySettings, tc)
+				err := internal.ProcessEvents(ctx, eventBuilder, s.events.LogEvents, resourceAttrs, tc)
 				if err != nil {
 					s.logger.Error("Failed to process logs condition", zap.Error(err))
 					return err
