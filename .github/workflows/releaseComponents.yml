@@ -30,10 +30,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: make validate-release-uniqueness tag=${{ steps.get-tag.outputs.tag }}
 
-#  build_and_test:
-#    name: Build and Test
-#    uses: ./.github/workflows/buildAndTest.yml
-#    secrets: inherit
+  build_and_test:
+    name: Build and Test
+    uses: ./.github/workflows/buildAndTest.yml
+    secrets: inherit
 
   create_release:
     runs-on: ubuntu-latest
