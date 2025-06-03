@@ -2,6 +2,8 @@
 
 ## vNext
 
+## v0.123.8
+
 ## v0.127.0
 - Consumes OpenTelemetry Collector dependencies v0.127.0.
 
