@@ -28,7 +28,7 @@ jobs:
         env:
           # for gh cli
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: make validate-release-uniqueness tag=${{ steps.get-tag.outputs.tag }}
+        run: make validate-release-uniqueness tag=v${{ steps.get-tag.outputs.tag }}
 
   build_and_test:
     name: Build and Test
