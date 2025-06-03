@@ -15,7 +15,7 @@ jobs:
     name: Release Checks
     runs-on: ubuntu-latest
     outputs:
-      image_tag: ${{ steps.get-version.outputs.version }}
+      version: ${{ steps.get-version.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -57,9 +57,9 @@ jobs:
         env:
           # for gh cli
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: make create-github-release current_tag=v${{ needs.release_checks.outputs.image_tag }} previous_tag=${{ env.PREVIOUS_TAG }}
+        run: make create-github-release current_tag=v${{ needs.release_checks.outputs.version }} previous_tag=${{ env.PREVIOUS_TAG }}
       - name: Tag Go packages on GitHub
         run: |
           FOLDERS="./exporter ./extension ./pkg ./receiver ./connector ./processor ./internal"
           EXCLUDED_FOLDERS="./internal/tools/"
-          make tag-github-packages folders="$FOLDERS" tag=v${{ needs.release_checks.outputs.image_tag }} excluded_folders="$EXCLUDED_FOLDERS"
+          make tag-github-packages folders="$FOLDERS" tag=v${{ needs.release_checks.outputs.version }} excluded_folders="$EXCLUDED_FOLDERS"
