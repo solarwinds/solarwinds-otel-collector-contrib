@@ -38,14 +38,31 @@ connectors:
             - k8s.deployment.name
             - k8s.namespace.name
             - sw.k8s.cluster.uid
-    
       events:
+        entities:
+          - context: log
+            type: KubernetesPod
+            conditions:
+          - context: metric
+            type: KubernetesPod
+            conditions:
+              - metric.name == "k8s.tcp.bytes"
         relationships:
-          - type: CommunicatesWith
+          - context: metric
+            conditions: 
+              - metric.name == "k8s.tcp.bytes"
+            type: CommunicatesWith
             source_entity: KubernetesPod
             destination_entity: KubernetesDeployment
             attributes:
-              - sw.connection.status
+                  - sw.connection.status
+          - context: log
+            conditions:
+              - attributes["sw.namespace"] == "sw.events.inframon.k8s.manifests" or attributes["sw.event.action"] == "k8s.pod.created"
+            type: Contains
+            source_entity: KubernetesPod
+            destination_entity: KubernetesPod
+            attributes:
 ```
 
 ### Configuration Options
@@ -58,6 +75,32 @@ connectors:
     - `entity` type as defined in SWO,
     - `id` attributes are used as the identifiers, these have to match identification properties in SWO,
     - `attributes` are optional.
-  - `events`
-    - `relationships` defines relationships between entities, specifying the relationship type, source entity, destination entity, and optional relationship attributes.
-      - Entities used in the relationships must be defined in the `entities` section.
+- `events`
+  - `relationships` defines relationships between entities, specifying the relationship type, the source entity, the destination entity, optional relationship attributes, the context telemetry data (metric or log), and OTTL conditions that must be met to create a relationship event.
+    - Entities referenced in the relationships must be defined in the `schema/entities` section.
+
+  - `entities` defines rules for creating entity events from incoming telemetry, based on the OTTL conditions, the entity type, and the context telemetry data (metric or log).
+    - The entity referenced in the type must be defined in the `schema/entities` section.
+
+  - `conditions` are part of both `relationship` and `entity` events and use OTTL syntax. You can define conditions in three ways:
+    - As multiple individual items:
+      ```yaml
+      conditions:
+        - con1
+        - con2
+      ```
+    - As a single complex expression:
+      ```yaml
+      conditions:
+        - con1 or con2 and con3
+      ```
+    - As a combination of both:
+      ```yaml
+      conditions:
+        - con1 or con2 and con3
+        - con4
+      ```
+
+    - If no condition items are specified, an event will always be created.
+    - When multiple condition items are specified, an event is created if **any** of them evaluate to true (logical OR).
+    - You can find more information about OTTL paths and syntax examples in the [OTTL contexts documentation](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/pkg/ottl/contexts)
