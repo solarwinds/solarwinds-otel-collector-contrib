@@ -11,6 +11,12 @@ swok8sworkloadtype/missing_expected_types:
     - name_attr: "source_workload"
       namespace_attr: "source_workload_namespace"
       workload_type_attr: "source_workload_type"
+swok8sworkloadtype/missing_workload_type:
+  workload_mappings:
+    - name_attr: "source_workload"
+      namespace_attr: "source_workload_namespace"
+      expected_types:
+        - deployments
 swok8sworkloadtype/invalid_expected_types:
   workload_mappings:
     - name_attr: "source_workload"
@@ -39,3 +45,43 @@ swok8sworkloadtype/valid_config:
       expected_types:
         - services
         - pods
+    - address_attr: "dest_address"
+      namespace_attr: "dest_workload_namespace"
+      workload_type_attr: "dest_workload_type"
+      expected_types:
+        - services
+swok8sworkloadtype/inconsistent_attribute_context_when_using_name_attribute:
+  workload_mappings:
+    - name_attr: "datapoint.source_workload"
+      namespace_attr: "source_workload_namespace"
+      workload_type_attr: "source_workload_type"
+      expected_types:
+        - deployments
+swok8sworkloadtype/inconsistent_attribute_context_when_using_address_attribute:
+  workload_mappings:
+    - address_attr: "datapoint.source_address"
+      namespace_attr: "source_workload_namespace"
+      workload_type_attr: "source_workload_type"
+      expected_types:
+        - services
+swok8sworkloadtype/using_both_name_and_addr_attributes:
+  workload_mappings:
+    - name_attr: "source_workload"
+      address_attr: "source_address"
+      namespace_attr: "source_workload_namespace"
+      workload_type_attr: "source_workload_type"
+      expected_types:
+        - deployments
+swok8sworkloadtype/unsupported_workload_type_when_using_address_attribute:
+  workload_mappings:
+    - address_attr: "source_address"
+      namespace_attr: "source_workload_namespace"
+      workload_type_attr: "source_workload_type"
+      expected_types:
+        - deployments
+swok8sworkloadtype/using_neither_name_nor_addr_attributes:
+  workload_mappings:
+    - namespace_attr: "source_workload_namespace"
+      workload_type_attr: "source_workload_type"
+      expected_types:
+        - deployments

@@ -19,15 +19,15 @@ import (
 	"fmt"
 	"iter"
 	"maps"
+	"net"
 	"slices"
 
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/swok8sworkloadtypeprocessor/internal"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/processor"
 	"go.uber.org/zap"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/tools/cache"
 )
@@ -53,49 +53,69 @@ type dataPoint interface{ Attributes() pcommon.Map }
 
 func processDatapoints[DPS dataPointSlice[DP], DP dataPoint](cp *swok8sworkloadtypeProcessor, datapoints DPS) {
 	for _, dp := range datapoints.All() {
-		attributes := dp.Attributes()
-		for _, workloadMapping := range cp.config.WorkloadMappings {
-			name := cp.getAttribute(attributes, workloadMapping.NameAttr)
-			if name == "" {
-				continue
-			}
-			namespace := cp.getAttribute(attributes, workloadMapping.NamespaceAttr)
-			var workloadKey string
-			if namespace != "" {
-				workloadKey = fmt.Sprintf("%s/%s", namespace, name)
-			} else {
-				workloadKey = name
-			}
+		processAttributes(cp, dp.Attributes(), DataPointContext)
+	}
+}
 
-			for _, workloadType := range workloadMapping.ExpectedTypes {
-				workload, exists, err := cp.informers[workloadType].GetStore().GetByKey(workloadKey)
-				if err != nil {
-					cp.logger.Error("Error getting workload from cache", zap.String("workloadType", workloadType), zap.String("workloadKey", workloadKey), zap.Error(err))
-					continue
-				}
-				if exists {
-					workloadObject, ok := workload.(runtime.Object)
-					if !ok {
-						cp.logger.Error("Unexpected workload object type in cache", zap.String("workloadType", workloadType), zap.String("workloadKey", workloadKey), zap.String("workloadObjectType", fmt.Sprintf("%T", workload)))
-						break
-					}
-					kind := workloadObject.GetObjectKind().GroupVersionKind().Kind
-					if kind != "" {
-						attributes.PutStr(workloadMapping.WorkloadTypeAttr, kind)
-					} else {
-						cp.logger.Debug("Workload has no kind", zap.String("workloadType", workloadType), zap.String("workloadKey", workloadKey))
-					}
-					break
-				}
-			}
+func processAttributes(cp *swok8sworkloadtypeProcessor, attributes pcommon.Map, statementContext statementContext) {
+	for _, workloadMapping := range cp.config.WorkloadMappings {
+		if workloadMapping.context != statementContext {
+			continue
 		}
+
+		if cp.getAttribute(attributes, workloadMapping.WorkloadTypeAttr) != "" {
+			// Skip if the workload type attribute is already set
+			continue
+		}
+
+		var kind string
+		if workloadMapping.NameAttr != "" {
+			kind = cp.lookupWorkloadTypeByNameAttr(workloadMapping, attributes)
+		} else if workloadMapping.AddressAttr != "" {
+			kind = cp.lookupWorkloadTypeByAddressAttr(workloadMapping, attributes)
+		} else {
+			cp.logger.Error("Unexpected workload mapping configuration")
+			continue
+		}
+		if kind != "" {
+			attributes.PutStr(workloadMapping.WorkloadTypeAttr, kind)
+		}
+	}
+}
+
+func (cp *swok8sworkloadtypeProcessor) lookupWorkloadTypeByNameAttr(workloadMapping *K8sWorkloadMappingConfig, attributes pcommon.Map) string {
+	name := cp.getAttribute(attributes, workloadMapping.NameAttr)
+	if name == "" {
+		return ""
+	}
+	namespace := cp.getAttribute(attributes, workloadMapping.NamespaceAttr)
+
+	return internal.LookupWorkloadTypeByNameAndNamespace(name, namespace, workloadMapping.ExpectedTypes, cp.logger, cp.informers)
+}
+
+func (cp *swok8sworkloadtypeProcessor) lookupWorkloadTypeByAddressAttr(workloadMapping *K8sWorkloadMappingConfig, attributes pcommon.Map) string {
+	addr := cp.getAttribute(attributes, workloadMapping.AddressAttr)
+	if addr == "" {
+		return ""
+	}
+	host := internal.ExtractHostFromAddress(addr)
+
+	if net.ParseIP(host) != nil {
+		return internal.LookupWorkloadTypeByIp(host, workloadMapping.ExpectedTypes, cp.logger, cp.informers)
+	} else {
+		namespace := cp.getAttribute(attributes, workloadMapping.NamespaceAttr)
+		return internal.LookupWorkloadTypeByHostname(host, namespace, workloadMapping.ExpectedTypes, cp.logger, cp.informers)
 	}
 }
 
 func (cp *swok8sworkloadtypeProcessor) processMetrics(ctx context.Context, md pmetric.Metrics) (pmetric.Metrics, error) {
 	for _, rm := range md.ResourceMetrics().All() {
+		processAttributes(cp, rm.Resource().Attributes(), ResourceContext)
 		for _, sm := range rm.ScopeMetrics().All() {
+			processAttributes(cp, sm.Scope().Attributes(), ScopeContext)
 			for _, m := range sm.Metrics().All() {
+				processAttributes(cp, m.Metadata(), MetricContext)
+
 				switch m.Type() {
 				case pmetric.MetricTypeGauge:
 					processDatapoints(cp, m.Gauge().DataPoints())
@@ -137,23 +157,16 @@ func (cp *swok8sworkloadtypeProcessor) Start(ctx context.Context, _ component.Ho
 			return fmt.Errorf("error creating informer for workload type '%s': %w", workloadType, err)
 		}
 		cp.informers[workloadType] = informer.Informer()
-		cp.informers[workloadType].SetTransform(func(obj any) (any, error) {
-			workload, ok := obj.(metav1.Object)
-			if !ok {
-				cp.logger.Error("Received an unexpected workload object type", zap.String("workloadObjectType", fmt.Sprintf("%T", obj)))
-				return obj, nil
-			}
-			cp.logger.Debug("Received workload", zap.String("workloadName", workload.GetName()), zap.String("workloadNamespace", workload.GetNamespace()))
-			return &metav1.PartialObjectMetadata{
-				TypeMeta: metav1.TypeMeta{
-					Kind: mappedWorkloadType.kind,
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      workload.GetName(),
-					Namespace: workload.GetNamespace(),
-				},
-			}, nil
-		})
+
+		if mappedWorkloadType.kind == internal.PodKind {
+			cp.informers[workloadType].SetTransform(internal.PodTransformFunc(cp.logger))
+			cp.informers[workloadType].AddIndexers(internal.PodIpIndexer(cp.logger))
+		} else if mappedWorkloadType.kind == internal.ServiceKind {
+			cp.informers[workloadType].SetTransform(internal.ServiceTransformFunc(cp.logger))
+			cp.informers[workloadType].AddIndexers(internal.ServiceIpIndexer(cp.logger))
+		} else {
+			cp.informers[workloadType].SetTransform(internal.GenericTransformFunc(cp.logger, mappedWorkloadType.kind))
+		}
 	}
 
 	cp.logger.Info("Starting informers", zap.Any("informers", slices.Collect(maps.Keys(cp.informers))))
