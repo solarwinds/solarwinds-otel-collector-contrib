@@ -53,13 +53,13 @@ jobs:
           PREVIOUS_TAG=$(make get-previous-tag)
           echo "PREVIOUS_TAG=$PREVIOUS_TAG" >> $GITHUB_ENV
 
-#      - name: Create GitHub Release
-#        env:
-#          # for gh cli
-#          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        run: make create-github-release current_tag=v${{ needs.release_checks.outputs.image_tag }} previous_tag=${{ env.PREVIOUS_TAG }}
-#      - name: Tag Go packages on GitHub
-#        run: |
-#          FOLDERS="./exporter ./extension ./pkg ./receiver ./connector ./processor ./internal"
-#          EXCLUDED_FOLDERS="./internal/tools/"
-#          make tag-github-packages folders="$FOLDERS" tag=v${{ needs.release_checks.outputs.image_tag }} excluded_folders="$EXCLUDED_FOLDERS"
+      - name: Create GitHub Release
+        env:
+          # for gh cli
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: make create-github-release current_tag=v${{ needs.release_checks.outputs.image_tag }} previous_tag=${{ env.PREVIOUS_TAG }}
+      - name: Tag Go packages on GitHub
+        run: |
+          FOLDERS="./exporter ./extension ./pkg ./receiver ./connector ./processor ./internal"
+          EXCLUDED_FOLDERS="./internal/tools/"
+          make tag-github-packages folders="$FOLDERS" tag=v${{ needs.release_checks.outputs.image_tag }} excluded_folders="$EXCLUDED_FOLDERS"
