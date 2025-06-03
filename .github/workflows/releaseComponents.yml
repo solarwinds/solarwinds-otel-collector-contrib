@@ -15,20 +15,20 @@ jobs:
     name: Release Checks
     runs-on: ubuntu-latest
     outputs:
-      image_tag: ${{ steps.get-tag.outputs.tag }}
+      image_tag: ${{ steps.get-version.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: true
-      - name: Get Current Tag
-        id: get-tag
-        run: echo "tag=$(grep -oP '(?<=const Version = ")[^"]+' "./pkg/version/version.go")" >> $GITHUB_OUTPUT
+      - name: Get Current Version
+        id: get-version
+        run: echo "version=$(grep -oP '(?<=const Version = ")[^"]+' "./pkg/version/version.go")" >> $GITHUB_OUTPUT
       - name: Verify that release does not already exist
         env:
           # for gh cli
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: make validate-release-uniqueness tag=${{ steps.get-tag.outputs.tag }}
+        run: make validate-release-uniqueness tag=v${{ steps.get-version.outputs.version }}
 
   build_and_test:
     name: Build and Test
@@ -57,9 +57,9 @@ jobs:
         env:
           # for gh cli
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: make create-github-release current_tag=${{ needs.release_checks.outputs.image_tag }} previous_tag=${{ env.PREVIOUS_TAG }}
+        run: make create-github-release current_tag=v${{ needs.release_checks.outputs.image_tag }} previous_tag=${{ env.PREVIOUS_TAG }}
       - name: Tag Go packages on GitHub
         run: |
           FOLDERS="./exporter ./extension ./pkg ./receiver ./connector ./processor ./internal"
           EXCLUDED_FOLDERS="./internal/tools/"
-          make tag-github-packages folders="$FOLDERS" version=${{ needs.release_checks.outputs.image_tag }} excluded_folders="$EXCLUDED_FOLDERS"
+          make tag-github-packages folders="$FOLDERS" tag=v${{ needs.release_checks.outputs.image_tag }} excluded_folders="$EXCLUDED_FOLDERS"
