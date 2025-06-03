@@ -47,13 +47,14 @@ func createConnector(settings connector.Settings, config component.Config, logs 
 		return nil, fmt.Errorf("expected config of type *Config, got %T", config)
 	}
 
+	telemetrySettings := settings.TelemetrySettings
 	solarwindsentity := &solarwindsentity{
-		telemetrySettings:   settings.TelemetrySettings,
+		telemetrySettings:   telemetrySettings,
 		logger:              settings.Logger,
 		sourcePrefix:        cfg.SourcePrefix,
 		destinationPrefix:   cfg.DestinationPrefix,
 		entitiesDefinitions: cfg.Schema.NewEntities(),
-		events:              cfg.Schema.NewEvents(),
+		events:              cfg.Schema.NewEvents(telemetrySettings),
 		logsConsumer:        logs,
 	}
 	return solarwindsentity, nil

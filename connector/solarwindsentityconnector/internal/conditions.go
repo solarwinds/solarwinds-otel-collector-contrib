@@ -16,7 +16,6 @@ package internal
 
 import (
 	"context"
-	"strings"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
@@ -30,94 +29,51 @@ import (
 func ProcessEvents[C any](
 	ctx context.Context,
 	eventBuilder *EventBuilder,
-	events config.Events,
+	events config.EventsGroup[C],
 	resourceAttrs pcommon.Map,
 	telemetrySettings component.TelemetrySettings,
-	parser *ottl.Parser[C],
-	tc C,
-	parsedConditions *map[string][]*ottl.Condition[C],
-) error {
+	tc C) error {
 
 	for _, entityEvent := range events.Entities {
 		condition := entityEvent.Conditions
-		ok, err := evaluateConditions(ctx, telemetrySettings, condition, parser, tc, parsedConditions)
+		ok, err := evaluateConditions(ctx, telemetrySettings, condition, tc)
 		if err != nil {
 			return err
 		}
 
 		if ok {
-			entity := eventBuilder.entitiesDefinitions[entityEvent.Type]
+			entity := eventBuilder.entitiesDefinitions[entityEvent.Definition.Type]
 			eventBuilder.AppendEntityUpdateEvent(entity, resourceAttrs)
 		}
 	}
 
 	for _, relationshipEvent := range events.Relationships {
 		condition := relationshipEvent.Conditions
-		ok, err := evaluateConditions(ctx, telemetrySettings, condition, parser, tc, parsedConditions)
+		ok, err := evaluateConditions(ctx, telemetrySettings, condition, tc)
 		if err != nil {
 			return err
 		}
 
 		if ok {
-			eventBuilder.AppendRelationshipUpdateEvent(relationshipEvent, resourceAttrs)
+			eventBuilder.AppendRelationshipUpdateEvent(*relationshipEvent.Definition, resourceAttrs)
 		}
 	}
 	return nil
 }
 
-// evaluateConditions evaluates the provided conditions using the given parser and telemetry settings.
+// evaluateConditions evaluates the provided conditions.
 // It returns true if the conditions are met, otherwise false.
 func evaluateConditions[C any](
 	ctx context.Context,
 	telemetrySettings component.TelemetrySettings,
-	condition []string,
-	parser *ottl.Parser[C],
+	stmts []*ottl.Condition[C],
 	tc C,
-	parsedConditions *map[string][]*ottl.Condition[C],
 ) (bool, error) {
-	seq, err := newConditionSeq(
-		*parser,
-		telemetrySettings,
-		condition,
-		parsedConditions,
-	)
-
-	if err != nil {
-		return false, err
-	}
+	seq := ottl.NewConditionSequence(stmts, telemetrySettings)
 
 	ok, err := seq.Eval(ctx, tc)
 	if err != nil {
 		return false, err
 	}
 	return ok, nil
-}
-
-// newConditionSeq creates a new condition sequence from the provided conditions.
-// If no conditions are provided, it defaults to a sequence that always evaluates to true.
-// It caches the parsed conditions to avoid re-parsing the same conditions multiple times.
-func newConditionSeq[C any](
-	parser ottl.Parser[C],
-	settings component.TelemetrySettings,
-	conditions []string,
-	parsedConditions *map[string][]*ottl.Condition[C],
-) (*ottl.ConditionSequence[C], error) {
-	if len(conditions) == 0 {
-		conditions = []string{"true"}
-	}
-
-	key := strings.Join(conditions, "")
-	if stmts, ok := (*parsedConditions)[key]; ok {
-		seq := ottl.NewConditionSequence(stmts, settings)
-		return &seq, nil
-	}
-
-	stmts, err := parser.ParseConditions(conditions)
-	if err != nil {
-		return nil, err
-	}
-
-	(*parsedConditions)[key] = stmts
-	seq := ottl.NewConditionSequence(stmts, settings)
-	return &seq, nil
 }
