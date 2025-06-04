@@ -15,20 +15,16 @@ on:
 
 env:
   GO_VERSION: '1.24.3'
+  SHARED_SCRIPTS: './submodules/solarwinds-otel-collector-core/build/scripts'
 
 jobs:  
-  # To be removed after org config is merged.
-  build_and_test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
   checks:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: true
       - name: Check licenses
         run: make ci-check-licenses
       - name: Check that the release version is synced across the repo
@@ -42,57 +38,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: true
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: false
       - name: Run Tests
-        run: |
-          set +e
-          
-          has_failure=false
-          orig_dir=$(pwd)
-
-          go_mod_files=$(find . -name go.mod)
-          for modfile in $go_mod_files; do
-            cd $(dirname "$modfile")
-
-            count=$(find . -name '*_test.go' | wc -l)
-            if [[ "$count" -eq 0 ]]; then
-              
-              # Build needs to be excluded for tools module.
-              if [[ "$modfile" == */tools/go.mod ]]; then
-                echo "Skipping build for tools module"
-                cd "$orig_dir"
-                continue
-              fi
-
-              echo "Processing build for module $modfile"
-              go build .
-              if [[ $? != 0 ]]; then
-                echo "Build failed for module $modfile"
-                has_failure=true
-              fi
-            else
-              echo "Processing tests for module $modfile"
-              go test -v ./...
-              if [[ $? != 0 ]]; then
-                echo "Test suite failed for module $modfile"
-                has_failure=true
-              fi
-            fi                       
-
-            cd "$orig_dir"
-          done
-
-          if [ "$has_failure" = true ]; then
-            echo "Some tests failed"
-            exit 1
-          fi
-
-          echo "All tests passed"
-          exit 0
+        run: ${{ env.SHARED_SCRIPTS }}/build-and-test.sh
         shell: bash
 
   build_and_test_windows:
@@ -101,53 +55,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: true
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: false
       - name: Run Tests
-        run: |
-          $hasFailure = $false
-
-          Get-ChildItem -Recurse -Filter 'go.mod' | ForEach-Object {
-              Push-Location $_.Directory
-
-              $testFiles = Get-ChildItem -Recurse -Filter '*_test.go'
-              if ($testFiles.Count -eq 0) {
-
-                # Build needs to be excluded for tools module.
-                if ($_.FullName -like '*\tools\go.mod') {
-                  Write-Host "Skipping build for tools module"
-                  Pop-Location
-                  return
-                }
-
-                Write-Host "Processing build for module $($_.FullName)"
-                go build .
-                if ($LASTEXITCODE -ne 0) {
-                  Write-Host "Build failed for module $modfile"
-                  $hasFailure = $true
-                }                
-              } else {
-                Write-Host "Processing tests for module $($_.FullName)"        
-                go test -v ./...
-                if ($LASTEXITCODE -ne 0) {
-                  Write-Host "Test suite failed for module $modfile"
-                  $hasFailure = $true
-                }
-              }          
-
-              Pop-Location
-          }
-
-          if ($hasFailure) {
-            Write-Host "Some tests failed"
-            exit 1
-          }
-
-          Write-Host "All tests passed"
-          exit 0
+        run: ${{ env.SHARED_SCRIPTS }}/build-and-test.ps1
         shell: pwsh
         
   build_and_test_darwin_arm64:
@@ -157,55 +73,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: true
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: false
       - name: Run Tests
-        run: |
-          set +e
-          
-          has_failure=false
-          orig_dir=$(pwd)
-
-          go_mod_files=$(find . -name go.mod)
-          for modfile in $go_mod_files; do
-            cd $(dirname "$modfile")
-
-            count=$(find . -name '*_test.go' | wc -l)
-            if [[ "$count" -eq 0 ]]; then
-              
-              # Build needs to be excluded for tools module.
-              if [[ "$modfile" == */tools/go.mod ]]; then
-                echo "Skipping build for tools module"
-                cd "$orig_dir"
-                continue
-              fi
-
-              echo "Processing build for module $modfile"
-              go build .
-              if [[ $? != 0 ]]; then
-                echo "Build failed for module $modfile"
-                has_failure=true
-              fi
-            else
-              echo "Processing tests for module $modfile"
-              go test -v ./...
-              if [[ $? != 0 ]]; then
-                echo "Test suite failed for module $modfile"
-                has_failure=true
-              fi
-            fi                       
-
-            cd "$orig_dir"
-          done
-
-          if [ "$has_failure" = true ]; then
-            echo "Some tests failed"
-            exit 1
-          fi
-
-          echo "All tests passed"
-          exit 0
+        run: ${{ env.SHARED_SCRIPTS }}/build-and-test.sh
         shell: bash
