@@ -1,0 +1,10 @@
+resourceMetrics:
+  - resource:
+      attributes: [ { "key": "k8s.cluster.id", "value":{"stringValue": "test-cluster-id"}},
+                    { "key": "k8s.cluster.name", "value":{"stringValue": "test-cluster-name"}},
+                    { "key": "k8s.cluster.port", "value":{"stringValue": "test-cluster-port"}} ]
+    scopeMetrics:
+    - metrics:
+      - name: "test-metric"
+        description: "test metric description"
+        unit: "1"

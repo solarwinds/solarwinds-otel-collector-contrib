@@ -35,7 +35,7 @@ func TestAppendEntityUpdateEventWhenAttributesArePresent(t *testing.T) {
 	resourceAttrs.PutStr("attr2", "attrvalue2")
 
 	// act
-	eventBuilder := NewEventBuilder(nil, nil, "", "", &logs, nil)
+	eventBuilder := NewEventBuilder(nil, "", "", &logs, nil)
 	eventBuilder.AppendEntityUpdateEvent(testEntity, resourceAttrs)
 
 	// assert
@@ -65,7 +65,7 @@ func TestDoesNotAppendEntityUpdateEventWhenIDAttributeIsMissing(t *testing.T) {
 	logger := zap.NewNop()
 
 	// act
-	eventBuilder := NewEventBuilder(nil, nil, "", "", &logs, logger)
+	eventBuilder := NewEventBuilder(nil, "", "", &logs, logger)
 	eventBuilder.AppendEntityUpdateEvent(testEntity, resourceAttrs)
 
 	// assert
@@ -81,7 +81,7 @@ func TestAppendEntityUpdateEventWhenAttributeIsMissing(t *testing.T) {
 	resourceAttrs.PutStr("attr1", "attrvalue1")
 
 	// act
-	eventBuilder := NewEventBuilder(nil, nil, "", "", &logs, nil)
+	eventBuilder := NewEventBuilder(nil, "", "", &logs, nil)
 	eventBuilder.AppendEntityUpdateEvent(testEntity, resourceAttrs)
 
 	// assert
@@ -105,7 +105,7 @@ func TestAppendRelationshipUpdateEventWhenAttributesArePresent(t *testing.T) {
 	logs := plog.NewLogs()
 	srcEntity := config.Entity{Type: "KubernetesCluster", IDs: []string{"id1"}, Attributes: []string{"attr1"}}
 	destEntity := config.Entity{Type: "KubernetesNamespace", IDs: []string{"id2"}, Attributes: []string{"attr2"}}
-	testRelationship := config.Relationship{Source: "KubernetesCluster", Destination: "KubernetesNamespace"}
+	testRelationship := config.RelationshipEvent{Source: "KubernetesCluster", Destination: "KubernetesNamespace"}
 	resourceAttrs := pcommon.NewMap()
 	resourceAttrs.PutStr("id1", "idvalue1")
 	resourceAttrs.PutStr("id2", "idvalue2")
@@ -116,7 +116,7 @@ func TestAppendRelationshipUpdateEventWhenAttributesArePresent(t *testing.T) {
 	eventBuilder := NewEventBuilder(map[string]config.Entity{
 		"KubernetesCluster":   srcEntity,
 		"KubernetesNamespace": destEntity,
-	}, nil, "", "", &logs, nil)
+	}, "", "", &logs, nil)
 	eventBuilder.AppendRelationshipUpdateEvent(testRelationship, resourceAttrs)
 
 	// assert
@@ -142,7 +142,7 @@ func TestAppendSameTypeRelationshipUpdateEventWhenAttributesArePresent(t *testin
 	// arrange
 	logs := plog.NewLogs()
 	entity := config.Entity{Type: "KubernetesCluster", IDs: []string{"id"}, Attributes: []string{"attr"}}
-	testRelationship := config.Relationship{Source: "KubernetesCluster", Destination: "KubernetesCluster"}
+	testRelationship := config.RelationshipEvent{Source: "KubernetesCluster", Destination: "KubernetesCluster"}
 	resourceAttrs := pcommon.NewMap()
 	resourceAttrs.PutStr("src.id", "idvalue1")
 	resourceAttrs.PutStr("dst.id", "idvalue2")
@@ -151,7 +151,7 @@ func TestAppendSameTypeRelationshipUpdateEventWhenAttributesArePresent(t *testin
 	// act
 	eventBuilder := NewEventBuilder(map[string]config.Entity{
 		"KubernetesCluster": entity,
-	}, nil, "src.", "dst.", &logs, nil)
+	}, "src.", "dst.", &logs, nil)
 	eventBuilder.AppendRelationshipUpdateEvent(testRelationship, resourceAttrs)
 
 	// assert
@@ -178,7 +178,7 @@ func TestDoesNotAppendRelationshipUpdateEventWhenIDAttributeIsMissing(t *testing
 	logs := plog.NewLogs()
 	srcEntity := config.Entity{Type: "KubernetesCluster", IDs: []string{"id1"}, Attributes: []string{}}
 	destEntity := config.Entity{Type: "KubernetesNamespace", IDs: []string{"id2"}, Attributes: []string{}}
-	testRelationship := config.Relationship{Source: "KubernetesCluster", Destination: "KubernetesNamespace"}
+	testRelationship := config.RelationshipEvent{Source: "KubernetesCluster", Destination: "KubernetesNamespace"}
 	resourceAttrs := pcommon.NewMap()
 	resourceAttrs.PutStr("id1", "idvalue1")
 	logger := zap.NewNop()
@@ -186,7 +186,7 @@ func TestDoesNotAppendRelationshipUpdateEventWhenIDAttributeIsMissing(t *testing
 	eventBuilder := NewEventBuilder(map[string]config.Entity{
 		"KubernetesCluster":   srcEntity,
 		"KubernetesNamespace": destEntity,
-	}, nil, "", "", &logs, logger)
+	}, "", "", &logs, logger)
 	eventBuilder.AppendRelationshipUpdateEvent(testRelationship, resourceAttrs)
 
 	// assert
@@ -197,14 +197,14 @@ func TestDoesNotAppendSameTypeRelationshipUpdateEventWhenIDAttributeIsMissing(t 
 	// arrange
 	logs := plog.NewLogs()
 	entity := config.Entity{Type: "KubernetesCluster", IDs: []string{"id"}, Attributes: []string{}}
-	testRelationship := config.Relationship{Source: "KubernetesCluster", Destination: "KubernetesCluster"}
+	testRelationship := config.RelationshipEvent{Source: "KubernetesCluster", Destination: "KubernetesCluster"}
 	resourceAttrs := pcommon.NewMap()
 	resourceAttrs.PutStr("src.id", "idvalue1")
 	logger := zap.NewNop()
 	// act
 	eventBuilder := NewEventBuilder(map[string]config.Entity{
 		"KubernetesCluster": entity,
-	}, nil, "src.", "dst.", &logs, logger)
+	}, "src.", "dst.", &logs, logger)
 	eventBuilder.AppendRelationshipUpdateEvent(testRelationship, resourceAttrs)
 
 	// assert
@@ -216,7 +216,7 @@ func TestAppendRelationshipUpdateEventWithRelationshipAttribute(t *testing.T) {
 	logs := plog.NewLogs()
 	srcEntity := config.Entity{Type: "KubernetesCluster", IDs: []string{"id1"}}
 	destEntity := config.Entity{Type: "KubernetesNamespace", IDs: []string{"id2"}}
-	testRelationship := config.Relationship{Source: "KubernetesCluster", Destination: "KubernetesNamespace", Attributes: []string{"relationshipAttr"}}
+	testRelationship := config.RelationshipEvent{Source: "KubernetesCluster", Destination: "KubernetesNamespace", Attributes: []string{"relationshipAttr"}}
 	resourceAttrs := pcommon.NewMap()
 	resourceAttrs.PutStr("id1", "idvalue1")
 	resourceAttrs.PutStr("id2", "idvalue2")
@@ -226,7 +226,7 @@ func TestAppendRelationshipUpdateEventWithRelationshipAttribute(t *testing.T) {
 	eventBuilder := NewEventBuilder(map[string]config.Entity{
 		"KubernetesCluster":   srcEntity,
 		"KubernetesNamespace": destEntity,
-	}, nil, "", "", &logs, nil)
+	}, "", "", &logs, nil)
 	eventBuilder.AppendRelationshipUpdateEvent(testRelationship, resourceAttrs)
 
 	// assert
@@ -243,7 +243,7 @@ func TestAppendSameTypeRelationshipUpdateEventWithRelationshipAttribute(t *testi
 	// arrange
 	logs := plog.NewLogs()
 	entity := config.Entity{Type: "KubernetesCluster", IDs: []string{"id"}}
-	testRelationship := config.Relationship{Source: "KubernetesCluster", Destination: "KubernetesCluster", Attributes: []string{"relationshipAttr"}}
+	testRelationship := config.RelationshipEvent{Source: "KubernetesCluster", Destination: "KubernetesCluster", Attributes: []string{"relationshipAttr"}}
 	resourceAttrs := pcommon.NewMap()
 	resourceAttrs.PutStr("src.id", "idvalue1")
 	resourceAttrs.PutStr("dst.id", "idvalue2")
@@ -252,7 +252,7 @@ func TestAppendSameTypeRelationshipUpdateEventWithRelationshipAttribute(t *testi
 	// act
 	eventBuilder := NewEventBuilder(map[string]config.Entity{
 		"KubernetesCluster": entity,
-	}, nil, "src.", "dst.", &logs, nil)
+	}, "src.", "dst.", &logs, nil)
 	eventBuilder.AppendRelationshipUpdateEvent(testRelationship, resourceAttrs)
 
 	// assert

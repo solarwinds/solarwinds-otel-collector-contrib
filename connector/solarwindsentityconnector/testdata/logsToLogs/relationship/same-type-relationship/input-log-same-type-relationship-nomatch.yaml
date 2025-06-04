@@ -2,9 +2,24 @@ resourceLogs:
   - resource:
       attributes: [ { "key": "aws.ec2.id", "value":{"stringValue": "aws-instance-id-first"}},
                     { "key": "aws.ec2.name", "value":{"stringValue": "aws-instance-name-first"}}]
+    scope_logs:
+    - log_records:
+      - body: { "stringValue": "test-log-body" }
+        attributes: [ { "key": "env", "value":{"stringValue": "test"}} ]
+        time_unix_nano: 1234567890
   - resource:
       attributes: [ { "key": "aws.ec2.id", "value":{"stringValue": "aws-instance-id-second"}}]
+    scope_logs:
+    - log_records:
+      - body: { "stringValue": "test-log-body" }
+        attributes: [ { "key": "env", "value":{"stringValue": "test"}} ]
+        time_unix_nano: 1234567891
   - resource:
       attributes: [ { "key": "src.aws.ec2.id", "value":{"stringValue": "aws-instance-id-first"}},
                     { "key": "src.aws.ec2.name", "value":{"stringValue": "aws-instance-name-first"}},
                     { "key": "dst.aws.ec2.id", "value":{"stringValue": "aws-instance-id-second"}}]
+    scope_logs:
+    - log_records:
+      - body: { "stringValue": "test-log-body" }
+        attributes: [ { "key": "env", "value":{"stringValue": "test"}} ]
+        time_unix_nano: 1234567892

@@ -2,3 +2,8 @@ resourceLogs:
   - resource:
       attributes: [ { "key": "snowflakeID-broken", "value":{"stringValue": "test-snowflakeID"}},
                     { "key": "attr1-broken", "value":{"stringValue": "test-attr1"}} ]
+    scope_logs:
+        - log_records:
+            - body: { "stringValue": "test-log-body" }
+              attributes: [ { "key": "k8s.pod.name", "value":{"stringValue": "test-pod-name"}} ]
+              time_unix_nano: 1234567890
