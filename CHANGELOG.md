@@ -2,6 +2,13 @@
 
 ## vNext
 
+## v0.127.1
+- Various improvements to `swoworkloadtypeprocessor`:
+  - Prevents overwriting workload type attribute if it's already set
+  - Supports multiple contexts for attributes (resource, datapoint, metric, scope)
+  - Supports searching for workload type by DNS and IP address
+- Utilizes reusable build components from [solarwinds-otel-collector-core](https://github.com/solarwinds/solarwinds-otel-collector-core)
+
 ## v0.127.0
 - Consumes OpenTelemetry Collector dependencies v0.127.0.
 
