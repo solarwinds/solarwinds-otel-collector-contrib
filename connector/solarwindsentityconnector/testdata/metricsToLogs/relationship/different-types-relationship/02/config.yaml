@@ -1,0 +1,24 @@
+# config.yaml
+schema:
+  entities:
+    - type: "Snowflake"
+      ids: ["snowflake.id"]
+      attributes: ["attr1"]
+    - type: "AWS EC2"
+      ids: ["aws.ec2.id", "aws.ec2.name"]
+      attributes: ["attr2"]
+  events:
+    entities:
+      - type: "Snowflake"
+        conditions: []
+        context: "metric"
+      - type: "AWS EC2"
+        conditions: ["true"]
+        context: "metric"
+    relationships:
+      - type: "MemberOf"
+        source: "Snowflake"
+        destination: "AWS EC2"
+        attributes: []
+        conditions: ["true"]
+        context: "metric"

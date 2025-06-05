@@ -38,6 +38,7 @@ func TestLogsToLogs(t *testing.T) {
 		name         string
 		inputFile    string
 		expectedFile string
+		configFile   string
 	}{
 		{
 			name:         "when same type relationship has valid advanced condition, log event is sent",
@@ -112,17 +113,51 @@ func TestLogsToLogs(t *testing.T) {
 			inputFile:    "relationship/different-types-relationship/input-log-different-type-relationship-valid-condition.yaml",
 			expectedFile: "relationship/different-types-relationship/expected-log-different-type-relationship-valid-condition.yaml",
 		},
+		{
+			// ~~~ DESCRIPTION ~~~
+			// config.yaml
+			// 		contains source_prefix:"src." & destination_prefix:"dst."
+			// input.yaml
+			//  	attributes are prefixed
+			//      there are no unexpected attribute copies, so no entity updates should happen
+			// expected-output.yaml
+			// 		only relationship update is sent (1 log record)
+			name:         "different type relationship works with prefixes",
+			inputFile:    "relationship/different-types-relationship/01/input.yaml",
+			expectedFile: "relationship/different-types-relationship/01/expected-output.yaml",
+			configFile:   "relationship/different-types-relationship/01/config.yaml",
+		},
+		{
+			// ~~~ DESCRIPTION ~~~
+			// config.yaml
+			// 		does not contain source_prefix & destination_prefix
+			// 		due to this, there should be match on entity attributes and relationship attributes (3 log records)
+			// input.yaml
+			//  	attributes are not prefixed
+			// expected-output.yaml
+			// 		two entity updates are sent, and one relationship update is sent (3 log records)
+			name:         "different type relationship works without prefixes",
+			inputFile:    "relationship/different-types-relationship/02/input.yaml",
+			expectedFile: "relationship/different-types-relationship/02/expected-output.yaml",
+			configFile:   "relationship/different-types-relationship/02/config.yaml",
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Load config from YAML file
-			cfg1, err := loadConfigFromFile(t, "testdata/config.yaml")
+			var cfg *Config
+			var err error
+			if tc.configFile != "" {
+				cfg, err = loadConfigFromFile(t, filepath.Join("testdata", "logsToLogs", tc.configFile))
+			} else {
+				cfg, err = loadConfigFromFile(t, "testdata/config.yaml")
+			}
 			require.NoError(t, err)
 			factory := NewFactory()
 			sink := &consumertest.LogsSink{}
 			conn, err := factory.CreateLogsToLogs(context.Background(),
-				connectortest.NewNopSettings(metadata.Type), cfg1, sink)
+				connectortest.NewNopSettings(metadata.Type), cfg, sink)
 			require.NoError(t, err)
 			require.NotNil(t, conn)
 
@@ -156,6 +191,7 @@ func TestMetricsToLogs(t *testing.T) {
 		name         string
 		inputFile    string
 		expectedFile string
+		configFile   string
 	}{
 		{
 			name:         "when same type relationship has valid advanced condition, log event is sent",
@@ -231,18 +267,52 @@ func TestMetricsToLogs(t *testing.T) {
 			inputFile:    "relationship/different-types-relationship/input-metric-different-type-relationship-valid-condition.yaml",
 			expectedFile: "relationship/different-types-relationship/expected-metric-different-type-relationship-valid-condition.yaml",
 		},
+		{
+			// ~~~ DESCRIPTION ~~~
+			// config.yaml
+			// 		contains source_prefix:"src." & destination_prefix:"dst."
+			// input.yaml
+			//  	attributes are prefixed
+			//      there are no unexpected attribute copies, so no entity updates should happen
+			// expected-output.yaml
+			// 		only relationship update is sent (1 log record)
+			name:         "different type relationship works with prefixes",
+			inputFile:    "relationship/different-types-relationship/01/input.yaml",
+			expectedFile: "relationship/different-types-relationship/01/expected-output.yaml",
+			configFile:   "relationship/different-types-relationship/01/config.yaml",
+		},
+		{
+			// ~~~ DESCRIPTION ~~~
+			// config.yaml
+			// 		does not contain source_prefix & destination_prefix
+			// 		due to this, there should be match on entity attributes and relationship attributes (3 log records)
+			// input.yaml
+			//  	attributes are not prefixed
+			// expected-output.yaml
+			// 		two entity updates are sent, and one relationship update is sent (3 log records)
+			name:         "different type relationship works without prefixes",
+			inputFile:    "relationship/different-types-relationship/02/input.yaml",
+			expectedFile: "relationship/different-types-relationship/02/expected-output.yaml",
+			configFile:   "relationship/different-types-relationship/02/config.yaml",
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Load config from YAML file
-			cfg1, err := loadConfigFromFile(t, "testdata/config.yaml")
+			var cfg *Config
+			var err error
+			if tc.configFile != "" {
+				cfg, err = loadConfigFromFile(t, filepath.Join("testdata", "metricsToLogs", tc.configFile))
+			} else {
+				cfg, err = loadConfigFromFile(t, "testdata/config.yaml")
+			}
 			require.NoError(t, err)
 
 			factory := NewFactory()
 			sink := &consumertest.LogsSink{}
 			conn, err := factory.CreateMetricsToLogs(context.Background(),
-				connectortest.NewNopSettings(metadata.Type), cfg1, sink)
+				connectortest.NewNopSettings(metadata.Type), cfg, sink)
 			require.NoError(t, err)
 			require.NotNil(t, conn)
 
