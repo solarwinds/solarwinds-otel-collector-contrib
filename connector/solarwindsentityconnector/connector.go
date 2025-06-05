@@ -16,6 +16,7 @@ package solarwindsentityconnector
 
 import (
 	"context"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/storage"
 	"sort"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
@@ -38,7 +39,8 @@ type solarwindsentity struct {
 	sourcePrefix      string
 	destinationPrefix string
 
-	component.StartFunc
+	expirationPolicy config.ExpirationPolicy
+
 	component.ShutdownFunc
 }
 
@@ -47,6 +49,20 @@ var _ connector.Logs = (*solarwindsentity)(nil)
 
 func (s *solarwindsentity) Capabilities() consumer.Capabilities {
 	return consumer.Capabilities{MutatesData: false}
+}
+
+func (s *solarwindsentity) Start(ctx context.Context, host component.Host) error {
+	if s.expirationPolicy.Enabled {
+		if err := s.expirationPolicy.IsValid(); err != nil {
+			s.logger.Error("expiration policy is invalid", zap.Error(err))
+			return err
+		}
+		storage.StartCache(s.expirationPolicy)
+	} else {
+		s.logger.Debug("expiration policy is disabled, no expiration logs will be generated")
+	}
+
+	return nil
 }
 
 // Will be removed when condition logic is added.

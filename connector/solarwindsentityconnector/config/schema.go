@@ -15,8 +15,9 @@
 package config
 
 type Schema struct {
-	Entities []Entity `mapstructure:"entities"`
-	Events   Events   `mapstructure:"events"`
+	Entities   []Entity         `mapstructure:"entities"`
+	Events     Events           `mapstructure:"events"`
+	Expiration ExpirationPolicy `mapstructure:"expiration_policy"`
 }
 
 func (s *Schema) NewEntities() map[string]Entity {
