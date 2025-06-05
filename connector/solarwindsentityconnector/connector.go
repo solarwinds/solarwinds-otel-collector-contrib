@@ -17,7 +17,6 @@ package solarwindsentityconnector
 import (
 	"context"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/storage"
-	"sort"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottlmetric"
@@ -65,8 +64,6 @@ func (s *solarwindsentity) Start(ctx context.Context, host component.Host) error
 
 	return nil
 }
-
-
 
 func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.Metrics) error {
 	eventLogs := plog.NewLogs()
