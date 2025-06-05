@@ -14,6 +14,10 @@
 
 package config
 
+import (
+	"go.opentelemetry.io/collector/component"
+)
+
 type Schema struct {
 	Entities   []Entity         `mapstructure:"entities"`
 	Events     Events           `mapstructure:"events"`
@@ -29,6 +33,7 @@ func (s *Schema) NewEntities() map[string]Entity {
 	return entities
 }
 
-func (s *Schema) NewRelationships() []Relationship {
-	return s.Events.Relationships
+func (s *Schema) NewEvents(settings component.TelemetrySettings) ParsedEvents {
+	NewEvents := CreateParsedEvents(*s, settings)
+	return NewEvents
 }

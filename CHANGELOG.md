@@ -2,6 +2,17 @@
 
 ## vNext
 
+## v0.127.1
+- Various improvements to `swoworkloadtypeprocessor`:
+  - Prevents overwriting workload type attribute if it's already set
+  - Supports multiple contexts for attributes (resource, datapoint, metric, scope)
+  - Supports searching for workload type by DNS and IP address
+- `solarwindsentityconnector` supports OTTL conditions for conditional creation/update of entities and relationships 
+- Utilizes reusable build components from [solarwinds-otel-collector-core](https://github.com/solarwinds/solarwinds-otel-collector-core)
+
+## v0.127.0
+- Consumes OpenTelemetry Collector dependencies v0.127.0.
+
 ## v0.123.7
 - Aligning version with [solarwinds-otel-collector-releases](https://github.com/solarwinds/solarwinds-otel-collector-releases) repository.
 - Latest version of `solarwindsentityconnector` moved to this repository from [solarwinds-otel-collector-releases](https://github.com/solarwinds/solarwinds-otel-collector-releases).
