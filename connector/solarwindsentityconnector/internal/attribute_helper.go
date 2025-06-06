@@ -43,9 +43,10 @@ func setIdAttributes(attrs pcommon.Map, entityIds []string, resourceAttrs pcommo
 	return nil
 }
 
-// setIdAttributesWithPrefix sets the entity id attributes in the log record as needed by SWO for same type relationships.
-// Verifies that prefix is present in the resource attributes at least once within entity IDs.
-func setIdAttributesWithPrefix(attrs pcommon.Map, entityIds []string, resourceAttrs pcommon.Map, name, prefix string) (bool, error) {
+// setIdAttributesForRelationships sets the entity id attributes in the log record as needed by SWO for relationships.
+// prefix - mandatory for same type relationships, but optional for relationships between different entity types.
+// Returns bool indicating if prefixed attributes were found (if called with empty prefix, you might need to ignore it), and an error.
+func setIdAttributesForRelationships(attrs pcommon.Map, entityIds []string, resourceAttrs pcommon.Map, name, prefix string) (bool, error) {
 	if len(entityIds) == 0 {
 		return false, fmt.Errorf("entity ID attributes are empty")
 	}

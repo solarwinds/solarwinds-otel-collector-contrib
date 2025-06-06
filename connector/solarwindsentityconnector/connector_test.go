@@ -16,10 +16,11 @@ package solarwindsentityconnector
 
 import (
 	"context"
+	"fmt"
+	"gopkg.in/yaml.v3"
+	"os"
 	"path/filepath"
 	"testing"
-
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest/plogtest"
@@ -28,190 +29,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/connector/connectortest"
-	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/consumer/consumertest"
-	"go.opentelemetry.io/collector/pdata/plog"
-)
-
-type testLogsConsumer struct {
-}
-
-func (t *testLogsConsumer) Capabilities() consumer.Capabilities {
-	return consumer.Capabilities{MutatesData: false}
-}
-
-func (t *testLogsConsumer) ConsumeLogs(ctx context.Context, ld plog.Logs) error {
-	return nil
-}
-
-var _ consumer.Logs = (*testLogsConsumer)(nil)
-
-// Test configuration for the entites, relationships and events.
-var (
-	configuredEntities = []config.Entity{
-		{Type: "Snowflake", IDs: []string{"snowflake.id"}, Attributes: []string{"attr1"}},
-		{Type: "AWS EC2", IDs: []string{"aws.ec2.id", "aws.ec2.name"}, Attributes: []string{"attr2"}},
-		{Type: "Kubernetes Pod", IDs: []string{"k8s.pod.id", "k8s.pod.name"}, Attributes: []string{"k8s.pod.port"}},
-		{Type: "Kubernetes Cluster", IDs: []string{"k8s.cluster.id", "k8s.cluster.name"}, Attributes: []string{"k8s.cluster.port"}},
-		{Type: "Kubernetes Node", IDs: []string{"k8s.node.id"}, Attributes: []string{}},
-	}
-
-	configuredRelationshipsEvent = []config.RelationshipEvent{
-		{
-			Type:        "MemberOf",
-			Source:      "Snowflake",
-			Destination: "AWS EC2",
-			Attributes:  []string{},
-			Conditions:  []string{"true"},
-			Context:     "log",
-		},
-		{
-			Type:        "MemberOf",
-			Source:      "Snowflake",
-			Destination: "AWS EC2",
-			Attributes:  []string{},
-			Conditions:  []string{"true"},
-			Context:     "metric",
-		},
-		{
-			Type:        "TestRelationshipType",
-			Source:      "AWS EC2",
-			Destination: "AWS EC2",
-			Attributes:  []string{},
-			Conditions:  []string{"true"},
-			Context:     "log",
-		},
-		{
-			Type:        "TestRelationshipType",
-			Source:      "AWS EC2",
-			Destination: "AWS EC2",
-			Attributes:  []string{},
-			Conditions:  []string{"true"},
-			Context:     "metric",
-		},
-		{
-			Type:        "TestRelationshipType",
-			Source:      "Kubernetes Pod",
-			Destination: "Kubernetes Pod",
-			Attributes:  []string{"k8s.pod.port"},
-			Conditions:  []string{"true"},
-			Context:     "log",
-		},
-		{
-			Type:        "TestRelationshipType",
-			Source:      "Kubernetes Pod",
-			Destination: "Kubernetes Pod",
-			Attributes:  []string{"k8s.pod.port"},
-			Conditions:  []string{"true"},
-			Context:     "metric",
-		},
-		{
-			Type:        "MemberOf",
-			Source:      "Snowflake",
-			Destination: "Kubernetes Pod",
-			Attributes:  []string{"k8s.pod.port"},
-			Conditions:  []string{"true"},
-			Context:     "log",
-		},
-		{
-			Type:        "MemberOf",
-			Source:      "Snowflake",
-			Destination: "Kubernetes Pod",
-			Attributes:  []string{"k8s.pod.port"},
-			Conditions:  []string{"true"},
-			Context:     "metric",
-		},
-		{
-			Type:        "MemberOf",
-			Source:      "Kubernetes Cluster",
-			Destination: "Kubernetes Pod",
-			Attributes:  []string{"k8s.cluster.port"},
-			Conditions:  []string{`attributes["k8s.cluster.port"] == "8080" or attributes["k8s.cluster.port"] == "9090" and attributes["k8s.cluster.name"] == "test-cluster-name"`},
-			Context:     "log",
-		},
-		{
-			Type:        "MemberOf",
-			Source:      "Kubernetes Cluster",
-			Destination: "Kubernetes Pod",
-			Attributes:  []string{"k8s.cluster.port"},
-			Conditions:  []string{`metric.name == "k8s.tcp.bytes" or metric.name == "k8s.tcp.connections" and metric.unit == "bytes"`},
-			Context:     "metric",
-		},
-		{
-			Type:        "TestRelationshipType",
-			Source:      "Kubernetes Node",
-			Destination: "Kubernetes Node",
-			Attributes:  []string{},
-			Conditions:  []string{`instrumentation_scope.name == "NodeScope" and resource.attributes["service.name"] == "NodeService" and log.body == "test-log-body"`},
-			Context:     "log",
-		},
-		{
-			Type:        "TestRelationshipType",
-			Source:      "Kubernetes Node",
-			Destination: "Kubernetes Node",
-			Attributes:  []string{},
-			Conditions:  []string{`instrumentation_scope.name == "NodeScope" and resource.attributes["service.name"] == "NodeService" and metric.unit == "bytes"`},
-			Context:     "metric",
-		},
-	}
-
-	configuredEntitiesEvent = []config.EntityEvent{
-		{
-			Type:       "Snowflake",
-			Conditions: []string{},
-			Context:    "log",
-		},
-		{
-			Type:       "Snowflake",
-			Conditions: []string{},
-			Context:    "metric",
-		},
-		{
-			Type:       "AWS EC2",
-			Conditions: []string{"true"},
-			Context:    "log",
-		},
-		{
-			Type:       "AWS EC2",
-			Conditions: []string{"true"},
-			Context:    "metric",
-		},
-		{
-			Type:       "Kubernetes Pod",
-			Conditions: []string{"true"},
-			Context:    "log",
-		},
-		{
-			Type:       "Kubernetes Pod",
-			Conditions: []string{"true"},
-			Context:    "metric",
-		},
-		{
-			Type:       "Kubernetes Cluster",
-			Conditions: []string{`attributes["k8s.cluster.port"] == "8080" or attributes["k8s.cluster.port"] == "9090" and attributes["k8s.cluster.name"] == "test-cluster-name"`},
-			Context:    "log",
-		},
-		{
-			Type:       "Kubernetes Cluster",
-			Conditions: []string{`metric.name == "k8s.tcp.bytes" or metric.name == "k8s.tcp.connections" and metric.unit == "bytes"`},
-			Context:    "metric",
-		},
-		{
-			Type:       "Kubernetes Node",
-			Conditions: []string{`instrumentation_scope.name == "NodeScope" and resource.attributes["service.name"] == "NodeService" and log.body == "test-log-body"`},
-			Context:    "log",
-		},
-		{
-			Type:       "Kubernetes Node",
-			Conditions: []string{`instrumentation_scope.name == "NodeScope" and resource.attributes["service.name"] == "NodeService" and metric.unit == "bytes"`},
-			Context:    "metric",
-		},
-	}
-
-	configuredEvents = config.Events{
-		Relationships: configuredRelationshipsEvent,
-		Entities:      configuredEntitiesEvent,
-	}
 )
 
 func TestLogsToLogs(t *testing.T) {
@@ -220,6 +38,7 @@ func TestLogsToLogs(t *testing.T) {
 		name         string
 		inputFile    string
 		expectedFile string
+		configFile   string
 	}{
 		{
 			name:         "when same type relationship has valid advanced condition, log event is sent",
@@ -294,21 +113,50 @@ func TestLogsToLogs(t *testing.T) {
 			inputFile:    "relationship/different-types-relationship/input-log-different-type-relationship-valid-condition.yaml",
 			expectedFile: "relationship/different-types-relationship/expected-log-different-type-relationship-valid-condition.yaml",
 		},
+		{
+			// ~~~ DESCRIPTION ~~~
+			// config.yaml
+			// 		contains source_prefix:"src." & destination_prefix:"dst."
+			// input.yaml
+			//  	attributes are prefixed
+			//      there are no unprefixed attribute copies, so no entity updates should happen
+			// expected-output.yaml
+			// 		only relationship update is sent (1 log record)
+			name:         "different type relationship works with prefixes",
+			inputFile:    "relationship/different-types-relationship/01-with-prefixes/input.yaml",
+			expectedFile: "relationship/different-types-relationship/01-with-prefixes/expected-output.yaml",
+			configFile:   "relationship/different-types-relationship/01-with-prefixes/config.yaml",
+		},
+		{
+			// ~~~ DESCRIPTION ~~~
+			// config.yaml
+			// 		does not contain source_prefix & destination_prefix
+			// 		due to this, there should be match on entity attributes and relationship attributes (3 log records)
+			// input.yaml
+			//  	attributes are not prefixed
+			// expected-output.yaml
+			// 		two entity updates are sent, and one relationship update is sent (3 log records)
+			name:         "different type relationship works without prefixes",
+			inputFile:    "relationship/different-types-relationship/02-without-prefixes/input.yaml",
+			expectedFile: "relationship/different-types-relationship/02-without-prefixes/expected-output.yaml",
+			configFile:   "relationship/different-types-relationship/02-without-prefixes/config.yaml",
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			var cfg *Config
+			var err error
+			if tc.configFile != "" {
+				cfg, err = loadConfigFromFile(t, filepath.Join("testdata", "logsToLogs", tc.configFile))
+			} else {
+				cfg, err = loadConfigFromFile(t, "testdata/config.yaml")
+			}
+			require.NoError(t, err)
 			factory := NewFactory()
 			sink := &consumertest.LogsSink{}
 			conn, err := factory.CreateLogsToLogs(context.Background(),
-				connectortest.NewNopSettings(metadata.Type), &Config{
-					Schema: config.Schema{
-						Entities: configuredEntities,
-						Events:   configuredEvents,
-					},
-					SourcePrefix:      "src.",
-					DestinationPrefix: "dst.",
-				}, sink)
+				connectortest.NewNopSettings(metadata.Type), cfg, sink)
 			require.NoError(t, err)
 			require.NotNil(t, conn)
 
@@ -342,6 +190,7 @@ func TestMetricsToLogs(t *testing.T) {
 		name         string
 		inputFile    string
 		expectedFile string
+		configFile   string
 	}{
 		{
 			name:         "when same type relationship has valid advanced condition, log event is sent",
@@ -417,21 +266,51 @@ func TestMetricsToLogs(t *testing.T) {
 			inputFile:    "relationship/different-types-relationship/input-metric-different-type-relationship-valid-condition.yaml",
 			expectedFile: "relationship/different-types-relationship/expected-metric-different-type-relationship-valid-condition.yaml",
 		},
+		{
+			// ~~~ DESCRIPTION ~~~
+			// config.yaml
+			// 		contains source_prefix:"src." & destination_prefix:"dst."
+			// input.yaml
+			//  	attributes are prefixed
+			//      there are no unexpected attribute copies, so no entity updates should happen
+			// expected-output.yaml
+			// 		only relationship update is sent (1 log record)
+			name:         "different type relationship works with prefixes",
+			inputFile:    "relationship/different-types-relationship/01-with-prefixes/input.yaml",
+			expectedFile: "relationship/different-types-relationship/01-with-prefixes/expected-output.yaml",
+			configFile:   "relationship/different-types-relationship/01-with-prefixes/config.yaml",
+		},
+		{
+			// ~~~ DESCRIPTION ~~~
+			// config.yaml
+			// 		does not contain source_prefix & destination_prefix
+			// 		due to this, there should be match on entity attributes and relationship attributes (3 log records)
+			// input.yaml
+			//  	attributes are not prefixed
+			// expected-output.yaml
+			// 		two entity updates are sent, and one relationship update is sent (3 log records)
+			name:         "different type relationship works without prefixes",
+			inputFile:    "relationship/different-types-relationship/02-without-prefixes/input.yaml",
+			expectedFile: "relationship/different-types-relationship/02-without-prefixes/expected-output.yaml",
+			configFile:   "relationship/different-types-relationship/02-without-prefixes/config.yaml",
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			var cfg *Config
+			var err error
+			if tc.configFile != "" {
+				cfg, err = loadConfigFromFile(t, filepath.Join("testdata", "metricsToLogs", tc.configFile))
+			} else {
+				cfg, err = loadConfigFromFile(t, "testdata/config.yaml")
+			}
+			require.NoError(t, err)
+
 			factory := NewFactory()
 			sink := &consumertest.LogsSink{}
 			conn, err := factory.CreateMetricsToLogs(context.Background(),
-				connectortest.NewNopSettings(metadata.Type), &Config{
-					Schema: config.Schema{
-						Entities: configuredEntities,
-						Events:   configuredEvents,
-					},
-					SourcePrefix:      "src.",
-					DestinationPrefix: "dst.",
-				}, sink)
+				connectortest.NewNopSettings(metadata.Type), cfg, sink)
 			require.NoError(t, err)
 			require.NotNil(t, conn)
 
@@ -457,4 +336,20 @@ func TestMetricsToLogs(t *testing.T) {
 			assert.NoError(t, plogtest.CompareLogs(expected, allLogs[0], plogtest.IgnoreObservedTimestamp()))
 		})
 	}
+}
+
+func loadConfigFromFile(t *testing.T, path string) (*Config, error) {
+	t.Helper()
+
+	yamlFile, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read config file: %w", err)
+	}
+
+	var cfg Config
+	if err := yaml.Unmarshal(yamlFile, &cfg); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+	}
+
+	return &cfg, nil
 }

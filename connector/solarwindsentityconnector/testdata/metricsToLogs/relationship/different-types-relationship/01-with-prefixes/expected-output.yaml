@@ -1,0 +1,43 @@
+resourceLogs:
+  - resource: {}
+    scopeLogs:
+      - logRecords:
+          - attributes:
+              - key: otel.entity_relationship.source_entity.id
+                value:
+                  kvlistValue:
+                    values:
+                      - key: snowflake.id
+                        value:
+                          stringValue: snowflake-instance-id
+              - key: otel.entity_relationship.destination_entity.id
+                value:
+                  kvlistValue:
+                    values:
+                      - key: aws.ec2.id
+                        value:
+                          stringValue: aws-instance-id
+                      - key: aws.ec2.name
+                        value:
+                          stringValue: aws-instance-name
+              - key: otel.entity_relationship.type
+                value:
+                  stringValue: MemberOf
+              - key: otel.entity_relationship.source_entity.type
+                value:
+                  stringValue: Snowflake
+              - key: otel.entity_relationship.destination_entity.type
+                value:
+                  stringValue: AWS EC2
+              - key: otel.entity.event.type
+                value:
+                  stringValue: entity_relationship_state
+            body: {}
+            observedTimeUnixNano: "1747299066557290000"
+            spanId: ""
+            traceId: ""
+        scope:
+          attributes:
+            - key: otel.entity.event_as_log
+              value:
+                boolValue: true

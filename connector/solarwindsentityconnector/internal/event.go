@@ -112,25 +112,13 @@ func (e *EventBuilder) createRelationshipEvent(relationship config.RelationshipE
 	attrs := lr.Attributes()
 
 	if source.Type == dest.Type {
-		// same type relationships
-		hasPrefixSrc, err := setIdAttributesWithPrefix(attrs, source.IDs, resourceAttrs, relationshipSrcEntityIds, e.sourcePrefix)
-		if err != nil || !hasPrefixSrc {
-			return plog.NewLogRecord(), fmt.Errorf("missing prefixed ID attribute for source entity")
-		}
-
-		hasPrefixDst, err := setIdAttributesWithPrefix(attrs, dest.IDs, resourceAttrs, relationshipDestEntityIds, e.destPrefix)
-		if err != nil || !hasPrefixDst {
-			return plog.NewLogRecord(), fmt.Errorf("missing prefixed ID attribute for destination entity")
+		if err := e.setAttributesForSameTypeRelationships(attrs, source, dest, resourceAttrs); err != nil {
+			return plog.NewLogRecord(), err
 		}
 
 	} else {
-
-		if err := setIdAttributes(attrs, source.IDs, resourceAttrs, relationshipSrcEntityIds); err != nil {
-			return plog.NewLogRecord(), fmt.Errorf("missing ID attribute for source entity")
-		}
-
-		if err := setIdAttributes(attrs, dest.IDs, resourceAttrs, relationshipDestEntityIds); err != nil {
-			return plog.NewLogRecord(), fmt.Errorf("missing ID attribute for destination entity")
+		if err := e.setAttributesForDifferentTypeRelationships(attrs, source, dest, resourceAttrs); err != nil {
+			return plog.NewLogRecord(), err
 		}
 	}
 
@@ -140,4 +128,35 @@ func (e *EventBuilder) createRelationshipEvent(relationship config.RelationshipE
 	attrs.PutStr(destEntityType, dest.Type)
 
 	return lr, nil
+}
+
+func (e *EventBuilder) setAttributesForSameTypeRelationships(attrs pcommon.Map, source config.Entity, dest config.Entity, resourceAttrs pcommon.Map) error {
+	if e.sourcePrefix == "" || e.destPrefix == "" {
+		return fmt.Errorf("prefixes are mandatory for same type relationships")
+	}
+
+	hasPrefixSrc, err := setIdAttributesForRelationships(attrs, source.IDs, resourceAttrs, relationshipSrcEntityIds, e.sourcePrefix)
+	if err != nil || !hasPrefixSrc {
+		return fmt.Errorf("missing prefixed ID attribute for source entity")
+	}
+
+	hasPrefixDst, err := setIdAttributesForRelationships(attrs, dest.IDs, resourceAttrs, relationshipDestEntityIds, e.destPrefix)
+	if err != nil || !hasPrefixDst {
+		return fmt.Errorf("missing prefixed ID attribute for destination entity")
+	}
+	return nil
+}
+
+func (e *EventBuilder) setAttributesForDifferentTypeRelationships(attrs pcommon.Map, source config.Entity, dest config.Entity, resourceAttrs pcommon.Map) error {
+	// For different type relationships, prefixes are optional.
+	_, err := setIdAttributesForRelationships(attrs, source.IDs, resourceAttrs, relationshipSrcEntityIds, e.sourcePrefix)
+	if err != nil {
+		return fmt.Errorf("missing ID attribute for source entity")
+	}
+
+	_, err = setIdAttributesForRelationships(attrs, dest.IDs, resourceAttrs, relationshipDestEntityIds, e.destPrefix)
+	if err != nil {
+		return fmt.Errorf("missing ID attribute for destination entity")
+	}
+	return nil
 }
