@@ -131,6 +131,9 @@ func (e *EventBuilder) createRelationshipEvent(relationship config.RelationshipE
 }
 
 func (e *EventBuilder) setAttributesForSameTypeRelationships(attrs pcommon.Map, source config.Entity, dest config.Entity, resourceAttrs pcommon.Map) error {
+	if e.sourcePrefix == "" || e.destPrefix == "" {
+		return fmt.Errorf("prefixes are mandatory for same type relationships")
+	}
 
 	hasPrefixSrc, err := setIdAttributesForRelationships(attrs, source.IDs, resourceAttrs, relationshipSrcEntityIds, e.sourcePrefix)
 	if err != nil || !hasPrefixSrc {
