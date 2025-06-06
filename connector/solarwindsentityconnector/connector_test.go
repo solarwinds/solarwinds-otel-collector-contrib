@@ -119,7 +119,7 @@ func TestLogsToLogs(t *testing.T) {
 			// 		contains source_prefix:"src." & destination_prefix:"dst."
 			// input.yaml
 			//  	attributes are prefixed
-			//      there are no unexpected attribute copies, so no entity updates should happen
+			//      there are no unprefixed attribute copies, so no entity updates should happen
 			// expected-output.yaml
 			// 		only relationship update is sent (1 log record)
 			name:         "different type relationship works with prefixes",
@@ -340,7 +340,6 @@ func TestMetricsToLogs(t *testing.T) {
 	}
 }
 
-// Helper function to load config from YAML file
 func loadConfigFromFile(t *testing.T, path string) (*Config, error) {
 	t.Helper()
 

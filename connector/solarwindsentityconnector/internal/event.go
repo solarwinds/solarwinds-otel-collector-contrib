@@ -141,7 +141,6 @@ func (e *EventBuilder) createRelationshipEvent(relationship config.RelationshipE
 }
 
 func (e *EventBuilder) setAttributesForSameTypeRelationships(attrs pcommon.Map, source config.Entity, dest config.Entity, resourceAttrs pcommon.Map) error {
-	// same type relationships
 	hasPrefixSrc, err := setIdAttributesWithPrefix(attrs, source.IDs, resourceAttrs, relationshipSrcEntityIds, e.sourcePrefix)
 	if err != nil || !hasPrefixSrc {
 		return fmt.Errorf("missing prefixed ID attribute for source entity")

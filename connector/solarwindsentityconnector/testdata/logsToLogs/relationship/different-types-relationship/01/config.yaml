@@ -1,4 +1,3 @@
-# config.yaml
 source_prefix: "src."
 destination_prefix: "dst."
 schema:
