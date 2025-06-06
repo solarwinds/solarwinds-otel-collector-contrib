@@ -57,4 +57,3 @@ resourceLogs:
             - key: otel.entity.event_as_log
               value:
                 boolValue: true
-          

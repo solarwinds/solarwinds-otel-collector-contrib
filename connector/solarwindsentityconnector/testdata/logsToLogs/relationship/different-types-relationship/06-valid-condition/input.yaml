@@ -7,5 +7,6 @@ resourceLogs:
     scope_logs:
     - log_records:
       - body: { "stringValue": "test-log-body" }
-        attributes: [ { "key": "env", "value":{"stringValue": "test"}} ]
+        attributes: [ { "key": "k8s.cluster.port", "value":{"stringValue": "8080"}},
+                      { "key": "k8s.cluster.name", "value":{"stringValue": "test-cluster-name"}} ]
         time_unix_nano: 1234567890
