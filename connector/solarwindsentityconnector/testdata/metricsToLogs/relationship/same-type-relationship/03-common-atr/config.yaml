@@ -1,0 +1,19 @@
+source_prefix: "src."
+destination_prefix: "dst."
+schema:
+  entities:
+    - type: "AWS EC2"
+      ids: ["aws.ec2.id", "aws.ec2.name"]
+      attributes: ["attr2"]
+  events:
+    relationships:
+      - type: "TestRelationshipType"
+        source: "AWS EC2"
+        destination: "AWS EC2"
+        attributes: []
+        conditions: ["true"]
+        context: "metric"
+    entities:
+      - type: "AWS EC2"
+        conditions: ["true"]
+        context: "metric"

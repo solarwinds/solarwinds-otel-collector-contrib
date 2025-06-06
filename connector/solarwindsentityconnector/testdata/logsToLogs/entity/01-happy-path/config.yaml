@@ -1,0 +1,12 @@
+source_prefix: "src."
+destination_prefix: "dst."
+schema:
+  entities:
+    - type: "Snowflake"
+      ids: ["snowflake.id"]
+      attributes: ["attr1"]
+  events:
+    entities:
+      - type: "Snowflake"
+        conditions: []
+        context: "log"
