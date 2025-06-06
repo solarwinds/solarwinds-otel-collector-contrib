@@ -123,9 +123,9 @@ func TestLogsToLogs(t *testing.T) {
 			// expected-output.yaml
 			// 		only relationship update is sent (1 log record)
 			name:         "different type relationship works with prefixes",
-			inputFile:    "relationship/different-types-relationship/01/input.yaml",
-			expectedFile: "relationship/different-types-relationship/01/expected-output.yaml",
-			configFile:   "relationship/different-types-relationship/01/config.yaml",
+			inputFile:    "relationship/different-types-relationship/01-with-prefixes/input.yaml",
+			expectedFile: "relationship/different-types-relationship/01-with-prefixes/expected-output.yaml",
+			configFile:   "relationship/different-types-relationship/01-with-prefixes/config.yaml",
 		},
 		{
 			// ~~~ DESCRIPTION ~~~
@@ -137,9 +137,9 @@ func TestLogsToLogs(t *testing.T) {
 			// expected-output.yaml
 			// 		two entity updates are sent, and one relationship update is sent (3 log records)
 			name:         "different type relationship works without prefixes",
-			inputFile:    "relationship/different-types-relationship/02/input.yaml",
-			expectedFile: "relationship/different-types-relationship/02/expected-output.yaml",
-			configFile:   "relationship/different-types-relationship/02/config.yaml",
+			inputFile:    "relationship/different-types-relationship/02-without-prefixes/input.yaml",
+			expectedFile: "relationship/different-types-relationship/02-without-prefixes/expected-output.yaml",
+			configFile:   "relationship/different-types-relationship/02-without-prefixes/config.yaml",
 		},
 	}
 
@@ -276,9 +276,9 @@ func TestMetricsToLogs(t *testing.T) {
 			// expected-output.yaml
 			// 		only relationship update is sent (1 log record)
 			name:         "different type relationship works with prefixes",
-			inputFile:    "relationship/different-types-relationship/01/input.yaml",
-			expectedFile: "relationship/different-types-relationship/01/expected-output.yaml",
-			configFile:   "relationship/different-types-relationship/01/config.yaml",
+			inputFile:    "relationship/different-types-relationship/01-with-prefixes/input.yaml",
+			expectedFile: "relationship/different-types-relationship/01-with-prefixes/expected-output.yaml",
+			configFile:   "relationship/different-types-relationship/01-with-prefixes/config.yaml",
 		},
 		{
 			// ~~~ DESCRIPTION ~~~
@@ -290,9 +290,9 @@ func TestMetricsToLogs(t *testing.T) {
 			// expected-output.yaml
 			// 		two entity updates are sent, and one relationship update is sent (3 log records)
 			name:         "different type relationship works without prefixes",
-			inputFile:    "relationship/different-types-relationship/02/input.yaml",
-			expectedFile: "relationship/different-types-relationship/02/expected-output.yaml",
-			configFile:   "relationship/different-types-relationship/02/config.yaml",
+			inputFile:    "relationship/different-types-relationship/02-without-prefixes/input.yaml",
+			expectedFile: "relationship/different-types-relationship/02-without-prefixes/expected-output.yaml",
+			configFile:   "relationship/different-types-relationship/02-without-prefixes/config.yaml",
 		},
 	}
 
