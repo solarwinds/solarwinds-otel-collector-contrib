@@ -145,7 +145,6 @@ func TestLogsToLogs(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// Load config from YAML file
 			var cfg *Config
 			var err error
 			if tc.configFile != "" {
@@ -299,7 +298,6 @@ func TestMetricsToLogs(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// Load config from YAML file
 			var cfg *Config
 			var err error
 			if tc.configFile != "" {
