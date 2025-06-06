@@ -4,7 +4,7 @@ resourceMetrics:
                     { "key": "k8s.cluster.name", "value":{"stringValue": "test-cluster-name"}},
                     { "key": "k8s.cluster.port", "value":{"stringValue": "test-cluster-port"}} ]
     scopeMetrics:
-    - metrics:
-      - name: "k8s.tcp.bytes"
-        description: "test metric description"
-        unit: "bytes"
+      - metrics:
+          - name: "k8s.tcp.bytes"
+            description: "test metric description"
+            unit: "bytes"

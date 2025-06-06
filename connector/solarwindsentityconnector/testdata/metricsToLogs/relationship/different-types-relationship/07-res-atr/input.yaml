@@ -6,6 +6,6 @@ resourceMetrics:
                     {"key": "k8s.pod.port", "value": {"stringValue": "8080"}}]
     scopeMetrics:
       - metrics:
-        - name: "test-metric"
-          description: "test metric description"
-          unit: "1"
+          - name: "test-metric"
+            description: "test metric description"
+            unit: "1"

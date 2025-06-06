@@ -6,6 +6,6 @@ resourceMetrics:
                     { "key": "k8s.pod.name", "value":{"stringValue": "k8s-pod-name"}}]
     scopeMetrics:
       - metrics:
-        - name: "test-metric"
-          description: "test metric description"
-          unit: "1"
+          - name: "test-metric"
+            description: "test metric description"
+            unit: "1"

@@ -4,6 +4,6 @@ resourceMetrics:
                     { "key": "attr1-broken", "value":{"stringValue": "test-attr1"}} ]
     scopeMetrics:
       - metrics:
-        - name: "test-metric"
-          description: "test metric description"
-          unit: "1"
+          - name: "test-metric"
+            description: "test metric description"
+            unit: "1"
