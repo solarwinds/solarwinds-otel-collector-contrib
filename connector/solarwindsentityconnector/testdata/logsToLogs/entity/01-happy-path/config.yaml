@@ -5,14 +5,8 @@ schema:
     - type: "Snowflake"
       ids: ["snowflake.id"]
       attributes: ["attr1"]
-    - type: "AWS EC2"
-      ids: ["aws.ec2.id", "aws.ec2.name"]
-      attributes: ["attr2"]
   events:
     entities:
       - type: "Snowflake"
         conditions: []
-        context: "log"
-      - type: "AWS EC2"
-        conditions: ["true"]
         context: "log"

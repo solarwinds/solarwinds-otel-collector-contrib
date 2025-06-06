@@ -1,4 +1,5 @@
 resourceLogs:
+  # first snowflake entity
   - resource:
       attributes: [ { "key": "snowflake.id", "value":{"stringValue": "test-snowflake-id"}},
                     { "key": "attr1", "value":{"stringValue": "test-attr1"}} ]
@@ -7,6 +8,7 @@ resourceLogs:
       - body: { "stringValue": "test-log-body" }
         attributes: [ { "key": "env", "value":{"stringValue": "test"}} ]
         time_unix_nano: 1234567890
+  # second snowflake entity
   - resource:
       attributes: [ { "key": "snowflake.id", "value":{"stringValue": "test-id2"}},
                     { "key": "attr1", "value":{"stringValue": "test-attr2"}} ]

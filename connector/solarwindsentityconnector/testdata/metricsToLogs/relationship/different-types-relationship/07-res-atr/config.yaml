@@ -12,12 +12,6 @@ schema:
     relationships:
       - type: "MemberOf"
         source: "Snowflake"
-        destination: "AWS EC2"
-        attributes: []
-        conditions: ["true"]
-        context: "metric"
-      - type: "MemberOf"
-        source: "Snowflake"
         destination: "Kubernetes Pod"
         attributes: ["k8s.pod.port"]
         conditions: ["true"]

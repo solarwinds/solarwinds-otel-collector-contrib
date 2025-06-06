@@ -12,12 +12,12 @@ schema:
         source: "Kubernetes Cluster"
         destination: "Kubernetes Pod"
         attributes: ["k8s.cluster.port"]
-        conditions: ['resource.attributes["k8s.cluster.name"] == "non-matching-cluster-name"']
+        conditions: ['metric.name == "k8s.tcp.bytes" or metric.name == "k8s.tcp.connections" and metric.unit == "bytes"']
         context: "metric"
     entities:
       - type: "Kubernetes Pod"
         conditions: ["true"]
         context: "metric"
       - type: "Kubernetes Cluster"
-        conditions: ['resource.attributes["k8s.cluster.name"] == "non-matching-test-cluster-name"']
+        conditions: ["true"]
         context: "metric"
