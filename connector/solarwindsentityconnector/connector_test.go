@@ -39,25 +39,7 @@ func TestLogsToLogs(t *testing.T) {
 		folder   string
 		noOutput bool
 	}{
-		{
-			// ~~~ DESCRIPTION ~~~
-			// Testing that more advanced conditions get evaluated correctly.
-			// Checks that events for entities and relationships are still sent.
-			name:   "when same type relationship has valid advanced condition, log event is sent",
-			folder: "relationship/same-type-relationship/02-advanced-conditions",
-		},
-		{
-			// ~~~ DESCRIPTION ~~~
-			// Checks that same type relationship for AWS EC2 is sent, together with the two AWS EC2 entities.
-			name:   "when relationship for same type is inferred log event is sent",
-			folder: "relationship/same-type-relationship/01-happy-path",
-		},
-		{
-			// ~~~ DESCRIPTION ~~~
-			// Checks that if one of the two entities is not created, the relationship is not sent.
-			name:   "when relationship for same type is not inferred no log is sent",
-			folder: "relationship/same-type-relationship/04-no-match",
-		},
+		// ENTITIES TESTS
 		{
 			// ~~~ DESCRIPTION ~~~
 			// Checks that same type relationship for AWS EC2 is sent, together with entities.
@@ -67,6 +49,10 @@ func TestLogsToLogs(t *testing.T) {
 			folder: "entity/01-happy-path",
 		},
 		{
+			name:   "when log for entity has valid condition, log event is sent",
+			folder: "entity/02-valid-condition",
+		},
+		{
 			// ~~~ DESCRIPTION ~~~
 			// Input is sending insufficient attributes for entity creation
 			// Nothing should be sent
@@ -74,75 +60,42 @@ func TestLogsToLogs(t *testing.T) {
 			folder: "entity/03-no-match",
 		},
 		{
-			// ~~~ DESCRIPTION ~~~
-			name:   "when relationship for same type and having common id attributes is inferred log event is sent",
-			folder: "relationship/same-type-relationship/03-common-atr",
-		},
-		{
-			// ~~~ DESCRIPTION ~~~
-			// config.yaml
-			//		setup for Snowflake AWS EC2 and Pod entities, and relationship between Snowflake and AWS EC2
-			// input.yaml
-			//		contains extra k8s attribute not necessary for relationship, but not enough for Pod entity creation
-			// expected-output.yaml
-			//		log event is sent for Snowflake and EC2 entities, and relationship between them. No Pod entity.
-			name:   "when log for different type relationship has redundant attributes, log event is sent",
-			folder: "relationship/different-types-relationship/05-redundant-atr",
-		},
-		{
-			// ~~~ DESCRIPTION ~~~
-			// config.yaml
-			// 		is set up for Snowflake and AWS EC2 entities, with relationship between them
-			// input.yaml
-			//  	is missing "id" attribute for entity "AWS EC2"
-			// expected-output.yaml
-			// 		log event is sent but only for entity "Snowflake", no relationship log event is sent
-			name:   "when log for different type relationship hasn't all necessary id attributes, log event is sent",
-			folder: "relationship/different-types-relationship/03-missing-atr",
-		},
-		{
-			// ~~~ DESCRIPTION ~~~
-			name:   "when log for same type relationship, log event is sent with relationship attributes",
-			folder: "relationship/same-type-relationship/05-res-atr",
-		},
-		{
-			// ~~~ DESCRIPTION ~~~
-			// config.yaml
-			// 		is set up for Snowflake and Pod entities, with relationship between them
-			// 		relationship has set attributes (that should be sent with the relationship log event)
-			// input.yaml
-			//  	setup for entities and relationship to be sent, with the extra attribute for relationship
-			// expected-output.yaml
-			// 		relationship should be sent with the extra attribute, and also 2 entity log events
-			name:   "when log for different type relationship, log event is sent with relationship attributes",
-			folder: "relationship/different-types-relationship/07-res-atr",
-		},
-		{
-			// ~~~ DESCRIPTION ~~~
 			name:   "when log for entity has no valid condition, no log event is sent",
 			folder: "entity/04-no-valid-condition",
 		},
 		{
 			// ~~~ DESCRIPTION ~~~
-			name:   "when log for entity has valid condition, log event is sent",
-			folder: "entity/02-valid-condition",
+			// Tests that additional attributes for same type relationship are sent with the relationship log event.
+			name:   "when log for same type relationship, log event is sent with relationship attributes",
+			folder: "relationship/same-type-relationship/05-res-atr",
+		},
+		// SAME TYPE RELATIONSHIP TESTS
+		{
+			// ~~~ DESCRIPTION ~~~
+			// Checks that same type relationship for AWS EC2 is sent, together with the two AWS EC2 entities.
+			name:   "when relationship for same type is inferred log event is sent",
+			folder: "relationship/same-type-relationship/01-happy-path",
 		},
 		{
 			// ~~~ DESCRIPTION ~~~
-			// config.yaml
-			// 		is set up for Pod and Cluster entities, with relationship between them
-			// input.yaml
-			//		does not fulfill the condition for relationship, and condition for Cluster entity
-			// expected-output.yaml
-			//		only entity log events for Pod is sent
-			name:   "when log for different type relationship has no valid condition, no log relationship event is sent",
-			folder: "relationship/different-types-relationship/04-no-valid-condition",
+			// Testing that more advanced conditions get evaluated correctly.
+			// Checks that events for entities and relationships are still sent.
+			name:   "when same type relationship has valid advanced condition, log event is sent",
+			folder: "relationship/same-type-relationship/02-advanced-conditions",
 		},
 		{
 			// ~~~ DESCRIPTION ~~~
-			name:   "when log for different type relationship has valid condition, log relationship event is sent",
-			folder: "relationship/different-types-relationship/06-valid-condition",
+			// ??? This seems like a happy path ??? TODO
+			name:   "when relationship for same type and having common id attributes is inferred log event is sent",
+			folder: "relationship/same-type-relationship/03-common-atr",
 		},
+		{
+			// ~~~ DESCRIPTION ~~~
+			// Checks that if one of the two entities is not created, the relationship is not sent.
+			name:   "when relationship for same type is not inferred no log is sent",
+			folder: "relationship/same-type-relationship/04-no-match",
+		},
+		// DIFFERENT TYPE RELATIONSHIP TESTS
 		{
 			// ~~~ DESCRIPTION ~~~
 			// config.yaml
@@ -166,6 +119,55 @@ func TestLogsToLogs(t *testing.T) {
 			// 		two entity updates are sent, and one relationship update is sent (3 log records)
 			name:   "different type relationship works without prefixes",
 			folder: "relationship/different-types-relationship/02-without-prefixes",
+		},
+		{
+			// ~~~ DESCRIPTION ~~~
+			// config.yaml
+			// 		is set up for Snowflake and AWS EC2 entities, with relationship between them
+			// input.yaml
+			//  	is missing "id" attribute for entity "AWS EC2"
+			// expected-output.yaml
+			// 		log event is sent but only for entity "Snowflake", no relationship log event is sent
+			name:   "when log for different type relationship hasn't all necessary id attributes, log event is sent",
+			folder: "relationship/different-types-relationship/03-missing-atr",
+		},
+		{
+			// ~~~ DESCRIPTION ~~~
+			// config.yaml
+			// 		is set up for Pod and Cluster entities, with relationship between them
+			// input.yaml
+			//		does not fulfill the condition for relationship, and condition for Cluster entity
+			// expected-output.yaml
+			//		only entity log events for Pod is sent
+			name:   "when log for different type relationship has no valid condition, no log relationship event is sent",
+			folder: "relationship/different-types-relationship/04-no-valid-condition",
+		},
+		{
+			// ~~~ DESCRIPTION ~~~
+			// config.yaml
+			//		setup for Snowflake AWS EC2 and Pod entities, and relationship between Snowflake and AWS EC2
+			// input.yaml
+			//		contains extra k8s attribute not necessary for relationship, but not enough for Pod entity creation
+			// expected-output.yaml
+			//		log event is sent for Snowflake and EC2 entities, and relationship between them. No Pod entity.
+			name:   "when log for different type relationship has redundant attributes, log event is sent",
+			folder: "relationship/different-types-relationship/05-redundant-atr",
+		},
+		{
+			name:   "when log for different type relationship has valid condition, log relationship event is sent",
+			folder: "relationship/different-types-relationship/06-valid-condition",
+		},
+		{
+			// ~~~ DESCRIPTION ~~~
+			// config.yaml
+			// 		is set up for Snowflake and Pod entities, with relationship between them
+			// 		relationship has set attributes (that should be sent with the relationship log event)
+			// input.yaml
+			//  	setup for entities and relationship to be sent, with the extra attribute for relationship
+			// expected-output.yaml
+			// 		relationship should be sent with the extra attribute, and also 2 entity log events
+			name:   "when log for different type relationship, log event is sent with relationship attributes",
+			folder: "relationship/different-types-relationship/07-res-atr",
 		},
 	}
 

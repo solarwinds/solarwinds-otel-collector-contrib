@@ -1,4 +1,5 @@
 resourceLogs:
+  # for first entity
   - resource:
       attributes: [ { "key": "aws.ec2.id", "value":{"stringValue": "aws-instance-id-first"}},
                     { "key": "aws.ec2.name", "value":{"stringValue": "aws-instance-name-common"}}]
@@ -7,6 +8,7 @@ resourceLogs:
       - body: { "stringValue": "test-log-body" }
         attributes: [ { "key": "env", "value":{"stringValue": "test"}} ]
         time_unix_nano: 1234567890
+  # for second entity
   - resource:
       attributes: [ { "key": "aws.ec2.id", "value":{"stringValue": "aws-instance-id-second"}},
                     { "key": "aws.ec2.name", "value":{"stringValue": "aws-instance-name-common"}}]
@@ -15,6 +17,7 @@ resourceLogs:
       - body: { "stringValue": "test-log-body" }
         attributes: [ { "key": "env", "value":{"stringValue": "test"}} ]
         time_unix_nano: 1234567891
+  # for relationship
   - resource:
       attributes: [ { "key": "src.aws.ec2.id", "value":{"stringValue": "aws-instance-id-first"}},
                     { "key": "dst.aws.ec2.id", "value":{"stringValue": "aws-instance-id-second"}},

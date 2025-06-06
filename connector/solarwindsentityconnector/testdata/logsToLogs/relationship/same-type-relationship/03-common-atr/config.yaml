@@ -2,123 +2,18 @@ source_prefix: "src."
 destination_prefix: "dst."
 schema:
   entities:
-    - type: "Snowflake"
-      ids: ["snowflake.id"]
-      attributes: ["attr1"]
     - type: "AWS EC2"
       ids: ["aws.ec2.id", "aws.ec2.name"]
       attributes: ["attr2"]
-    - type: "Kubernetes Pod"
-      ids: ["k8s.pod.id", "k8s.pod.name"]
-      attributes: ["k8s.pod.port"]
-    - type: "Kubernetes Cluster"
-      ids: ["k8s.cluster.id", "k8s.cluster.name"]
-      attributes: ["k8s.cluster.port"]
-    - type: "Kubernetes Node"
-      ids: ["k8s.node.id"]
-      attributes: []
   events:
     relationships:
-      - type: "MemberOf"
-        source: "Snowflake"
-        destination: "AWS EC2"
-        attributes: []
-        conditions: ["true"]
-        context: "log"
-      - type: "MemberOf"
-        source: "Snowflake"
-        destination: "AWS EC2"
-        attributes: []
-        conditions: ["true"]
-        context: "metric"
       - type: "TestRelationshipType"
         source: "AWS EC2"
         destination: "AWS EC2"
         attributes: []
         conditions: ["true"]
         context: "log"
-      - type: "TestRelationshipType"
-        source: "AWS EC2"
-        destination: "AWS EC2"
-        attributes: []
-        conditions: ["true"]
-        context: "metric"
-      - type: "TestRelationshipType"
-        source: "Kubernetes Pod"
-        destination: "Kubernetes Pod"
-        attributes: ["k8s.pod.port"]
-        conditions: ["true"]
-        context: "log"
-      - type: "TestRelationshipType"
-        source: "Kubernetes Pod"
-        destination: "Kubernetes Pod"
-        attributes: ["k8s.pod.port"]
-        conditions: ["true"]
-        context: "metric"
-      - type: "MemberOf"
-        source: "Snowflake"
-        destination: "Kubernetes Pod"
-        attributes: ["k8s.pod.port"]
-        conditions: ["true"]
-        context: "log"
-      - type: "MemberOf"
-        source: "Snowflake"
-        destination: "Kubernetes Pod"
-        attributes: ["k8s.pod.port"]
-        conditions: ["true"]
-        context: "metric"
-      - type: "MemberOf"
-        source: "Kubernetes Cluster"
-        destination: "Kubernetes Pod"
-        attributes: ["k8s.cluster.port"]
-        conditions: ['attributes["k8s.cluster.port"] == "8080" or attributes["k8s.cluster.port"] == "9090" and attributes["k8s.cluster.name"] == "test-cluster-name"']
-        context: "log"
-      - type: "MemberOf"
-        source: "Kubernetes Cluster"
-        destination: "Kubernetes Pod"
-        attributes: ["k8s.cluster.port"]
-        conditions: ['metric.name == "k8s.tcp.bytes" or metric.name == "k8s.tcp.connections" and metric.unit == "bytes"']
-        context: "metric"
-      - type: "TestRelationshipType"
-        source: "Kubernetes Node"
-        destination: "Kubernetes Node"
-        attributes: []
-        conditions: ['instrumentation_scope.name == "NodeScope" and resource.attributes["service.name"] == "NodeService" and log.body == "test-log-body"']
-        context: "log"
-      - type: "TestRelationshipType"
-        source: "Kubernetes Node"
-        destination: "Kubernetes Node"
-        attributes: []
-        conditions: ['instrumentation_scope.name == "NodeScope" and resource.attributes["service.name"] == "NodeService" and metric.unit == "bytes"']
-        context: "metric"
     entities:
-      - type: "Snowflake"
-        conditions: []
-        context: "log"
-      - type: "Snowflake"
-        conditions: []
-        context: "metric"
       - type: "AWS EC2"
         conditions: ["true"]
         context: "log"
-      - type: "AWS EC2"
-        conditions: ["true"]
-        context: "metric"
-      - type: "Kubernetes Pod"
-        conditions: ["true"]
-        context: "log"
-      - type: "Kubernetes Pod"
-        conditions: ["true"]
-        context: "metric"
-      - type: "Kubernetes Cluster"
-        conditions: ['attributes["k8s.cluster.port"] == "8080" or attributes["k8s.cluster.port"] == "9090" and attributes["k8s.cluster.name"] == "test-cluster-name"']
-        context: "log"
-      - type: "Kubernetes Cluster"
-        conditions: ['metric.name == "k8s.tcp.bytes" or metric.name == "k8s.tcp.connections" and metric.unit == "bytes"']
-        context: "metric"
-      - type: "Kubernetes Node"
-        conditions: ['instrumentation_scope.name == "NodeScope" and resource.attributes["service.name"] == "NodeService" and log.body == "test-log-body"']
-        context: "log"
-      - type: "Kubernetes Node"
-        conditions: ['instrumentation_scope.name == "NodeScope" and resource.attributes["service.name"] == "NodeService" and metric.unit == "bytes"']
-        context: "metric"
