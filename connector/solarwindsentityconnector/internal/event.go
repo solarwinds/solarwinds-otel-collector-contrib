@@ -141,12 +141,12 @@ func (e *EventBuilder) createRelationshipEvent(relationship config.RelationshipE
 }
 
 func (e *EventBuilder) setAttributesForSameTypeRelationships(attrs pcommon.Map, source config.Entity, dest config.Entity, resourceAttrs pcommon.Map) error {
-	hasPrefixSrc, err := setIdAttributesWithPrefix(attrs, source.IDs, resourceAttrs, relationshipSrcEntityIds, e.sourcePrefix)
+	hasPrefixSrc, err := setIdAttributesForRelationships(attrs, source.IDs, resourceAttrs, relationshipSrcEntityIds, e.sourcePrefix)
 	if err != nil || !hasPrefixSrc {
 		return fmt.Errorf("missing prefixed ID attribute for source entity")
 	}
 
-	hasPrefixDst, err := setIdAttributesWithPrefix(attrs, dest.IDs, resourceAttrs, relationshipDestEntityIds, e.destPrefix)
+	hasPrefixDst, err := setIdAttributesForRelationships(attrs, dest.IDs, resourceAttrs, relationshipDestEntityIds, e.destPrefix)
 	if err != nil || !hasPrefixDst {
 		return fmt.Errorf("missing prefixed ID attribute for destination entity")
 	}
