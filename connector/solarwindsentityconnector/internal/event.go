@@ -117,18 +117,8 @@ func (e *EventBuilder) createRelationshipEvent(relationship config.RelationshipE
 		}
 
 	} else {
-		err := error(nil)
-		// Different type relationships can optionally use prefixes, so we try to set attributes with prefixes first.
-		if e.sourcePrefix != "" && e.destPrefix != "" {
-			err = e.setAttributesForSameTypeRelationships(attrs, source, dest, resourceAttrs)
-		}
-
-		// Fallback to setting IDs without prefixes
-		if err != nil || (e.sourcePrefix == "" && e.destPrefix == "") {
-			err := e.setAttributesForDifferentTypeRelationships(attrs, source, dest, resourceAttrs)
-			if err != nil {
-				return plog.NewLogRecord(), err
-			}
+		if err := e.setAttributesForDifferentTypeRelationships(attrs, source, dest, resourceAttrs); err != nil {
+			return plog.NewLogRecord(), err
 		}
 	}
 
@@ -141,6 +131,10 @@ func (e *EventBuilder) createRelationshipEvent(relationship config.RelationshipE
 }
 
 func (e *EventBuilder) setAttributesForSameTypeRelationships(attrs pcommon.Map, source config.Entity, dest config.Entity, resourceAttrs pcommon.Map) error {
+	if e.sourcePrefix == "" || e.destPrefix == "" {
+		return fmt.Errorf("prefixes are mandatory for same type relationships")
+	}
+
 	hasPrefixSrc, err := setIdAttributesForRelationships(attrs, source.IDs, resourceAttrs, relationshipSrcEntityIds, e.sourcePrefix)
 	if err != nil || !hasPrefixSrc {
 		return fmt.Errorf("missing prefixed ID attribute for source entity")
@@ -154,12 +148,14 @@ func (e *EventBuilder) setAttributesForSameTypeRelationships(attrs pcommon.Map, 
 }
 
 func (e *EventBuilder) setAttributesForDifferentTypeRelationships(attrs pcommon.Map, source config.Entity, dest config.Entity, resourceAttrs pcommon.Map) error {
-
-	if err := setIdAttributes(attrs, source.IDs, resourceAttrs, relationshipSrcEntityIds); err != nil {
+	// For different type relationships, prefixes are optional.
+	_, err := setIdAttributesForRelationships(attrs, source.IDs, resourceAttrs, relationshipSrcEntityIds, e.sourcePrefix)
+	if err != nil {
 		return fmt.Errorf("missing ID attribute for source entity")
 	}
 
-	if err := setIdAttributes(attrs, dest.IDs, resourceAttrs, relationshipDestEntityIds); err != nil {
+	_, err = setIdAttributesForRelationships(attrs, dest.IDs, resourceAttrs, relationshipDestEntityIds, e.destPrefix)
+	if err != nil {
 		return fmt.Errorf("missing ID attribute for destination entity")
 	}
 	return nil
