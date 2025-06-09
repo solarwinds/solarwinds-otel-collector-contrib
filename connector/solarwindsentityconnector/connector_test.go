@@ -35,101 +35,100 @@ import (
 func TestLogsToLogs(t *testing.T) {
 
 	testCases := []struct {
-		name     string
-		folder   string
-		noOutput bool
+		name   string
+		folder string
 	}{
 		// ~~~~~~ ENTITIES TESTS ~~~~~~
 		{
-			// Checks creation of 2 Snowflake entities without any conditions.
-			name:   "when config has no conditions, entity is inferred  and log event is sent",
-			folder: "entity/01-no-conditions",
-		},
-		{
 			name:   "when log for entity has valid complex condition, log event is sent",
-			folder: "entity/02-condition-met",
-		},
-		{
-			// Input is sending insufficient attributes for entity creation
-			// No event should be sent.
-			name:   "when entity is not inferred no log is sent",
-			folder: "entity/03-no-match",
+			folder: "entity/condition-met",
 		},
 		{
 			// Attributes for schema.entities are sufficient for entity creation, but
 			// condition in schema.event.entities is not satisfied.
 			name:   "when log for entity has not satisfied the condition, no log event is sent",
-			folder: "entity/04-condition-not-met",
+			folder: "entity/condition-not-met",
+		},
+		{
+			// Checks creation of 2 Snowflake entities without any conditions.
+			name:   "when config has no conditions, entity is inferred  and log event is sent",
+			folder: "entity/no-conditions",
+		},
+		{
+			// Input is sending insufficient attributes for entity creation
+			// No event should be sent.
+			name:   "when entity is not inferred no log is sent",
+			folder: "entity/no-match",
 		},
 		// ~~~~~~ SAME TYPE RELATIONSHIP TESTS ~~~~~~
-		{
-			// Checks that same type relationship for AWS EC2 is sent, together with the two AWS EC2 entities.
-			// Uses simple ["true"] conditions.
-			// Uses prefixes as all same type relationship tests.
-			name:   "when relationship for same type is inferred log event is sent",
-			folder: "relationship/same-type-relationship/01-no-conditions",
-		},
 		{
 			// Testing that more complex conditions get evaluated correctly.
 			// Checks that events for entities and the relationship are still sent.
 			name:   "when same type relationship has valid advanced condition, log event is sent",
-			folder: "relationship/same-type-relationship/02-advanced-conditions",
+			folder: "relationship/same-type-relationship/advanced-conditions",
 		},
 		{
 			// Tests that when two entities share an attribute key and value for some required attribute,
 			// the events for entities and their relationship are still detected and sent.
 			name:   "when relationship for same type and having common id attributes is inferred log event is sent",
-			folder: "relationship/same-type-relationship/03-common-attr",
-		},
-		{
-			// Checks that if one of the attributes for the relationship is not set, the relationship is not sent, but is for entities.
-			name:   "when relationship for same type is not inferred no log is sent",
-			folder: "relationship/same-type-relationship/04-no-match",
+			folder: "relationship/same-type-relationship/common-attr",
 		},
 		{
 			// Checks that when additional attributes are set on the relationship, they are sent with the relationship.
 			name:   "when log for same type relationship, log event is sent with relationship attributes",
-			folder: "relationship/same-type-relationship/05-extra-attr",
+			folder: "relationship/same-type-relationship/extra-attr",
+		},
+		{
+			// Checks that same type relationship for AWS EC2 is sent, together with the two AWS EC2 entities.
+			// Uses simple ["true"] conditions.
+			// Uses prefixes as all same type relationship tests.
+			name:   "when relationship for same type is inferred log event is sent",
+			folder: "relationship/same-type-relationship/no-conditions",
+		},
+		{
+			// Checks that if one of the attributes for the relationship is not set, the relationship is not sent, but is for entities.
+			name:   "when relationship for same type is not inferred no log is sent",
+			folder: "relationship/same-type-relationship/no-match",
 		},
 		// ~~~~~~ DIFFERENT TYPE RELATIONSHIP TESTS ~~~~~~
 		{
-			// Checks that different type relationship supports optional prefixes for source and destination attributes.
-			// Since no unprefixed attributes are sent that would match the entities, only relationship log record is sent.
-			name:   "different type relationship works with prefixes",
-			folder: "relationship/different-types-relationship/01-with-prefixes",
+			// Checks that when relationship condition is satisfied, relationship log event is sent, and the entities also.
+			name:   "when log for different type relationship has satisfied the condition, log relationship event is sent",
+			folder: "relationship/different-types-relationship/condition-met",
 		},
 		{
-			// Checks that different type relationship works without prefixes configuration.
-			// Since there are no prefixes, the attributes match the entities and their relationship, so 3 events are sent.
-			name:   "different type relationship works without prefixes",
-			folder: "relationship/different-types-relationship/02-without-prefixes",
+			// Relationship condition is not satisfied, so no relationship log event is sent, but entities are.
+			name:   "when log for different type relationship has not satisfied the condition, no log relationship event is sent",
+			folder: "relationship/different-types-relationship/condition-not-met",
+		},
+		{
+			// Relationship should be sent with the extra attributes, and also 2 entity log events.
+			name:   "when log for different type relationship, log event is sent with relationship attributes",
+			folder: "relationship/different-types-relationship/extra-attr",
 		},
 		{
 			// When config.yaml has 2 entities to infer with relationship between them, but one of them
 			// is missing required id attribute, relationship log event is not sent and only entity log event is sent for the one entity that was found.
 			name:   "when log for different type relationship hasn't all necessary id attributes, log event is sent",
-			folder: "relationship/different-types-relationship/03-missing-attr",
-		},
-		{
-			// Relationship condition is not satisfied, so no relationship log event is sent, but entities are.
-			name:   "when log for different type relationship has not satisfied the condition, no log relationship event is sent",
-			folder: "relationship/different-types-relationship/04-condition-not-met",
+			folder: "relationship/different-types-relationship/missing-attr",
 		},
 		{
 			// Checks that when there is an extra attribute, that has nothing to do with entities or relationship,
 			// relationship and entities are still sent.
 			name:   "when log for different type relationship has redundant attributes, log event is sent",
-			folder: "relationship/different-types-relationship/05-redundant-attr",
+			folder: "relationship/different-types-relationship/redundant-attr",
 		},
 		{
-			// Checks that when relationship condition is satisfied, relationship log event is sent, and the entities also.
-			name:   "when log for different type relationship has satisfied the condition, log relationship event is sent",
-			folder: "relationship/different-types-relationship/06-condition-met",
+			// Checks that different type relationship supports optional prefixes for source and destination attributes.
+			// Since no unprefixed attributes are sent that would match the entities, only relationship log record is sent.
+			name:   "different type relationship works with prefixes",
+			folder: "relationship/different-types-relationship/with-prefixes",
 		},
 		{
-			// Relationship should be sent with the extra attributes, and also 2 entity log events.
-			name:   "when log for different type relationship, log event is sent with relationship attributes",
-			folder: "relationship/different-types-relationship/07-extra-attr",
+			// Checks that different type relationship works without prefixes configuration.
+			// Since there are no prefixes, the attributes match the entities and their relationship, so 3 events are sent.
+			name:   "different type relationship works without prefixes",
+			folder: "relationship/different-types-relationship/without-prefixes",
 		},
 	}
 
@@ -179,95 +178,95 @@ func TestMetricsToLogs(t *testing.T) {
 	}{
 		//  ~~~~~~ ENTITIES TESTS ~~~~~~
 		{
-			// Checks creation of 2 Snowflake entities without any conditions.
-			name:   "when config has no conditions, entity is inferred  and log event is sent",
-			folder: "entity/01-no-conditions",
-		},
-		{
 			name:   "when log for entity has satisfied a complex condition, log event is sent",
-			folder: "entity/02-condition-met",
-		},
-		{
-			// Input is sending insufficient attributes for entity creation
-			name:   "when entity is not inferred no log is sent",
-			folder: "entity/03-no-match",
+			folder: "entity/condition-met",
 		},
 		{
 			// Attributes for schema.entities are sufficient for entity creation, but
 			// condition in schema.event.entities is not satisfied.
 			name:   "when log for entity has not satisfied the condition, no log event is sent",
-			folder: "entity/04-condition-not-met",
+			folder: "entity/condition-not-met",
+		},
+		{
+			// Checks creation of 2 Snowflake entities without any conditions.
+			name:   "when config has no conditions, entity is inferred  and log event is sent",
+			folder: "entity/no-conditions",
+		},
+		{
+			// Input is sending insufficient attributes for entity creation
+			name:   "when entity is not inferred no log is sent",
+			folder: "entity/no-match",
 		},
 		//  ~~~~~~ SAME TYPE RELATIONSHIP TESTS ~~~~~~
-		{
-			// Checks that same type relationship for AWS EC2 is sent, together with the two AWS EC2 entities.
-			// Uses simple ["true"] conditions.
-			// Uses prefixes as all same type relationship tests.
-			name:   "when relationship for same type is inferred log event is sent",
-			folder: "relationship/same-type-relationship/01-no-conditions",
-		},
 		{
 			// Testing that more complex conditions get evaluated correctly.
 			// Checks that events for entities and relationship are still sent.
 			name:   "when same type relationship has valid advanced condition, log event is sent",
-			folder: "relationship/same-type-relationship/02-advanced-conditions",
+			folder: "relationship/same-type-relationship/advanced-conditions",
 		},
 		{
 			// Tests that when two entities share an attribute key and value for some required attribute,
 			// the events for entities and their relationship are still detected and sent.
 			name:   "when relationship for same type and having common id attributes is inferred log event is sent",
-			folder: "relationship/same-type-relationship/03-common-attr",
-		},
-		{
-			// Checks that if one of the attributes for the relationship is not set, the relationship is not sent, but is for entities.
-			name:   "when relationship for same type is not inferred no log is sent",
-			folder: "relationship/same-type-relationship/04-no-match",
+			folder: "relationship/same-type-relationship/common-attr",
 		},
 		{
 
 			// Checks that when additional attributes are set on the relationship, they are sent with the relationship.
 			name:   "when log for same type relationship, log event is sent with relationship attributes",
-			folder: "relationship/same-type-relationship/05-extra-attr",
+			folder: "relationship/same-type-relationship/extra-attr",
+		},
+		{
+			// Checks that same type relationship for AWS EC2 is sent, together with the two AWS EC2 entities.
+			// Uses simple ["true"] conditions.
+			// Uses prefixes as all same type relationship tests.
+			name:   "when relationship for same type is inferred log event is sent",
+			folder: "relationship/same-type-relationship/no-conditions",
+		},
+		{
+			// Checks that if one of the attributes for the relationship is not set, the relationship is not sent, but is for entities.
+			name:   "when relationship for same type is not inferred no log is sent",
+			folder: "relationship/same-type-relationship/no-match",
 		},
 		// ~~~~~~ DIFFERENT TYPE RELATIONSHIP TESTS ~~~~~~
 		{
-			// Checks that different type relationship supports optional prefixes for source and destination attributes.
-			// Since no unprefixed attributes are sent that would match the entities, only relationship log record is sent.
-			name:   "different type relationship works with prefixes",
-			folder: "relationship/different-types-relationship/01-with-prefixes",
+			// Checks that when relationship condition is satisfied, relationship log event is sent, and the entities also.
+			name:   "when log for different type relationship has satisfied the condition, log relationship event is sent",
+			folder: "relationship/different-types-relationship/condition-met",
 		},
 		{
-			// Checks that different type relationship works without prefixes configuration.
-			// Since there are no prefixes, the attributes match the entities and their relationship, so 3 events are sent.
-			name:   "different type relationship works without prefixes",
-			folder: "relationship/different-types-relationship/02-without-prefixes",
+			// Relationship condition is not satisfied, so no relationship log event is sent, but entities are.
+			name:   "when log for different type relationship has not satisfied the condition, no log relationship event is sent",
+			folder: "relationship/different-types-relationship/condition-not-met",
+		},
+		{
+			// Relationship should be sent with the extra attributes, and also 2 entity log events.
+			name:   "when log for different type relationship, log event is sent with relationship attributes",
+			folder: "relationship/different-types-relationship/extra-attr",
 		},
 		{
 			// When config.yaml has 2 entities to infer with relationship between them, but one of them
 			// is missing required id attribute, relationship log event is not sent and only entity log event is sent for the one entity that was found.
 			name:   "when log for different type relationship hasn't all necessary id attributes, log event is sent",
-			folder: "relationship/different-types-relationship/03-missing-attr",
-		},
-		{
-			// Relationship condition is not satisfied, so no relationship log event is sent, but entities are.
-			name:   "when log for different type relationship has not satisfied the condition, no log relationship event is sent",
-			folder: "relationship/different-types-relationship/04-condition-not-met",
+			folder: "relationship/different-types-relationship/missing-attr",
 		},
 		{
 			// Checks that when there is an extra attribute, that has nothing to do with entities or relationship,
 			// relationship and entities are still sent if they have what is needed.
 			name:   "when log for different type relationship has redundant attributes, log event is sent",
-			folder: "relationship/different-types-relationship/05-redundant-attr",
+			folder: "relationship/different-types-relationship/redundant-attr",
 		},
 		{
-			// Checks that when relationship condition is satisfied, relationship log event is sent, and the entities also.
-			name:   "when log for different type relationship has satisfied the condition, log relationship event is sent",
-			folder: "relationship/different-types-relationship/06-condition-met",
+			// Checks that different type relationship supports optional prefixes for source and destination attributes.
+			// Since no unprefixed attributes are sent that would match the entities, only relationship log record is sent.
+			name:   "different type relationship works with prefixes",
+			folder: "relationship/different-types-relationship/with-prefixes",
 		},
 		{
-			// Relationship should be sent with the extra attributes, and also 2 entity log events.
-			name:   "when log for different type relationship, log event is sent with relationship attributes",
-			folder: "relationship/different-types-relationship/07-extra-attr",
+			// Checks that different type relationship works without prefixes configuration.
+			// Since there are no prefixes, the attributes match the entities and their relationship, so 3 events are sent.
+			name:   "different type relationship works without prefixes",
+			folder: "relationship/different-types-relationship/without-prefixes",
 		},
 	}
 
