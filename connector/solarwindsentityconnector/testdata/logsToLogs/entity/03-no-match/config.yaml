@@ -1,5 +1,3 @@
-source_prefix: "src."
-destination_prefix: "dst."
 schema:
   entities:
     - type: "Snowflake"

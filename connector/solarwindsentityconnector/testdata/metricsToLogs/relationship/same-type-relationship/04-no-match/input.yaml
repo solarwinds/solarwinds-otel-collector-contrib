@@ -8,16 +8,16 @@ resourceMetrics:
           - name: "test-metric"
             description: "test metric description"
             unit: "1"
-  # incomplete AWS EC2 entity, missing name attribute
+  # incomplete AWS EC2 entity
   - resource:
-      attributes: [ { "key": "aws.ec2.id", "value":{"stringValue": "aws-instance-id-second"}}]
+      attributes: [ { "key": "aws.ec2.id", "value":{"stringValue": "aws-instance-id-second"}},
+                    { "key": "aws.ec2.name", "value":{"stringValue": "aws-instance-name-second"}}]
     scopeMetrics:
       - metrics:
           - name: "test-metric"
             description: "test metric description"
             unit: "1"
-  # for creation of relationship between the two AWS EC2 entities
-  # but since the above entity is incomplete and will not be inferred, it should not trigger a relationship creation
+  # for creation of relationship between the two AWS EC2 entities, but is missing one destination attribute
   - resource:
       attributes: [ { "key": "src.aws.ec2.id", "value":{"stringValue": "aws-instance-id-first"}},
                     { "key": "src.aws.ec2.name", "value":{"stringValue": "aws-instance-name-first"}},
