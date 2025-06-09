@@ -40,7 +40,7 @@ type solarwindsentity struct {
 	events              config.ParsedEvents
 
 	expirationPolicy config.ExpirationPolicy
-	cache            *storage.Cache
+	storageManager   *storage.Manager
 
 	component.ShutdownFunc
 }
@@ -52,19 +52,19 @@ func (s *solarwindsentity) Capabilities() consumer.Capabilities {
 	return consumer.Capabilities{MutatesData: false}
 }
 
-func (s *solarwindsentity) Start(ctx context.Context, host component.Host) error {
+func (s *solarwindsentity) Start(ctx context.Context, _ component.Host) error {
 	s.logger.Info("Starting solarwindsentity connector")
 	if s.expirationPolicy.Enabled {
 		expirationCfg := s.expirationPolicy.Parse()
 		if expirationCfg == nil {
 			s.logger.Error("expiration policy is invalid")
 		}
+		s.storageManager = storage.NewStorageManager(expirationCfg, s.logger, s.logsConsumer)
+		err := s.storageManager.Start(ctx)
 
-		em := storage.NewEvictionManager(s.logsConsumer, s.logger)
-		em.Start(ctx)
-		cache := storage.NewCache(expirationCfg, s.logger, em)
-		s.cache = cache
-		go cache.Run(ctx)
+		if err != nil {
+			return err
+		}
 	} else {
 		s.logger.Debug("expiration policy is disabled, no expiration logs will be generated")
 	}
@@ -74,7 +74,7 @@ func (s *solarwindsentity) Start(ctx context.Context, host component.Host) error
 
 func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.Metrics) error {
 	eventLogs := plog.NewLogs()
-	eventBuilder := internal.NewEventBuilder(s.entitiesDefinitions, s.sourcePrefix, s.destinationPrefix, &eventLogs, s.logger, s.cache)
+	eventBuilder := internal.NewEventBuilder(s.entitiesDefinitions, s.sourcePrefix, s.destinationPrefix, &eventLogs, s.logger, s.storageManager)
 
 	for i := 0; i < metrics.ResourceMetrics().Len(); i++ {
 		resourceMetric := metrics.ResourceMetrics().At(i)
@@ -104,7 +104,7 @@ func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.M
 
 func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) error {
 	eventLogs := plog.NewLogs()
-	eventBuilder := internal.NewEventBuilder(s.entitiesDefinitions, s.sourcePrefix, s.destinationPrefix, &eventLogs, s.logger, s.cache)
+	eventBuilder := internal.NewEventBuilder(s.entitiesDefinitions, s.sourcePrefix, s.destinationPrefix, &eventLogs, s.logger, s.storageManager)
 
 	for i := 0; i < logs.ResourceLogs().Len(); i++ {
 		resourceLog := logs.ResourceLogs().At(i)

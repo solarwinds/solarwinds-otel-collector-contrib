@@ -32,17 +32,17 @@ type EventBuilder struct {
 	eventLogs           *plog.LogRecordSlice
 	logger              *zap.Logger
 
-	cache *storage.Cache
+	storageManager *storage.Manager
 }
 
-func NewEventBuilder(entities map[string]config.Entity, sourcePrefix string, destPrefix string, events *plog.Logs, logger *zap.Logger, cache *storage.Cache) *EventBuilder {
+func NewEventBuilder(entities map[string]config.Entity, sourcePrefix string, destPrefix string, events *plog.Logs, logger *zap.Logger, sm *storage.Manager) *EventBuilder {
 	return &EventBuilder{
 		entitiesDefinitions: entities,
 		sourcePrefix:        sourcePrefix,
 		destPrefix:          destPrefix,
 		eventLogs:           createEventLog(events),
 		logger:              logger,
-		cache:               cache,
+		storageManager:      sm,
 	}
 }
 
@@ -101,7 +101,7 @@ func (e *EventBuilder) AppendRelationshipUpdateEvent(relationship config.Relatio
 
 	srcIds, _ := relationshipLog.Attributes().Get(relationshipSrcEntityIds)
 	destIds, _ := relationshipLog.Attributes().Get(relationshipDestEntityIds)
-	e.cache.Update(relationship, srcIds.Map(), destIds.Map())
+	e.storageManager.Update(relationship, srcIds.Map(), destIds.Map())
 }
 
 func (e *EventBuilder) createRelationshipEvent(relationship config.RelationshipEvent, resourceAttrs pcommon.Map) (plog.LogRecord, error) {

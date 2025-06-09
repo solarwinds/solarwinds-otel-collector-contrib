@@ -18,7 +18,7 @@ const (
 	itemCost = 1
 )
 
-type Cache struct {
+type ttlCache struct {
 	data     *ristretto.Cache[string, relationship]
 	ttl      time.Duration
 	interval time.Duration
@@ -26,7 +26,7 @@ type Cache struct {
 	logger   *zap.Logger
 }
 
-func NewCache(cfg *config.ExpirationSettings, logger *zap.Logger, em *EvictionManager) *Cache {
+func NewTTLCache(cfg *config.ExpirationSettings, logger *zap.Logger, em chan<- relationship) *ttlCache {
 	var err error
 
 	cache, err := ristretto.NewCache(&ristretto.Config[string, relationship]{
@@ -35,9 +35,9 @@ func NewCache(cfg *config.ExpirationSettings, logger *zap.Logger, em *EvictionMa
 		TtlTickerDurationInSec: int64(cfg.TTLCleanupInterval.Seconds()),
 		BufferItems:            64,
 		OnEvict: func(item *ristretto.Item[relationship]) {
-			logger.Info("Cache item evicted")
+			logger.Info("ttlCache item evicted")
 			if item != nil {
-				em.Add(item.Value)
+				em <- item.Value
 			}
 		},
 	})
@@ -46,7 +46,7 @@ func NewCache(cfg *config.ExpirationSettings, logger *zap.Logger, em *EvictionMa
 		panic("Failed to create cache: " + err.Error())
 	}
 
-	return &Cache{
+	return &ttlCache{
 		data:   cache,
 		ttl:    cfg.Interval,
 		logger: logger,
@@ -54,17 +54,17 @@ func NewCache(cfg *config.ExpirationSettings, logger *zap.Logger, em *EvictionMa
 	}
 }
 
-func (c *Cache) Run(ctx context.Context) {
+func (c *ttlCache) Run(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			c.logger.Info("Cache stopped")
+			c.logger.Info("ttlCache stopped")
 			return
 		}
 	}
 }
 
-func (c *Cache) Update(relationship config.RelationshipEvent, sourceIds, destinationIds pcommon.Map) {
+func (c *ttlCache) Update(relationship config.RelationshipEvent, sourceIds, destinationIds pcommon.Map) {
 	key, value := buildKeyValue(relationship, sourceIds, destinationIds)
 
 	c.data.SetWithTTL(key, value, itemCost, c.ttl)
