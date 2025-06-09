@@ -431,6 +431,10 @@ func TestMetricsToLogs(t *testing.T) {
 					},
 					SourcePrefix:      "src.",
 					DestinationPrefix: "dst.",
+					Expiration: config.ExpirationPolicy{
+						Enabled:  true,
+						Interval: "10s",
+					},
 				}, sink)
 			require.NoError(t, err)
 			require.NotNil(t, conn)
