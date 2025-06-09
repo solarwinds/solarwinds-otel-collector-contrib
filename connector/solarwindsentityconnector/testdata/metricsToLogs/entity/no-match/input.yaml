@@ -1,0 +1,9 @@
+resourceMetrics:
+  - resource:
+      attributes: [ { "key": "snowflakeID-broken", "value":{"stringValue": "test-snowflakeID"}},
+                    { "key": "attr1-broken", "value":{"stringValue": "test-attr1"}} ]
+    scopeMetrics:
+      - metrics:
+          - name: "test-metric"
+            description: "test metric description"
+            unit: "1"
