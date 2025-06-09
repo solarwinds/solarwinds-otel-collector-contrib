@@ -41,9 +41,9 @@ func TestLogsToLogs(t *testing.T) {
 	}{
 		// ~~~~~~ ENTITIES TESTS ~~~~~~
 		{
-			// Checks creation of 2 Snowflake entities
-			name:   "when entity is inferred log event is sent",
-			folder: "entity/01-happy-path",
+			// Checks creation of 2 Snowflake entities without any conditions.
+			name:   "when config has no conditions, entity is inferred  and log event is sent",
+			folder: "entity/01-no-conditions",
 		},
 		{
 			name:   "when log for entity has valid complex condition, log event is sent",
@@ -67,7 +67,7 @@ func TestLogsToLogs(t *testing.T) {
 			// Uses simple ["true"] conditions.
 			// Uses prefixes as all same type relationship tests.
 			name:   "when relationship for same type is inferred log event is sent",
-			folder: "relationship/same-type-relationship/01-happy-path",
+			folder: "relationship/same-type-relationship/01-no-conditions",
 		},
 		{
 			// Testing that more complex conditions get evaluated correctly.
@@ -79,7 +79,7 @@ func TestLogsToLogs(t *testing.T) {
 			// Tests that when two entities share an attribute key and value for some required attribute,
 			// the events for entities and their relationship are still detected and sent.
 			name:   "when relationship for same type and having common id attributes is inferred log event is sent",
-			folder: "relationship/same-type-relationship/03-common-atr",
+			folder: "relationship/same-type-relationship/03-common-attr",
 		},
 		{
 			// Checks that if one of the attributes for the relationship is not set, the relationship is not sent, but is for entities.
@@ -89,7 +89,7 @@ func TestLogsToLogs(t *testing.T) {
 		{
 			// Checks that when additional attributes are set on the relationship, they are sent with the relationship.
 			name:   "when log for same type relationship, log event is sent with relationship attributes",
-			folder: "relationship/same-type-relationship/05-res-atr",
+			folder: "relationship/same-type-relationship/05-extra-attr",
 		},
 		// ~~~~~~ DIFFERENT TYPE RELATIONSHIP TESTS ~~~~~~
 		{
@@ -108,7 +108,7 @@ func TestLogsToLogs(t *testing.T) {
 			// When config.yaml has 2 entities to infer with relationship between them, but one of them
 			// is missing required id attribute, relationship log event is not sent and only entity log event is sent for the one entity that was found.
 			name:   "when log for different type relationship hasn't all necessary id attributes, log event is sent",
-			folder: "relationship/different-types-relationship/03-missing-atr",
+			folder: "relationship/different-types-relationship/03-missing-attr",
 		},
 		{
 			// Relationship condition is not satisfied, so no relationship log event is sent, but entities are.
@@ -119,7 +119,7 @@ func TestLogsToLogs(t *testing.T) {
 			// Checks that when there is an extra attribute, that has nothing to do with entities or relationship,
 			// relationship and entities are still sent.
 			name:   "when log for different type relationship has redundant attributes, log event is sent",
-			folder: "relationship/different-types-relationship/05-redundant-atr",
+			folder: "relationship/different-types-relationship/05-redundant-attr",
 		},
 		{
 			// Checks that when relationship condition is satisfied, relationship log event is sent, and the entities also.
@@ -129,7 +129,7 @@ func TestLogsToLogs(t *testing.T) {
 		{
 			// Relationship should be sent with the extra attributes, and also 2 entity log events.
 			name:   "when log for different type relationship, log event is sent with relationship attributes",
-			folder: "relationship/different-types-relationship/07-res-atr",
+			folder: "relationship/different-types-relationship/07-extra-attr",
 		},
 	}
 
@@ -179,9 +179,9 @@ func TestMetricsToLogs(t *testing.T) {
 	}{
 		//  ~~~~~~ ENTITIES TESTS ~~~~~~
 		{
-			// Checks creation of 2 Snowflake entities
-			name:   "when entity is inferred log event is sent",
-			folder: "entity/01-happy-path",
+			// Checks creation of 2 Snowflake entities without any conditions.
+			name:   "when config has no conditions, entity is inferred  and log event is sent",
+			folder: "entity/01-no-conditions",
 		},
 		{
 			name:   "when log for entity has valid complex condition, log event is sent",
@@ -204,7 +204,7 @@ func TestMetricsToLogs(t *testing.T) {
 			// Uses simple ["true"] conditions.
 			// Uses prefixes as all same type relationship tests.
 			name:   "when relationship for same type is inferred log event is sent",
-			folder: "relationship/same-type-relationship/01-happy-path",
+			folder: "relationship/same-type-relationship/01-no-conditions",
 		},
 		{
 			// Testing that more complex conditions get evaluated correctly.
@@ -216,7 +216,7 @@ func TestMetricsToLogs(t *testing.T) {
 			// Tests that when two entities share an attribute key and value for some required attribute,
 			// the events for entities and their relationship are still detected and sent.
 			name:   "when relationship for same type and having common id attributes is inferred log event is sent",
-			folder: "relationship/same-type-relationship/03-common-atr",
+			folder: "relationship/same-type-relationship/03-common-attr",
 		},
 		{
 			// Checks that if one of the attributes for the relationship is not set, the relationship is not sent, but is for entities.
@@ -227,7 +227,7 @@ func TestMetricsToLogs(t *testing.T) {
 
 			// Checks that when additional attributes are set on the relationship, they are sent with the relationship.
 			name:   "when log for same type relationship, log event is sent with relationship attributes",
-			folder: "relationship/same-type-relationship/05-res-atr",
+			folder: "relationship/same-type-relationship/05-extra-attr",
 		},
 		// ~~~~~~ DIFFERENT TYPE RELATIONSHIP TESTS ~~~~~~
 		{
@@ -246,7 +246,7 @@ func TestMetricsToLogs(t *testing.T) {
 			// When config.yaml has 2 entities to infer with relationship between them, but one of them
 			// is missing required id attribute, relationship log event is not sent and only entity log event is sent for the one entity that was found.
 			name:   "when log for different type relationship hasn't all necessary id attributes, log event is sent",
-			folder: "relationship/different-types-relationship/03-missing-atr",
+			folder: "relationship/different-types-relationship/03-missing-attr",
 		},
 		{
 			// Relationship condition is not satisfied, so no relationship log event is sent, but entities are.
@@ -257,7 +257,7 @@ func TestMetricsToLogs(t *testing.T) {
 			// Checks that when there is an extra attribute, that has nothing to do with entities or relationship,
 			// relationship and entities are still sent if they have what is needed.
 			name:   "when log for different type relationship has redundant attributes, log event is sent",
-			folder: "relationship/different-types-relationship/05-redundant-atr",
+			folder: "relationship/different-types-relationship/05-redundant-attr",
 		},
 		{
 			// Checks that when relationship condition is satisfied, relationship log event is sent, and the entities also.
@@ -267,7 +267,7 @@ func TestMetricsToLogs(t *testing.T) {
 		{
 			// Relationship should be sent with the extra attributes, and also 2 entity log events.
 			name:   "when log for different type relationship, log event is sent with relationship attributes",
-			folder: "relationship/different-types-relationship/07-res-atr",
+			folder: "relationship/different-types-relationship/07-extra-attr",
 		},
 	}
 

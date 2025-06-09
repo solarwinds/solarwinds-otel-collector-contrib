@@ -6,5 +6,4 @@ schema:
   events:
     entities:
       - type: "Snowflake"
-        conditions: []
-        context: "log"
+        context: "metric"

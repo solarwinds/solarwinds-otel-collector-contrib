@@ -11,9 +11,7 @@ schema:
         source: "AWS EC2"
         destination: "AWS EC2"
         attributes: []
-        conditions: ["true"]
-        context: "log"
+        context: "metric"
     entities:
       - type: "AWS EC2"
-        conditions: ["true"]
-        context: "log"
+        context: "metric"
