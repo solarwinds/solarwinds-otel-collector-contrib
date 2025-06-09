@@ -18,16 +18,8 @@ const (
 	itemCost = 1
 )
 
-type cacheValue struct {
-	RelationshipType      string
-	SourceEntityType      string
-	DestinationEntityType string
-	SourceEntityID        []string
-	DestinationEntityID   []string
-}
-
 type Cache struct {
-	data     *ristretto.Cache[string, cacheValue]
+	data     *ristretto.Cache[string, relationship]
 	ttl      time.Duration
 	interval time.Duration
 	mu       sync.Mutex
@@ -37,12 +29,12 @@ type Cache struct {
 func NewCache(cfg *config.ExpirationSettings, logger *zap.Logger) *Cache {
 	var err error
 
-	cache, err := ristretto.NewCache(&ristretto.Config[string, cacheValue]{
+	cache, err := ristretto.NewCache(&ristretto.Config[string, relationship]{
 		NumCounters:            cfg.MaxCapacity * 10,
 		MaxCost:                cfg.MaxCapacity,
 		TtlTickerDurationInSec: int64(cfg.TTLCleanupInterval.Seconds()),
 		BufferItems:            64,
-		OnEvict: func(item *ristretto.Item[cacheValue]) {
+		OnEvict: func(item *ristretto.Item[relationship]) {
 			if item == nil {
 				return
 			}
@@ -88,31 +80,15 @@ func (c *Cache) Update(relationship config.RelationshipEvent, sourceIds, destina
 // buildKey constructs a unique key for the cache based on the relationship event.
 // The key is composition of relationship type, source and destination entity types
 // and their ID values.
-func buildKeyValue(relationship config.RelationshipEvent, sourceIds, destIds pcommon.Map) (string, cacheValue) {
-	value := cacheValue{
-		RelationshipType:      relationship.Type,
-		SourceEntityType:      relationship.Source,
-		DestinationEntityType: relationship.Destination,
-		SourceEntityID:        make([]string, 0, sourceIds.Len()),
-		DestinationEntityID:   make([]string, 0, destIds.Len()),
-	}
-
-	sourceIds.Range(func(k string, v pcommon.Value) bool {
-		value.SourceEntityID = append(value.SourceEntityID, k)
-		return true
-	})
-
-	destIds.Range(func(k string, v pcommon.Value) bool {
-		value.DestinationEntityID = append(value.DestinationEntityID, k)
-		return true
-	})
+func buildKeyValue(relationship config.RelationshipEvent, sourceIds, destIds pcommon.Map) (string, relationship) {
+	r := newRelationship(relationship, sourceIds, destIds)
 
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
-	if err := enc.Encode(value); err != nil {
+	if err := enc.Encode(r); err != nil {
 		panic(fmt.Sprintf("Failed to encode cache value: %v", err))
 	}
 
 	key := sha256.Sum256(buf.Bytes())
-	return fmt.Sprintf("%x", key), value
+	return fmt.Sprintf("%x", key), r
 }
