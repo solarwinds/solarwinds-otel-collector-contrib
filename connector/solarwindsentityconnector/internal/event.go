@@ -16,6 +16,7 @@ package internal
 
 import (
 	"fmt"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/storage"
 	"time"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
@@ -30,15 +31,18 @@ type EventBuilder struct {
 	destPrefix          string
 	eventLogs           *plog.LogRecordSlice
 	logger              *zap.Logger
+
+	cache *storage.Cache
 }
 
-func NewEventBuilder(entities map[string]config.Entity, sourcePrefix string, destPrefix string, events *plog.Logs, logger *zap.Logger) *EventBuilder {
+func NewEventBuilder(entities map[string]config.Entity, sourcePrefix string, destPrefix string, events *plog.Logs, logger *zap.Logger, cache *storage.Cache) *EventBuilder {
 	return &EventBuilder{
 		entitiesDefinitions: entities,
 		sourcePrefix:        sourcePrefix,
 		destPrefix:          destPrefix,
 		eventLogs:           createEventLog(events),
 		logger:              logger,
+		cache:               cache,
 	}
 }
 
@@ -95,6 +99,9 @@ func (e *EventBuilder) AppendRelationshipUpdateEvent(relationship config.Relatio
 	eventLog := e.eventLogs.AppendEmpty()
 	relationshipLog.CopyTo(eventLog)
 
+	srcIds, _ := relationshipLog.Attributes().Get(relationshipSrcEntityIds)
+	destIds, _ := relationshipLog.Attributes().Get(relationshipDestEntityIds)
+	e.cache.Update(relationship, srcIds.Map(), destIds.Map())
 }
 
 func (e *EventBuilder) createRelationshipEvent(relationship config.RelationshipEvent, resourceAttrs pcommon.Map) (plog.LogRecord, error) {
