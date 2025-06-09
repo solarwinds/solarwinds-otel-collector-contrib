@@ -47,7 +47,7 @@ func TestLogsToLogs(t *testing.T) {
 		},
 		{
 			name:   "when log for entity has valid complex condition, log event is sent",
-			folder: "entity/02-valid-condition",
+			folder: "entity/02-condition-met",
 		},
 		{
 			// Input is sending insufficient attributes for entity creation
@@ -58,8 +58,8 @@ func TestLogsToLogs(t *testing.T) {
 		{
 			// Attributes for schema.entities are sufficient for entity creation, but
 			// condition in schema.event.entities is not satisfied.
-			name:   "when log for entity has no valid condition, no log event is sent",
-			folder: "entity/04-no-valid-condition",
+			name:   "when log for entity has not satisfied the condition, no log event is sent",
+			folder: "entity/04-condition-not-met",
 		},
 		// ~~~~~~ SAME TYPE RELATIONSHIP TESTS ~~~~~~
 		{
@@ -112,8 +112,8 @@ func TestLogsToLogs(t *testing.T) {
 		},
 		{
 			// Relationship condition is not satisfied, so no relationship log event is sent, but entities are.
-			name:   "when log for different type relationship has no valid condition, no log relationship event is sent",
-			folder: "relationship/different-types-relationship/04-no-valid-condition",
+			name:   "when log for different type relationship has not satisfied the condition, no log relationship event is sent",
+			folder: "relationship/different-types-relationship/04-condition-not-met",
 		},
 		{
 			// Checks that when there is an extra attribute, that has nothing to do with entities or relationship,
@@ -123,8 +123,8 @@ func TestLogsToLogs(t *testing.T) {
 		},
 		{
 			// Checks that when relationship condition is satisfied, relationship log event is sent, and the entities also.
-			name:   "when log for different type relationship has valid condition, log relationship event is sent",
-			folder: "relationship/different-types-relationship/06-valid-condition",
+			name:   "when log for different type relationship has satisfied the condition, log relationship event is sent",
+			folder: "relationship/different-types-relationship/06-condition-met",
 		},
 		{
 			// Relationship should be sent with the extra attributes, and also 2 entity log events.
@@ -184,8 +184,8 @@ func TestMetricsToLogs(t *testing.T) {
 			folder: "entity/01-no-conditions",
 		},
 		{
-			name:   "when log for entity has valid complex condition, log event is sent",
-			folder: "entity/02-valid-condition",
+			name:   "when log for entity has satisfied a complex condition, log event is sent",
+			folder: "entity/02-condition-met",
 		},
 		{
 			// Input is sending insufficient attributes for entity creation
@@ -195,8 +195,8 @@ func TestMetricsToLogs(t *testing.T) {
 		{
 			// Attributes for schema.entities are sufficient for entity creation, but
 			// condition in schema.event.entities is not satisfied.
-			name:   "when log for entity has no valid condition, no log event is sent",
-			folder: "entity/04-no-valid-condition",
+			name:   "when log for entity has not satisfied the condition, no log event is sent",
+			folder: "entity/04-condition-not-met",
 		},
 		//  ~~~~~~ SAME TYPE RELATIONSHIP TESTS ~~~~~~
 		{
@@ -250,8 +250,8 @@ func TestMetricsToLogs(t *testing.T) {
 		},
 		{
 			// Relationship condition is not satisfied, so no relationship log event is sent, but entities are.
-			name:   "when log for different type relationship has no valid condition, no log relationship event is sent",
-			folder: "relationship/different-types-relationship/04-no-valid-condition",
+			name:   "when log for different type relationship has not satisfied the condition, no log relationship event is sent",
+			folder: "relationship/different-types-relationship/04-condition-not-met",
 		},
 		{
 			// Checks that when there is an extra attribute, that has nothing to do with entities or relationship,
@@ -261,8 +261,8 @@ func TestMetricsToLogs(t *testing.T) {
 		},
 		{
 			// Checks that when relationship condition is satisfied, relationship log event is sent, and the entities also.
-			name:   "when log for different type relationship has valid condition, log relationship event is sent",
-			folder: "relationship/different-types-relationship/06-valid-condition",
+			name:   "when log for different type relationship has satisfied the condition, log relationship event is sent",
+			folder: "relationship/different-types-relationship/06-condition-met",
 		},
 		{
 			// Relationship should be sent with the extra attributes, and also 2 entity log events.
