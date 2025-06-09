@@ -19,9 +19,8 @@ import (
 )
 
 type Schema struct {
-	Entities   []Entity         `mapstructure:"entities"`
-	Events     Events           `mapstructure:"events"`
-	Expiration ExpirationPolicy `mapstructure:"expiration_policy"`
+	Entities []Entity `mapstructure:"entities"`
+	Events   Events   `mapstructure:"events"`
 }
 
 func (s *Schema) NewEntities() map[string]Entity {

@@ -53,6 +53,7 @@ func createConnector(settings connector.Settings, config component.Config, logs 
 		destinationPrefix:   cfg.DestinationPrefix,
 		entitiesDefinitions: cfg.Schema.NewEntities(),
 		events:              cfg.Schema.NewEvents(settings.TelemetrySettings),
+		expirationPolicy:    cfg.Expiration,
 		logsConsumer:        logs,
 	}
 	return solarwindsentity, nil
