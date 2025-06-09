@@ -60,7 +60,9 @@ func (s *solarwindsentity) Start(ctx context.Context, host component.Host) error
 			s.logger.Error("expiration policy is invalid")
 		}
 
-		cache := storage.NewCache(expirationCfg, s.logger)
+		em := storage.NewEvictionManager(s.logsConsumer, s.logger)
+		em.Start(ctx)
+		cache := storage.NewCache(expirationCfg, s.logger, em)
 		s.cache = cache
 		go cache.Run(ctx)
 	} else {

@@ -26,7 +26,7 @@ type Cache struct {
 	logger   *zap.Logger
 }
 
-func NewCache(cfg *config.ExpirationSettings, logger *zap.Logger) *Cache {
+func NewCache(cfg *config.ExpirationSettings, logger *zap.Logger, em *EvictionManager) *Cache {
 	var err error
 
 	cache, err := ristretto.NewCache(&ristretto.Config[string, relationship]{
@@ -35,17 +35,10 @@ func NewCache(cfg *config.ExpirationSettings, logger *zap.Logger) *Cache {
 		TtlTickerDurationInSec: int64(cfg.TTLCleanupInterval.Seconds()),
 		BufferItems:            64,
 		OnEvict: func(item *ristretto.Item[relationship]) {
-			if item == nil {
-				return
+			logger.Info("Cache item evicted")
+			if item != nil {
+				em.Add(item.Value)
 			}
-			cacheValue := item.Value
-			logger.Info(fmt.Sprintf("Cache evicting %s", item.Key),
-				zap.String("relationship_type", cacheValue.RelationshipType),
-				zap.String("source_entity_type", cacheValue.SourceEntityType),
-				zap.String("destination_entity_type", cacheValue.DestinationEntityType),
-				zap.Strings("source_entity_ids", cacheValue.SourceEntityID),
-				zap.Strings("destination_entity_ids", cacheValue.DestinationEntityID))
-			logger.Debug("Cache item evicted")
 		},
 	})
 
