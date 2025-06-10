@@ -3,9 +3,8 @@ package storage
 import (
 	"context"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
-	"go.opentelemetry.io/collector/consumer"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/consumer"
 	"go.opentelemetry.io/collector/pdata/pcommon"
-	"go.opentelemetry.io/collector/pdata/plog"
 	"go.uber.org/zap"
 	"time"
 )
@@ -13,12 +12,12 @@ import (
 type Manager struct {
 	cache        *ttlCache
 	expiredCh    chan relationship
-	logsConsumer consumer.Logs
+	logsConsumer consumer.Consumer
 
 	logger *zap.Logger
 }
 
-func NewStorageManager(cfg *config.ExpirationSettings, logger *zap.Logger, logsConsumer consumer.Logs) *Manager {
+func NewStorageManager(cfg *config.ExpirationSettings, logger *zap.Logger, logsConsumer consumer.Consumer) *Manager {
 	if cfg == nil {
 		logger.Error("Expiration settings configuration is nil")
 		return nil
@@ -64,7 +63,7 @@ func (m *Manager) receiveExpired(ctx context.Context) {
 			return
 
 		case rel := <-m.expiredCh:
-			m.logger.Info("Received evicted relationship", zap.String("type", rel.RelationshipType))
+			m.logger.Info("Received evicted relationship", zap.String("type", rel.Type))
 			if batch == nil {
 				batch = make([]relationship, 0)
 				timer = time.NewTimer(1 * time.Second)
@@ -86,13 +85,17 @@ func (m *Manager) receiveExpired(ctx context.Context) {
 }
 
 func (m *Manager) send(batch []relationship, ctx context.Context) {
-	if len(batch) == 0 {
-		return
+	result := make([]consumer.Relationship, 0, len(batch))
+	for _, rel := range batch {
+		result = append(result, consumer.Relationship{
+			Relationship: config.Relationship{
+				Type:        rel.Type,
+				Source:      rel.Source,
+				Destination: rel.Destination,
+			},
+			SourceEntityIDs:      rel.SourceEntityIDs,
+			DestinationEntityIDs: rel.DestinationEntityIDs,
+		})
 	}
-
-	m.logger.Info("Sending eviction logs", zap.Int("count", len(batch)))
-	err := m.logsConsumer.ConsumeLogs(ctx, plog.NewLogs())
-	if err != nil {
-		m.logger.Error("failed to generate eviction logs", zap.Error(err))
-	}
+	m.logsConsumer.SendExpiredRelationships(ctx, result)
 }

@@ -6,29 +6,29 @@ import (
 )
 
 type relationship struct {
-	RelationshipType      string
-	SourceEntityType      string
-	DestinationEntityType string
-	SourceEntityID        []string
-	DestinationEntityID   []string
+	config.Relationship
+	SourceEntityIDs      []string
+	DestinationEntityIDs []string
 }
 
 func newRelationship(rEvent config.RelationshipEvent, sourceIds, destIds pcommon.Map) relationship {
 	value := relationship{
-		RelationshipType:      rEvent.Type,
-		SourceEntityType:      rEvent.Source,
-		DestinationEntityType: rEvent.Destination,
-		SourceEntityID:        make([]string, 0, sourceIds.Len()),
-		DestinationEntityID:   make([]string, 0, destIds.Len()),
+		Relationship: config.Relationship{
+			Type:        rEvent.Type,
+			Source:      rEvent.Source,
+			Destination: rEvent.Destination,
+		},
+		SourceEntityIDs:      make([]string, 0, sourceIds.Len()),
+		DestinationEntityIDs: make([]string, 0, destIds.Len()),
 	}
 
 	sourceIds.Range(func(k string, v pcommon.Value) bool {
-		value.SourceEntityID = append(value.SourceEntityID, k)
+		value.SourceEntityIDs = append(value.SourceEntityIDs, k)
 		return true
 	})
 
 	destIds.Range(func(k string, v pcommon.Value) bool {
-		value.DestinationEntityID = append(value.DestinationEntityID, k)
+		value.DestinationEntityIDs = append(value.DestinationEntityIDs, k)
 		return true
 	})
 

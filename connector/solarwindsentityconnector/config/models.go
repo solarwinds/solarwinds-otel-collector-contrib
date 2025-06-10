@@ -25,13 +25,17 @@ type Events struct {
 	Entities      []EntityEvent       `mapstructure:"entities"`
 }
 
+type Relationship struct {
+	Type        string `mapstructure:"type"`
+	Source      string `mapstructure:"source_entity"`
+	Destination string `mapstructure:"destination_entity"`
+}
+
 type RelationshipEvent struct {
-	Type        string   `mapstructure:"type"`
-	Source      string   `mapstructure:"source_entity"`
-	Destination string   `mapstructure:"destination_entity"`
-	Attributes  []string `mapstructure:"attributes"`
-	Conditions  []string `mapstructure:"conditions"`
-	Context     string   `mapstructure:"context"`
+	Relationship `mapstructure:",squash"`
+	Attributes   []string `mapstructure:"attributes"`
+	Conditions   []string `mapstructure:"conditions"`
+	Context      string   `mapstructure:"context"`
 }
 
 type EntityEvent struct {
