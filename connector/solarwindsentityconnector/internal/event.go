@@ -29,36 +29,21 @@ type EventBuilder struct {
 	entitiesDefinitions map[string]config.Entity
 	sourcePrefix        string
 	destPrefix          string
-	eventLogs           *plog.LogRecordSlice
 	logger              *zap.Logger
 
 	storageManager *storage.Manager
 }
 
-func NewEventBuilder(entities map[string]config.Entity, sourcePrefix string, destPrefix string, events *plog.Logs, logger *zap.Logger, sm *storage.Manager) *EventBuilder {
+func NewEventBuilder(entities map[string]config.Entity, sourcePrefix string, destPrefix string, logger *zap.Logger) *EventBuilder {
 	return &EventBuilder{
 		entitiesDefinitions: entities,
 		sourcePrefix:        sourcePrefix,
 		destPrefix:          destPrefix,
-		eventLogs:           createEventLog(events),
 		logger:              logger,
-		storageManager:      sm,
 	}
 }
 
-// createResultEventLog prepares a clean LogRecordSlice, where log records representing events should be appended.
-// Creates a resource log in input plog.Logs with single scope log decorated with attributes necessary for proper SWO ingestion.
-func createEventLog(logs *plog.Logs) *plog.LogRecordSlice {
-	resourceLog := logs.ResourceLogs().AppendEmpty()
-	scopeLog := resourceLog.ScopeLogs().AppendEmpty()
-	scopeLog.Scope().Attributes().PutBool(entityEventAsLog, true)
-	lrs := scopeLog.LogRecords()
-
-	return &lrs
-}
-
-func (e *EventBuilder) AppendEntityUpdateEvent(entity config.Entity, resourceAttrs pcommon.Map) {
-
+func (e *EventBuilder) AppendEntityUpdateEvent(eventLogs *plog.LogRecordSlice, entity config.Entity, resourceAttrs pcommon.Map) {
 	entityLog, err := e.createEntityEvent(resourceAttrs, entity)
 	if err != nil {
 		e.logger.Debug("failed to create update event", zap.Error(err))
@@ -67,7 +52,7 @@ func (e *EventBuilder) AppendEntityUpdateEvent(entity config.Entity, resourceAtt
 
 	entityLog.SetObservedTimestamp(pcommon.NewTimestampFromTime(time.Now()))
 	entityLog.Attributes().PutStr(entityEventType, entityUpdateEventType)
-	eventLog := e.eventLogs.AppendEmpty()
+	eventLog := eventLogs.AppendEmpty()
 	entityLog.CopyTo(eventLog)
 }
 
@@ -87,7 +72,7 @@ func (e *EventBuilder) createEntityEvent(resourceAttrs pcommon.Map, entity confi
 	return lr, nil
 }
 
-func (e *EventBuilder) AppendRelationshipUpdateEvent(relationship config.RelationshipEvent, resourceAttrs pcommon.Map) {
+func (e *EventBuilder) AppendRelationshipUpdateEvent(eventLogs *plog.LogRecordSlice, relationship config.RelationshipEvent, resourceAttrs pcommon.Map, sm *storage.Manager) {
 	relationshipLog, err := e.createRelationshipEvent(relationship, resourceAttrs)
 	if err != nil {
 		e.logger.Debug("failed to create relationship event", zap.Error(err))
@@ -96,12 +81,12 @@ func (e *EventBuilder) AppendRelationshipUpdateEvent(relationship config.Relatio
 
 	relationshipLog.SetObservedTimestamp(pcommon.NewTimestampFromTime(time.Now()))
 	relationshipLog.Attributes().PutStr(entityEventType, relationshipUpdateEventType)
-	eventLog := e.eventLogs.AppendEmpty()
+	eventLog := eventLogs.AppendEmpty()
 	relationshipLog.CopyTo(eventLog)
 
 	srcIds, _ := relationshipLog.Attributes().Get(relationshipSrcEntityIds)
 	destIds, _ := relationshipLog.Attributes().Get(relationshipDestEntityIds)
-	e.storageManager.Update(relationship, srcIds.Map(), destIds.Map())
+	sm.Update(relationship, srcIds.Map(), destIds.Map())
 }
 
 func (e *EventBuilder) createRelationshipEvent(relationship config.RelationshipEvent, resourceAttrs pcommon.Map) (plog.LogRecord, error) {

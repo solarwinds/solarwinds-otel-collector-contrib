@@ -16,19 +16,23 @@ package internal
 
 import (
 	"context"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/storage"
+	"go.opentelemetry.io/collector/pdata/plog"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 )
 
-// ProcessCondition evaluates the conditions for entities and relationships events.
+// ProcessEvents evaluates the conditions for entities and relationships events.
 // If the conditions are met, it appends the corresponding entity or relationship update event to the event builder.
 // Multiple condition items are evaluated using OR logic.
 func ProcessEvents[C any](
 	ctx context.Context,
+	result *plog.LogRecordSlice,
 	eventBuilder *EventBuilder,
 	events config.EventsGroup[C],
 	resourceAttrs pcommon.Map,
+	sm *storage.Manager,
 	tc C) error {
 
 	for _, entityEvent := range events.Entities {
@@ -39,7 +43,7 @@ func ProcessEvents[C any](
 
 		if ok {
 			entity := eventBuilder.entitiesDefinitions[entityEvent.Definition.Type]
-			eventBuilder.AppendEntityUpdateEvent(entity, resourceAttrs)
+			eventBuilder.AppendEntityUpdateEvent(result, entity, resourceAttrs)
 		}
 	}
 
@@ -50,7 +54,7 @@ func ProcessEvents[C any](
 		}
 
 		if ok {
-			eventBuilder.AppendRelationshipUpdateEvent(*relationshipEvent.Definition, resourceAttrs)
+			eventBuilder.AppendRelationshipUpdateEvent(result, *relationshipEvent.Definition, resourceAttrs, sm)
 		}
 	}
 	return nil

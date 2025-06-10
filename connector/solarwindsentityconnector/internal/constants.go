@@ -16,7 +16,7 @@ package internal
 
 const (
 	// Log properties
-	entityEventAsLog = "otel.entity.event_as_log"
+	EntityEventAsLog = "otel.entity.event_as_log"
 	entityEventType  = "otel.entity.event.type"
 
 	// Event type values

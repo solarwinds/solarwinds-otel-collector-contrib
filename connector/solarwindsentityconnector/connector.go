@@ -39,6 +39,7 @@ type solarwindsentity struct {
 	sourcePrefix        string
 	destinationPrefix   string
 	events              config.ParsedEvents
+	eventBuilder        *internal.EventBuilder
 
 	expirationPolicy config.ExpirationPolicy
 	storageManager   *storage.Manager
@@ -76,7 +77,7 @@ func (s *solarwindsentity) Start(ctx context.Context, _ component.Host) error {
 
 func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.Metrics) error {
 	eventLogs := plog.NewLogs()
-	eventBuilder := internal.NewEventBuilder(s.entitiesDefinitions, s.sourcePrefix, s.destinationPrefix, &eventLogs, s.logger, s.storageManager)
+	events := createEventLog(&eventLogs)
 
 	for i := 0; i < metrics.ResourceMetrics().Len(); i++ {
 		resourceMetric := metrics.ResourceMetrics().At(i)
@@ -88,7 +89,7 @@ func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.M
 				metric := scopeMetric.Metrics().At(k)
 
 				tc := ottlmetric.NewTransformContext(metric, scopeMetric.Metrics(), scopeMetric.Scope(), resourceMetric.Resource(), scopeMetric, resourceMetric)
-				err := internal.ProcessEvents(ctx, eventBuilder, s.events.MetricEvents, resourceAttrs, tc)
+				err := internal.ProcessEvents(ctx, events, s.eventBuilder, s.events.MetricEvents, resourceAttrs, s.storageManager, tc)
 				if err != nil {
 					s.logger.Error("Failed to process metric condition", zap.Error(err))
 					return err
@@ -106,7 +107,7 @@ func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.M
 
 func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) error {
 	eventLogs := plog.NewLogs()
-	eventBuilder := internal.NewEventBuilder(s.entitiesDefinitions, s.sourcePrefix, s.destinationPrefix, &eventLogs, s.logger, s.storageManager)
+	events := createEventLog(&eventLogs)
 
 	for i := 0; i < logs.ResourceLogs().Len(); i++ {
 		resourceLog := logs.ResourceLogs().At(i)
@@ -119,7 +120,7 @@ func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) erro
 				logRecord := scopeLog.LogRecords().At(k)
 
 				tc := ottllog.NewTransformContext(logRecord, scopeLog.Scope(), resourceLog.Resource(), scopeLog, resourceLog)
-				err := internal.ProcessEvents(ctx, eventBuilder, s.events.LogEvents, resourceAttrs, tc)
+				err := internal.ProcessEvents(ctx, events, s.eventBuilder, s.events.LogEvents, resourceAttrs, s.storageManager, tc)
 				if err != nil {
 					s.logger.Error("Failed to process logs condition", zap.Error(err))
 					return err
@@ -133,4 +134,15 @@ func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) erro
 	}
 
 	return s.logsConsumer.ConsumeLogs(ctx, eventLogs)
+}
+
+// createResultEventLog prepares a clean LogRecordSlice, where log records representing events should be appended.
+// Creates a resource log in input plog.Logs with single scope log decorated with attributes necessary for proper SWO ingestion.
+func createEventLog(logs *plog.Logs) *plog.LogRecordSlice {
+	resourceLog := logs.ResourceLogs().AppendEmpty()
+	scopeLog := resourceLog.ScopeLogs().AppendEmpty()
+	scopeLog.Scope().Attributes().PutBool(internal.EntityEventAsLog, true)
+	lrs := scopeLog.LogRecords()
+
+	return &lrs
 }
