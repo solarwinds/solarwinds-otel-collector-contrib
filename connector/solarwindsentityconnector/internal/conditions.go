@@ -16,7 +16,7 @@ package internal
 
 import (
 	"context"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/storage"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal/storage"
 	"go.opentelemetry.io/collector/pdata/plog"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"

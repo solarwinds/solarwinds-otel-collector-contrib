@@ -3,7 +3,7 @@ package storage
 import (
 	"context"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/consumer"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal/consumer"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.uber.org/zap"
 	"time"

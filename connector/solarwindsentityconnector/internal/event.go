@@ -16,7 +16,7 @@ package internal
 
 import (
 	"fmt"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/storage"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal/storage"
 	"time"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"

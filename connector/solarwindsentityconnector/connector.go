@@ -16,8 +16,8 @@ package solarwindsentityconnector
 
 import (
 	"context"
-	consumer2 "github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/consumer"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/storage"
+	consumer2 "github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal/consumer"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal/storage"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottlmetric"
