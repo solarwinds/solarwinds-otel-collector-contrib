@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"github.com/dgraph-io/ristretto/v2"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
-	"go.opentelemetry.io/collector/pdata/pcommon"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal"
 	"go.uber.org/zap"
 	"sync"
 	"time"
@@ -19,22 +19,22 @@ const (
 )
 
 type ttlCache struct {
-	data     *ristretto.Cache[string, relationship]
+	data     *ristretto.Cache[string, internal.Subject]
 	ttl      time.Duration
 	interval time.Duration
 	mu       sync.Mutex
 	logger   *zap.Logger
 }
 
-func NewTTLCache(cfg *config.ExpirationSettings, logger *zap.Logger, em chan<- relationship) *ttlCache {
+func NewTTLCache(cfg *config.ExpirationSettings, logger *zap.Logger, em chan<- internal.Subject) *ttlCache {
 	var err error
 
-	cache, err := ristretto.NewCache(&ristretto.Config[string, relationship]{
+	cache, err := ristretto.NewCache(&ristretto.Config[string, internal.Subject]{
 		NumCounters:            cfg.MaxCapacity * 10,
 		MaxCost:                cfg.MaxCapacity,
 		TtlTickerDurationInSec: int64(cfg.TTLCleanupInterval.Seconds()),
 		BufferItems:            64,
-		OnEvict: func(item *ristretto.Item[relationship]) {
+		OnEvict: func(item *ristretto.Item[internal.Subject]) {
 			logger.Info("ttlCache item evicted")
 			if item != nil {
 				em <- item.Value
@@ -64,24 +64,22 @@ func (c *ttlCache) Run(ctx context.Context) {
 	}
 }
 
-func (c *ttlCache) Update(relationship config.RelationshipEvent, sourceIds, destinationIds pcommon.Map) {
-	key, value := buildKeyValue(relationship, sourceIds, destinationIds)
+func (c *ttlCache) Update(relationship internal.Subject) {
+	key := buildKey(relationship)
 
-	c.data.SetWithTTL(key, value, itemCost, c.ttl)
+	c.data.SetWithTTL(key, relationship, itemCost, c.ttl)
 }
 
 // buildKey constructs a unique key for the cache based on the relationship event.
 // The key is composition of relationship type, source and destination entity types
 // and their ID values.
-func buildKeyValue(relationship config.RelationshipEvent, sourceIds, destIds pcommon.Map) (string, relationship) {
-	r := newRelationship(relationship, sourceIds, destIds)
-
+func buildKey(relationship internal.Subject) string {
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
-	if err := enc.Encode(r); err != nil {
+	if err := enc.Encode(relationship); err != nil {
 		panic(fmt.Sprintf("Failed to encode cache value: %v", err))
 	}
 
 	key := sha256.Sum256(buf.Bytes())
-	return fmt.Sprintf("%x", key), r
+	return fmt.Sprintf("%x", key)
 }

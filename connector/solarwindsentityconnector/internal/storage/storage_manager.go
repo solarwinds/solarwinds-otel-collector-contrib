@@ -3,15 +3,15 @@ package storage
 import (
 	"context"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal/consumer"
-	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.uber.org/zap"
 	"time"
 )
 
 type Manager struct {
 	cache        *ttlCache
-	expiredCh    chan relationship
+	expiredCh    chan internal.Subject
 	logsConsumer consumer.Consumer
 
 	logger *zap.Logger
@@ -23,7 +23,7 @@ func NewStorageManager(cfg *config.ExpirationSettings, logger *zap.Logger, logsC
 		return nil
 	}
 
-	expiredCh := make(chan relationship)
+	expiredCh := make(chan internal.Subject)
 	cache := NewTTLCache(cfg, logger, expiredCh)
 
 	return &Manager{
@@ -41,12 +41,14 @@ func (m *Manager) Start(ctx context.Context) error {
 	return nil
 }
 
-func (m *Manager) Update(r config.RelationshipEvent, src, dest pcommon.Map) {
-	m.cache.Update(r, src, dest)
+func (m *Manager) Update(r internal.Subject) {
+	if _, ok := r.(internal.Relationship); !ok {
+		m.cache.Update(r)
+	}
 }
 
 func (m *Manager) receiveExpired(ctx context.Context) {
-	var batch []relationship
+	var batch []internal.Subject
 	var timer *time.Timer
 	var timerC <-chan time.Time
 
@@ -63,9 +65,8 @@ func (m *Manager) receiveExpired(ctx context.Context) {
 			return
 
 		case rel := <-m.expiredCh:
-			m.logger.Info("Received evicted relationship", zap.String("type", rel.Type))
 			if batch == nil {
-				batch = make([]relationship, 0)
+				batch = make([]internal.Subject, 0)
 				timer = time.NewTimer(1 * time.Second)
 				timerC = timer.C
 			}
@@ -84,18 +85,6 @@ func (m *Manager) receiveExpired(ctx context.Context) {
 	}
 }
 
-func (m *Manager) send(batch []relationship, ctx context.Context) {
-	result := make([]consumer.Relationship, 0, len(batch))
-	for _, rel := range batch {
-		result = append(result, consumer.Relationship{
-			Relationship: config.Relationship{
-				Type:        rel.Type,
-				Source:      rel.Source,
-				Destination: rel.Destination,
-			},
-			SourceEntityIDs:      rel.SourceEntityIDs,
-			DestinationEntityIDs: rel.DestinationEntityIDs,
-		})
-	}
-	m.logsConsumer.SendExpiredRelationships(ctx, result)
+func (m *Manager) send(batch []internal.Subject, ctx context.Context) {
+	m.logsConsumer.SendExpiredEvents(ctx, batch)
 }
