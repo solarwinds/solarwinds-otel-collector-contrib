@@ -1,4 +1,5 @@
 type: solarwinds
+
 github_project: solarwinds/solarwinds-otel-collector-contrib
 
 status:
