@@ -34,13 +34,9 @@ import (
 type solarwindsentity struct {
 	logger *zap.Logger
 
-	logsConsumer        consumer.Logs
-	entitiesDefinitions map[string]config.Entity
-	sourcePrefix        string
-	destinationPrefix   string
-	eventDetector       *internal.EventDetector
-	events              config.ParsedEvents
-	eventBuilder        *internal.EventBuilder
+	logsConsumer  consumer.Logs
+	eventDetector *internal.EventDetector
+	eventBuilder  *internal.EventBuilder
 
 	expirationPolicy config.ExpirationPolicy
 	storageManager   *storage.Manager
