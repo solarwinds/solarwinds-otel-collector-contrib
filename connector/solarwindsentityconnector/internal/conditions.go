@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottlmetric"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal/models"
+	"go.opentelemetry.io/collector/pdata/plog"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -48,88 +48,117 @@ func NewEventDetector(
 	}
 }
 
-func (e *EventDetector) DetectLog(ctx context.Context, resourceAttrs pcommon.Map, transformCtx ottllog.TransformContext) ([]models.Subject, error) {
+func (e *EventDetector) DetectLog(ctx context.Context, resourceAttrs pcommon.Map, transformCtx ottllog.TransformContext) ([]Subject, error) {
 	ee, re, err := processEvents(ctx, e.logEvents, transformCtx)
 	if err != nil {
 		return nil, err
 	}
 
-	events := make([]models.Subject, 0, len(ee)+len(re))
-	for _, entityEvent := range ee {
-		newEvent, _ := e.createEntity(resourceAttrs, entityEvent)
-		events = append(events, newEvent)
-	}
-
-	return events, err
+	return e.collectEvents(resourceAttrs, ee, re)
 }
-func (e *EventDetector) DetectMetric(ctx context.Context, resourceAttrs pcommon.Map, transformCtx ottlmetric.TransformContext) ([]models.Subject, error) {
+
+func (e *EventDetector) DetectMetric(ctx context.Context, resourceAttrs pcommon.Map, transformCtx ottlmetric.TransformContext) ([]Subject, error) {
 	ee, re, err := processEvents(ctx, e.metricEvents, transformCtx)
 	if err != nil {
 		return nil, err
 	}
+	return e.collectEvents(resourceAttrs, ee, re)
 
-	events := make([]models.Subject, 0, len(ee)+len(re))
+}
+
+func (e *EventDetector) collectEvents(attrs pcommon.Map, ee []*config.EntityEvent, re []*config.RelationshipEvent) ([]Subject, error) {
+	events := make([]Subject, 0, len(ee)+len(re))
 	for _, entityEvent := range ee {
-		newEvent, _ := e.createEntity(resourceAttrs, entityEvent)
+		newEvent, _ := e.createEntity(attrs, entityEvent)
 		events = append(events, newEvent)
 	}
 
-	return events, err
-}
-
-func (e *EventDetector) createEntity(resourceAttrs pcommon.Map, event *config.EntityEvent) (models.Entity, error) {
-	ids := pcommon.NewMap()
-	entity := e.entities[event.Type]
-	err := setIdAttributes1(ids, entity.IDs, resourceAttrs)
-	if err != nil {
-		return models.Entity{}, fmt.Errorf("failed to set ID attributes for entity %s: %w", entity.Type, err)
+	for _, relationshipEvent := range re {
+		newRel, err := e.createRelationship(attrs, relationshipEvent)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create relationship: %w", err)
+		}
+		events = append(events, newRel)
 	}
 
-	attrs := pcommon.NewMap()
-	setAttributes1(attrs, entity.Attributes, resourceAttrs)
+	return events, nil
+}
 
-	return models.Entity{
-		Action:     models.Update,
+func (e *EventDetector) createEntity(resourceAttrs pcommon.Map, event *config.EntityEvent) (Entity, error) {
+	attrs := pcommon.NewMap()
+	entity := e.entities[event.Type]
+	err := setIdAttributes(attrs, entity.IDs, resourceAttrs, entityIds)
+	if err != nil {
+		return Entity{}, fmt.Errorf("failed to set ID attributes for entity %s: %w", entity.Type, err)
+	}
+	idsValue, _ := attrs.Get(entityIds)
+	ids := idsValue.Map()
+
+	setAttributes(attrs, entity.Attributes, resourceAttrs, entityAttributes)
+	var entityAttrs pcommon.Map
+	entityAttrsValue, exists := attrs.Get(entityAttributes)
+	if exists {
+		entityAttrs = entityAttrsValue.Map()
+	} else {
+		entityAttrs = pcommon.NewMap()
+	}
+
+	return Entity{
+		Action:     Update,
 		Type:       entity.Type,
 		IDs:        ids,
-		Attributes: attrs,
+		Attributes: entityAttrs,
 	}, nil
 }
 
-func (e *EventDetector) createRelationship(resourceAttrs pcommon.Map, relationship *config.RelationshipEvent) (*models.Relationship, error) {
-	sourceIds := pcommon.NewMap()
-	source, _ := e.entities[relationship.Source]
-	dest, _ := e.entities[relationship.Destination]
-	hasSourcePrefix, err := setIdAttributesWithPrefix(sourceIds, source.IDs, resourceAttrs, relationship.Source, e.sourcePrefix)
-	if err != nil {
-		return nil, fmt.Errorf("failed to set source entity ID attributes: %w", err)
-	}
-	if !hasSourcePrefix {
-		return nil, fmt.Errorf("missing source entity ID attributes with prefix %s", e.sourcePrefix)
+func (e *EventDetector) createRelationship(resourceAttrs pcommon.Map, relationship *config.RelationshipEvent) (*Relationship, error) {
+	source, ok := e.entities[relationship.Source]
+	if !ok {
+		return nil, fmt.Errorf("bad source entity")
 	}
 
-	destIds := pcommon.NewMap()
-	hasDestPrefix, err := setIdAttributesWithPrefix(destIds, dest.IDs, resourceAttrs, relationship.Destination, e.destPrefix)
-	if err != nil {
-		return nil, fmt.Errorf("failed to set destination entity ID attributes: %w", err)
-	}
-	if !hasDestPrefix {
-		return nil, fmt.Errorf("missing destination entity ID attributes with prefix %s", e.destPrefix)
+	dest, ok := e.entities[relationship.Destination]
+	if !ok {
+		return nil, fmt.Errorf("bad destination entity")
 	}
 
-	relAttrs := pcommon.NewMap()
-	setAttributes1(relAttrs, relationship.Attributes, resourceAttrs)
+	lr := plog.NewLogRecord()
+	attrs := lr.Attributes()
 
-	return &models.Relationship{
-		Action: models.Update,
+	if source.Type == dest.Type {
+		if err := e.setAttributesForSameTypeRelationships(attrs, source, dest, resourceAttrs); err != nil {
+			return nil, err
+		}
+
+	} else {
+		if err := e.setAttributesForDifferentTypeRelationships(attrs, source, dest, resourceAttrs); err != nil {
+			return nil, err
+		}
+	}
+
+	tmpAttrs := pcommon.NewMap()
+	setAttributes(tmpAttrs, relationship.Attributes, resourceAttrs, relationshipAttributes)
+	relAttrsValue, exists := tmpAttrs.Get(relationshipAttributes)
+	var relAttrs pcommon.Map
+	if exists {
+		relAttrs = relAttrsValue.Map()
+	} else {
+		relAttrs = pcommon.NewMap()
+	}
+
+	sourceIds, _ := attrs.Get(relationshipSrcEntityIds)
+	destIds, _ := attrs.Get(relationshipDestEntityIds)
+
+	return &Relationship{
+		Action: Update,
 		Type:   relationship.Type,
-		Source: models.RelationshipEntity{
+		Source: RelationshipEntity{
 			Type: relationship.Source,
-			IDs:  sourceIds,
+			IDs:  sourceIds.Map(),
 		},
-		Destination: models.RelationshipEntity{
+		Destination: RelationshipEntity{
 			Type: relationship.Destination,
-			IDs:  destIds,
+			IDs:  destIds.Map(),
 		},
 		Attributes: relAttrs,
 	}, nil
@@ -171,92 +200,33 @@ func processEvents[C any](
 	return entityEvents, relationshipEvents, nil
 }
 
-// setIdAttributes sets the entity id attributes in the log record as needed by SWO.
-// Attributes are used to infer the entity in the system.
-//
-// Returns error if any of the attributes are missing in the resourceAttrs.
-// If any ID attribute is missing, the entity would not be inferred.
-func setIdAttributes1(attrs pcommon.Map, entityIds []string, resourceAttrs pcommon.Map) error {
-	if len(entityIds) == 0 {
-		return fmt.Errorf("entity ID attributes are empty")
+func (e *EventDetector) setAttributesForSameTypeRelationships(attrs pcommon.Map, source config.Entity, dest config.Entity, resourceAttrs pcommon.Map) error {
+	if e.sourcePrefix == "" || e.destPrefix == "" {
+		return fmt.Errorf("prefixes are mandatory for same type relationships")
 	}
 
-	for _, id := range entityIds {
+	hasPrefixSrc, err := setIdAttributesForRelationships(attrs, source.IDs, resourceAttrs, relationshipSrcEntityIds, e.sourcePrefix)
+	if err != nil || !hasPrefixSrc {
+		return fmt.Errorf("missing prefixed ID attribute for source entity")
+	}
 
-		value, exists := findAttribute(id, resourceAttrs)
-		if !exists {
-			return fmt.Errorf("missing entity ID attribute: %s", id)
-		}
-
-		putAttribute1(&attrs, id, value)
+	hasPrefixDst, err := setIdAttributesForRelationships(attrs, dest.IDs, resourceAttrs, relationshipDestEntityIds, e.destPrefix)
+	if err != nil || !hasPrefixDst {
+		return fmt.Errorf("missing prefixed ID attribute for destination entity")
 	}
 	return nil
 }
 
-// setEntityAttributes sets the entity attributes in the log record as needed by SWO.
-// Attributes are used to update the entity.
-func setAttributes1(attrs pcommon.Map, entityAttrs []string, resourceAttrs pcommon.Map) {
-	if len(entityAttrs) == 0 {
-		return
+func (e *EventDetector) setAttributesForDifferentTypeRelationships(attrs pcommon.Map, source config.Entity, dest config.Entity, resourceAttrs pcommon.Map) error {
+	// For different type relationships, prefixes are optional.
+	_, err := setIdAttributesForRelationships(attrs, source.IDs, resourceAttrs, relationshipSrcEntityIds, e.sourcePrefix)
+	if err != nil {
+		return fmt.Errorf("missing ID attribute for source entity")
 	}
 
-	for _, attr := range entityAttrs {
-		value, exists := findAttribute1(attr, resourceAttrs)
-		if !exists {
-			continue
-		}
-		putAttribute1(&attrs, attr, value)
+	_, err = setIdAttributesForRelationships(attrs, dest.IDs, resourceAttrs, relationshipDestEntityIds, e.destPrefix)
+	if err != nil {
+		return fmt.Errorf("missing ID attribute for destination entity")
 	}
-}
-
-// setIdAttributesWithPrefix sets the entity id attributes in the log record as needed by SWO for same type relationships.
-// Verifies that prefix is present in the resource attributes at least once within entity IDs.
-func setIdAttributesWithPrefix1(attrs pcommon.Map, entityIds []string, resourceAttrs pcommon.Map, name, prefix string) (bool, error) {
-	if len(entityIds) == 0 {
-		return false, fmt.Errorf("entity ID attributes are empty")
-	}
-
-	hasPrefix := false
-	logIds := attrs.PutEmptyMap(name)
-	for _, id := range entityIds {
-
-		value, exists := findAttribute1(prefix+id, resourceAttrs)
-		if exists {
-			putAttribute1(&logIds, id, value)
-			hasPrefix = true
-			continue
-		}
-
-		value, exists = findAttribute1(id, resourceAttrs)
-		if exists {
-			putAttribute1(&logIds, id, value)
-			continue
-		}
-
-		return false, fmt.Errorf("missing entity ID attribute: %s", id)
-	}
-	return hasPrefix, nil
-}
-
-// findAttribute checks if the attribute identified as key exists in the source pcommon.Map.
-func findAttribute1(key string, src pcommon.Map) (pcommon.Value, bool) {
-	attrVal, ok := src.Get(key)
-	return attrVal, ok
-}
-
-// putAttribute copies the value of attribute identified as key, to destination pcommon.Map.
-func putAttribute1(dest *pcommon.Map, key string, attrValue pcommon.Value) {
-	switch typeAttr := attrValue.Type(); typeAttr {
-	case pcommon.ValueTypeInt:
-		dest.PutInt(key, attrValue.Int())
-	case pcommon.ValueTypeDouble:
-		dest.PutDouble(key, attrValue.Double())
-	case pcommon.ValueTypeBool:
-		dest.PutBool(key, attrValue.Bool())
-	case pcommon.ValueTypeBytes:
-		value := attrValue.Bytes().AsRaw()
-		dest.PutEmptyBytes(key).FromRaw(value)
-	default:
-		dest.PutStr(key, attrValue.Str())
-	}
+	return nil
 }
