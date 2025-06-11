@@ -78,7 +78,7 @@ func (s *solarwindsentity) Start(ctx context.Context, _ component.Host) error {
 
 func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.Metrics) error {
 	eventLogs := plog.NewLogs()
-	logRecords := createEventLog(&eventLogs)
+	logRecords := internal.CreateEventLog(&eventLogs)
 
 	for i := 0; i < metrics.ResourceMetrics().Len(); i++ {
 		resourceMetric := metrics.ResourceMetrics().At(i)
@@ -112,7 +112,7 @@ func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.M
 
 func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) error {
 	eventLogs := plog.NewLogs()
-	logRecords := createEventLog(&eventLogs)
+	logRecords := internal.CreateEventLog(&eventLogs)
 
 	for i := 0; i < logs.ResourceLogs().Len(); i++ {
 		resourceLog := logs.ResourceLogs().At(i)
@@ -133,6 +133,7 @@ func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) erro
 				}
 				for _, event := range events {
 					s.eventBuilder.AppendUpdateEvent(logRecords, event)
+					s.storageManager.Update(event)
 				}
 			}
 		}
@@ -143,15 +144,4 @@ func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) erro
 	}
 
 	return s.logsConsumer.ConsumeLogs(ctx, eventLogs)
-}
-
-// createResultEventLog prepares a clean LogRecordSlice, where log records representing events should be appended.
-// Creates a resource log in input plog.Logs with single scope log decorated with attributes necessary for proper SWO ingestion.
-func createEventLog(logs *plog.Logs) *plog.LogRecordSlice {
-	resourceLog := logs.ResourceLogs().AppendEmpty()
-	scopeLog := resourceLog.ScopeLogs().AppendEmpty()
-	scopeLog.Scope().Attributes().PutBool(internal.EntityEventAsLog, true)
-	lrs := scopeLog.LogRecords()
-
-	return &lrs
 }
