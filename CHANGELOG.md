@@ -2,6 +2,9 @@
 
 ## vNext
 
+## v0.127.2
+- `solarwindsentityconnector` Added optional prefixes support for entity relationships between entities of different types.
+
 ## v0.127.1
 - Various improvements to `swoworkloadtypeprocessor`:
   - Prevents overwriting workload type attribute if it's already set
