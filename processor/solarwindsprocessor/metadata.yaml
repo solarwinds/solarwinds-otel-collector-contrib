@@ -1,33 +1,26 @@
-type: solarwindsprocessor
+type: solarwinds
 github_project: solarwinds/solarwinds-otel-collector-contrib
+
 status:
   class: processor
   stability:
     development: [ metrics, logs, traces ]
 
 resource_attributes:
-  - name: "sw.otelcol.receiver.name"
+  sw.otelcol.receiver.name:
     enabled: true
     description: "Integration type."
     type: string
-  - name: "sw.otelcol.integration.id"
+  sw.otelcol.integration.id:
     enabled: true
     description: "Integration ID."
     type: string
-  - name: "sw.otelcol.integration.instance_id"
-    enabled: true
-    description: "Integration instance ID."
-    type: string
-  - name: "sw.otelcol.integration.display_name"
-    enabled: false
-    description: "Integration display name."
-    type: string
-  - name: "sw.otelcol.collector.name"
+  sw.otelcol.collector.name:
     enabled: true
     description: "SolarWinds OTEL Collector name."
     type: string
-  - name: "sw.otelcol.collector.entity_creation"
-    enabled: true
+  sw.otelcol.collector.entity_creation:
+    enabled: false
     description: "Defines if entity should be created from signal."
     type: string 
 tests:
