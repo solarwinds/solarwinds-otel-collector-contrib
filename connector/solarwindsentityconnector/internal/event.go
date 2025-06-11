@@ -16,7 +16,6 @@ package internal
 
 import (
 	"fmt"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal/models"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal/storage"
 	"time"
 
@@ -44,7 +43,7 @@ func NewEventBuilder(entities map[string]config.Entity, sourcePrefix string, des
 	}
 }
 
-func (e *EventBuilder) AppendUpdateEvent(eventLogs *plog.LogRecordSlice, subject models.Subject) {
+func (e *EventBuilder) AppendUpdateEvent(eventLogs *plog.LogRecordSlice, subject Subject) {
 	lr := eventLogs.AppendEmpty()
 	lr.SetObservedTimestamp(pcommon.NewTimestampFromTime(time.Now()))
 

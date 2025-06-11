@@ -1,29 +1,8 @@
-package models
+package internal
 
 import (
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
-)
-
-const (
-	entityEventType = "otel.entity.event.type"
-
-	// Event type values
-	entityUpdateEventType       = "entity_state"
-	relationshipUpdateEventType = "entity_relationship_state"
-
-	// Entity properties
-	entityType       = "otel.entity.type"
-	entityIdsKey     = "otel.entity.id"
-	entityAttributes = "otel.entity.attributes"
-
-	// Relationship properties
-	relationshipSrcEntityIds  = "otel.entity_relationship.source_entity.id"
-	relationshipDestEntityIds = "otel.entity_relationship.destination_entity.id"
-	relationshipAttributes    = "otel.entity_relationship.attributes"
-	relationshipType          = "otel.entity_relationship.type"
-	srcEntityType             = "otel.entity_relationship.source_entity.type"
-	destEntityType            = "otel.entity_relationship.destination_entity.type"
 )
 
 type Subject interface {
@@ -77,12 +56,13 @@ func (r Relationship) Update(logRecord *plog.LogRecord) {
 func (e Entity) Update(logRecord *plog.LogRecord) {
 	attrs := logRecord.Attributes()
 	attrs.PutStr(entityEventType, entityUpdateEventType)
+	attrs.PutStr(entityType, e.Type)
 
 	// Copy id and entity attributes as pcommon.Map to the log record
-	entityIds := attrs.PutEmptyMap(entityIdsKey)
+	entityIdsMap := attrs.PutEmptyMap(entityIds)
 	entityAttrs := attrs.PutEmptyMap(entityAttributes)
 
-	e.IDs.CopyTo(entityIds)
+	e.IDs.CopyTo(entityIdsMap)
 	e.Attributes.CopyTo(entityAttrs)
 }
 
