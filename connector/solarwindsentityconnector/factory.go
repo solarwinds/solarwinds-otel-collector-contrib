@@ -55,8 +55,15 @@ func createConnector(settings connector.Settings, config component.Config, logs 
 		entitiesDefinitions: cfg.Schema.NewEntities(),
 		events:              cfg.Schema.NewEvents(settings.TelemetrySettings),
 		eventBuilder:        internal.NewEventBuilder(cfg.Schema.NewEntities(), cfg.SourcePrefix, cfg.DestinationPrefix, settings.Logger),
-		expirationPolicy:    cfg.Expiration,
-		logsConsumer:        logs,
+		eventDetector: internal.NewEventDetector(
+			cfg.Schema.NewEntities(),
+			cfg.SourcePrefix,
+			cfg.DestinationPrefix,
+			cfg.Schema.NewEvents(settings.TelemetrySettings).LogEvents,
+			cfg.Schema.NewEvents(settings.TelemetrySettings).MetricEvents,
+		),
+		expirationPolicy: cfg.Expiration,
+		logsConsumer:     logs,
 	}
 	return se, nil
 }

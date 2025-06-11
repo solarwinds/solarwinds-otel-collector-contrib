@@ -38,6 +38,7 @@ type solarwindsentity struct {
 	entitiesDefinitions map[string]config.Entity
 	sourcePrefix        string
 	destinationPrefix   string
+	eventDetector       *internal.EventDetector
 	events              config.ParsedEvents
 	eventBuilder        *internal.EventBuilder
 
@@ -77,7 +78,7 @@ func (s *solarwindsentity) Start(ctx context.Context, _ component.Host) error {
 
 func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.Metrics) error {
 	eventLogs := plog.NewLogs()
-	events := createEventLog(&eventLogs)
+	logRecords := createEventLog(&eventLogs)
 
 	for i := 0; i < metrics.ResourceMetrics().Len(); i++ {
 		resourceMetric := metrics.ResourceMetrics().At(i)
@@ -89,10 +90,14 @@ func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.M
 				metric := scopeMetric.Metrics().At(k)
 
 				tc := ottlmetric.NewTransformContext(metric, scopeMetric.Metrics(), scopeMetric.Scope(), resourceMetric.Resource(), scopeMetric, resourceMetric)
-				err := internal.ProcessEvents(ctx, events, s.eventBuilder, s.events.MetricEvents, resourceAttrs, s.storageManager, tc)
+				events, err := s.eventDetector.DetectMetric(ctx, resourceAttrs, tc)
+
 				if err != nil {
-					s.logger.Error("Failed to process metric condition", zap.Error(err))
+					s.logger.Error("Failed to process logs condition", zap.Error(err))
 					return err
+				}
+				for _, event := range events {
+					s.eventBuilder.AppendUpdateEvent(logRecords, event)
 				}
 			}
 		}
@@ -107,7 +112,7 @@ func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.M
 
 func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) error {
 	eventLogs := plog.NewLogs()
-	events := createEventLog(&eventLogs)
+	logRecords := createEventLog(&eventLogs)
 
 	for i := 0; i < logs.ResourceLogs().Len(); i++ {
 		resourceLog := logs.ResourceLogs().At(i)
@@ -120,10 +125,14 @@ func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) erro
 				logRecord := scopeLog.LogRecords().At(k)
 
 				tc := ottllog.NewTransformContext(logRecord, scopeLog.Scope(), resourceLog.Resource(), scopeLog, resourceLog)
-				err := internal.ProcessEvents(ctx, events, s.eventBuilder, s.events.LogEvents, resourceAttrs, s.storageManager, tc)
+				events, err := s.eventDetector.DetectLog(ctx, resourceAttrs, tc)
+
 				if err != nil {
 					s.logger.Error("Failed to process logs condition", zap.Error(err))
 					return err
+				}
+				for _, event := range events {
+					s.eventBuilder.AppendUpdateEvent(logRecords, event)
 				}
 			}
 		}
