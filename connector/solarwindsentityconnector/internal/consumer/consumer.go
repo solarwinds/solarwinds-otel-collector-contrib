@@ -2,7 +2,6 @@ package consumer
 
 import (
 	"context"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal"
 	otelConsumer "go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/pdata/plog"
@@ -18,15 +17,13 @@ const (
 
 type consumer struct {
 	logsConsumer otelConsumer.Logs
-	entities     map[string]config.Entity
 }
 
 var _ Consumer = (*consumer)(nil)
 
-func NewConsumer(logsConsumer otelConsumer.Logs, entities map[string]config.Entity) Consumer {
+func NewConsumer(logsConsumer otelConsumer.Logs) Consumer {
 	return &consumer{
 		logsConsumer: logsConsumer,
-		entities:     entities,
 	}
 }
 

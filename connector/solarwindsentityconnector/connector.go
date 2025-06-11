@@ -62,7 +62,7 @@ func (s *solarwindsentity) Start(ctx context.Context, _ component.Host) error {
 		if expirationCfg == nil {
 			s.logger.Error("expiration policy is invalid")
 		}
-		lc := consumer2.NewConsumer(s.logsConsumer, s.entitiesDefinitions)
+		lc := consumer2.NewConsumer(s.logsConsumer)
 		s.storageManager = storage.NewStorageManager(expirationCfg, s.logger, lc)
 		err := s.storageManager.Start(ctx)
 
