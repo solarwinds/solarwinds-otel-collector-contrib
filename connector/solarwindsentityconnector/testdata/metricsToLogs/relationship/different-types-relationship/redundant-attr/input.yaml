@@ -1,0 +1,11 @@
+resourceMetrics:
+  - resource:
+      attributes: [ { "key": "aws.ec2.id", "value":{"stringValue": "aws-instance-id"}},
+                    { "key": "aws.ec2.name", "value":{"stringValue": "aws-instance-name"}},
+                    { "key": "snowflake.id", "value":{"stringValue": "snowflake-instance-id"}},
+                    { "key": "k8s.pod.name", "value":{"stringValue": "k8s-pod-name"}}]
+    scopeMetrics:
+      - metrics:
+          - name: "test-metric"
+            description: "test metric description"
+            unit: "1"

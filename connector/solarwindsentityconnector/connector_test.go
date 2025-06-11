@@ -16,10 +16,11 @@ package solarwindsentityconnector
 
 import (
 	"context"
+	"fmt"
+	"gopkg.in/yaml.v3"
+	"os"
 	"path/filepath"
 	"testing"
-
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest/plogtest"
@@ -28,287 +29,117 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/connector/connectortest"
-	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/consumer/consumertest"
-	"go.opentelemetry.io/collector/pdata/plog"
-)
-
-type testLogsConsumer struct {
-}
-
-func (t *testLogsConsumer) Capabilities() consumer.Capabilities {
-	return consumer.Capabilities{MutatesData: false}
-}
-
-func (t *testLogsConsumer) ConsumeLogs(ctx context.Context, ld plog.Logs) error {
-	return nil
-}
-
-var _ consumer.Logs = (*testLogsConsumer)(nil)
-
-// Test configuration for the entites, relationships and events.
-var (
-	configuredEntities = []config.Entity{
-		{Type: "Snowflake", IDs: []string{"snowflake.id"}, Attributes: []string{"attr1"}},
-		{Type: "AWS EC2", IDs: []string{"aws.ec2.id", "aws.ec2.name"}, Attributes: []string{"attr2"}},
-		{Type: "Kubernetes Pod", IDs: []string{"k8s.pod.id", "k8s.pod.name"}, Attributes: []string{"k8s.pod.port"}},
-		{Type: "Kubernetes Cluster", IDs: []string{"k8s.cluster.id", "k8s.cluster.name"}, Attributes: []string{"k8s.cluster.port"}},
-		{Type: "Kubernetes Node", IDs: []string{"k8s.node.id"}, Attributes: []string{}},
-	}
-
-	configuredRelationshipsEvent = []config.RelationshipEvent{
-		{
-			Type:        "MemberOf",
-			Source:      "Snowflake",
-			Destination: "AWS EC2",
-			Attributes:  []string{},
-			Conditions:  []string{"true"},
-			Context:     "log",
-		},
-		{
-			Type:        "MemberOf",
-			Source:      "Snowflake",
-			Destination: "AWS EC2",
-			Attributes:  []string{},
-			Conditions:  []string{"true"},
-			Context:     "metric",
-		},
-		{
-			Type:        "TestRelationshipType",
-			Source:      "AWS EC2",
-			Destination: "AWS EC2",
-			Attributes:  []string{},
-			Conditions:  []string{"true"},
-			Context:     "log",
-		},
-		{
-			Type:        "TestRelationshipType",
-			Source:      "AWS EC2",
-			Destination: "AWS EC2",
-			Attributes:  []string{},
-			Conditions:  []string{"true"},
-			Context:     "metric",
-		},
-		{
-			Type:        "TestRelationshipType",
-			Source:      "Kubernetes Pod",
-			Destination: "Kubernetes Pod",
-			Attributes:  []string{"k8s.pod.port"},
-			Conditions:  []string{"true"},
-			Context:     "log",
-		},
-		{
-			Type:        "TestRelationshipType",
-			Source:      "Kubernetes Pod",
-			Destination: "Kubernetes Pod",
-			Attributes:  []string{"k8s.pod.port"},
-			Conditions:  []string{"true"},
-			Context:     "metric",
-		},
-		{
-			Type:        "MemberOf",
-			Source:      "Snowflake",
-			Destination: "Kubernetes Pod",
-			Attributes:  []string{"k8s.pod.port"},
-			Conditions:  []string{"true"},
-			Context:     "log",
-		},
-		{
-			Type:        "MemberOf",
-			Source:      "Snowflake",
-			Destination: "Kubernetes Pod",
-			Attributes:  []string{"k8s.pod.port"},
-			Conditions:  []string{"true"},
-			Context:     "metric",
-		},
-		{
-			Type:        "MemberOf",
-			Source:      "Kubernetes Cluster",
-			Destination: "Kubernetes Pod",
-			Attributes:  []string{"k8s.cluster.port"},
-			Conditions:  []string{`attributes["k8s.cluster.port"] == "8080" or attributes["k8s.cluster.port"] == "9090" and attributes["k8s.cluster.name"] == "test-cluster-name"`},
-			Context:     "log",
-		},
-		{
-			Type:        "MemberOf",
-			Source:      "Kubernetes Cluster",
-			Destination: "Kubernetes Pod",
-			Attributes:  []string{"k8s.cluster.port"},
-			Conditions:  []string{`metric.name == "k8s.tcp.bytes" or metric.name == "k8s.tcp.connections" and metric.unit == "bytes"`},
-			Context:     "metric",
-		},
-		{
-			Type:        "TestRelationshipType",
-			Source:      "Kubernetes Node",
-			Destination: "Kubernetes Node",
-			Attributes:  []string{},
-			Conditions:  []string{`instrumentation_scope.name == "NodeScope" and resource.attributes["service.name"] == "NodeService" and log.body == "test-log-body"`},
-			Context:     "log",
-		},
-		{
-			Type:        "TestRelationshipType",
-			Source:      "Kubernetes Node",
-			Destination: "Kubernetes Node",
-			Attributes:  []string{},
-			Conditions:  []string{`instrumentation_scope.name == "NodeScope" and resource.attributes["service.name"] == "NodeService" and metric.unit == "bytes"`},
-			Context:     "metric",
-		},
-	}
-
-	configuredEntitiesEvent = []config.EntityEvent{
-		{
-			Type:       "Snowflake",
-			Conditions: []string{},
-			Context:    "log",
-		},
-		{
-			Type:       "Snowflake",
-			Conditions: []string{},
-			Context:    "metric",
-		},
-		{
-			Type:       "AWS EC2",
-			Conditions: []string{"true"},
-			Context:    "log",
-		},
-		{
-			Type:       "AWS EC2",
-			Conditions: []string{"true"},
-			Context:    "metric",
-		},
-		{
-			Type:       "Kubernetes Pod",
-			Conditions: []string{"true"},
-			Context:    "log",
-		},
-		{
-			Type:       "Kubernetes Pod",
-			Conditions: []string{"true"},
-			Context:    "metric",
-		},
-		{
-			Type:       "Kubernetes Cluster",
-			Conditions: []string{`attributes["k8s.cluster.port"] == "8080" or attributes["k8s.cluster.port"] == "9090" and attributes["k8s.cluster.name"] == "test-cluster-name"`},
-			Context:    "log",
-		},
-		{
-			Type:       "Kubernetes Cluster",
-			Conditions: []string{`metric.name == "k8s.tcp.bytes" or metric.name == "k8s.tcp.connections" and metric.unit == "bytes"`},
-			Context:    "metric",
-		},
-		{
-			Type:       "Kubernetes Node",
-			Conditions: []string{`instrumentation_scope.name == "NodeScope" and resource.attributes["service.name"] == "NodeService" and log.body == "test-log-body"`},
-			Context:    "log",
-		},
-		{
-			Type:       "Kubernetes Node",
-			Conditions: []string{`instrumentation_scope.name == "NodeScope" and resource.attributes["service.name"] == "NodeService" and metric.unit == "bytes"`},
-			Context:    "metric",
-		},
-	}
-
-	configuredEvents = config.Events{
-		Relationships: configuredRelationshipsEvent,
-		Entities:      configuredEntitiesEvent,
-	}
 )
 
 func TestLogsToLogs(t *testing.T) {
 
 	testCases := []struct {
-		name         string
-		inputFile    string
-		expectedFile string
+		name   string
+		folder string
 	}{
+		// ~~~~~~ ENTITIES TESTS ~~~~~~
 		{
-			name:         "when same type relationship has valid advanced condition, log event is sent",
-			inputFile:    "relationship/same-type-relationship/input-log-same-type-relationship-advanced-conditions.yaml",
-			expectedFile: "relationship/same-type-relationship/expected-log-same-type-relationship-advanced-conditions.yaml",
+			name:   "when log for entity has valid complex condition, log event is sent",
+			folder: "entity/condition-met",
 		},
 		{
-			name:         "when relationship for different type is inferred log event is sent",
-			inputFile:    "relationship/different-types-relationship/input-log-different-type-relationship.yaml",
-			expectedFile: "relationship/different-types-relationship/expected-log-different-type-relationship.yaml",
+			// Attributes for schema.entities are sufficient for entity creation, but
+			// condition in schema.event.entities is not satisfied.
+			name:   "when log for entity has not satisfied the condition, no log event is sent",
+			folder: "entity/condition-not-met",
 		},
 		{
-			name:         "when relationship for same type is inferred log event is sent",
-			inputFile:    "relationship/same-type-relationship/input-log-same-type-relationship.yaml",
-			expectedFile: "relationship/same-type-relationship/expected-log-same-type-relationship.yaml",
+			// Checks creation of 2 Snowflake entities without any conditions.
+			name:   "when config has no conditions, entity is inferred  and log event is sent",
+			folder: "entity/no-conditions",
 		},
 		{
-			name:         "when relationship for same type is not inferred no log is sent",
-			inputFile:    "relationship/same-type-relationship/input-log-same-type-relationship-nomatch.yaml",
-			expectedFile: "relationship/same-type-relationship/expected-log-same-type-relationship-nomatch.yaml",
+			// Input is sending insufficient attributes for entity creation
+			// No event should be sent.
+			name:   "when entity is not inferred no log is sent",
+			folder: "entity/no-match",
+		},
+		// ~~~~~~ SAME TYPE RELATIONSHIP TESTS ~~~~~~
+		{
+			// Testing that more complex conditions get evaluated correctly.
+			// Checks that events for entities and the relationship are still sent.
+			name:   "when same type relationship has valid advanced condition, log event is sent",
+			folder: "relationship/same-type-relationship/advanced-conditions",
 		},
 		{
-			name:         "when entity is inferred log event is sent",
-			inputFile:    "entity/input-log.yaml",
-			expectedFile: "entity/expected-log.yaml",
+			// Tests that when two entities share an attribute key and value for some required attribute,
+			// the events for entities and their relationship are still detected and sent.
+			name:   "when relationship for same type and having common id attributes is inferred log event is sent",
+			folder: "relationship/same-type-relationship/common-attr",
 		},
 		{
-			name:      "when entity is not inferred no log is sent",
-			inputFile: "entity/input-log-nomatch.yaml",
+			// Checks that when additional attributes are set on the relationship, they are sent with the relationship.
+			name:   "when log for same type relationship, log event is sent with relationship attributes",
+			folder: "relationship/same-type-relationship/extra-attr",
 		},
 		{
-			name:         "when relationship for same type and having common id attributes is inferred log event is sent",
-			inputFile:    "relationship/same-type-relationship/input-log-same-type-relationship-common-atr.yaml",
-			expectedFile: "relationship/same-type-relationship/expected-log-same-type-relationship-common-atr.yaml",
+			// Checks that same type relationship for AWS EC2 is sent, together with the two AWS EC2 entities.
+			// Uses simple ["true"] conditions.
+			// Uses prefixes as all same type relationship tests.
+			name:   "when relationship for same type is inferred log event is sent",
+			folder: "relationship/same-type-relationship/no-conditions",
 		},
 		{
-			name:         "when log for different type relationship has redundant attributes, log event is sent",
-			inputFile:    "relationship/different-types-relationship/input-log-different-type-relationship-redundant-atr.yaml",
-			expectedFile: "relationship/different-types-relationship/expected-log-different-type-relationship-redundant-atr.yaml",
+			// Checks that if one of the attributes for the relationship is not set, the relationship is not sent, but is for entities.
+			name:   "when relationship for same type is not inferred no log is sent",
+			folder: "relationship/same-type-relationship/no-match",
+		},
+		// ~~~~~~ DIFFERENT TYPE RELATIONSHIP TESTS ~~~~~~
+		{
+			// Checks that when relationship condition is satisfied, relationship log event is sent, and the entities also.
+			name:   "when log for different type relationship has satisfied the condition, log relationship event is sent",
+			folder: "relationship/different-types-relationship/condition-met",
 		},
 		{
-			name:         "when log for different type relationship hasn't all necessary id attributes, log event is sent",
-			inputFile:    "relationship/different-types-relationship/input-log-different-type-relationship-missing-atr.yaml",
-			expectedFile: "relationship/different-types-relationship/expected-log-different-type-relationship-missing-atr.yaml",
+			// Relationship condition is not satisfied, so no relationship log event is sent, but entities are.
+			name:   "when log for different type relationship has not satisfied the condition, no log relationship event is sent",
+			folder: "relationship/different-types-relationship/condition-not-met",
 		},
 		{
-			name:         "when log for same type relationship, log event is sent with relationship attributes",
-			inputFile:    "relationship/same-type-relationship/input-log-same-type-relationship-res-atr.yaml",
-			expectedFile: "relationship/same-type-relationship/expected-log-same-type-relationship-res-atr.yaml",
+			// Relationship should be sent with the extra attributes, and also 2 entity log events.
+			name:   "when log for different type relationship, log event is sent with relationship attributes",
+			folder: "relationship/different-types-relationship/extra-attr",
 		},
 		{
-			name:         "when log for different type relationship, log event is sent with relationship attributes",
-			inputFile:    "relationship/different-types-relationship/input-log-different-type-relationship-res-atr.yaml",
-			expectedFile: "relationship/different-types-relationship/expected-log-different-type-relationship-res-atr.yaml",
+			// When config.yaml has 2 entities to infer with relationship between them, but one of them
+			// is missing required id attribute, relationship log event is not sent and only entity log event is sent for the one entity that was found.
+			name:   "when log for different type relationship hasn't all necessary id attributes, log event is sent",
+			folder: "relationship/different-types-relationship/missing-attr",
 		},
 		{
-			name:      "when log for entity has no valid condition, no log event is sent",
-			inputFile: "entity/input-log-no-valid-condition.yaml",
+			// Checks that when there is an extra attribute, that has nothing to do with entities or relationship,
+			// relationship and entities are still sent.
+			name:   "when log for different type relationship has redundant attributes, log event is sent",
+			folder: "relationship/different-types-relationship/redundant-attr",
 		},
 		{
-			name:         "when log for entity has valid condition, log event is sent",
-			inputFile:    "entity/input-log-valid-condition.yaml",
-			expectedFile: "entity/expected-log-valid-condition.yaml",
+			// Checks that different type relationship supports optional prefixes for source and destination attributes.
+			// Since no unprefixed attributes are sent that would match the entities, only relationship log record is sent.
+			name:   "different type relationship works with prefixes",
+			folder: "relationship/different-types-relationship/with-prefixes",
 		},
 		{
-			name:         "when log for different type relationship has no valid condition, no log relationship event is sent",
-			inputFile:    "relationship/different-types-relationship/input-log-different-type-relationship-no-valid-condition.yaml",
-			expectedFile: "relationship/different-types-relationship/expected-log-different-type-relationship-no-valid-condition.yaml",
-		},
-		{
-			name:         "when log for different type relationship has valid condition, log relationship event is sent",
-			inputFile:    "relationship/different-types-relationship/input-log-different-type-relationship-valid-condition.yaml",
-			expectedFile: "relationship/different-types-relationship/expected-log-different-type-relationship-valid-condition.yaml",
+			// Checks that different type relationship works without prefixes configuration.
+			// Since there are no prefixes, the attributes match the entities and their relationship, so 3 events are sent.
+			name:   "different type relationship works without prefixes",
+			folder: "relationship/different-types-relationship/without-prefixes",
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			cfg, err := loadConfigFromFile(t, filepath.Join("testdata", "logsToLogs", tc.folder, "config.yaml"))
+			require.NoError(t, err)
 			factory := NewFactory()
 			sink := &consumertest.LogsSink{}
 			conn, err := factory.CreateLogsToLogs(context.Background(),
-				connectortest.NewNopSettings(metadata.Type), &Config{
-					Schema: config.Schema{
-						Entities: configuredEntities,
-						Events:   configuredEvents,
-					},
-					SourcePrefix:      "src.",
-					DestinationPrefix: "dst.",
-				}, sink)
+				connectortest.NewNopSettings(metadata.Type), cfg, sink)
 			require.NoError(t, err)
 			require.NotNil(t, conn)
 
@@ -317,21 +148,24 @@ func TestLogsToLogs(t *testing.T) {
 				assert.NoError(t, conn.Shutdown(context.Background()))
 			}()
 
-			testLogs, err := golden.ReadLogs(filepath.Join("testdata", "logsToLogs", tc.inputFile))
+			inputFile := filepath.Join("testdata", "logsToLogs", tc.folder, "input.yaml")
+			testLogs, err := golden.ReadLogs(inputFile)
 
 			assert.NoError(t, err)
 			assert.NoError(t, conn.ConsumeLogs(context.Background(), testLogs))
 
 			allLogs := sink.AllLogs()
-			if len(tc.expectedFile) == 0 {
+			expectedFile := filepath.Join("testdata", "logsToLogs", tc.folder, "expected-output.yaml")
+
+			if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
 				assert.Len(t, allLogs, 0)
 				return
 			}
 
-			expected, err := golden.ReadLogs(filepath.Join("testdata", "logsToLogs", tc.expectedFile))
+			expected, err := golden.ReadLogs(expectedFile)
 
 			assert.NoError(t, err)
-			assert.Equal(t, allLogs[0].LogRecordCount(), expected.LogRecordCount())
+			assert.Equal(t, expected.LogRecordCount(), allLogs[0].LogRecordCount())
 			assert.NoError(t, plogtest.CompareLogs(expected, allLogs[0], plogtest.IgnoreObservedTimestamp()))
 		})
 	}
@@ -339,103 +173,111 @@ func TestLogsToLogs(t *testing.T) {
 
 func TestMetricsToLogs(t *testing.T) {
 	testCases := []struct {
-		name         string
-		inputFile    string
-		expectedFile string
+		name   string
+		folder string
 	}{
+		//  ~~~~~~ ENTITIES TESTS ~~~~~~
 		{
-			name:         "when same type relationship has valid advanced condition, log event is sent",
-			inputFile:    "relationship/same-type-relationship/input-metric-same-type-relationship-advanced-conditions.yaml",
-			expectedFile: "relationship/same-type-relationship/expected-metric-same-type-relationship-advanced-conditions.yaml",
+			name:   "when log for entity has satisfied a complex condition, log event is sent",
+			folder: "entity/condition-met",
 		},
 		{
-			name:         "when entity is inferred, log event is sent",
-			inputFile:    "entity/input-metric.yaml",
-			expectedFile: "entity/expected-metric.yaml",
+			// Attributes for schema.entities are sufficient for entity creation, but
+			// condition in schema.event.entities is not satisfied.
+			name:   "when log for entity has not satisfied the condition, no log event is sent",
+			folder: "entity/condition-not-met",
 		},
 		{
-			name:      "when entity is not inferred, no log is sent",
-			inputFile: "entity/input-metric-nomatch.yaml",
+			// Checks creation of 2 Snowflake entities without any conditions.
+			name:   "when config has no conditions, entity is inferred  and log event is sent",
+			folder: "entity/no-conditions",
 		},
 		{
-			name:         "when relationship for different type is inferred log event is sent",
-			inputFile:    "relationship/different-types-relationship/input-metric-different-type-relationship.yaml",
-			expectedFile: "relationship/different-types-relationship/expected-metric-different-type-relationship.yaml",
+			// Input is sending insufficient attributes for entity creation
+			name:   "when entity is not inferred no log is sent",
+			folder: "entity/no-match",
+		},
+		//  ~~~~~~ SAME TYPE RELATIONSHIP TESTS ~~~~~~
+		{
+			// Testing that more complex conditions get evaluated correctly.
+			// Checks that events for entities and relationship are still sent.
+			name:   "when same type relationship has valid advanced condition, log event is sent",
+			folder: "relationship/same-type-relationship/advanced-conditions",
 		},
 		{
-			name:         "when relationship for same type is inferred log event is sent",
-			inputFile:    "relationship/same-type-relationship/input-metric-same-type-relationship.yaml",
-			expectedFile: "relationship/same-type-relationship/expected-metric-same-type-relationship.yaml",
+			// Tests that when two entities share an attribute key and value for some required attribute,
+			// the events for entities and their relationship are still detected and sent.
+			name:   "when relationship for same type and having common id attributes is inferred log event is sent",
+			folder: "relationship/same-type-relationship/common-attr",
 		},
 		{
-			name:         "when relationship for same type is not inferred no log is sent",
-			inputFile:    "relationship/same-type-relationship/input-metric-same-type-relationship-nomatch.yaml",
-			expectedFile: "relationship/same-type-relationship/expected-metric-same-type-relationship-nomatch.yaml",
-		},
 
-		{
-			name:         "when relationship for same type and having common id attributes is inferred log event is sent",
-			inputFile:    "relationship/same-type-relationship/input-metric-same-type-relationship-common-atr.yaml",
-			expectedFile: "relationship/same-type-relationship/expected-metric-same-type-relationship-common-atr.yaml",
+			// Checks that when additional attributes are set on the relationship, they are sent with the relationship.
+			name:   "when log for same type relationship, log event is sent with relationship attributes",
+			folder: "relationship/same-type-relationship/extra-attr",
 		},
 		{
-			name:         "when metric for different type relationship has redundant attributes, log event is sent",
-			inputFile:    "relationship/different-types-relationship/input-metric-different-type-relationship-redundant-atr.yaml",
-			expectedFile: "relationship/different-types-relationship/expected-metric-different-type-relationship-redundant-atr.yaml",
+			// Checks that same type relationship for AWS EC2 is sent, together with the two AWS EC2 entities.
+			// Uses simple ["true"] conditions.
+			// Uses prefixes as all same type relationship tests.
+			name:   "when relationship for same type is inferred log event is sent",
+			folder: "relationship/same-type-relationship/no-conditions",
 		},
 		{
-			name:         "when metric for different type relationship hasn't all necessary id attributes, log event is sent",
-			inputFile:    "relationship/different-types-relationship/input-metric-different-type-relationship-missing-atr.yaml",
-			expectedFile: "relationship/different-types-relationship/expected-metric-different-type-relationship-missing-atr.yaml",
+			// Checks that if one of the attributes for the relationship is not set, the relationship is not sent, but is for entities.
+			name:   "when relationship for same type is not inferred no log is sent",
+			folder: "relationship/same-type-relationship/no-match",
+		},
+		// ~~~~~~ DIFFERENT TYPE RELATIONSHIP TESTS ~~~~~~
+		{
+			// Checks that when relationship condition is satisfied, relationship log event is sent, and the entities also.
+			name:   "when log for different type relationship has satisfied the condition, log relationship event is sent",
+			folder: "relationship/different-types-relationship/condition-met",
 		},
 		{
-			name:         "when metric for same type relationship, log event is sent with relationship attributes",
-			inputFile:    "relationship/same-type-relationship/input-metric-same-type-relationship-res-atr.yaml",
-			expectedFile: "relationship/same-type-relationship/expected-metric-same-type-relationship-res-atr.yaml",
+			// Relationship condition is not satisfied, so no relationship log event is sent, but entities are.
+			name:   "when log for different type relationship has not satisfied the condition, no log relationship event is sent",
+			folder: "relationship/different-types-relationship/condition-not-met",
 		},
 		{
-			name:         "when metric for different type relationship, log event is sent with relationship attributes",
-			inputFile:    "relationship/different-types-relationship/input-metric-different-type-relationship-res-atr.yaml",
-			expectedFile: "relationship/different-types-relationship/expected-metric-different-type-relationship-res-atr.yaml",
+			// Relationship should be sent with the extra attributes, and also 2 entity log events.
+			name:   "when log for different type relationship, log event is sent with relationship attributes",
+			folder: "relationship/different-types-relationship/extra-attr",
 		},
 		{
-			name:      "when metric for entity has no valid condition, no log event is sent",
-			inputFile: "entity/input-metric-no-valid-condition.yaml",
+			// When config.yaml has 2 entities to infer with relationship between them, but one of them
+			// is missing required id attribute, relationship log event is not sent and only entity log event is sent for the one entity that was found.
+			name:   "when log for different type relationship hasn't all necessary id attributes, log event is sent",
+			folder: "relationship/different-types-relationship/missing-attr",
 		},
 		{
-			name:         "when metric for entity has valid condition, log event is sent",
-			inputFile:    "entity/input-metric-valid-condition.yaml",
-			expectedFile: "entity/expected-metric-valid-condition.yaml",
+			// Checks that when there is an extra attribute, that has nothing to do with entities or relationship,
+			// relationship and entities are still sent if they have what is needed.
+			name:   "when log for different type relationship has redundant attributes, log event is sent",
+			folder: "relationship/different-types-relationship/redundant-attr",
 		},
 		{
-			name:         "when metric for different type relationship has no valid condition, no log relationship event is sent",
-			inputFile:    "relationship/different-types-relationship/input-metric-different-type-relationship-no-valid-condition.yaml",
-			expectedFile: "relationship/different-types-relationship/expected-metric-different-type-relationship-no-valid-condition.yaml",
+			// Checks that different type relationship supports optional prefixes for source and destination attributes.
+			// Since no unprefixed attributes are sent that would match the entities, only relationship log record is sent.
+			name:   "different type relationship works with prefixes",
+			folder: "relationship/different-types-relationship/with-prefixes",
 		},
 		{
-			name:         "when metric for different type relationship has valid condition, log relationship event is sent",
-			inputFile:    "relationship/different-types-relationship/input-metric-different-type-relationship-valid-condition.yaml",
-			expectedFile: "relationship/different-types-relationship/expected-metric-different-type-relationship-valid-condition.yaml",
+			// Checks that different type relationship works without prefixes configuration.
+			// Since there are no prefixes, the attributes match the entities and their relationship, so 3 events are sent.
+			name:   "different type relationship works without prefixes",
+			folder: "relationship/different-types-relationship/without-prefixes",
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			cfg, err := loadConfigFromFile(t, filepath.Join("testdata", "metricsToLogs", tc.folder, "config.yaml"))
+			require.NoError(t, err)
 			factory := NewFactory()
 			sink := &consumertest.LogsSink{}
 			conn, err := factory.CreateMetricsToLogs(context.Background(),
-				connectortest.NewNopSettings(metadata.Type), &Config{
-					Schema: config.Schema{
-						Entities: configuredEntities,
-						Events:   configuredEvents,
-					},
-					SourcePrefix:      "src.",
-					DestinationPrefix: "dst.",
-					Expiration: config.ExpirationPolicy{
-						Enabled:  true,
-						Interval: "10s",
-					},
-				}, sink)
+				connectortest.NewNopSettings(metadata.Type), cfg, sink)
 			require.NoError(t, err)
 			require.NotNil(t, conn)
 
@@ -444,21 +286,41 @@ func TestMetricsToLogs(t *testing.T) {
 				assert.NoError(t, conn.Shutdown(context.Background()))
 			}()
 
-			testMetrics, err := golden.ReadMetrics(filepath.Join("testdata", "metricsToLogs", tc.inputFile))
+			inputFile := filepath.Join("testdata", "metricsToLogs", tc.folder, "input.yaml")
+			testMetrics, err := golden.ReadMetrics(inputFile)
+
 			assert.NoError(t, err)
 			assert.NoError(t, conn.ConsumeMetrics(context.Background(), testMetrics))
 
 			allLogs := sink.AllLogs()
-			if len(tc.expectedFile) == 0 {
+			expectedFile := filepath.Join("testdata", "metricsToLogs", tc.folder, "expected-output.yaml")
+
+			if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
 				assert.Len(t, allLogs, 0)
 				return
 			}
 
-			expected, err := golden.ReadLogs(filepath.Join("testdata", "metricsToLogs", tc.expectedFile))
+			expected, err := golden.ReadLogs(expectedFile)
 
 			assert.NoError(t, err)
-			assert.Equal(t, allLogs[0].LogRecordCount(), expected.LogRecordCount())
+			assert.Equal(t, expected.LogRecordCount(), allLogs[0].LogRecordCount())
 			assert.NoError(t, plogtest.CompareLogs(expected, allLogs[0], plogtest.IgnoreObservedTimestamp()))
 		})
 	}
+}
+
+func loadConfigFromFile(t *testing.T, path string) (*Config, error) {
+	t.Helper()
+
+	yamlFile, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read config file: %w", err)
+	}
+
+	var cfg Config
+	if err := yaml.Unmarshal(yamlFile, &cfg); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+	}
+
+	return &cfg, nil
 }

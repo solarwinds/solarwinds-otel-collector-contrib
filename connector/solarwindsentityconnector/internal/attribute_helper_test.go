@@ -39,7 +39,7 @@ func TestSetIdAttributesSameTypeEmpty(t *testing.T) {
 	resourceAttrs.PutStr("dst.id", "idvalue2")
 
 	destination := plog.NewLogRecord()
-	hasPrefix, err := setIdAttributesWithPrefix(destination.Attributes(), []string{}, resourceAttrs, entityIds, "src.")
+	hasPrefix, err := setIdAttributesForRelationships(destination.Attributes(), []string{}, resourceAttrs, entityIds, "src.")
 	assert.NotNil(t, err)
 	assert.False(t, hasPrefix)
 }
@@ -63,7 +63,7 @@ func TestSetIdAttributesSameTypetIdNoMatch(t *testing.T) {
 	resourceAttrs.PutStr("dst.id", "idvalue2")
 
 	destination := plog.NewLogRecord()
-	hasPrefix, err := setIdAttributesWithPrefix(destination.Attributes(), []string{"id2"}, resourceAttrs, entityIds, "src.")
+	hasPrefix, err := setIdAttributesForRelationships(destination.Attributes(), []string{"id2"}, resourceAttrs, entityIds, "src.")
 	assert.False(t, hasPrefix)
 	assert.NotNil(t, err)
 	ids, exists := destination.Attributes().Get(entityIds)
@@ -77,7 +77,7 @@ func TestSetIdAttributesSameTypePrefixNoMatch(t *testing.T) {
 	resourceAttrs.PutStr("dst.id", "idvalue2")
 
 	destination := plog.NewLogRecord()
-	hasPrefix, err := setIdAttributesWithPrefix(destination.Attributes(), []string{"id"}, resourceAttrs, entityIds, "prefix.")
+	hasPrefix, err := setIdAttributesForRelationships(destination.Attributes(), []string{"id"}, resourceAttrs, entityIds, "prefix.")
 	assert.False(t, hasPrefix)
 	assert.NotNil(t, err)
 	ids, exists := destination.Attributes().Get(entityIds)
@@ -107,7 +107,7 @@ func TestSetIdAttributesSameTypeMultiple(t *testing.T) {
 	resourceAttrs.PutStr("dst.id", "idvalue2")
 
 	destination := plog.NewLogRecord()
-	hasPrefix, err := setIdAttributesWithPrefix(destination.Attributes(), []string{"id"}, resourceAttrs, entityIds, "src.")
+	hasPrefix, err := setIdAttributesForRelationships(destination.Attributes(), []string{"id"}, resourceAttrs, entityIds, "src.")
 	assert.True(t, hasPrefix)
 	assert.Nil(t, err)
 	ids, exists := destination.Attributes().Get(entityIds)
