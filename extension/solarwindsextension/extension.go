@@ -28,6 +28,7 @@ import (
 // representing the configured name of the collector.
 const CollectorNameAttribute = internal.CollectorNameAttribute
 const EntityCreation = internal.EntityCreation
+const EntityCreationValue = internal.EntityCreationValue
 
 type SolarwindsExtension struct {
 	logger    *zap.Logger
