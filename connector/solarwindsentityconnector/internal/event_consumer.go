@@ -2,7 +2,7 @@ package internal
 
 import (
 	"context"
-	otelConsumer "go.opentelemetry.io/collector/consumer"
+	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/pdata/plog"
 )
 
@@ -11,12 +11,12 @@ type EventConsumer interface {
 }
 
 type eventConsumer struct {
-	logsConsumer otelConsumer.Logs
+	logsConsumer consumer.Logs
 }
 
 var _ EventConsumer = (*eventConsumer)(nil)
 
-func NewConsumer(logsConsumer otelConsumer.Logs) EventConsumer {
+func NewConsumer(logsConsumer consumer.Logs) EventConsumer {
 	return &eventConsumer{
 		logsConsumer: logsConsumer,
 	}
