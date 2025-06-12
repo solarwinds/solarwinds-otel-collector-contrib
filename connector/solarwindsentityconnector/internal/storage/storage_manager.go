@@ -10,14 +10,14 @@ import (
 )
 
 type Manager struct {
-	cache        *internalStorage
-	expiredCh    chan internal.Subject
-	logsConsumer internal.Consumer
+	cache         *internalStorage
+	expiredCh     chan internal.Subject
+	eventConsumer internal.EventConsumer
 
 	logger *zap.Logger
 }
 
-func NewStorageManager(cfg *config.ExpirationSettings, logger *zap.Logger, logsConsumer internal.Consumer) (*Manager, error) {
+func NewStorageManager(cfg *config.ExpirationSettings, logger *zap.Logger, logsConsumer internal.EventConsumer) (*Manager, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("expiration settings configuration is nil")
 	}
@@ -29,10 +29,10 @@ func NewStorageManager(cfg *config.ExpirationSettings, logger *zap.Logger, logsC
 	}
 
 	return &Manager{
-		cache:        cache,
-		expiredCh:    expiredCh,
-		logsConsumer: logsConsumer,
-		logger:       logger,
+		cache:         cache,
+		expiredCh:     expiredCh,
+		eventConsumer: logsConsumer,
+		logger:        logger,
 	}, nil
 }
 
@@ -88,5 +88,5 @@ func (m *Manager) receiveExpired(ctx context.Context) {
 }
 
 func (m *Manager) send(batch []internal.Subject, ctx context.Context) {
-	m.logsConsumer.SendExpiredEvents(ctx, batch)
+	m.eventConsumer.SendExpiredEvents(ctx, batch)
 }

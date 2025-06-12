@@ -6,23 +6,23 @@ import (
 	"go.opentelemetry.io/collector/pdata/plog"
 )
 
-type Consumer interface {
+type EventConsumer interface {
 	SendExpiredEvents(ctx context.Context, relationships []Subject)
 }
 
-type consumer struct {
+type eventConsumer struct {
 	logsConsumer otelConsumer.Logs
 }
 
-var _ Consumer = (*consumer)(nil)
+var _ EventConsumer = (*eventConsumer)(nil)
 
-func NewConsumer(logsConsumer otelConsumer.Logs) Consumer {
-	return &consumer{
+func NewConsumer(logsConsumer otelConsumer.Logs) EventConsumer {
+	return &eventConsumer{
 		logsConsumer: logsConsumer,
 	}
 }
 
-func (c *consumer) SendExpiredEvents(ctx context.Context, events []Subject) {
+func (c *eventConsumer) SendExpiredEvents(ctx context.Context, events []Subject) {
 	logs := plog.NewLogs()
 	logRecords := CreateEventLog(&logs)
 
@@ -31,6 +31,8 @@ func (c *consumer) SendExpiredEvents(ctx context.Context, events []Subject) {
 	}
 
 	err := c.logsConsumer.ConsumeLogs(ctx, logs)
+	// TODO: This has to be reworked to use error channel in the refactoring task,
+	// since the consumer is run in the go routine.
 	if err != nil {
 		panic("failed to consume logs: " + err.Error())
 	}
