@@ -10,7 +10,7 @@ import (
 )
 
 type Manager struct {
-	cache        *ttlCache
+	cache        *internalStorage
 	expiredCh    chan internal.Subject
 	logsConsumer consumer.Consumer
 
@@ -24,7 +24,7 @@ func NewStorageManager(cfg *config.ExpirationSettings, logger *zap.Logger, logsC
 	}
 
 	expiredCh := make(chan internal.Subject)
-	cache := newTTLCache(cfg, logger, expiredCh)
+	cache := newInternalStorage(cfg, logger, expiredCh)
 
 	return &Manager{
 		cache:        cache,
@@ -36,14 +36,14 @@ func NewStorageManager(cfg *config.ExpirationSettings, logger *zap.Logger, logsC
 
 func (m *Manager) Start(ctx context.Context) error {
 	go m.receiveExpired(ctx)
-	go m.cache.Run(ctx)
+	go m.cache.run(ctx)
 
 	return nil
 }
 
 func (m *Manager) Update(s internal.Subject) {
 	if r, ok := s.(*internal.Relationship); ok {
-		m.cache.Update(r)
+		m.cache.update(r)
 	}
 }
 
