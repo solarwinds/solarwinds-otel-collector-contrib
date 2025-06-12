@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal/consumer"
 	"go.uber.org/zap"
 	"time"
 )
@@ -13,12 +12,12 @@ import (
 type Manager struct {
 	cache        *internalStorage
 	expiredCh    chan internal.Subject
-	logsConsumer consumer.Consumer
+	logsConsumer internal.Consumer
 
 	logger *zap.Logger
 }
 
-func NewStorageManager(cfg *config.ExpirationSettings, logger *zap.Logger, logsConsumer consumer.Consumer) (*Manager, error) {
+func NewStorageManager(cfg *config.ExpirationSettings, logger *zap.Logger, logsConsumer internal.Consumer) (*Manager, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("expiration settings configuration is nil")
 	}
@@ -57,7 +56,6 @@ func (m *Manager) receiveExpired(ctx context.Context) {
 	var timerC <-chan time.Time
 
 	for {
-		m.logger.Info("in for loop of eviction manager")
 		select {
 		case <-ctx.Done():
 			m.logger.Info("Context done, stopping eviction manager")
@@ -78,7 +76,7 @@ func (m *Manager) receiveExpired(ctx context.Context) {
 
 		case <-timerC:
 			// Timer expired, send the batch of evicted relationships
-			m.logger.Info("Timer expired, sending batch of evicted relationships", zap.Int("count", len(batch)))
+			m.logger.Debug("timer expired, sending batch of evicted relationships", zap.Int("count", len(batch)))
 			if len(batch) > 0 {
 				m.send(batch, ctx)
 				batch = nil // Reset the batch after sending

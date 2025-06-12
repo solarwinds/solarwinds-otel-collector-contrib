@@ -16,8 +16,8 @@ package solarwindsentityconnector
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	consumer2 "github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal/consumer"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal/storage"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
@@ -54,12 +54,12 @@ func (s *solarwindsentity) Capabilities() consumer.Capabilities {
 
 func (s *solarwindsentity) Start(ctx context.Context, _ component.Host) error {
 	if s.expirationPolicy.Enabled {
-		expirationCfg := s.expirationPolicy.Parse()
-		if expirationCfg == nil {
-			return fmt.Errorf("expiration policy is invalid")
+		expirationCfg, err := s.expirationPolicy.Parse()
+		if err != nil {
+			return errors.Join(err, fmt.Errorf("expiration policy is invalid"))
 		}
 
-		lc := consumer2.NewConsumer(s.logsConsumer)
+		lc := internal.NewConsumer(s.logsConsumer)
 		sm, err := storage.NewStorageManager(expirationCfg, s.logger, lc)
 		if err != nil {
 			s.logger.Error("failed to create storage manager", zap.Error(err))

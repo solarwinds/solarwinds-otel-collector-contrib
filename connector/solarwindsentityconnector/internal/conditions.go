@@ -104,7 +104,6 @@ func (e *EventDetector) createEntity(resourceAttrs pcommon.Map, event *config.En
 	}
 
 	return Entity{
-		Action:     Update,
 		Type:       entity.Type,
 		IDs:        ids,
 		Attributes: entityAttrs,
@@ -150,8 +149,7 @@ func (e *EventDetector) createRelationship(resourceAttrs pcommon.Map, relationsh
 	destIds, _ := attrs.Get(relationshipDestEntityIds)
 
 	return &Relationship{
-		Action: Update,
-		Type:   relationship.Type,
+		Type: relationship.Type,
 		Source: RelationshipEntity{
 			Type: relationship.Source,
 			IDs:  sourceIds.Map(),

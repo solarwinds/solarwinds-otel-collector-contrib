@@ -10,7 +10,6 @@ import (
 	"github.com/dgraph-io/ristretto/v2"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal"
-	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.uber.org/zap"
 	"time"
 )
@@ -20,9 +19,11 @@ const (
 	// Additionally, when itemCost is set to 1 the MaxCost is equal to the maximum number of items in the cache.
 	itemCost = 1
 	// When dealing with TTL for entities we do not need to be as precise as with relationships.
-	// Thus cleaning up the cache every 10 times the interval and storing entities
-	// for longer period of time is sufficient.
-	entityExpirationFactor = 10
+	// Thus cleaning up the cache every 10 times the interval.
+	entityTTLCleanupFactor = 10
+	// entityTTLFactor is a factor that controls how long the entity will be kept in the cache,
+	// after the relationship is updated.
+	entityTTLFactor = 5
 	// bufferItems is a configuration parameter that controls how many key-value operations
 	// are buffered before being processed by the internal ristretto eviction logic.
 	// The value is recommended by ristretto documentation but not set to any default value.
@@ -35,13 +36,8 @@ type storedRelationship struct {
 	relationshipType string
 }
 
-type storedEntity struct {
-	Type string
-	IDs  pcommon.Map
-}
-
 type internalStorage struct {
-	entities      *ristretto.Cache[string, storedEntity]
+	entities      *ristretto.Cache[string, internal.RelationshipEntity]
 	relationships *ristretto.Cache[string, storedRelationship]
 	ttl           time.Duration
 	interval      time.Duration
@@ -64,10 +60,10 @@ func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em c
 	// it is not immediately removed from the cache.
 	ttlCleanup := int64(cfg.TTLCleanupInterval.Seconds())
 
-	entityCache, err := ristretto.NewCache(&ristretto.Config[string, storedEntity]{
+	entityCache, err := ristretto.NewCache(&ristretto.Config[string, internal.RelationshipEntity]{
 		NumCounters:            numCounters,
 		MaxCost:                maxCost,
-		TtlTickerDurationInSec: ttlCleanup * entityExpirationFactor,
+		TtlTickerDurationInSec: ttlCleanup * entityTTLCleanupFactor,
 		BufferItems:            bufferItems,
 	})
 
@@ -146,18 +142,12 @@ func (c *internalStorage) update(relationship *internal.Relationship) error {
 		return errors.Join(err, fmt.Errorf("failed to hash key for destination entity: %s", relationship.Destination.Type))
 	}
 
-	sourceUpdated := c.entities.SetWithTTL(sourceHash, storedEntity{
-		Type: relationship.Source.Type,
-		IDs:  relationship.Source.IDs,
-	}, itemCost, c.ttl*entityExpirationFactor)
+	sourceUpdated := c.entities.SetWithTTL(sourceHash, relationship.Source, itemCost, c.ttl*entityTTLFactor)
 	if !sourceUpdated {
 		return fmt.Errorf("failed to update source entity: %s", relationship.Source.Type)
 	}
 
-	destUpdated := c.entities.SetWithTTL(destHash, storedEntity{
-		Type: relationship.Destination.Type,
-		IDs:  relationship.Destination.IDs,
-	}, itemCost, c.ttl*entityExpirationFactor)
+	destUpdated := c.entities.SetWithTTL(destHash, relationship.Destination, itemCost, c.ttl*entityTTLFactor)
 	if !destUpdated {
 		return fmt.Errorf("failed to update relationship entity: %s", relationship.Destination.Type)
 	}
@@ -179,7 +169,7 @@ func (c *internalStorage) update(relationship *internal.Relationship) error {
 // buildKey constructs a unique key for the entity referenced in the relationship.
 // The key is composition of entity type and its ID attributes.
 func buildKey(entity internal.RelationshipEntity) (string, error) {
-	e := storedEntity{
+	e := internal.RelationshipEntity{
 		Type: entity.Type,
 		IDs:  entity.IDs,
 	}

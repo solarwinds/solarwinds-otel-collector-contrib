@@ -3,6 +3,7 @@ package internal
 import (
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
+	"time"
 )
 
 type Subject interface {
@@ -10,19 +11,12 @@ type Subject interface {
 	Delete(logRecord *plog.LogRecordSlice)
 }
 
-type Action string
-
-const (
-	Update Action = "update"
-)
-
 type RelationshipEntity struct {
 	Type string
 	IDs  pcommon.Map
 }
 
 type Relationship struct {
-	Action
 	Type        string
 	Source      RelationshipEntity
 	Destination RelationshipEntity
@@ -31,6 +25,7 @@ type Relationship struct {
 
 func (r Relationship) Delete(logRecords *plog.LogRecordSlice) {
 	logRecord := logRecords.AppendEmpty()
+	logRecord.SetObservedTimestamp(pcommon.NewTimestampFromTime(time.Now()))
 	attrs := logRecord.Attributes()
 	attrs.PutStr(entityEventType, relationshipDeleteEventType)
 
@@ -47,7 +42,6 @@ func (r Relationship) Delete(logRecords *plog.LogRecordSlice) {
 }
 
 type Entity struct {
-	Action
 	Type       string
 	IDs        pcommon.Map
 	Attributes pcommon.Map

@@ -2,7 +2,13 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"time"
+)
+
+const (
+	defaultTTLCleanupInterval = 5 * time.Second
+	defaultMaxCapacity        = int64(1_000_000) // 1 million items in the cache
 )
 
 type ExpirationPolicy struct {
@@ -23,28 +29,26 @@ type ExpirationSettings struct {
 	MaxCapacity        int64
 }
 
-func (e *ExpirationPolicy) Parse() *ExpirationSettings {
+func (e *ExpirationPolicy) Parse() (*ExpirationSettings, error) {
 	if !e.Enabled {
-		return &ExpirationSettings{
-			Enabled: false,
-		}
+		return nil, fmt.Errorf("expiration policy is not enabled")
 	}
 
 	var interval time.Duration
 
 	if e.Interval == "" {
-		return nil
+		return nil, fmt.Errorf("expiration interval is not set")
 	} else {
 		interval, _ = time.ParseDuration(e.Interval)
 	}
 
 	maxCapacity, err := e.getMaxCapacity()
 	if err != nil {
-		return nil // Invalid max capacity
+		return nil, err
 	}
 	ttlCleanupInterval, err := e.getTTLCleanupInterval()
 	if err != nil {
-		return nil // Invalid TTL cleanup interval
+		return nil, err
 	}
 
 	return &ExpirationSettings{
@@ -52,11 +56,10 @@ func (e *ExpirationPolicy) Parse() *ExpirationSettings {
 		Interval:           interval,
 		TTLCleanupInterval: ttlCleanupInterval,
 		MaxCapacity:        maxCapacity,
-	}
+	}, nil
 }
 
 func (e *ExpirationPolicy) getMaxCapacity() (int64, error) {
-	defaultMaxCapacity := int64(1_000_000) // Default to 1 million items
 	if e.CacheConfiguration != nil && e.CacheConfiguration.MaxCapacity != nil {
 		if *e.CacheConfiguration.MaxCapacity <= 0 {
 			return 0, errors.New("max capacity must be greater than zero")
@@ -81,6 +84,5 @@ func (e *ExpirationPolicy) getTTLCleanupInterval() (time.Duration, error) {
 		return parsedCleanupInterval, nil
 	}
 
-	defaultTTLCleanupInterval := 10 * time.Second
 	return defaultTTLCleanupInterval, nil
 }

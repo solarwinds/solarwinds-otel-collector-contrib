@@ -1,14 +1,13 @@
-package consumer
+package internal
 
 import (
 	"context"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal"
 	otelConsumer "go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/pdata/plog"
 )
 
 type Consumer interface {
-	SendExpiredEvents(ctx context.Context, relationships []internal.Subject)
+	SendExpiredEvents(ctx context.Context, relationships []Subject)
 }
 
 type consumer struct {
@@ -23,9 +22,9 @@ func NewConsumer(logsConsumer otelConsumer.Logs) Consumer {
 	}
 }
 
-func (c *consumer) SendExpiredEvents(ctx context.Context, events []internal.Subject) {
+func (c *consumer) SendExpiredEvents(ctx context.Context, events []Subject) {
 	logs := plog.NewLogs()
-	logRecords := internal.CreateEventLog(&logs)
+	logRecords := CreateEventLog(&logs)
 
 	for _, e := range events {
 		e.Delete(logRecords)
