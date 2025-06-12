@@ -16,7 +16,7 @@ type eventConsumer struct {
 
 var _ EventConsumer = (*eventConsumer)(nil)
 
-func NewConsumer(logsConsumer consumer.Logs) EventConsumer {
+func NewEventConsumer(logsConsumer consumer.Logs) EventConsumer {
 	return &eventConsumer{
 		logsConsumer: logsConsumer,
 	}

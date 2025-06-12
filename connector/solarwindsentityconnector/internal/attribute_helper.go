@@ -119,7 +119,7 @@ func putAttribute(dest *pcommon.Map, key string, attrValue pcommon.Value) {
 func CreateEventLog(logs *plog.Logs) *plog.LogRecordSlice {
 	resourceLog := logs.ResourceLogs().AppendEmpty()
 	scopeLog := resourceLog.ScopeLogs().AppendEmpty()
-	scopeLog.Scope().Attributes().PutBool(EntityEventAsLog, true)
+	scopeLog.Scope().Attributes().PutBool(entityEventAsLog, true)
 	lrs := scopeLog.LogRecords()
 
 	return &lrs

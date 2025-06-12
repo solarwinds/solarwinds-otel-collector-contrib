@@ -59,10 +59,6 @@ func (m *Manager) receiveExpired(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			m.logger.Info("Context done, stopping eviction manager")
-			// Send the remaining batch of evicted relationships
-			if len(batch) > 0 {
-				m.send(batch, ctx)
-			}
 			close(m.expiredCh)
 			return
 
@@ -78,15 +74,11 @@ func (m *Manager) receiveExpired(ctx context.Context) {
 			// Timer expired, send the batch of evicted relationships
 			m.logger.Debug("timer expired, sending batch of evicted relationships", zap.Int("count", len(batch)))
 			if len(batch) > 0 {
-				m.send(batch, ctx)
+				m.eventConsumer.SendExpiredEvents(ctx, batch)
 				batch = nil // Reset the batch after sending
 				timer.Stop()
 				timerC = nil
 			}
 		}
 	}
-}
-
-func (m *Manager) send(batch []internal.Event, ctx context.Context) {
-	m.eventConsumer.SendExpiredEvents(ctx, batch)
 }

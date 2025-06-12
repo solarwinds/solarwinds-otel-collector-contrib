@@ -58,8 +58,8 @@ func (s *solarwindsentity) Start(ctx context.Context, _ component.Host) error {
 			return errors.Join(err, fmt.Errorf("expiration policy is invalid"))
 		}
 
-		lc := internal.NewConsumer(s.logsConsumer)
-		sm, err := storage.NewStorageManager(expirationCfg, s.logger, lc)
+		ec := internal.NewEventConsumer(s.logsConsumer)
+		sm, err := storage.NewStorageManager(expirationCfg, s.logger, ec)
 		if err != nil {
 			s.logger.Error("failed to create storage manager", zap.Error(err))
 			return err
