@@ -7,7 +7,7 @@ import (
 
 type Subject interface {
 	Update(logRecord *plog.LogRecord)
-	Expire(logRecord *plog.LogRecordSlice)
+	Delete(logRecord *plog.LogRecordSlice)
 }
 
 type Action string
@@ -29,10 +29,10 @@ type Relationship struct {
 	Attributes  pcommon.Map
 }
 
-func (r Relationship) Expire(logRecords *plog.LogRecordSlice) {
+func (r Relationship) Delete(logRecords *plog.LogRecordSlice) {
 	logRecord := logRecords.AppendEmpty()
 	attrs := logRecord.Attributes()
-	attrs.PutStr(entityEventType, setUnknownEventType)
+	attrs.PutStr(entityEventType, relationshipDeleteEventType)
 
 	// Copy id, entity and relationship attributes as pcommon.Map to the log record
 	srcIds := attrs.PutEmptyMap(relationshipSrcEntityIds)
@@ -53,8 +53,8 @@ type Entity struct {
 	Attributes pcommon.Map
 }
 
-func (e Entity) Expire(_ *plog.LogRecordSlice) {
-	// Expire is not supported for Entity
+func (e Entity) Delete(_ *plog.LogRecordSlice) {
+	// TODO: Implement delete logic for Entity in the following task.
 }
 
 func (r Relationship) Update(logRecord *plog.LogRecord) {

@@ -28,7 +28,7 @@ func (c *consumer) SendExpiredEvents(ctx context.Context, events []internal.Subj
 	logRecords := internal.CreateEventLog(&logs)
 
 	for _, e := range events {
-		e.Expire(logRecords)
+		e.Delete(logRecords)
 	}
 
 	err := c.logsConsumer.ConsumeLogs(ctx, logs)
