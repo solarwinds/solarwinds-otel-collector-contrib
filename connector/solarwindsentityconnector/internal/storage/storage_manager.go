@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"fmt"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal/consumer"
@@ -17,21 +18,23 @@ type Manager struct {
 	logger *zap.Logger
 }
 
-func NewStorageManager(cfg *config.ExpirationSettings, logger *zap.Logger, logsConsumer consumer.Consumer) *Manager {
+func NewStorageManager(cfg *config.ExpirationSettings, logger *zap.Logger, logsConsumer consumer.Consumer) (*Manager, error) {
 	if cfg == nil {
-		logger.Error("Expiration settings configuration is nil")
-		return nil
+		return nil, fmt.Errorf("expiration settings configuration is nil")
 	}
 
 	expiredCh := make(chan internal.Subject)
-	cache := newInternalStorage(cfg, logger, expiredCh)
+	cache, err := newInternalStorage(cfg, logger, expiredCh)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create internal storage: %w", err)
+	}
 
 	return &Manager{
 		cache:        cache,
 		expiredCh:    expiredCh,
 		logsConsumer: logsConsumer,
 		logger:       logger,
-	}
+	}, nil
 }
 
 func (m *Manager) Start(ctx context.Context) error {

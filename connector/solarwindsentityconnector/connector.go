@@ -16,6 +16,7 @@ package solarwindsentityconnector
 
 import (
 	"context"
+	"fmt"
 	consumer2 "github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal/consumer"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal/storage"
 
@@ -52,19 +53,27 @@ func (s *solarwindsentity) Capabilities() consumer.Capabilities {
 }
 
 func (s *solarwindsentity) Start(ctx context.Context, _ component.Host) error {
-	s.logger.Info("Starting solarwindsentity connector")
 	if s.expirationPolicy.Enabled {
 		expirationCfg := s.expirationPolicy.Parse()
 		if expirationCfg == nil {
-			s.logger.Error("expiration policy is invalid")
+			return fmt.Errorf("expiration policy is invalid")
 		}
-		lc := consumer2.NewConsumer(s.logsConsumer)
-		s.storageManager = storage.NewStorageManager(expirationCfg, s.logger, lc)
-		err := s.storageManager.Start(ctx)
 
+		lc := consumer2.NewConsumer(s.logsConsumer)
+		sm, err := storage.NewStorageManager(expirationCfg, s.logger, lc)
 		if err != nil {
+			s.logger.Error("failed to create storage manager", zap.Error(err))
 			return err
 		}
+
+		s.storageManager = sm
+		err = s.storageManager.Start(ctx)
+
+		if err != nil {
+			s.logger.Error("failed to start storage manager", zap.Error(err))
+			return err
+		}
+
 	} else {
 		s.logger.Debug("expiration policy is disabled, no expiration logs will be generated")
 	}

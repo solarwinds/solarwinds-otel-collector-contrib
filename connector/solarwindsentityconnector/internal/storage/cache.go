@@ -52,7 +52,7 @@ type internalStorage struct {
 	// mu sync.Mutex
 }
 
-func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em chan<- internal.Subject) *internalStorage {
+func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em chan<- internal.Subject) (*internalStorage, error) {
 	var err error
 
 	// maxCost sets the maximum number of items, when itemCost is set to 1
@@ -70,6 +70,10 @@ func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em c
 		TtlTickerDurationInSec: ttlCleanup * entityExpirationFactor,
 		BufferItems:            bufferItems,
 	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to create entity cache: %w", err)
+	}
 
 	relationshipCache, err := ristretto.NewCache(&ristretto.Config[string, storedRelationship]{
 		NumCounters:            numCounters,
@@ -107,7 +111,7 @@ func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em c
 	})
 
 	if err != nil {
-		panic("Failed to create cache: " + err.Error())
+		return nil, fmt.Errorf("failed to create relaitonship cache: %w", err)
 	}
 
 	return &internalStorage{
@@ -115,7 +119,7 @@ func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em c
 		relationships: relationshipCache,
 		ttl:           cfg.Interval,
 		logger:        logger,
-	}
+	}, nil
 }
 
 func (c *internalStorage) run(ctx context.Context) {
