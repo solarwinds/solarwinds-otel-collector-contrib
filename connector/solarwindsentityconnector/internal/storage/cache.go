@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/dgraph-io/ristretto/v2"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
@@ -16,11 +17,14 @@ import (
 
 const (
 	// ristretto cache provides cost management, but we need to set the same cost for all items.
-	// Additionally, the MaxCost is then equal to the maximum number of items in the cache.
+	// Additionally, when itemCost is set to 1 the MaxCost is equal to the maximum number of items in the cache.
 	itemCost = 1
 	// When dealing with TTL for entities we do not need to be as precise as with relationships.
-	// Thus cleaning up the cache every 10 times the interval is sufficient.
+	// Thus cleaning up the cache every 10 times the interval and storing entities
+	// for longer period of time is sufficient.
 	entityExpirationFactor = 10
+	// bufferItems is a configuration parameter that controls how many key-value operations
+	// are buffered before being processed by the internal ristretto eviction logic.
 	// The value is recommended by ristretto documentation but not set to any default value.
 	bufferItems = 64
 )
@@ -126,19 +130,33 @@ func (c *internalStorage) run(ctx context.Context) {
 
 // Reset TTL for existing entries, or creates a new entries with default TTL, for given relationship
 // as well as source and destination entities.
-func (c *internalStorage) update(relationship *internal.Relationship) {
-	sourceHash := buildKey(relationship.Source)
-	destHash := buildKey(relationship.Destination)
+func (c *internalStorage) update(relationship *internal.Relationship) error {
+	c.logger.Debug("updating relationship in internal storage", zap.String("relationshipType", relationship.Type))
 
-	c.entities.SetWithTTL(sourceHash, storedEntity{
+	sourceHash, err := buildKey(relationship.Source)
+	if err != nil {
+		return errors.Join(err, fmt.Errorf("failed to hash key for source entity: %s", relationship.Source.Type))
+	}
+	destHash, err := buildKey(relationship.Destination)
+	if err != nil {
+		return errors.Join(err, fmt.Errorf("failed to hash key for destination entity: %s", relationship.Destination.Type))
+	}
+
+	sourceUpdated := c.entities.SetWithTTL(sourceHash, storedEntity{
 		Type: relationship.Source.Type,
 		IDs:  relationship.Source.IDs,
 	}, itemCost, c.ttl*entityExpirationFactor)
+	if !sourceUpdated {
+		return fmt.Errorf("failed to update source entity: %s", relationship.Source.Type)
+	}
 
-	c.entities.SetWithTTL(destHash, storedEntity{
+	destUpdated := c.entities.SetWithTTL(destHash, storedEntity{
 		Type: relationship.Destination.Type,
 		IDs:  relationship.Destination.IDs,
 	}, itemCost, c.ttl*entityExpirationFactor)
+	if !destUpdated {
+		return fmt.Errorf("failed to update relationship entity: %s", relationship.Destination.Type)
+	}
 
 	relationshipKey := fmt.Sprintf("%s:%s:%s", relationship.Type, sourceHash, destHash)
 	relationshipValue := storedRelationship{
@@ -146,12 +164,17 @@ func (c *internalStorage) update(relationship *internal.Relationship) {
 		destHash:         destHash,
 		relationshipType: relationship.Type,
 	}
-	c.relationships.SetWithTTL(relationshipKey, relationshipValue, itemCost, c.ttl)
+
+	relationshipUpdated := c.relationships.SetWithTTL(relationshipKey, relationshipValue, itemCost, c.ttl)
+	if !relationshipUpdated {
+		return fmt.Errorf("failed to update relationship: %s", relationship.Type)
+	}
+	return nil
 }
 
 // buildKey constructs a unique key for the entity referenced in the relationship.
 // The key is composition of entity type and its ID attributes.
-func buildKey(entity internal.RelationshipEntity) string {
+func buildKey(entity internal.RelationshipEntity) (string, error) {
 	e := storedEntity{
 		Type: entity.Type,
 		IDs:  entity.IDs,
@@ -159,9 +182,9 @@ func buildKey(entity internal.RelationshipEntity) string {
 	var buf bytes.Buffer
 	enc := json.NewEncoder(&buf)
 	if err := enc.Encode(e); err != nil {
-		panic(fmt.Sprintf("Failed to encode cache value: %v", err))
+		return "", fmt.Errorf("failed to encode entity: %s, with the following error: %w", entity.Type, err)
 	}
 
 	key := sha256.Sum256(buf.Bytes())
-	return fmt.Sprintf("%x", key)
+	return fmt.Sprintf("%x", key), nil
 }

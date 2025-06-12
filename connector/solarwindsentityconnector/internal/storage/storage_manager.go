@@ -41,10 +41,11 @@ func (m *Manager) Start(ctx context.Context) error {
 	return nil
 }
 
-func (m *Manager) Update(s internal.Subject) {
+func (m *Manager) Update(s internal.Subject) error {
 	if r, ok := s.(*internal.Relationship); ok {
-		m.cache.update(r)
+		return m.cache.update(r)
 	}
+	return nil
 }
 
 func (m *Manager) receiveExpired(ctx context.Context) {

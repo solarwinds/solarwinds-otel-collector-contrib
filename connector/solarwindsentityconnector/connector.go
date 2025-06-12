@@ -94,7 +94,11 @@ func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.M
 				}
 				for _, event := range events {
 					s.eventBuilder.AppendUpdateEvent(logRecords, event)
-					s.storageManager.Update(event)
+					err := s.storageManager.Update(event)
+					if err != nil {
+						s.logger.Error("Failed to update storage with event", zap.Error(err))
+						return err
+					}
 				}
 			}
 		}
@@ -128,9 +132,14 @@ func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) erro
 					s.logger.Error("Failed to process logs condition", zap.Error(err))
 					return err
 				}
+
 				for _, event := range events {
 					s.eventBuilder.AppendUpdateEvent(logRecords, event)
-					s.storageManager.Update(event)
+					err := s.storageManager.Update(event)
+					if err != nil {
+						s.logger.Error("Failed to update storage with event", zap.Error(err))
+						return err
+					}
 				}
 			}
 		}
