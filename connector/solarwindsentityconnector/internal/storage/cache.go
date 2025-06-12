@@ -51,19 +51,26 @@ type internalStorage struct {
 func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em chan<- internal.Subject) *internalStorage {
 	var err error
 
+	// maxCost sets the maximum number of items, when itemCost is set to 1
+	maxCost := cfg.MaxCapacity
+	// numCounters are internal setting for ristretto cache that helps to manage eviction mechanism.
+	// It is recommended to set it to 10 times the maximum capacity for most of the use cases.
+	numCounters := cfg.MaxCapacity * 10
+	// ttlCleanup sets the interval for sequence scan of the evicted items. When item is evicted,
+	// it is not immediately removed from the cache.
+	ttlCleanup := int64(cfg.TTLCleanupInterval.Seconds())
+
 	entityCache, err := ristretto.NewCache(&ristretto.Config[string, storedEntity]{
-		NumCounters: cfg.MaxCapacity * 10,
-		MaxCost:     cfg.MaxCapacity,
-		// TtlTickerDurationInSec is set to 10 times the cleanup interval to ensure that entities are cleaned up
-		// in a timely manner, but not too frequently.
-		TtlTickerDurationInSec: int64(cfg.TTLCleanupInterval.Seconds()) * entityExpirationFactor,
+		NumCounters:            numCounters,
+		MaxCost:                maxCost,
+		TtlTickerDurationInSec: ttlCleanup * entityExpirationFactor,
 		BufferItems:            bufferItems,
 	})
 
 	relationshipCache, err := ristretto.NewCache(&ristretto.Config[string, storedRelationship]{
-		NumCounters:            cfg.MaxCapacity * 10,
-		MaxCost:                cfg.MaxCapacity,
-		TtlTickerDurationInSec: int64(cfg.TTLCleanupInterval.Seconds()),
+		NumCounters:            numCounters,
+		MaxCost:                maxCost,
+		TtlTickerDurationInSec: ttlCleanup,
 		BufferItems:            bufferItems,
 		OnEvict: func(item *ristretto.Item[storedRelationship]) {
 			logger.Info("internalStorage relationship evicted")
