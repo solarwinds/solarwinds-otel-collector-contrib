@@ -50,8 +50,7 @@ func createConnector(settings connector.Settings, config component.Config, logs 
 	events := cfg.Schema.NewEvents(settings.TelemetrySettings)
 
 	se := &solarwindsentity{
-		logger:       settings.Logger,
-		eventBuilder: internal.NewEventBuilder(),
+		logger: settings.Logger,
 		eventDetector: internal.NewEventDetector(
 			cfg.Schema.NewEntities(),
 			cfg.SourcePrefix,

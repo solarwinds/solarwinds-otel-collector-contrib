@@ -37,7 +37,6 @@ type solarwindsentity struct {
 
 	logsConsumer  consumer.Logs
 	eventDetector *internal.EventDetector
-	eventBuilder  *internal.EventBuilder
 
 	expirationPolicy config.ExpirationPolicy
 	storageManager   *storage.Manager
@@ -102,10 +101,9 @@ func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.M
 					return err
 				}
 				for _, event := range events {
-					s.eventBuilder.AppendUpdateEvent(logRecords, event)
-					err := s.storageManager.Update(event)
+					err := s.handleEvent(event, logRecords)
 					if err != nil {
-						s.logger.Error("Failed to update storage with event", zap.Error(err))
+						s.logger.Error("failed to handle event", zap.Error(err))
 						return err
 					}
 				}
@@ -143,10 +141,9 @@ func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) erro
 				}
 
 				for _, event := range events {
-					s.eventBuilder.AppendUpdateEvent(logRecords, event)
-					err := s.storageManager.Update(event)
+					err := s.handleEvent(event, logRecords)
 					if err != nil {
-						s.logger.Error("Failed to update storage with event", zap.Error(err))
+						s.logger.Error("failed to handle event", zap.Error(err))
 						return err
 					}
 				}
@@ -159,4 +156,16 @@ func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) erro
 	}
 
 	return s.logsConsumer.ConsumeLogs(ctx, eventLogs)
+}
+
+func (s *solarwindsentity) handleEvent(event internal.Subject, eventLogs *plog.LogRecordSlice) error {
+	event.Update(eventLogs)
+	if s.storageManager != nil {
+		err := s.storageManager.Update(event)
+		if err != nil {
+			s.logger.Error("Failed to update storage with event", zap.Error(err))
+			return err
+		}
+	}
+	return nil
 }

@@ -13,23 +13,3 @@
 // limitations under the License.
 
 package internal
-
-import (
-	"time"
-
-	"go.opentelemetry.io/collector/pdata/pcommon"
-	"go.opentelemetry.io/collector/pdata/plog"
-)
-
-type EventBuilder struct{}
-
-func NewEventBuilder() *EventBuilder {
-	return &EventBuilder{}
-}
-
-func (e *EventBuilder) AppendUpdateEvent(eventLogs *plog.LogRecordSlice, subject Subject) {
-	lr := eventLogs.AppendEmpty()
-	lr.SetObservedTimestamp(pcommon.NewTimestampFromTime(time.Now()))
-
-	subject.Update(&lr)
-}

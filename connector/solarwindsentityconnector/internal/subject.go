@@ -7,8 +7,8 @@ import (
 )
 
 type Subject interface {
-	Update(logRecord *plog.LogRecord)
-	Delete(logRecord *plog.LogRecordSlice)
+	Update(logRecords *plog.LogRecordSlice)
+	Delete(logRecords *plog.LogRecordSlice)
 }
 
 type RelationshipEntity struct {
@@ -51,7 +51,9 @@ func (e Entity) Delete(_ *plog.LogRecordSlice) {
 	// TODO: Implement delete logic for Entity in the following task.
 }
 
-func (r Relationship) Update(logRecord *plog.LogRecord) {
+func (r Relationship) Update(logRecords *plog.LogRecordSlice) {
+	logRecord := logRecords.AppendEmpty()
+	logRecord.SetObservedTimestamp(pcommon.NewTimestampFromTime(time.Now()))
 	attrs := logRecord.Attributes()
 	attrs.PutStr(entityEventType, relationshipUpdateEventType)
 
@@ -69,7 +71,9 @@ func (r Relationship) Update(logRecord *plog.LogRecord) {
 	attrs.PutStr(destEntityType, r.Destination.Type)
 }
 
-func (e Entity) Update(logRecord *plog.LogRecord) {
+func (e Entity) Update(logRecords *plog.LogRecordSlice) {
+	logRecord := logRecords.AppendEmpty()
+	logRecord.SetObservedTimestamp(pcommon.NewTimestampFromTime(time.Now()))
 	attrs := logRecord.Attributes()
 	attrs.PutStr(entityEventType, entityUpdateEventType)
 	attrs.PutStr(entityType, e.Type)
