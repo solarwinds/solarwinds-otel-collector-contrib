@@ -24,7 +24,7 @@ func NewStorageManager(cfg *config.ExpirationSettings, logger *zap.Logger, logsC
 	}
 
 	expiredCh := make(chan internal.Subject)
-	cache := NewTTLCache(cfg, logger, expiredCh)
+	cache := newTTLCache(cfg, logger, expiredCh)
 
 	return &Manager{
 		cache:        cache,
