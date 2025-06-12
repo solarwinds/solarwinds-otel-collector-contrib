@@ -6,11 +6,6 @@ import (
 	"time"
 )
 
-type Subject interface {
-	Update(logRecords *plog.LogRecordSlice)
-	Delete(logRecords *plog.LogRecordSlice)
-}
-
 type RelationshipEntity struct {
 	Type string
 	IDs  pcommon.Map
@@ -23,35 +18,9 @@ type Relationship struct {
 	Attributes  pcommon.Map
 }
 
-func (r Relationship) Delete(logRecords *plog.LogRecordSlice) {
-	logRecord := logRecords.AppendEmpty()
-	logRecord.SetObservedTimestamp(pcommon.NewTimestampFromTime(time.Now()))
-	attrs := logRecord.Attributes()
-	attrs.PutStr(entityEventType, relationshipDeleteEventType)
+var _ Event = (*Relationship)(nil)
 
-	// Copy id, entity and relationship attributes as pcommon.Map to the log record
-	srcIds := attrs.PutEmptyMap(relationshipSrcEntityIds)
-	destIds := attrs.PutEmptyMap(relationshipDestEntityIds)
-
-	r.Source.IDs.CopyTo(srcIds)
-	r.Destination.IDs.CopyTo(destIds)
-
-	attrs.PutStr(relationshipType, r.Type)
-	attrs.PutStr(srcEntityType, r.Source.Type)
-	attrs.PutStr(destEntityType, r.Destination.Type)
-}
-
-type Entity struct {
-	Type       string
-	IDs        pcommon.Map
-	Attributes pcommon.Map
-}
-
-func (e Entity) Delete(_ *plog.LogRecordSlice) {
-	// TODO: Implement delete logic for Entity in the following task.
-}
-
-func (r Relationship) Update(logRecords *plog.LogRecordSlice) {
+func (r *Relationship) Update(logRecords *plog.LogRecordSlice) {
 	logRecord := logRecords.AppendEmpty()
 	logRecord.SetObservedTimestamp(pcommon.NewTimestampFromTime(time.Now()))
 	attrs := logRecord.Attributes()
@@ -71,20 +40,20 @@ func (r Relationship) Update(logRecords *plog.LogRecordSlice) {
 	attrs.PutStr(destEntityType, r.Destination.Type)
 }
 
-func (e Entity) Update(logRecords *plog.LogRecordSlice) {
+func (r *Relationship) Delete(logRecords *plog.LogRecordSlice) {
 	logRecord := logRecords.AppendEmpty()
 	logRecord.SetObservedTimestamp(pcommon.NewTimestampFromTime(time.Now()))
 	attrs := logRecord.Attributes()
-	attrs.PutStr(entityEventType, entityUpdateEventType)
-	attrs.PutStr(entityType, e.Type)
+	attrs.PutStr(entityEventType, relationshipDeleteEventType)
 
-	// Copy id and entity attributes as pcommon.Map to the log record
-	entityIdsMap := attrs.PutEmptyMap(entityIds)
-	entityAttrs := attrs.PutEmptyMap(entityAttributes)
+	// Copy id, entity and relationship attributes as pcommon.Map to the log record
+	srcIds := attrs.PutEmptyMap(relationshipSrcEntityIds)
+	destIds := attrs.PutEmptyMap(relationshipDestEntityIds)
 
-	e.IDs.CopyTo(entityIdsMap)
-	e.Attributes.CopyTo(entityAttrs)
+	r.Source.IDs.CopyTo(srcIds)
+	r.Destination.IDs.CopyTo(destIds)
+
+	attrs.PutStr(relationshipType, r.Type)
+	attrs.PutStr(srcEntityType, r.Source.Type)
+	attrs.PutStr(destEntityType, r.Destination.Type)
 }
-
-var _ Subject = (*Relationship)(nil)
-var _ Subject = (*Entity)(nil)

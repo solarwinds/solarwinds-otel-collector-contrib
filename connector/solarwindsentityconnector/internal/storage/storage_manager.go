@@ -11,7 +11,7 @@ import (
 
 type Manager struct {
 	cache         *internalStorage
-	expiredCh     chan internal.Subject
+	expiredCh     chan internal.Event
 	eventConsumer internal.EventConsumer
 
 	logger *zap.Logger
@@ -22,7 +22,7 @@ func NewStorageManager(cfg *config.ExpirationSettings, logger *zap.Logger, logsC
 		return nil, fmt.Errorf("expiration settings configuration is nil")
 	}
 
-	expiredCh := make(chan internal.Subject)
+	expiredCh := make(chan internal.Event)
 	cache, err := newInternalStorage(cfg, logger, expiredCh)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create internal storage: %w", err)
@@ -43,7 +43,7 @@ func (m *Manager) Start(ctx context.Context) error {
 	return nil
 }
 
-func (m *Manager) Update(s internal.Subject) error {
+func (m *Manager) Update(s internal.Event) error {
 	if r, ok := s.(*internal.Relationship); ok {
 		return m.cache.update(r)
 	}
@@ -51,7 +51,7 @@ func (m *Manager) Update(s internal.Subject) error {
 }
 
 func (m *Manager) receiveExpired(ctx context.Context) {
-	var batch []internal.Subject
+	var batch []internal.Event
 	var timer *time.Timer
 	var timerC <-chan time.Time
 
@@ -68,7 +68,7 @@ func (m *Manager) receiveExpired(ctx context.Context) {
 
 		case rel := <-m.expiredCh:
 			if batch == nil {
-				batch = make([]internal.Subject, 0)
+				batch = make([]internal.Event, 0)
 				timer = time.NewTimer(1 * time.Second)
 				timerC = timer.C
 			}
@@ -87,6 +87,6 @@ func (m *Manager) receiveExpired(ctx context.Context) {
 	}
 }
 
-func (m *Manager) send(batch []internal.Subject, ctx context.Context) {
+func (m *Manager) send(batch []internal.Event, ctx context.Context) {
 	m.eventConsumer.SendExpiredEvents(ctx, batch)
 }

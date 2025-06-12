@@ -7,7 +7,7 @@ import (
 )
 
 type EventConsumer interface {
-	SendExpiredEvents(ctx context.Context, relationships []Subject)
+	SendExpiredEvents(ctx context.Context, relationships []Event)
 }
 
 type eventConsumer struct {
@@ -22,7 +22,7 @@ func NewConsumer(logsConsumer otelConsumer.Logs) EventConsumer {
 	}
 }
 
-func (c *eventConsumer) SendExpiredEvents(ctx context.Context, events []Subject) {
+func (c *eventConsumer) SendExpiredEvents(ctx context.Context, events []Event) {
 	logs := plog.NewLogs()
 	logRecords := CreateEventLog(&logs)
 

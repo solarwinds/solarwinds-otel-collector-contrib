@@ -13,3 +13,10 @@
 // limitations under the License.
 
 package internal
+
+import "go.opentelemetry.io/collector/pdata/plog"
+
+type Event interface {
+	Update(logRecords *plog.LogRecordSlice)
+	Delete(logRecords *plog.LogRecordSlice)
+}

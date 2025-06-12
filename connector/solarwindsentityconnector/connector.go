@@ -158,7 +158,7 @@ func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) erro
 	return s.logsConsumer.ConsumeLogs(ctx, eventLogs)
 }
 
-func (s *solarwindsentity) handleEvent(event internal.Subject, eventLogs *plog.LogRecordSlice) error {
+func (s *solarwindsentity) handleEvent(event internal.Event, eventLogs *plog.LogRecordSlice) error {
 	event.Update(eventLogs)
 	if s.storageManager != nil {
 		err := s.storageManager.Update(event)

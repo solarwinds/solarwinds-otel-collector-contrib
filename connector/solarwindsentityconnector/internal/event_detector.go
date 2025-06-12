@@ -48,7 +48,7 @@ func NewEventDetector(
 	}
 }
 
-func (e *EventDetector) DetectLog(ctx context.Context, resourceAttrs pcommon.Map, transformCtx ottllog.TransformContext) ([]Subject, error) {
+func (e *EventDetector) DetectLog(ctx context.Context, resourceAttrs pcommon.Map, transformCtx ottllog.TransformContext) ([]Event, error) {
 	ee, re, err := processEvents(ctx, e.logEvents, transformCtx)
 	if err != nil {
 		return nil, err
@@ -57,7 +57,7 @@ func (e *EventDetector) DetectLog(ctx context.Context, resourceAttrs pcommon.Map
 	return e.collectEvents(resourceAttrs, ee, re)
 }
 
-func (e *EventDetector) DetectMetric(ctx context.Context, resourceAttrs pcommon.Map, transformCtx ottlmetric.TransformContext) ([]Subject, error) {
+func (e *EventDetector) DetectMetric(ctx context.Context, resourceAttrs pcommon.Map, transformCtx ottlmetric.TransformContext) ([]Event, error) {
 	ee, re, err := processEvents(ctx, e.metricEvents, transformCtx)
 	if err != nil {
 		return nil, err
@@ -66,8 +66,8 @@ func (e *EventDetector) DetectMetric(ctx context.Context, resourceAttrs pcommon.
 
 }
 
-func (e *EventDetector) collectEvents(attrs pcommon.Map, ee []*config.EntityEvent, re []*config.RelationshipEvent) ([]Subject, error) {
-	events := make([]Subject, 0, len(ee)+len(re))
+func (e *EventDetector) collectEvents(attrs pcommon.Map, ee []*config.EntityEvent, re []*config.RelationshipEvent) ([]Event, error) {
+	events := make([]Event, 0, len(ee)+len(re))
 	for _, entityEvent := range ee {
 		newEvent, _ := e.createEntity(attrs, entityEvent)
 		events = append(events, newEvent)

@@ -48,7 +48,7 @@ type internalStorage struct {
 	// mu sync.Mutex
 }
 
-func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em chan<- internal.Subject) (*internalStorage, error) {
+func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em chan<- internal.Event) (*internalStorage, error) {
 	var err error
 
 	// maxCost sets the maximum number of items, when itemCost is set to 1
@@ -91,7 +91,7 @@ func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em c
 					logger.Warn("destination entity not found in cache", zap.String("hash", item.Value.sourceHash))
 				}
 
-				em <- internal.Relationship{
+				em <- &internal.Relationship{
 					Type: item.Value.relationshipType,
 					Source: internal.RelationshipEntity{
 						Type: source.Type,
