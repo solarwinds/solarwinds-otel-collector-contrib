@@ -22,6 +22,7 @@ const (
 	// Event type values
 	entityUpdateEventType       = "entity_state"
 	relationshipUpdateEventType = "entity_relationship_state"
+	setUnknownEventType         = "set_unknown"
 
 	// Entity properties
 	entityType       = "otel.entity.type"

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
-	"encoding/gob"
+	"encoding/json"
 	"fmt"
 	"github.com/dgraph-io/ristretto/v2"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
@@ -64,7 +64,7 @@ func (c *ttlCache) Run(ctx context.Context) {
 	}
 }
 
-func (c *ttlCache) Update(relationship internal.Subject) {
+func (c *ttlCache) Update(relationship *internal.Relationship) {
 	key := buildKey(relationship)
 
 	c.data.SetWithTTL(key, relationship, itemCost, c.ttl)
@@ -73,9 +73,10 @@ func (c *ttlCache) Update(relationship internal.Subject) {
 // buildKey constructs a unique key for the cache based on the relationship event.
 // The key is composition of relationship type, source and destination entity types
 // and their ID values.
-func buildKey(relationship internal.Subject) string {
+func buildKey(relationship *internal.Relationship) string {
 	var buf bytes.Buffer
-	enc := gob.NewEncoder(&buf)
+	// TODO: Verify that the whole object is serializable
+	enc := json.NewEncoder(&buf)
 	if err := enc.Encode(relationship); err != nil {
 		panic(fmt.Sprintf("Failed to encode cache value: %v", err))
 	}

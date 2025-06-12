@@ -94,6 +94,7 @@ func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.M
 				}
 				for _, event := range events {
 					s.eventBuilder.AppendUpdateEvent(logRecords, event)
+					s.storageManager.Update(event)
 				}
 			}
 		}

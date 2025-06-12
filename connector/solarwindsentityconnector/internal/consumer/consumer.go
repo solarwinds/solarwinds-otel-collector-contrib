@@ -11,10 +11,6 @@ type Consumer interface {
 	SendExpiredEvents(ctx context.Context, relationships []internal.Subject)
 }
 
-const (
-	entityEventAsLog = "otel.entity.event_as_log"
-)
-
 type consumer struct {
 	logsConsumer otelConsumer.Logs
 }
@@ -29,12 +25,14 @@ func NewConsumer(logsConsumer otelConsumer.Logs) Consumer {
 
 func (c *consumer) SendExpiredEvents(ctx context.Context, events []internal.Subject) {
 	logs := plog.NewLogs()
-	rl := logs.ResourceLogs().AppendEmpty()
-	rl.Resource().Attributes().PutStr(entityEventAsLog, "true")
-	//sl := rl.ScopeLogs().AppendEmpty()
-	//timestamp := pcommon.NewTimestampFromTime(time.Now())
+	logRecords := internal.CreateEventLog(&logs)
 
-	//	for _, e := range events {
-	//		e.Expire()
-	//	}
+	for _, e := range events {
+		e.Expire(logRecords)
+	}
+
+	err := c.logsConsumer.ConsumeLogs(ctx, logs)
+	if err != nil {
+		panic("failed to consume logs: " + err.Error())
+	}
 }

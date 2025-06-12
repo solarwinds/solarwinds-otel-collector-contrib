@@ -32,10 +32,12 @@ type Relationship struct {
 }
 
 type RelationshipEvent struct {
-	Relationship `mapstructure:",squash"`
-	Attributes   []string `mapstructure:"attributes"`
-	Conditions   []string `mapstructure:"conditions"`
-	Context      string   `mapstructure:"context"`
+	Type        string   `mapstructure:"type"`
+	Source      string   `mapstructure:"source_entity"`
+	Destination string   `mapstructure:"destination_entity"`
+	Attributes  []string `mapstructure:"attributes"`
+	Conditions  []string `mapstructure:"conditions"`
+	Context     string   `mapstructure:"context"`
 }
 
 type EntityEvent struct {

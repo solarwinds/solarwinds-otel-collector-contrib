@@ -41,8 +41,8 @@ func (m *Manager) Start(ctx context.Context) error {
 	return nil
 }
 
-func (m *Manager) Update(r internal.Subject) {
-	if _, ok := r.(internal.Relationship); !ok {
+func (m *Manager) Update(s internal.Subject) {
+	if r, ok := s.(*internal.Relationship); ok {
 		m.cache.Update(r)
 	}
 }
