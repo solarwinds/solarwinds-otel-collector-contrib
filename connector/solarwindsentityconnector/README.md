@@ -53,7 +53,7 @@ connectors:
             source_entity: KubernetesPod
             destination_entity: KubernetesDeployment
             attributes:
-                  - sw.connection.status
+              - sw.connection.status
 ```
 
 ### Configuration Options
