@@ -72,9 +72,9 @@ func (s *solarwindsentity) Start(ctx context.Context, _ component.Host) error {
 			s.logger.Error("failed to start storage manager", zap.Error(err))
 			return err
 		}
-
+		s.logger.Info("expiration policy is enabled and started, expiration logs will be generated")
 	} else {
-		s.logger.Debug("expiration policy is disabled, no expiration logs will be generated")
+		s.logger.Info("expiration policy is disabled, no expiration logs will be generated")
 	}
 
 	return nil
