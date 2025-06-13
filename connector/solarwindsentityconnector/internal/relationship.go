@@ -20,6 +20,15 @@ type Relationship struct {
 
 var _ Event = (*Relationship)(nil)
 
+// Update adds a log record for the relationship update event.
+// Log record is decorated by following attributes:
+//   - Source entity type
+//   - Source entity ids
+//   - Destination entity type
+//   - Destination entity ids
+//   - Relationship type
+//   - timestamp
+//   - event type set to update action
 func (r *Relationship) Update(logRecords *plog.LogRecordSlice) {
 	logRecord := logRecords.AppendEmpty()
 	logRecord.SetObservedTimestamp(pcommon.NewTimestampFromTime(time.Now()))
@@ -40,6 +49,15 @@ func (r *Relationship) Update(logRecords *plog.LogRecordSlice) {
 	attrs.PutStr(destEntityType, r.Destination.Type)
 }
 
+// Delete adds the relationship as a log record with attributes needed be SWO.
+// Log record is decorated by following attributes:
+//   - Source entity type
+//   - Source entity ids
+//   - Destination entity type
+//   - Destination entity ids
+//   - Relationship type
+//   - timestamp
+//   - event type set to delete action
 func (r *Relationship) Delete(logRecords *plog.LogRecordSlice) {
 	logRecord := logRecords.AppendEmpty()
 	logRecord.SetObservedTimestamp(pcommon.NewTimestampFromTime(time.Now()))

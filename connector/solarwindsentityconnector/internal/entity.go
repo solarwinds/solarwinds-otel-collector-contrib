@@ -16,6 +16,13 @@ func (e Entity) Delete(_ *plog.LogRecordSlice) {
 	// TODO: Implement delete logic for Entity in the following task.
 }
 
+// Update adds a log record for the entity update event.
+// Log record is decorated by following attributes:
+//   - Entity type
+//   - Entity ids
+//   - Entity attributes
+//   - timestamp
+//   - event type set to update action
 func (e Entity) Update(logRecords *plog.LogRecordSlice) {
 	logRecord := logRecords.AppendEmpty()
 	logRecord.SetObservedTimestamp(pcommon.NewTimestampFromTime(time.Now()))

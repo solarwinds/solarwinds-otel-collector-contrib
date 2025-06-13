@@ -43,6 +43,7 @@ func (m *Manager) Start(ctx context.Context) error {
 	return nil
 }
 
+// Update last seen of a relationship and its entities in the cache.
 func (m *Manager) Update(s internal.Event) error {
 	if r, ok := s.(*internal.Relationship); ok {
 		return m.cache.update(r)
@@ -50,6 +51,7 @@ func (m *Manager) Update(s internal.Event) error {
 	return nil
 }
 
+// receiveExpired listens for expired relationships and sends them in batches to the event consumer.
 func (m *Manager) receiveExpired(ctx context.Context) {
 	var batch []internal.Event
 	var timer *time.Timer
@@ -58,7 +60,8 @@ func (m *Manager) receiveExpired(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			m.logger.Info("Context done, stopping eviction manager")
+			m.logger.Info("Context done, stopping storage manager")
+			// when context is closed, we will not send the remaining batch of evicted relationships
 			close(m.expiredCh)
 			return
 
@@ -71,7 +74,6 @@ func (m *Manager) receiveExpired(ctx context.Context) {
 			batch = append(batch, rel)
 
 		case <-timerC:
-			// Timer expired, send the batch of evicted relationships
 			m.logger.Debug("timer expired, sending batch of evicted relationships", zap.Int("count", len(batch)))
 			if len(batch) > 0 {
 				m.eventConsumer.SendExpiredEvents(ctx, batch)
