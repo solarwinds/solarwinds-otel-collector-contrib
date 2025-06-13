@@ -97,7 +97,7 @@ func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.M
 				events, err := s.eventDetector.DetectMetric(ctx, resourceAttrs, tc)
 
 				if err != nil {
-					s.logger.Error("Failed to process logs condition", zap.Error(err))
+					s.logger.Error("Failed to process metric condition", zap.Error(err))
 					return err
 				}
 				for _, event := range events {

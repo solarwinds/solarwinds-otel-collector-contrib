@@ -3,7 +3,6 @@ package storage
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,6 +10,7 @@ import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal"
 	"go.uber.org/zap"
+	"hash/fnv"
 	"time"
 )
 
@@ -178,16 +178,23 @@ func (c *internalStorage) update(relationship *internal.Relationship) error {
 // buildKey constructs a unique key for the entity referenced in the relationship.
 // The key is composition of entity type and its ID attributes.
 func buildKey(entity internal.RelationshipEntity) (string, error) {
-	e := internal.RelationshipEntity{
-		Type: entity.Type,
-		IDs:  entity.IDs,
-	}
 	var buf bytes.Buffer
 	enc := json.NewEncoder(&buf)
-	if err := enc.Encode(e); err != nil {
-		return "", fmt.Errorf("failed to encode entity: %s, with the following error: %w", entity.Type, err)
+	err := enc.Encode(struct {
+		Type string
+		IDs  map[string]any
+	}{
+		entity.Type,
+		entity.IDs.AsRaw(),
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to encode entity: %w", err)
 	}
 
-	key := sha256.Sum256(buf.Bytes())
-	return fmt.Sprintf("%x", key), nil
+	h := fnv.New64a()
+	_, err = h.Write(buf.Bytes())
+	if err != nil {
+		return "", fmt.Errorf("failed to write entity bytes to hash: %w", err)
+	}
+	return fmt.Sprintf("%x", h.Sum64()), nil
 }
