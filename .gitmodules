@@ -1,0 +1,3 @@
+[submodule "submodules/solarwinds-otel-collector-core"]
+	path = submodules/solarwinds-otel-collector-core
+	url = https://github.com/solarwinds/solarwinds-otel-collector-core

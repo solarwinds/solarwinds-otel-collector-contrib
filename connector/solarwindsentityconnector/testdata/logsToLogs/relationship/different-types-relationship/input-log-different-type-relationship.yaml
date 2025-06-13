@@ -1,5 +1,0 @@
-resourceLogs:
-  - resource:
-      attributes: [ { "key": "aws.ec2.id", "value":{"stringValue": "aws-instance-id"}},
-                    { "key": "aws.ec2.name", "value":{"stringValue": "aws-instance-name"}},
-                    { "key": "snowflake.id", "value":{"stringValue": "snowflake-instance-id"}}]

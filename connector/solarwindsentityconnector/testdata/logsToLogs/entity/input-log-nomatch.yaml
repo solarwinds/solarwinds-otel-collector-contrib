@@ -1,4 +1,0 @@
-resourceLogs:
-  - resource:
-      attributes: [ { "key": "snowflakeID-broken", "value":{"stringValue": "test-snowflakeID"}},
-                    { "key": "attr1-broken", "value":{"stringValue": "test-attr1"}} ]
