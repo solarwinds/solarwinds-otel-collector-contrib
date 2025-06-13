@@ -16,6 +16,7 @@ package internal
 
 import (
 	"fmt"
+	"go.opentelemetry.io/collector/pdata/plog"
 
 	"go.opentelemetry.io/collector/pdata/pcommon"
 )
@@ -111,4 +112,15 @@ func putAttribute(dest *pcommon.Map, key string, attrValue pcommon.Value) {
 	default:
 		dest.PutStr(key, attrValue.Str())
 	}
+}
+
+// CreateEventLog prepares a clean LogRecordSlice, where log records representing events should be appended.
+// Creates a resource log in input plog.Logs with single scope log decorated with attributes necessary for proper SWO ingestion.
+func CreateEventLog(logs *plog.Logs) *plog.LogRecordSlice {
+	resourceLog := logs.ResourceLogs().AppendEmpty()
+	scopeLog := resourceLog.ScopeLogs().AppendEmpty()
+	scopeLog.Scope().Attributes().PutBool(entityEventAsLog, true)
+	lrs := scopeLog.LogRecords()
+
+	return &lrs
 }
