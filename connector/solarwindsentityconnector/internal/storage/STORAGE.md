@@ -15,6 +15,20 @@ expiration_policy:
         ttl_cleanup_interval: 10s # Interval for periodic cleanup of expired relationships
 ```
 
+## Events
+### Incoming Events
+The storage reacts to Relationship Update event.
+- On Relationship Update event:
+  - The entities of the relationship are either created or their TTL is reset in the entity cache.
+  - The relationship is created or its TTL is reset in the relationship cache.
+
+The storage does not react to Entity Update events, as it does not need to track entity updates, if we
+do not support entity expiration.
+
+### Outgoing Events
+The storage sends Relationship Delete events when:
+- The relationship is evicted from the relationship cache due to TTL expiration.
+
 ## Internal Storage
 Internal storage uses two caches, one for entities and one for relationships.
 Both caches are implemented using [ristretto cache](https://github.com/hypermodeinc/ristretto).
