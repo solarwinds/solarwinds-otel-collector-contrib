@@ -97,8 +97,9 @@ Entities referenced in the `events.entities` and `events.relationships` must be 
 
 
 #### Conditions
-Conditions are part of both `relationship` and `entity` events and use OTTL syntax. You can define conditions in three ways:
-- As multiple individual conditions (one condition can be composed as OTTL format allows) each on a separate line. They will be evaluated as a logical **OR**:
+Conditions are part of both `relationship` and `entity` events and use OTTL syntax. For each event 1+ conditions can be defined.
+
+One condition can be composed (using operands like and, or, etc...) as OTTL format allows. In case there are multiple items in the conditions array, it will be evaluated as a logical **OR**:
   ```yaml
   conditions:
     - con1 or con2 and con3
