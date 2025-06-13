@@ -106,4 +106,5 @@ Conditions are part of both `relationship` and `entity` events and use OTTL synt
   ```
 
 - If *no condition* items are specified, an event will always be created.
+- `context` is required, `conditions` are optional
 - You can find more information about OTTL paths and syntax examples in the [OTTL contexts documentation](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/pkg/ottl/contexts)
