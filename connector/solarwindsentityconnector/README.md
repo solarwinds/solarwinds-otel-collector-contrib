@@ -86,11 +86,11 @@ Events define rules for creating entity/relationship from incoming telemetry. Bo
 - `relationships` defines relationships between entities.
   - The ID attributes of both entities must be present in the incoming telemetry as resource attributes. The expected
     ID attributes are found by looking into the source/destination entity definition.
-- expected attributes are:
-  - relationship type,
-  - source entity type,
-  - destination entity,
-  - relationship attributes (optional)
+  - expected attributes are:
+    - relationship type,
+    - source entity type,
+    - destination entity,
+    - relationship attributes (optional)
 
 
 Entities referenced in the `events.entities` and `events.relationships` must be defined in the `schema.entities` section.
