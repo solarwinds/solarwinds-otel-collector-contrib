@@ -77,32 +77,7 @@ func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em c
 		TtlTickerDurationInSec: ttlCleanup,
 		BufferItems:            bufferItems,
 		OnEvict: func(item *ristretto.Item[storedRelationship]) {
-			logger.Info("internalStorage relationship evicted")
-
-			if item != nil {
-				source, sourceExists := entityCache.Get(item.Value.sourceHash)
-				if !sourceExists {
-					logger.Warn("source entity not found in cache", zap.String("hash", item.Value.sourceHash))
-					return
-				}
-
-				dest, destExists := entityCache.Get(item.Value.destHash)
-				if !destExists {
-					logger.Warn("destination entity not found in cache", zap.String("hash", item.Value.sourceHash))
-				}
-
-				em <- &internal.Relationship{
-					Type: item.Value.relationshipType,
-					Source: internal.RelationshipEntity{
-						Type: source.Type,
-						IDs:  source.IDs,
-					},
-					Destination: internal.RelationshipEntity{
-						Type: dest.Type,
-						IDs:  dest.IDs,
-					},
-				}
-			}
+			onRelationshipEvict(item, entityCache, logger, em)
 		},
 	})
 
@@ -116,6 +91,40 @@ func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em c
 		ttl:           cfg.Interval,
 		logger:        logger,
 	}, nil
+}
+
+// onRelationshipEvict is a callback function that is called when a relationship item is evicted from the cache.
+// It retrieves the source and destination entities from the entity cache and sends a relationship event.
+func onRelationshipEvict(
+	item *ristretto.Item[storedRelationship],
+	entityCache *ristretto.Cache[string, internal.RelationshipEntity],
+	logger *zap.Logger,
+	em chan<- internal.Event) {
+
+	logger.Debug("relationship item evicted", zap.String("relationshipType", item.Value.relationshipType))
+	source, sourceExists := entityCache.Get(item.Value.sourceHash)
+	if !sourceExists {
+		logger.Warn("source entity not found in cache", zap.String("hash", item.Value.sourceHash))
+		return
+	}
+
+	dest, destExists := entityCache.Get(item.Value.destHash)
+	if !destExists {
+		logger.Warn("destination entity not found in cache", zap.String("hash", item.Value.sourceHash))
+		return
+	}
+
+	em <- &internal.Relationship{
+		Type: item.Value.relationshipType,
+		Source: internal.RelationshipEntity{
+			Type: source.Type,
+			IDs:  source.IDs,
+		},
+		Destination: internal.RelationshipEntity{
+			Type: dest.Type,
+			IDs:  dest.IDs,
+		},
+	}
 }
 
 func (c *internalStorage) run(ctx context.Context) {
