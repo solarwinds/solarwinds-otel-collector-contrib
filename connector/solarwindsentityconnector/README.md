@@ -32,7 +32,6 @@ connectors:
             - sw.k8s.cluster.uid
           attributes:
             - sw.k8s.pod.status
-            
         - entity: KubernetesDeployment
           id:
             - k8s.deployment.name
@@ -42,7 +41,6 @@ connectors:
         entities:
           - context: log
             type: KubernetesPod
-            conditions:
           - context: metric
             type: KubernetesPod
             conditions:
@@ -56,51 +54,56 @@ connectors:
             destination_entity: KubernetesDeployment
             attributes:
                   - sw.connection.status
-          - context: log
-            conditions:
-              - attributes["sw.namespace"] == "sw.events.inframon.k8s.manifests" or attributes["sw.event.action"] == "k8s.pod.created"
-            type: Contains
-            source_entity: KubernetesPod
-            destination_entity: KubernetesPod
-            attributes:
 ```
 
 ### Configuration Options
-- `source_prefix` and `destination_prefix` are used for same-type relationships when source and destination attributes has to be correctly set to create expected relationship.
-  - The `solarwindsentity` connector expects source and destination resource attributes (IDs only) to be prefixed with `source.` and `dest.` respectively.
-  - For example, if both entities have attributes `k8s.pod.name`, then the connector expects them to be prefixed as `source.k8s.pod.name` and `dest.k8s.pod.name` in resource attributes of incoming telemetry.
-  - No defaults are provided for these prefixes, so they must be set explicitly in the configuration if same-type relationships are expected.
-- `schema` defines the entities and relationships to be created/updated/deleted from incoming telemetry.
-  - `entities` is a list of entity definitions, with the following properties. All the property values have to be defined in SWO system for the specific entity and be marked with `@telemetryMapping`.
-    - `entity` type as defined in SWO,
-    - `id` attributes are used as the identifiers, these have to match identification properties in SWO,
-    - `attributes` are optional.
-- `events`
-  - `relationships` defines relationships between entities, specifying the relationship type, the source entity, the destination entity, optional relationship attributes, the context telemetry data (metric or log), and OTTL conditions that must be met to create a relationship event.
-    - Entities referenced in the relationships must be defined in the `schema/entities` section.
+#### Prefixes
+- `source_prefix` and `destination_prefix` are used for all kinds of relationships.
+  - For same-type relationships:
+    - The connector expects source and destination resource attributes (IDs only) to be prefixed with `source.` and `dest.` respectively.
+    - For example, if both entities have attributes `k8s.pod.name`, then the connector expects them to be prefixed as `source.k8s.pod.name` and `dest.k8s.pod.name` in resource attributes of incoming telemetry.
+    - Not all attributes need to be prefixed, the requirement is to have at least one attribute prefixed with `source.` and one with `dest.` for the connector to identify the source and destination entities,
+      to build valid event.
+  - For different-type relationships:
+    - Prefixes are supported for source and destination entity ID attributes, but are not required.
+  - No defaults are provided for these prefixes, so they must be set explicitly in the configuration if same-type relationships are expected or the prefix is used for different-type relationships.
 
-  - `entities` defines rules for creating entity events from incoming telemetry, based on the OTTL conditions, the entity type, and the context telemetry data (metric or log).
-    - The entity referenced in the type must be defined in the `schema/entities` section.
+#### Schema
+Defines the entities and relationships to be created/updated/deleted from incoming telemetry. To have action performed, the event
+has to be defined in the `schema.events` section.
+- `entities` is a list of entity definitions, with the following properties. All the property values have to be defined in SWO system for the specific entity.
+  - `entity` type as defined in SWO,
+  - `id` attributes are used as the identifiers, these have to match identification properties in SWO,
+  - `attributes` are optional.
 
-  - `conditions` are part of both `relationship` and `entity` events and use OTTL syntax. You can define conditions in three ways:
-    - As multiple individual items:
-      ```yaml
-      conditions:
-        - con1
-        - con2
-      ```
-    - As a single complex expression:
-      ```yaml
-      conditions:
-        - con1 or con2 and con3
-      ```
-    - As a combination of both:
-      ```yaml
-      conditions:
-        - con1 or con2 and con3
-        - con4
-      ```
+#### Events
+Events define rules for creating entity/relationship from incoming telemetry. Both works with [conditions](#conditions) and `context` (log or metric).
 
-    - If no condition items are specified, an event will always be created.
-    - When multiple condition items are specified, an event is created if **any** of them evaluate to true (logical OR).
-    - You can find more information about OTTL paths and syntax examples in the [OTTL contexts documentation](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/pkg/ottl/contexts)
+- `entities` defines rules for creating entity events.
+  - Entity is matched by the entity type.
+  - ID attributes have to be present in the incoming telemetry as resource attributes.
+
+- `relationships` defines relationships between entities.
+  - The ID attributes of both entities must be present in the incoming telemetry as resource attributes. The expected
+    ID attributes are found by looking into the source/destination entity definition.
+- expected attributes are:
+  - relationship type,
+  - source entity type,
+  - destination entity,
+  - relationship attributes (optional)
+
+
+Entities referenced in the `events.entities` and `events.relationships` must be defined in the `schema.entities` section.
+
+
+#### Conditions
+Conditions are part of both `relationship` and `entity` events and use OTTL syntax. You can define conditions in three ways:
+- As multiple individual conditions (one condition can be composed as OTTL format allows) each on a separate line. They will be evaluated as a logical **OR**:
+  ```yaml
+  conditions:
+    - con1 or con2 and con3
+    - con4
+  ```
+
+- If *no condition* items are specified, an event will always be created.
+- You can find more information about OTTL paths and syntax examples in the [OTTL contexts documentation](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/pkg/ottl/contexts)
