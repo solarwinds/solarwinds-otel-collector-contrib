@@ -39,7 +39,7 @@ func TestSetIdAttributesSameTypeEmpty(t *testing.T) {
 	resourceAttrs.PutStr("dst.id", "idvalue2")
 
 	destination := plog.NewLogRecord()
-	hasPrefix, err := setIdAttributesWithPrefix(destination.Attributes(), []string{}, resourceAttrs, entityIds, "src.")
+	hasPrefix, err := setIdAttributesForRelationships(destination.Attributes(), []string{}, resourceAttrs, entityIds, "src.")
 	assert.NotNil(t, err)
 	assert.False(t, hasPrefix)
 }
@@ -63,7 +63,7 @@ func TestSetIdAttributesSameTypetIdNoMatch(t *testing.T) {
 	resourceAttrs.PutStr("dst.id", "idvalue2")
 
 	destination := plog.NewLogRecord()
-	hasPrefix, err := setIdAttributesWithPrefix(destination.Attributes(), []string{"id2"}, resourceAttrs, entityIds, "src.")
+	hasPrefix, err := setIdAttributesForRelationships(destination.Attributes(), []string{"id2"}, resourceAttrs, entityIds, "src.")
 	assert.False(t, hasPrefix)
 	assert.NotNil(t, err)
 	ids, exists := destination.Attributes().Get(entityIds)
@@ -77,7 +77,7 @@ func TestSetIdAttributesSameTypePrefixNoMatch(t *testing.T) {
 	resourceAttrs.PutStr("dst.id", "idvalue2")
 
 	destination := plog.NewLogRecord()
-	hasPrefix, err := setIdAttributesWithPrefix(destination.Attributes(), []string{"id"}, resourceAttrs, entityIds, "prefix.")
+	hasPrefix, err := setIdAttributesForRelationships(destination.Attributes(), []string{"id"}, resourceAttrs, entityIds, "prefix.")
 	assert.False(t, hasPrefix)
 	assert.NotNil(t, err)
 	ids, exists := destination.Attributes().Get(entityIds)
@@ -107,7 +107,7 @@ func TestSetIdAttributesSameTypeMultiple(t *testing.T) {
 	resourceAttrs.PutStr("dst.id", "idvalue2")
 
 	destination := plog.NewLogRecord()
-	hasPrefix, err := setIdAttributesWithPrefix(destination.Attributes(), []string{"id"}, resourceAttrs, entityIds, "src.")
+	hasPrefix, err := setIdAttributesForRelationships(destination.Attributes(), []string{"id"}, resourceAttrs, entityIds, "src.")
 	assert.True(t, hasPrefix)
 	assert.Nil(t, err)
 	ids, exists := destination.Attributes().Get(entityIds)
@@ -204,7 +204,7 @@ func TestCreateEntityEvent(t *testing.T) {
 
 	// Create the event builder with a new logs instance
 	logs := plog.NewLogs()
-	eventBuilder := NewEventBuilder(nil, nil, "", "", &logs, nil)
+	eventBuilder := NewEventBuilder(nil, "", "", &logs, nil)
 
 	logRecord, err := eventBuilder.createEntityEvent(resourceAttrs, entity)
 	assert.Nil(t, err)
@@ -234,7 +234,7 @@ func TestCreateEntityEventWithNoAttributes(t *testing.T) {
 	}
 
 	logs := plog.NewLogs()
-	eventBuilder := NewEventBuilder(nil, nil, "", "", &logs, nil)
+	eventBuilder := NewEventBuilder(nil, "", "", &logs, nil)
 	_, err := eventBuilder.createEntityEvent(resourceAttrs, entity)
 	assert.NotNil(t, err)
 }
@@ -257,7 +257,7 @@ func TestCreateRelationshipEvent(t *testing.T) {
 		Attributes: []string{"attr2"},
 	}
 
-	relationship := config.Relationship{
+	relationship := config.RelationshipEvent{
 		Type:        "MemberOf",
 		Source:      "KubernetesCluster",
 		Destination: "KubernetesNode",
@@ -269,7 +269,6 @@ func TestCreateRelationshipEvent(t *testing.T) {
 			"KubernetesCluster": srcEntity,
 			"KubernetesNode":    destEntity,
 		},
-		nil,
 		"",
 		"",
 		&logs,
@@ -305,7 +304,7 @@ func TestCreateRelationshipEventWithNoAttributes(t *testing.T) {
 		IDs:  []string{},
 	}
 
-	relationship := config.Relationship{
+	relationship := config.RelationshipEvent{
 		Type:        "MemberOf",
 		Source:      "KubernetesCluster",
 		Destination: "KubernetesNode",
@@ -317,7 +316,6 @@ func TestCreateRelationshipEventWithNoAttributes(t *testing.T) {
 			"KubernetesCluster": srcEntity,
 			"KubernetesNode":    destEntity,
 		},
-		nil,
 		"",
 		"",
 		&logs,
@@ -341,7 +339,7 @@ func TestCreateRelationshipEventWithoutResourceAttributes(t *testing.T) {
 		IDs:  []string{"id2"},
 	}
 
-	relationship := config.Relationship{
+	relationship := config.RelationshipEvent{
 		Type:        "MemberOf",
 		Source:      "KubernetesCluster",
 		Destination: "KubernetesNode",
@@ -353,7 +351,6 @@ func TestCreateRelationshipEventWithoutResourceAttributes(t *testing.T) {
 			"KubernetesCluster": srcEntity,
 			"KubernetesNode":    destEntity,
 		},
-		nil,
 		"",
 		"",
 		&logs,
@@ -376,7 +373,7 @@ func TestCreateSameTypeRelationshipEvent(t *testing.T) {
 		Attributes: []string{"attr1"},
 	}
 
-	relationship := config.Relationship{
+	relationship := config.RelationshipEvent{
 		Type:        "VirtualizationTopologyConnection",
 		Source:      "KubernetesCluster",
 		Destination: "KubernetesCluster",
@@ -387,7 +384,6 @@ func TestCreateSameTypeRelationshipEvent(t *testing.T) {
 		map[string]config.Entity{
 			"KubernetesCluster": entity,
 		},
-		nil,
 		"src.",
 		"dst.",
 		&logs,
@@ -418,7 +414,7 @@ func TestCreateSameTypeRelationshipEventWithNoAttributesSameType(t *testing.T) {
 		IDs:  []string{},
 	}
 
-	relationship := config.Relationship{
+	relationship := config.RelationshipEvent{
 		Type:        "VirtualizationTopologyConnection",
 		Source:      "KubernetesCluster",
 		Destination: "KubernetesCluster",
@@ -429,7 +425,6 @@ func TestCreateSameTypeRelationshipEventWithNoAttributesSameType(t *testing.T) {
 		map[string]config.Entity{
 			"KubernetesCluster": entity,
 		},
-		nil,
 		"src.",
 		"dst.",
 		&logs,
@@ -448,7 +443,7 @@ func TestCreateSameTypeRelationshipEventWithoutResourceAttributes(t *testing.T) 
 		IDs:  []string{"id"},
 	}
 
-	relationship := config.Relationship{
+	relationship := config.RelationshipEvent{
 		Type:        "VirtualizationTopologyConnection",
 		Source:      "KubernetesCluster",
 		Destination: "KubernetesCluster",
@@ -459,7 +454,6 @@ func TestCreateSameTypeRelationshipEventWithoutResourceAttributes(t *testing.T) 
 		map[string]config.Entity{
 			"KubernetesCluster": entity,
 		},
-		nil,
 		"src.",
 		"dst.",
 		&logs,
