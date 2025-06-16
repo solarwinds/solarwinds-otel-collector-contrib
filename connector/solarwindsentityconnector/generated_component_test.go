@@ -4,7 +4,6 @@ package solarwindsentityconnector
 
 import (
 	"context"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal/metadata"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -18,10 +17,8 @@ import (
 	"go.opentelemetry.io/collector/pipeline"
 )
 
-var typ = component.MustNewType("solarwindsentity")
-
 func TestComponentFactoryType(t *testing.T) {
-	require.Equal(t, typ, NewFactory().Type())
+	require.Equal(t, "solarwindsentity", NewFactory().Type().String())
 }
 
 func TestComponentConfigStruct(t *testing.T) {
@@ -32,8 +29,8 @@ func TestComponentLifecycle(t *testing.T) {
 	factory := NewFactory()
 
 	tests := []struct {
-		createFn func(ctx context.Context, set connector.Settings, cfg component.Config) (component.Component, error)
 		name     string
+		createFn func(ctx context.Context, set connector.Settings, cfg component.Config) (component.Component, error)
 	}{
 
 		{
@@ -62,19 +59,19 @@ func TestComponentLifecycle(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name+"-shutdown", func(t *testing.T) {
-			c, err := tt.createFn(context.Background(), connectortest.NewNopSettings(metadata.Type), cfg)
+			c, err := tt.createFn(context.Background(), connectortest.NewNopSettings(), cfg)
 			require.NoError(t, err)
 			err = c.Shutdown(context.Background())
 			require.NoError(t, err)
 		})
 		t.Run(tt.name+"-lifecycle", func(t *testing.T) {
-			firstConnector, err := tt.createFn(context.Background(), connectortest.NewNopSettings(metadata.Type), cfg)
+			firstConnector, err := tt.createFn(context.Background(), connectortest.NewNopSettings(), cfg)
 			require.NoError(t, err)
 			host := componenttest.NewNopHost()
 			require.NoError(t, err)
 			require.NoError(t, firstConnector.Start(context.Background(), host))
 			require.NoError(t, firstConnector.Shutdown(context.Background()))
-			secondConnector, err := tt.createFn(context.Background(), connectortest.NewNopSettings(metadata.Type), cfg)
+			secondConnector, err := tt.createFn(context.Background(), connectortest.NewNopSettings(), cfg)
 			require.NoError(t, err)
 			require.NoError(t, secondConnector.Start(context.Background(), host))
 			require.NoError(t, secondConnector.Shutdown(context.Background()))
