@@ -12,6 +12,7 @@ type RelationshipEntity struct {
 }
 
 type Relationship struct {
+	Action      string
 	Type        string
 	Source      RelationshipEntity
 	Destination RelationshipEntity
@@ -19,6 +20,10 @@ type Relationship struct {
 }
 
 var _ Event = (*Relationship)(nil)
+
+func (r *Relationship) GetActionType() string {
+	return r.Action
+}
 
 // Update adds a log record for the relationship update event.
 // Log record is decorated by following attributes:

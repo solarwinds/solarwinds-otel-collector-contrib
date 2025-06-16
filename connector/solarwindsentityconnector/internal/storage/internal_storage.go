@@ -137,6 +137,24 @@ func (c *internalStorage) run(ctx context.Context) {
 	}
 }
 
+func (c *internalStorage) delete(relationship *internal.Relationship) error {
+	c.logger.Debug("deleting relationship from internal storage", zap.String("relationshipType", relationship.Type))
+
+	sourceHash, err := buildKey(relationship.Source)
+	if err != nil {
+		return errors.Join(err, fmt.Errorf("failed to hash key for source entity: %s", relationship.Source.Type))
+	}
+	destHash, err := buildKey(relationship.Destination)
+	if err != nil {
+		return errors.Join(err, fmt.Errorf("failed to hash key for destination entity: %s", relationship.Destination.Type))
+	}
+
+	// Remove the relationship from the cache
+	relationshipKey := fmt.Sprintf("%s:%s:%s", relationship.Type, sourceHash, destHash)
+	c.relationships.Del(relationshipKey)
+	return nil
+}
+
 // Reset TTL for existing entries, or creates a new entries with default TTL, for given relationship
 // as well as source and destination entities.
 func (c *internalStorage) update(relationship *internal.Relationship) error {

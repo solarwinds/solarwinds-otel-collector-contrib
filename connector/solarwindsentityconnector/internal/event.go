@@ -18,6 +18,7 @@ import "go.opentelemetry.io/collector/pdata/plog"
 
 // Event interface defines methods for handling events related to entities and relationships.
 type Event interface {
+	GetActionType() string
 	Update(logRecords *plog.LogRecordSlice)
 	Delete(logRecords *plog.LogRecordSlice)
 }

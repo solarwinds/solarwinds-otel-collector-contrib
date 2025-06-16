@@ -45,8 +45,18 @@ func (m *Manager) Start(ctx context.Context) error {
 
 // Update last seen of a relationship and its entities in the cache.
 func (m *Manager) Update(s internal.Event) error {
+	// TODO, is this finished?
 	if r, ok := s.(*internal.Relationship); ok {
 		return m.cache.update(r)
+	}
+	return nil
+}
+
+// Delete last seen of a relationship from the cache.
+func (m *Manager) Delete(s internal.Event) error {
+	// TODO, is this finished?
+	if r, ok := s.(*internal.Relationship); ok {
+		return m.cache.delete(r)
 	}
 	return nil
 }

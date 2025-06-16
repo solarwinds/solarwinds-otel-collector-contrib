@@ -69,14 +69,14 @@ func (e *EventDetector) DetectMetric(ctx context.Context, resourceAttrs pcommon.
 func (e *EventDetector) collectEvents(attrs pcommon.Map, ee []*config.EntityEvent, re []*config.RelationshipEvent) ([]Event, error) {
 	events := make([]Event, 0, len(ee)+len(re))
 	for _, entityEvent := range ee {
-		newEvent, _ := e.createEntity(attrs, entityEvent)
+		newEvent, _ := e.createEntityEvent(attrs, entityEvent)
 		events = append(events, newEvent)
 	}
 
 	for _, relationshipEvent := range re {
-		newRel, err := e.createRelationship(attrs, relationshipEvent)
+		newRel, err := e.createRelationshipEvent(attrs, relationshipEvent)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create relationship: %w", err)
+			return nil, fmt.Errorf("failed to create relationship event: %w", err)
 		}
 		events = append(events, newRel)
 	}
@@ -84,7 +84,7 @@ func (e *EventDetector) collectEvents(attrs pcommon.Map, ee []*config.EntityEven
 	return events, nil
 }
 
-func (e *EventDetector) createEntity(resourceAttrs pcommon.Map, event *config.EntityEvent) (Entity, error) {
+func (e *EventDetector) createEntityEvent(resourceAttrs pcommon.Map, event *config.EntityEvent) (Entity, error) {
 	attrs := pcommon.NewMap()
 	entity := e.entities[event.Type]
 	err := setIdAttributes(attrs, entity.IDs, resourceAttrs, entityIds)
@@ -104,13 +104,14 @@ func (e *EventDetector) createEntity(resourceAttrs pcommon.Map, event *config.En
 	}
 
 	return Entity{
+		Action:     getActionType(event.Action),
 		Type:       entity.Type,
 		IDs:        ids,
 		Attributes: entityAttrs,
 	}, nil
 }
 
-func (e *EventDetector) createRelationship(resourceAttrs pcommon.Map, relationship *config.RelationshipEvent) (*Relationship, error) {
+func (e *EventDetector) createRelationshipEvent(resourceAttrs pcommon.Map, relationship *config.RelationshipEvent) (*Relationship, error) {
 	source, ok := e.entities[relationship.Source]
 	if !ok {
 		return nil, fmt.Errorf("bad source entity")
@@ -149,7 +150,8 @@ func (e *EventDetector) createRelationship(resourceAttrs pcommon.Map, relationsh
 	destIds, _ := attrs.Get(relationshipDestEntityIds)
 
 	return &Relationship{
-		Type: relationship.Type,
+		Action: getActionType(relationship.Action),
+		Type:   relationship.Type,
 		Source: RelationshipEntity{
 			Type: relationship.Source,
 			IDs:  sourceIds.Map(),
@@ -160,6 +162,16 @@ func (e *EventDetector) createRelationship(resourceAttrs pcommon.Map, relationsh
 		},
 		Attributes: relAttrs,
 	}, nil
+}
+
+func getActionType(input string) string {
+	var action string
+	if input == eventUpdateAction {
+		action = eventUpdateAction
+	} else if input == eventDeleteAction {
+		action = eventDeleteAction
+	}
+	return action
 }
 
 // ProcessEvents evaluates the conditions for entities and relationships events.

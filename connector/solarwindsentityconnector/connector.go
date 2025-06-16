@@ -159,13 +159,25 @@ func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) erro
 }
 
 func (s *solarwindsentity) handleEvent(event internal.Event, eventLogs *plog.LogRecordSlice) error {
-	event.Update(eventLogs)
-	if s.storageManager != nil {
-		err := s.storageManager.Update(event)
-		if err != nil {
-			s.logger.Error("Failed to update storage with event", zap.Error(err))
-			return err
+	if event.GetActionType() == "update" { // TODO - can I make the constants public?
+		event.Update(eventLogs)
+		if s.storageManager != nil {
+			err := s.storageManager.Update(event)
+			if err != nil {
+				s.logger.Error("Failed to update storage with event", zap.Error(err))
+				return err
+			}
+		}
+	} else if event.GetActionType() == "delete" { // TODO - can I make the constants public?
+		event.Delete(eventLogs)
+		if s.storageManager != nil {
+			err := s.storageManager.Delete(event)
+			if err != nil {
+				s.logger.Error("Failed to delete event from storage", zap.Error(err))
+				return err
+			}
 		}
 	}
+
 	return nil
 }
