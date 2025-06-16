@@ -1,0 +1,45 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: :4317
+
+extensions:
+  solarwinds:
+    token: ${SOLARWINDS_TOKEN}
+    without_entity: false
+    collector_name: "solarwinds-processor-collector"
+    endpoint_url_override: "otel.collector.na-01.dev-ssp.solarwinds.com:443"
+
+processors:
+  solarwinds:
+    extension: solarwinds
+    max_size_mib: 1
+    resource:
+      sw.otelcol.receiver.name: "otlp"
+      sw.otelcol.integration.id: "test-integration-id"
+
+exporters:
+  debug:
+    verbosity: detailed
+
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      exporters: [debug]
+      processors: [solarwinds]
+    logs:
+      receivers: [otlp]
+      exporters: [debug]
+      processors: [solarwinds]
+    traces:
+      receivers: [otlp]
+      exporters: [debug]
+      processors: [solarwinds]
+
+  extensions: [solarwinds]
+
+  telemetry:
+    logs:
+      level: "DEBUG"

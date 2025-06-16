@@ -113,23 +113,43 @@ func decorateResourceAttributes[T Resource](collection ResourceCollection[T], at
 
 // TODO: to be exported out.
 
-func checkSignalSizeLimit(signal any, limit int) error {
+func notifySignalSizeLimitExceeded(signal any, limit int, logger *zap.Logger) error {
 	if limit <= 0 {
 		return nil // No limit set, skip the check.
 	}
 
+	var err error
+	var bs []byte
+	var signalName string
+
 	switch v := signal.(type) {
 	case plog.Logs:
+		signalName = "Logs"
 		er := plogotlp.NewExportRequestFromLogs(v)
-		bs, err := er.MarshalProto()
+		bs, err = er.MarshalProto()
 	case pmetric.Metrics:
+		signalName = "Metrics"
 		er := pmetricotlp.NewExportRequestFromMetrics(v)
-		bs, err := er.MarshalProto()
+		bs, err = er.MarshalProto()
 	case ptrace.Traces:
+		signalName = "Traces"
 		er := ptraceotlp.NewExportRequestFromTraces(v)
-		bs, err := er.MarshalProto()
+		bs, err = er.MarshalProto()
 	default:
 		return fmt.Errorf("unsupported signal type: %T", v)
+	}
+
+	if err != nil {
+		return fmt.Errorf("failed to marshal signal: %w", err)
+	}
+
+	bsLen := len(bs)
+	if bsLen > limit {
+		msg := fmt.Sprintf(
+			"%s size %d bytes exceeds the limit of %d MiB",
+			signalName, bsLen, limit,
+		)
+		logger.Warn(msg, zap.Int("size_bytes", bsLen), zap.Int("limit_mib", limit))
 	}
 
 	return nil
@@ -142,6 +162,12 @@ func (p *solarwindsprocessor) processLogs(
 	logs plog.Logs,
 ) (plog.Logs, error) {
 	decorateResourceAttributes(logs.ResourceLogs(), p.cfg.ResourceAttributes)
+	err := notifySignalSizeLimitExceeded(logs, p.cfg.MaxSizeMib, p.logger)
+	if err != nil {
+		msg := fmt.Sprintf("failed to notify logs size limit exceeded")
+		p.logger.Error(msg, zap.Error(err))
+		return plog.Logs{}, fmt.Errorf("%s: %w", msg, err)
+	}
 	return logs, nil
 }
 
@@ -150,6 +176,12 @@ func (p *solarwindsprocessor) processMetrics(
 	metrics pmetric.Metrics,
 ) (pmetric.Metrics, error) {
 	decorateResourceAttributes(metrics.ResourceMetrics(), p.cfg.ResourceAttributes)
+	err := notifySignalSizeLimitExceeded(metrics, p.cfg.MaxSizeMib, p.logger)
+	if err != nil {
+		msg := fmt.Sprintf("failed to notify metrics size limit exceeded")
+		p.logger.Error(msg, zap.Error(err))
+		return pmetric.Metrics{}, fmt.Errorf("%s: %w", msg, err)
+	}
 	return metrics, nil
 }
 
@@ -158,7 +190,21 @@ func (p *solarwindsprocessor) processTraces(
 	traces ptrace.Traces,
 ) (ptrace.Traces, error) {
 	decorateResourceAttributes(traces.ResourceSpans(), p.cfg.ResourceAttributes)
+	err := notifySignalSizeLimitExceeded(traces, p.cfg.MaxSizeMib, p.logger)
+	if err != nil {
+		msg := fmt.Sprintf("failed to notify traces size limit exceeded")
+		p.logger.Error(msg, zap.Error(err))
+		return ptrace.Traces{}, fmt.Errorf("%s: %w", msg, err)
+	}
 	return traces, nil
+}
+
+func createProcessor(logger *zap.Logger, cfg component.Config) (*solarwindsprocessor, error) {
+	c, err := checkConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+	return newProcessor(logger, c), nil
 }
 
 func checkConfig(cfg component.Config) (*Config, error) {
@@ -177,12 +223,4 @@ func newProcessor(logger *zap.Logger, cfg *Config) *solarwindsprocessor {
 		logger: logger,
 		cfg:    cfg,
 	}
-}
-
-func createProcessor(logger *zap.Logger, cfg component.Config) (*solarwindsprocessor, error) {
-	c, err := checkConfig(cfg)
-	if err != nil {
-		return nil, err
-	}
-	return newProcessor(logger, c), nil
 }
