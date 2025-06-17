@@ -27,6 +27,14 @@ type Entity struct {
 	Attributes pcommon.Map
 }
 
+// Delete adds a log record for the entity delete event.
+// Log record is decorated by following attributes:
+//   - Entity type
+//   - Entity ids
+//   - Entity attributes
+//   - timestamp
+//   - event type set to delete action
+//   - entity delete type set to soft_delete
 func (e Entity) Delete(logRecords *plog.LogRecordSlice) {
 	logRecord := logRecords.AppendEmpty()
 	logRecord.SetObservedTimestamp(pcommon.NewTimestampFromTime(time.Now()))
