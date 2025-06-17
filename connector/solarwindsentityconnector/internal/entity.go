@@ -46,10 +46,12 @@ func (e Entity) Update(logRecords *plog.LogRecordSlice) {
 
 	// Copy id and entity attributes as pcommon.Map to the log record
 	entityIdsMap := attrs.PutEmptyMap(entityIds)
-	entityAttrs := attrs.PutEmptyMap(entityAttributes)
-
 	e.IDs.CopyTo(entityIdsMap)
-	e.Attributes.CopyTo(entityAttrs)
+
+	if e.Attributes.Len() != 0 {
+		entityAttrs := attrs.PutEmptyMap(entityAttributes)
+		e.Attributes.CopyTo(entityAttrs)
+	}
 }
 
 var _ Event = (*Entity)(nil)

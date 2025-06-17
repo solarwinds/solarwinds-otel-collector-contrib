@@ -52,11 +52,13 @@ func (r *Relationship) Update(logRecords *plog.LogRecordSlice) {
 	// Copy id, entity and relationship attributes as pcommon.Map to the log record
 	srcIds := attrs.PutEmptyMap(relationshipSrcEntityIds)
 	destIds := attrs.PutEmptyMap(relationshipDestEntityIds)
-	relationshipAttrs := attrs.PutEmptyMap(relationshipAttributes)
 
 	r.Source.IDs.CopyTo(srcIds)
 	r.Destination.IDs.CopyTo(destIds)
-	r.Attributes.CopyTo(relationshipAttrs)
+	if r.Attributes.Len() != 0 {
+		relationshipAttrs := attrs.PutEmptyMap(relationshipAttributes)
+		r.Attributes.CopyTo(relationshipAttrs)
+	}
 
 	attrs.PutStr(relationshipType, r.Type)
 	attrs.PutStr(srcEntityType, r.Source.Type)
