@@ -184,10 +184,10 @@ func (e *EventDetector) createRelationshipEvent(resourceAttrs pcommon.Map, relat
 }
 
 func getActionType(input string) (string, error) {
-	if input == eventUpdateAction {
-		return eventUpdateAction, nil
-	} else if input == eventDeleteAction {
-		return eventDeleteAction, nil
+	if input == EventUpdateAction {
+		return EventUpdateAction, nil
+	} else if input == EventDeleteAction {
+		return EventDeleteAction, nil
 	}
 	return "", fmt.Errorf("failed to get action type from input: %s", input)
 }

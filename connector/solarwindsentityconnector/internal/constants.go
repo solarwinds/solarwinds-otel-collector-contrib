@@ -30,8 +30,8 @@ const (
 	entitySoftDelete = "soft_delete"
 
 	// Event action types
-	eventUpdateAction = "update"
-	eventDeleteAction = "delete"
+	EventUpdateAction = "update"
+	EventDeleteAction = "delete"
 
 	// Entity properties
 	entityType       = "otel.entity.type"

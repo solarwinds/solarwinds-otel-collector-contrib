@@ -159,7 +159,7 @@ func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) erro
 }
 
 func (s *solarwindsentity) handleEvent(event internal.Event, eventLogs *plog.LogRecordSlice) error {
-	if event.GetActionType() == "update" { // TODO - can I make the constants public?
+	if event.GetActionType() == internal.EventUpdateAction {
 		event.Update(eventLogs)
 		if s.storageManager != nil {
 			err := s.storageManager.Update(event)
@@ -168,7 +168,7 @@ func (s *solarwindsentity) handleEvent(event internal.Event, eventLogs *plog.Log
 				return err
 			}
 		}
-	} else if event.GetActionType() == "delete" { // TODO - can I make the constants public?
+	} else if event.GetActionType() == internal.EventDeleteAction {
 		event.Delete(eventLogs)
 		if s.storageManager != nil {
 			err := s.storageManager.Delete(event)
