@@ -7,3 +7,4 @@ schema:
     entities:
       - type: "Snowflake"
         context: "metric"
+        action: "update"

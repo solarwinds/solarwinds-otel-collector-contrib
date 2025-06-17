@@ -13,7 +13,9 @@ schema:
         attributes: ["k8s.pod.port"]
         conditions: ["true"]
         context: "log"
+        action: "update"
     entities:
       - type: "Kubernetes Pod"
         conditions: ["true"]
         context: "log"
+        action: "update"
