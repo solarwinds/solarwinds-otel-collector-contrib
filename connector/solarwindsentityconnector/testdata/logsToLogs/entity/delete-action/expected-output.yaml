@@ -10,6 +10,7 @@ resourceLogs:
                 value:
                   kvlistValue:
                     values:
+                      - key: k8s.cluster.id
                         value:
                           stringValue: test-cluster-id
                       - key: k8s.cluster.name
