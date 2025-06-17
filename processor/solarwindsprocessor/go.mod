@@ -5,13 +5,15 @@ go 1.24.3
 require (
 	github.com/google/go-cmp v0.7.0
 	github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension v0.127.1
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/attributesdecorator v0.127.1
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/extensionfinder v0.127.1
 	github.com/stretchr/testify v1.10.0
-	go.opentelemetry.io/collector/component v1.33.0
+	go.opentelemetry.io/collector/component v1.34.0
 	go.opentelemetry.io/collector/component/componenttest v0.127.0
 	go.opentelemetry.io/collector/confmap v1.33.0
 	go.opentelemetry.io/collector/consumer v1.33.0
 	go.opentelemetry.io/collector/consumer/consumertest v0.127.0
-	go.opentelemetry.io/collector/pdata v1.33.0
+	go.opentelemetry.io/collector/pdata v1.34.0
 	go.opentelemetry.io/collector/processor v1.33.0
 	go.opentelemetry.io/collector/processor/processortest v0.127.0
 	go.uber.org/goleak v1.3.0
@@ -66,11 +68,11 @@ require (
 	go.opentelemetry.io/collector/extension/extensionauth v1.33.0 // indirect
 	go.opentelemetry.io/collector/extension/extensionmiddleware v0.127.0 // indirect
 	go.opentelemetry.io/collector/extension/xextension v0.127.0 // indirect
-	go.opentelemetry.io/collector/featuregate v1.33.0 // indirect
-	go.opentelemetry.io/collector/internal/telemetry v0.127.0 // indirect
+	go.opentelemetry.io/collector/featuregate v1.34.0 // indirect
+	go.opentelemetry.io/collector/internal/telemetry v0.128.0 // indirect
 	go.opentelemetry.io/collector/pdata/pprofile v0.127.0 // indirect
 	go.opentelemetry.io/collector/pdata/testdata v0.127.0 // indirect
-	go.opentelemetry.io/collector/pipeline v0.127.0 // indirect
+	go.opentelemetry.io/collector/pipeline v0.128.0 // indirect
 	go.opentelemetry.io/collector/pipeline/xpipeline v0.127.0 // indirect
 	go.opentelemetry.io/collector/processor/processorhelper v0.127.0
 	go.opentelemetry.io/collector/processor/xprocessor v0.127.0 // indirect
@@ -97,6 +99,8 @@ require (
 
 replace (
 	github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension => ../../extension/solarwindsextension
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/attributesdecorator => ../../pkg/attributesdecorator
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/extensionfinder => ../../pkg/extensionfinder
 	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil => ../../pkg/testutil
 	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version => ../../pkg/version
 )

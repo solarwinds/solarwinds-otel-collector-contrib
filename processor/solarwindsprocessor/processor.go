@@ -5,8 +5,9 @@ import (
 	"fmt"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/attributesdecorator"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/extensionfinder"
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/pdata/plog/plogotlp"
 	"go.opentelemetry.io/collector/pdata/pmetric"
@@ -22,7 +23,7 @@ type solarwindsprocessor struct {
 }
 
 func (p *solarwindsprocessor) start(ctx context.Context, host component.Host) error {
-	swiExtension, err := findControllingExtension[*solarwindsextension.SolarwindsExtension](
+	swiExtension, err := extensionfinder.FindExtension[*solarwindsextension.SolarwindsExtension](
 		p.logger,
 		p.cfg.ExtensionName,
 		host,
@@ -53,63 +54,6 @@ func (p *solarwindsprocessor) adjustConfigurationByExtension(
 	p.cfg.ResourceAttributes[solarwindsextension.CollectorNameAttribute] = extCfg.CollectorName()
 	return
 }
-
-// TODO: to be exported out.
-func findControllingExtension[E any](
-	l *zap.Logger,
-	extensionName string,
-	host component.Host,
-) (E, error) {
-	extID := new(component.ID)
-	if err := extID.UnmarshalText([]byte(extensionName)); err != nil {
-		msg := fmt.Sprintf("failed to parse extension ID %q", extensionName)
-		l.Error(msg, zap.Error(err))
-		return *new(E), fmt.Errorf("%s: %w", msg, err)
-	}
-
-	ext, found := host.GetExtensions()[*extID]
-	if !found {
-		msg := fmt.Sprintf("extension %q not found", extensionName)
-		l.Error(msg)
-		return *new(E), fmt.Errorf("%s", msg)
-	}
-
-	castedExtension, castedOK := ext.(E)
-	if !castedOK {
-		msg := fmt.Sprintf("extension %q is not a %T", extensionName, (*E)(nil))
-		l.Error(msg)
-		return *new(E), fmt.Errorf("%s", msg)
-	}
-
-	return castedExtension, nil
-}
-
-// TODO: to be exported out.
-type Resource interface {
-	Resource() pcommon.Resource
-}
-
-type ResourceCollection[T Resource] interface {
-	At(index int) T
-	Len() int
-}
-
-func decorateResourceAttributes[T Resource](collection ResourceCollection[T], atts map[string]string) {
-	collectionLen := collection.Len()
-	if collectionLen == 0 {
-		return
-	}
-
-	for i := 0; i < collectionLen; i++ {
-		resource := collection.At(i).Resource()
-		resourceAttributes := resource.Attributes()
-		for key, value := range atts {
-			resourceAttributes.PutStr(key, value)
-		}
-	}
-}
-
-// End of to be exported out.
 
 // TODO: to be exported out.
 
@@ -144,7 +88,8 @@ func notifySignalSizeLimitExceeded(signal any, limit int, logger *zap.Logger) er
 	}
 
 	bsLen := len(bs)
-	if bsLen > limit {
+	limitBytes := limit * 1024 * 1024 // Convert MiB to bytes
+	if bsLen > limitBytes {
 		msg := fmt.Sprintf(
 			"%s size %d bytes exceeds the limit of %d MiB",
 			signalName, bsLen, limit,
@@ -161,7 +106,7 @@ func (p *solarwindsprocessor) processLogs(
 	ctx context.Context,
 	logs plog.Logs,
 ) (plog.Logs, error) {
-	decorateResourceAttributes(logs.ResourceLogs(), p.cfg.ResourceAttributes)
+	attributesdecorator.DecorateResourceAttributes(logs.ResourceLogs(), p.cfg.ResourceAttributes)
 	err := notifySignalSizeLimitExceeded(logs, p.cfg.MaxSizeMib, p.logger)
 	if err != nil {
 		msg := fmt.Sprintf("failed to notify logs size limit exceeded")
@@ -175,7 +120,7 @@ func (p *solarwindsprocessor) processMetrics(
 	ctx context.Context,
 	metrics pmetric.Metrics,
 ) (pmetric.Metrics, error) {
-	decorateResourceAttributes(metrics.ResourceMetrics(), p.cfg.ResourceAttributes)
+	attributesdecorator.DecorateResourceAttributes(metrics.ResourceMetrics(), p.cfg.ResourceAttributes)
 	err := notifySignalSizeLimitExceeded(metrics, p.cfg.MaxSizeMib, p.logger)
 	if err != nil {
 		msg := fmt.Sprintf("failed to notify metrics size limit exceeded")
@@ -189,7 +134,7 @@ func (p *solarwindsprocessor) processTraces(
 	ctx context.Context,
 	traces ptrace.Traces,
 ) (ptrace.Traces, error) {
-	decorateResourceAttributes(traces.ResourceSpans(), p.cfg.ResourceAttributes)
+	attributesdecorator.DecorateResourceAttributes(traces.ResourceSpans(), p.cfg.ResourceAttributes)
 	err := notifySignalSizeLimitExceeded(traces, p.cfg.MaxSizeMib, p.logger)
 	if err != nil {
 		msg := fmt.Sprintf("failed to notify traces size limit exceeded")
