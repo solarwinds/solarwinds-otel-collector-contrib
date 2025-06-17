@@ -19,10 +19,10 @@ import (
 	"fmt"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottlmetric"
-	"go.opentelemetry.io/collector/pdata/plog"
-
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/plog"
+	"go.uber.org/zap"
 )
 
 type EventDetector struct {
@@ -31,6 +31,7 @@ type EventDetector struct {
 	metricEvents config.EventsGroup[ottlmetric.TransformContext]
 	sourcePrefix string
 	destPrefix   string
+	logger       *zap.Logger
 }
 
 func NewEventDetector(
@@ -38,6 +39,7 @@ func NewEventDetector(
 	sourcePrefix, destPrefix string,
 	logEvents config.EventsGroup[ottllog.TransformContext],
 	metricEvents config.EventsGroup[ottlmetric.TransformContext],
+	logger *zap.Logger,
 ) *EventDetector {
 	return &EventDetector{
 		entities:     entities,
@@ -45,6 +47,7 @@ func NewEventDetector(
 		metricEvents: metricEvents,
 		sourcePrefix: sourcePrefix,
 		destPrefix:   destPrefix,
+		logger:       logger,
 	}
 }
 
@@ -69,14 +72,19 @@ func (e *EventDetector) DetectMetric(ctx context.Context, resourceAttrs pcommon.
 func (e *EventDetector) collectEvents(attrs pcommon.Map, ee []*config.EntityEvent, re []*config.RelationshipEvent) ([]Event, error) {
 	events := make([]Event, 0, len(ee)+len(re))
 	for _, entityEvent := range ee {
-		newEvent, _ := e.createEntity(attrs, entityEvent)
+		newEvent, err := e.createEntity(attrs, entityEvent)
+		if err != nil {
+			e.logger.Debug("failed to create entity update event", zap.Error(err))
+			continue
+		}
 		events = append(events, newEvent)
 	}
 
 	for _, relationshipEvent := range re {
 		newRel, err := e.createRelationship(attrs, relationshipEvent)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create relationship: %w", err)
+			e.logger.Debug("failed to create relationship update event", zap.Error(err))
+			continue
 		}
 		events = append(events, newRel)
 	}
