@@ -23,6 +23,7 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/confmap/confmaptest"
 	"go.opentelemetry.io/collector/confmap/xconfmap"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfig"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/swok8sworkloadtypeprocessor/internal/metadata"
@@ -80,10 +81,11 @@ func TestInvalidConfig(t *testing.T) {
 						ExpectedTypes:    []string{"deployments"},
 					},
 					{
-						NameAttr:         "dest_workload",
-						NamespaceAttr:    "dest_workload_namespace",
-						WorkloadTypeAttr: "dest_workload_type",
-						ExpectedTypes:    []string{"services", "pods"},
+						NameAttr:           "dest_workload",
+						NamespaceAttr:      "dest_workload_namespace",
+						WorkloadTypeAttr:   "dest_workload_type",
+						PreferOwnerForPods: true,
+						ExpectedTypes:      []string{"services", "pods"},
 					},
 					{
 						AddressAttr:      "dest_address",
@@ -105,6 +107,7 @@ func TestInvalidConfig(t *testing.T) {
 			mock.MockServerPreferredResources("v1", "pods", "Pod")
 			mock.MockServerPreferredResources("v1", "services", "Service")
 			mock.MockServerPreferredResources("apps/v1", "deployments", "Deployment")
+			mock.MockServerPreferredResources("apps/v1", "replicasets", "ReplicaSet")
 			mock.MockServerPreferredResources("v1", "withinvalidkinds", "")
 
 			cm, err := confmaptest.LoadConf(filepath.Join("testdata", "config.yaml"))
@@ -354,6 +357,101 @@ func TestMappingMismatchedContextInConfig(t *testing.T) {
 			err := tt.data.validate(nil, mappedExpectedTypes)
 
 			require.EqualError(t, err, "inconsistent context in workload mapping")
+		})
+	}
+}
+
+func TestIncludingReplicaSetsWhenPreferringPodOwnersInConfig(t *testing.T) {
+	tests := []struct {
+		id                  string
+		mappedExpectedTypes map[string]groupVersionResourceKind
+		mappingConfigs      []*K8sWorkloadMappingConfig
+	}{
+		{
+			id: "only_requested_types_are_included",
+			mappedExpectedTypes: map[string]groupVersionResourceKind{
+				"deployments": {
+					kind: "Deployment",
+					gvr: &schema.GroupVersionResource{
+						Group:    "apps",
+						Version:  "v1",
+						Resource: "deployments",
+					},
+				},
+				"pods": {
+					kind: "Pod",
+					gvr: &schema.GroupVersionResource{
+						Group:    "",
+						Version:  "v1",
+						Resource: "pods",
+					},
+				},
+			},
+			mappingConfigs: []*K8sWorkloadMappingConfig{
+				{
+					NameAttr:         "source_workload",
+					NamespaceAttr:    "source_workload_namespace",
+					WorkloadTypeAttr: "source_workload_type",
+					ExpectedTypes:    []string{"pods", "deployments"},
+				},
+			},
+		},
+		{
+			id: "replicasets_are_included_when_preferring_pod_owners",
+			mappedExpectedTypes: map[string]groupVersionResourceKind{
+				"deployments": {
+					kind: "Deployment",
+					gvr: &schema.GroupVersionResource{
+						Group:    "apps",
+						Version:  "v1",
+						Resource: "deployments",
+					},
+				},
+				"pods": {
+					kind: "Pod",
+					gvr: &schema.GroupVersionResource{
+						Group:    "",
+						Version:  "v1",
+						Resource: "pods",
+					},
+				},
+				"replicasets": {
+					kind: "ReplicaSet",
+					gvr: &schema.GroupVersionResource{
+						Group:    "apps",
+						Version:  "v1",
+						Resource: "replicasets",
+					},
+				},
+			},
+			mappingConfigs: []*K8sWorkloadMappingConfig{
+				{
+					NameAttr:           "source_workload",
+					NamespaceAttr:      "source_workload_namespace",
+					WorkloadTypeAttr:   "source_workload_type",
+					ExpectedTypes:      []string{"pods", "deployments"},
+					PreferOwnerForPods: true,
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.id, func(t *testing.T) {
+			mock, reset := MockKubeClient()
+			defer reset()
+
+			mock.MockServerPreferredResources("v1", "pods", "Pod")
+			mock.MockServerPreferredResources("apps/v1", "deployments", "Deployment")
+			mock.MockServerPreferredResources("apps/v1", "replicasets", "ReplicaSet")
+
+			factory := NewFactory()
+			cfg := factory.CreateDefaultConfig().(*Config)
+
+			cfg.WorkloadMappings = tt.mappingConfigs
+
+			require.NoError(t, xconfmap.Validate(cfg))
+			require.Equal(t, tt.mappedExpectedTypes, cfg.mappedExpectedTypes, "Incorrectly initialized mappedExpectedTypes")
 		})
 	}
 }

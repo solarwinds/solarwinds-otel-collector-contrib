@@ -41,12 +41,15 @@ type groupVersionResourceKind struct {
 }
 
 type K8sWorkloadMappingConfig struct {
-	NameAttr         string   `mapstructure:"name_attr"`
-	NamespaceAttr    string   `mapstructure:"namespace_attr"`
-	AddressAttr      string   `mapstructure:"address_attr"`
-	WorkloadTypeAttr string   `mapstructure:"workload_type_attr"`
-	ExpectedTypes    []string `mapstructure:"expected_types"`
-	context          statementContext
+	NameAttr              string   `mapstructure:"name_attr"`
+	NamespaceAttr         string   `mapstructure:"namespace_attr"`
+	AddressAttr           string   `mapstructure:"address_attr"`
+	WorkloadNameAttr      string   `mapstructure:"workload_name_attr"`
+	WorkloadNamespaceAttr string   `mapstructure:"workload_namespace_attr"`
+	WorkloadTypeAttr      string   `mapstructure:"workload_type_attr"`
+	ExpectedTypes         []string `mapstructure:"expected_types"`
+	PreferOwnerForPods    bool     `mapstructure:"prefer_owner_for_pods"`
+	context               statementContext
 }
 
 type statementContext string
@@ -100,6 +103,8 @@ func (m *K8sWorkloadMappingConfig) validate(validObjects map[string][]groupVersi
 	workloadTypeCtx := extractContext(&m.WorkloadTypeAttr)
 	namespaceCtx := extractContext(&m.NamespaceAttr)
 	addressCtx := extractContext(&m.AddressAttr)
+	workloadNameCtx := extractContext(&m.WorkloadNameAttr)
+	workloadNamespaceCtx := extractContext(&m.WorkloadNamespaceAttr)
 
 	switch {
 	case len(m.NameAttr) == 0 && len(m.AddressAttr) == 0:
@@ -117,7 +122,7 @@ func (m *K8sWorkloadMappingConfig) validate(validObjects map[string][]groupVersi
 		m.context = addressCtx
 	}
 
-	if (m.context != workloadTypeCtx) || (m.NamespaceAttr != "" && namespaceCtx != m.context) {
+	if (m.context != workloadTypeCtx) || (m.NamespaceAttr != "" && namespaceCtx != m.context) || (m.WorkloadNameAttr != "" && workloadNameCtx != m.context) || (m.WorkloadNamespaceAttr != "" && workloadNamespaceCtx != m.context) {
 		return fmt.Errorf("inconsistent context in workload mapping")
 	}
 
@@ -129,7 +134,13 @@ func (m *K8sWorkloadMappingConfig) validate(validObjects map[string][]groupVersi
 		return fmt.Errorf("expected_types cannot be empty")
 	}
 
-	for _, expectedType := range m.ExpectedTypes {
+	allExpectedTypes := m.ExpectedTypes
+	if _, ok := validObjects[internal.ReplicaSetsWorkloadType]; ok && m.PreferOwnerForPods && slices.Contains(m.ExpectedTypes, internal.PodsWorkloadType) {
+		// if we prefer owner for pods, we add replicasets to the expected types to be able to get their owner
+		allExpectedTypes = append(allExpectedTypes, internal.ReplicaSetsWorkloadType)
+	}
+
+	for _, expectedType := range allExpectedTypes {
 		if mappedExpectedTypes[expectedType] != (groupVersionResourceKind{}) {
 			continue
 		}
