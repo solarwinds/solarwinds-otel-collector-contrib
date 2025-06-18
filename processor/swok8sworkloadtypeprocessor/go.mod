@@ -1,6 +1,6 @@
 module github.com/solarwinds/solarwinds-otel-collector-contrib/processor/swok8sworkloadtypeprocessor
 
-go 1.24.3
+go 1.24.4
 
 require (
 	github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfig v0.127.3
