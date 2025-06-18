@@ -65,6 +65,14 @@ func (m *Manager) Update(s internal.Event) error {
 	return nil
 }
 
+// Delete last seen of a relationship from the cache.
+func (m *Manager) Delete(s internal.Event) error {
+	if r, ok := s.(*internal.Relationship); ok {
+		return m.cache.delete(r)
+	}
+	return nil
+}
+
 // receiveExpired listens for expired relationships and sends them in batches to the event consumer.
 func (m *Manager) receiveExpired(ctx context.Context) {
 	var batch []internal.Event

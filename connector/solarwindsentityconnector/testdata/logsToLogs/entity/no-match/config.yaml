@@ -8,3 +8,4 @@ schema:
       - type: "Snowflake"
         conditions: []
         context: "log"
+        action: "update"

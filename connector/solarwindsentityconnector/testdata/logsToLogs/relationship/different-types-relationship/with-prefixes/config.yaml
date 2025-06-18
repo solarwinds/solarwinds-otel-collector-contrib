@@ -16,6 +16,7 @@ schema:
       - type: "AWS EC2"
         conditions: ["true"]
         context: "log"
+        action: "update"
     relationships:
       - type: "MemberOf"
         source: "Snowflake"
@@ -23,3 +24,4 @@ schema:
         attributes: []
         conditions: ["true"]
         context: "log"
+        action: "update"

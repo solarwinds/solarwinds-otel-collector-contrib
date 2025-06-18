@@ -17,19 +17,24 @@ schema:
         attributes: []
         conditions: ["true"]
         context: "metric"
+        action: "update"
       - type: "MemberOf"
         source: "Snowflake"
         destination: "Kubernetes Pod"
         attributes: ["k8s.pod.port"]
         conditions: ["true"]
         context: "metric"
+        action: "update"
     entities:
       - type: "Snowflake"
         conditions: []
         context: "metric"
+        action: "update"
       - type: "AWS EC2"
         conditions: ["true"]
         context: "metric"
+        action: "update"
       - type: "Kubernetes Pod"
         conditions: ["true"]
         context: "metric"
+        action: "update"

@@ -1,0 +1,11 @@
+resourceLogs:
+  - resource:
+      attributes: [ { "key": "k8s.cluster.id", "value":{"stringValue": "test-cluster-id"}},
+                    { "key": "k8s.cluster.name", "value":{"stringValue": "test-cluster-name"}},
+                    { "key": "k8s.cluster.port", "value":{"stringValue": "test-cluster-port"}} ]
+    scope_logs: 
+    - log_records:
+      - body: { "stringValue": "test-log-body" }
+        attributes: [ { "key": "k8s.cluster.port", "value":{"stringValue": "8080"}},
+                      { "key": "k8s.cluster.name", "value":{"stringValue": "test-cluster-name"}} ]
+        time_unix_nano: 1234567890

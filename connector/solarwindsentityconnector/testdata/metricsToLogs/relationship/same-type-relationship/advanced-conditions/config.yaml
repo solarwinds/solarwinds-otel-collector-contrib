@@ -13,7 +13,9 @@ schema:
         attributes: []
         conditions: ['instrumentation_scope.name == "NodeScope" and resource.attributes["service.name"] == "NodeService" and metric.unit == "bytes"']
         context: "metric"
+        action: "update"
     entities:
       - type: "Kubernetes Node"
         conditions: ['instrumentation_scope.name == "NodeScope" and resource.attributes["service.name"] == "NodeService" and metric.unit == "bytes"']
         context: "metric"
+        action: "update"

@@ -38,10 +38,12 @@ type RelationshipEvent struct {
 	Attributes  []string `mapstructure:"attributes"`
 	Conditions  []string `mapstructure:"conditions"`
 	Context     string   `mapstructure:"context"`
+	Action      string   `mapstructure:"action"`
 }
 
 type EntityEvent struct {
 	Context    string   `mapstructure:"context"`
 	Conditions []string `mapstructure:"conditions"`
 	Type       string   `mapstructure:"type"`
+	Action     string   `mapstructure:"action"`
 }

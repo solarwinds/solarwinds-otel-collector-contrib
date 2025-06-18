@@ -14,10 +14,13 @@ schema:
         attributes: ["k8s.cluster.port"]
         conditions: ['metric.name == "k8s.tcp.bytes" or metric.name == "k8s.tcp.connections" and metric.unit == "bytes"']
         context: "metric"
+        action: "update"
     entities:
       - type: "Kubernetes Pod"
         conditions: ["true"]
         context: "metric"
+        action: "update"
       - type: "Kubernetes Cluster"
         conditions: ['metric.name == "k8s.tcp.bytes" or metric.name == "k8s.tcp.connections" and metric.unit == "bytes"']
         context: "metric"
+        action: "update"

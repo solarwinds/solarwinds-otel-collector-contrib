@@ -1,0 +1,77 @@
+resourceLogs:
+  - resource: {}
+    scopeLogs:
+      - logRecords:
+          - attributes:
+              - key: otel.entity.type
+                value:
+                  stringValue: Kubernetes Node
+              - key: otel.entity.id
+                value:
+                  kvlistValue:
+                    values:
+                      - key: k8s.node.id
+                        value:
+                          stringValue: first-node-id
+              - key: otel.entity.event.type
+                value:
+                  stringValue: entity_state
+            body: {}
+            observedTimeUnixNano: "1748615768192316000"
+            spanId: ""
+            traceId: ""
+          - attributes:
+              - key: otel.entity.type
+                value:
+                  stringValue: Kubernetes Node
+              - key: otel.entity.id
+                value:
+                  kvlistValue:
+                    values:
+                      - key: k8s.node.id
+                        value:
+                          stringValue: second-node-id
+              - key: otel.entity.event.type
+                value:
+                  stringValue: entity_state
+            body: {}
+            observedTimeUnixNano: "1748615768193225000"
+            spanId: ""
+            traceId: ""
+          - attributes:
+              - key: otel.entity_relationship.source_entity.id
+                value:
+                  kvlistValue:
+                    values:
+                      - key: k8s.node.id
+                        value:
+                          stringValue: first-node-id
+              - key: otel.entity_relationship.destination_entity.id
+                value:
+                  kvlistValue:
+                    values:
+                      - key: k8s.node.id
+                        value:
+                          stringValue: second-node-id
+              - key: otel.entity_relationship.type
+                value:
+                  stringValue: TestRelationshipType
+              - key: otel.entity_relationship.source_entity.type
+                value:
+                  stringValue: Kubernetes Node
+              - key: otel.entity_relationship.destination_entity.type
+                value:
+                  stringValue: Kubernetes Node
+              # expected type is entity_relationship_delete
+              - key: otel.entity.event.type
+                value:
+                  stringValue: entity_relationship_delete
+            body: {}
+            observedTimeUnixNano: "1748615768193802000"
+            spanId: ""
+            traceId: ""
+        scope:
+          attributes:
+            - key: otel.entity.event_as_log
+              value:
+                boolValue: true

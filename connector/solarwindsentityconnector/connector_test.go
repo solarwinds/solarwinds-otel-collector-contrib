@@ -50,6 +50,10 @@ func TestLogsToLogs(t *testing.T) {
 			folder: "entity/condition-not-met",
 		},
 		{
+			name:   "when action is set as delete, delete log event is sent",
+			folder: "entity/delete-action",
+		},
+		{
 			// Checks creation of 2 Snowflake entities without any conditions.
 			name:   "when config has no conditions, entity is inferred  and log event is sent",
 			folder: "entity/no-conditions",
@@ -72,6 +76,10 @@ func TestLogsToLogs(t *testing.T) {
 			// the events for entities and their relationship are still detected and sent.
 			name:   "when relationship for same type and having common id attributes is inferred log event is sent",
 			folder: "relationship/same-type-relationship/common-attr",
+		},
+		{
+			name:   "when action is set as delete, delete log event is sent",
+			folder: "relationship/same-type-relationship/delete-action",
 		},
 		{
 			// Checks that when additional attributes are set on the relationship, they are sent with the relationship.
@@ -100,6 +108,10 @@ func TestLogsToLogs(t *testing.T) {
 			// Relationship condition is not satisfied, so no relationship log event is sent, but entities are.
 			name:   "when log for different type relationship has not satisfied the condition, no log relationship event is sent",
 			folder: "relationship/different-types-relationship/condition-not-met",
+		},
+		{
+			name:   "when action is set as delete, delete log event is sent",
+			folder: "relationship/different-types-relationship/delete-action",
 		},
 		{
 			// Relationship should be sent with the extra attributes, and also 2 entity log events.
@@ -188,6 +200,10 @@ func TestMetricsToLogs(t *testing.T) {
 			folder: "entity/condition-not-met",
 		},
 		{
+			name:   "when action is set as delete, delete log event is sent",
+			folder: "entity/delete-action",
+		},
+		{
 			// Checks creation of 2 Snowflake entities without any conditions.
 			name:   "when config has no conditions, entity is inferred  and log event is sent",
 			folder: "entity/no-conditions",
@@ -209,6 +225,10 @@ func TestMetricsToLogs(t *testing.T) {
 			// the events for entities and their relationship are still detected and sent.
 			name:   "when relationship for same type and having common id attributes is inferred log event is sent",
 			folder: "relationship/same-type-relationship/common-attr",
+		},
+		{
+			name:   "when action is set as delete, delete log event is sent",
+			folder: "relationship/same-type-relationship/delete-action",
 		},
 		{
 
@@ -238,6 +258,10 @@ func TestMetricsToLogs(t *testing.T) {
 			// Relationship condition is not satisfied, so no relationship log event is sent, but entities are.
 			name:   "when log for different type relationship has not satisfied the condition, no log relationship event is sent",
 			folder: "relationship/different-types-relationship/condition-not-met",
+		},
+		{
+			name:   "when action is set as delete, delete log event is sent",
+			folder: "relationship/different-types-relationship/delete-action",
 		},
 		{
 			// Relationship should be sent with the extra attributes, and also 2 entity log events.

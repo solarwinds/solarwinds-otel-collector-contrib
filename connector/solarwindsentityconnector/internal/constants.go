@@ -16,13 +16,22 @@ package internal
 
 const (
 	// Log properties
-	entityEventAsLog = "otel.entity.event_as_log"
-	entityEventType  = "otel.entity.event.type"
+	entityEventAsLog         = "otel.entity.event_as_log"
+	entityEventType          = "otel.entity.event.type"
+	entityDeleteTypeAttrName = "otel.entity.delete.type"
 
 	// Event type values
 	entityUpdateEventType       = "entity_state"
+	entityDeleteEventType       = "entity_delete"
 	relationshipUpdateEventType = "entity_relationship_state"
 	relationshipDeleteEventType = "entity_relationship_delete"
+
+	// Delete event types
+	entitySoftDelete = "soft_delete"
+
+	// Event action types
+	EventUpdateAction = "update"
+	EventDeleteAction = "delete"
 
 	// Entity properties
 	entityType       = "otel.entity.type"

@@ -12,6 +12,8 @@ schema:
         destination: "AWS EC2"
         attributes: []
         context: "log"
+        action: "update"
     entities:
       - type: "AWS EC2"
         context: "log"
+        action: "update"
