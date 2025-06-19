@@ -51,11 +51,11 @@ type storedRelationship struct {
 }
 
 type internalStorage struct {
-	entities      *ristretto.Cache[string, internal.RelationshipEntity]
-	relationships *ristretto.Cache[string, storedRelationship]
-	ttl           time.Duration
-	interval      time.Duration
-	logger        *zap.Logger
+	entities           *ristretto.Cache[string, internal.RelationshipEntity]
+	relationships      *ristretto.Cache[string, storedRelationship]
+	ttl                time.Duration
+	ttlCleanUpInterval time.Duration
+	logger             *zap.Logger
 
 	// TODO: Introduce mutex to protect concurrent access to the cache when parallelization is used
 	// in the upper layers (NH-112603).
@@ -100,10 +100,11 @@ func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em c
 	}
 
 	return &internalStorage{
-		entities:      entityCache,
-		relationships: relationshipCache,
-		ttl:           cfg.Interval,
-		logger:        logger,
+		entities:           entityCache,
+		relationships:      relationshipCache,
+		ttl:                cfg.Interval,
+		ttlCleanUpInterval: cfg.TTLCleanupInterval,
+		logger:             logger,
 	}, nil
 }
 
@@ -165,12 +166,12 @@ func (c *internalStorage) update(relationship *internal.Relationship) error {
 		return errors.Join(err, fmt.Errorf("failed to hash key for destination entity: %s", relationship.Destination.Type))
 	}
 
-	sourceUpdated := c.entities.SetWithTTL(sourceHash, relationship.Source, itemCost, (c.ttl*entityTTLFactor)+10*time.Second) // TODO - remove the 10 seconds once we figure out why the tests need it
+	sourceUpdated := c.entities.SetWithTTL(sourceHash, relationship.Source, itemCost, c.ttlCleanUpInterval*entityTTLFactor)
 	if !sourceUpdated {
 		return fmt.Errorf("failed to update source entity: %s", relationship.Source.Type)
 	}
 
-	destUpdated := c.entities.SetWithTTL(destHash, relationship.Destination, itemCost, (c.ttl*entityTTLFactor)+10*time.Second) // TODO - remove the 10 seconds once we figure out why the tests need it
+	destUpdated := c.entities.SetWithTTL(destHash, relationship.Destination, itemCost, c.ttlCleanUpInterval*entityTTLFactor)
 	if !destUpdated {
 		return fmt.Errorf("failed to update destination entity: %s", relationship.Destination.Type)
 	}

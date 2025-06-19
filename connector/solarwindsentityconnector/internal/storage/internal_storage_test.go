@@ -338,12 +338,13 @@ func TestTtlExpiration(t *testing.T) {
 	require.NoError(t, err)
 
 	// Set up a cache with the entities
-	ttlTime := 100 * time.Millisecond
+	ttl := 100 * time.Millisecond
+	ttlCleanupInterval := time.Second
 	cfg := &config.ExpirationSettings{
 		Enabled:            true,
-		Interval:           ttlTime,
+		Interval:           ttl,
 		MaxCapacity:        1000000,
-		TTLCleanupInterval: 10 * time.Millisecond,
+		TTLCleanupInterval: ttlCleanupInterval,
 	}
 
 	storage, err := newInternalStorage(cfg, logger, eventsChan)
@@ -370,8 +371,11 @@ func TestTtlExpiration(t *testing.T) {
 	require.NoError(t, err, "Failed to insert relationship")
 
 	// Verify entities are in the cache before TTL expiration
+	relationshipKey := fmt.Sprintf("%s:%s:%s", relationship.Type, sourceHash, destHash)
+	_, relFound := storage.relationships.Get(relationshipKey)
 	_, srcFound := storage.entities.Get(sourceHash)
 	_, dstFound := storage.entities.Get(destHash)
+	require.True(t, relFound, "Relationship should be in cache")
 	require.True(t, srcFound, "Source entity should be in cache")
 	require.True(t, dstFound, "Destination entity should be in cache")
 
@@ -384,10 +388,7 @@ func TestTtlExpiration(t *testing.T) {
 		assert.Equal(t, "service", rel.Source.Type)
 		assert.Equal(t, "database", rel.Destination.Type)
 
-		relationshipKey := fmt.Sprintf("%s:%s:%s", relationship.Type, sourceHash, destHash)
-		_, relFound := storage.relationships.Get(relationshipKey)
-		storage.relationships.Wait()
-		time.Sleep(100 * time.Millisecond) // Wait for eviction to happen
+		_, relFound = storage.relationships.Get(relationshipKey)
 		require.False(t, relFound, "Relationship should be gone from cache")
 
 		// Verify entities are gone after eviction
@@ -405,9 +406,8 @@ func TestTtlExpiration(t *testing.T) {
 		require.True(t, exists)
 		assert.Equal(t, "userdb", nameVal.AsString())
 		cancel()
-	case <-time.After(50 * ttlTime):
-		relationshipKey := fmt.Sprintf("%s:%s:%s", relationship.Type, sourceHash, destHash)
-		_, relFound := storage.relationships.Get(relationshipKey)
+	case <-time.After(ttlCleanupInterval * 3):
+		_, relFound = storage.relationships.Get(relationshipKey)
 		assert.False(t, relFound, "Relationship should be gone from cache")
 		cancel()
 		t.Fatal("No event was received, but relationship has gone from cache")
