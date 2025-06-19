@@ -329,7 +329,7 @@ func TestUpdate(t *testing.T) {
 
 func TestTtlExpiration(t *testing.T) {
 	logger := zap.NewNop()
-	eventsChan := make(chan internal.Event, 1000)
+	eventsChan := make(chan internal.Event, 10)
 
 	// Create the source and destination hashes
 	sourceHash, err := buildKey(sourceEntity)
@@ -339,7 +339,7 @@ func TestTtlExpiration(t *testing.T) {
 
 	// Set up a cache with the entities
 	ttl := 100 * time.Millisecond
-	ttlCleanupInterval := time.Second
+	ttlCleanupInterval := 2 * time.Second
 	cfg := &config.ExpirationSettings{
 		Enabled:            true,
 		Interval:           ttl,
