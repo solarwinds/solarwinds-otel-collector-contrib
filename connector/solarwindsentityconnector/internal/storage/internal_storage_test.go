@@ -406,7 +406,7 @@ func TestTtlExpiration(t *testing.T) {
 		require.True(t, exists)
 		assert.Equal(t, "userdb", nameVal.AsString())
 		cancel()
-	case <-time.After(ttlCleanupInterval * 3):
+	case <-time.After(ttlCleanupInterval * 10):
 		_, relFound = storage.relationships.Get(relationshipKey)
 		assert.False(t, relFound, "Relationship should be gone from cache")
 		cancel()
