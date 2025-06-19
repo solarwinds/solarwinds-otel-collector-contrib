@@ -45,6 +45,7 @@ swok8sworkloadtype/valid_config:
       expected_types:
         - services
         - pods
+      prefer_owner_for_pods: true
     - address_attr: "dest_address"
       namespace_attr: "dest_workload_namespace"
       workload_type_attr: "dest_workload_type"
@@ -85,3 +86,11 @@ swok8sworkloadtype/using_neither_name_nor_addr_attributes:
       workload_type_attr: "source_workload_type"
       expected_types:
         - deployments
+swok8sworkloadtype/prefer_owner_for_pods:
+  workload_mappings:
+    - name_attr: "source_workload"
+      namespace_attr: "source_workload_namespace"
+      workload_type_attr: "source_workload_type"
+      prefer_owner_for_pods: true
+      expected_types:
+        - pods

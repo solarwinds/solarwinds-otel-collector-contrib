@@ -68,43 +68,49 @@ func processAttributes(cp *swok8sworkloadtypeProcessor, attributes pcommon.Map, 
 			continue
 		}
 
-		var kind string
+		var res internal.LookupResult
 		if workloadMapping.NameAttr != "" {
-			kind = cp.lookupWorkloadTypeByNameAttr(workloadMapping, attributes)
+			res = cp.lookupWorkloadTypeByNameAttr(workloadMapping, attributes)
 		} else if workloadMapping.AddressAttr != "" {
-			kind = cp.lookupWorkloadTypeByAddressAttr(workloadMapping, attributes)
+			res = cp.lookupWorkloadTypeByAddressAttr(workloadMapping, attributes)
 		} else {
 			cp.logger.Error("Unexpected workload mapping configuration")
 			continue
 		}
-		if kind != "" {
-			attributes.PutStr(workloadMapping.WorkloadTypeAttr, kind)
+		if res.Kind != "" {
+			attributes.PutStr(workloadMapping.WorkloadTypeAttr, res.Kind)
+		}
+		if res.Name != "" && workloadMapping.WorkloadNameAttr != "" {
+			attributes.PutStr(workloadMapping.WorkloadNameAttr, res.Name)
+		}
+		if res.Namespace != "" && workloadMapping.WorkloadNamespaceAttr != "" {
+			attributes.PutStr(workloadMapping.WorkloadNamespaceAttr, res.Namespace)
 		}
 	}
 }
 
-func (cp *swok8sworkloadtypeProcessor) lookupWorkloadTypeByNameAttr(workloadMapping *K8sWorkloadMappingConfig, attributes pcommon.Map) string {
+func (cp *swok8sworkloadtypeProcessor) lookupWorkloadTypeByNameAttr(workloadMapping *K8sWorkloadMappingConfig, attributes pcommon.Map) internal.LookupResult {
 	name := cp.getAttribute(attributes, workloadMapping.NameAttr)
 	if name == "" {
-		return ""
+		return internal.EmptyLookupResult
 	}
 	namespace := cp.getAttribute(attributes, workloadMapping.NamespaceAttr)
 
-	return internal.LookupWorkloadTypeByNameAndNamespace(name, namespace, workloadMapping.ExpectedTypes, cp.logger, cp.informers)
+	return internal.LookupWorkloadKindByNameAndNamespace(name, namespace, workloadMapping.ExpectedTypes, cp.logger, cp.informers, workloadMapping.PreferOwnerForPods)
 }
 
-func (cp *swok8sworkloadtypeProcessor) lookupWorkloadTypeByAddressAttr(workloadMapping *K8sWorkloadMappingConfig, attributes pcommon.Map) string {
+func (cp *swok8sworkloadtypeProcessor) lookupWorkloadTypeByAddressAttr(workloadMapping *K8sWorkloadMappingConfig, attributes pcommon.Map) internal.LookupResult {
 	addr := cp.getAttribute(attributes, workloadMapping.AddressAttr)
 	if addr == "" {
-		return ""
+		return internal.EmptyLookupResult
 	}
 	host := internal.ExtractHostFromAddress(addr)
 
 	if net.ParseIP(host) != nil {
-		return internal.LookupWorkloadTypeByIp(host, workloadMapping.ExpectedTypes, cp.logger, cp.informers)
+		return internal.LookupWorkloadKindByIp(host, workloadMapping.ExpectedTypes, cp.logger, cp.informers, workloadMapping.PreferOwnerForPods)
 	} else {
 		namespace := cp.getAttribute(attributes, workloadMapping.NamespaceAttr)
-		return internal.LookupWorkloadTypeByHostname(host, namespace, workloadMapping.ExpectedTypes, cp.logger, cp.informers)
+		return internal.LookupWorkloadKindByHostname(host, namespace, workloadMapping.ExpectedTypes, cp.logger, cp.informers, workloadMapping.PreferOwnerForPods)
 	}
 }
 
@@ -150,6 +156,10 @@ func (cp *swok8sworkloadtypeProcessor) Start(ctx context.Context, _ component.Ho
 
 	cp.factory = informers.NewSharedInformerFactory(client, cp.config.WatchSyncPeriod)
 
+	copyOwners := slices.ContainsFunc(cp.config.WorkloadMappings, func(mapping *K8sWorkloadMappingConfig) bool {
+		return mapping.PreferOwnerForPods && slices.Contains(mapping.ExpectedTypes, internal.PodsWorkloadType)
+	})
+
 	cp.informers = make(map[string]cache.SharedIndexInformer, len(cp.config.mappedExpectedTypes))
 	for workloadType, mappedWorkloadType := range cp.config.mappedExpectedTypes {
 		informer, err := cp.factory.ForResource(*mappedWorkloadType.gvr)
@@ -159,13 +169,15 @@ func (cp *swok8sworkloadtypeProcessor) Start(ctx context.Context, _ component.Ho
 		cp.informers[workloadType] = informer.Informer()
 
 		if mappedWorkloadType.kind == internal.PodKind {
-			cp.informers[workloadType].SetTransform(internal.PodTransformFunc(cp.logger))
+			cp.informers[workloadType].SetTransform(internal.PodTransformFunc(cp.logger, copyOwners))
 			cp.informers[workloadType].AddIndexers(internal.PodIpIndexer(cp.logger))
 		} else if mappedWorkloadType.kind == internal.ServiceKind {
 			cp.informers[workloadType].SetTransform(internal.ServiceTransformFunc(cp.logger))
 			cp.informers[workloadType].AddIndexers(internal.ServiceIpIndexer(cp.logger))
+		} else if mappedWorkloadType.kind == internal.ReplicaSetKind {
+			cp.informers[workloadType].SetTransform(internal.GenericTransformFunc(cp.logger, mappedWorkloadType.kind, copyOwners))
 		} else {
-			cp.informers[workloadType].SetTransform(internal.GenericTransformFunc(cp.logger, mappedWorkloadType.kind))
+			cp.informers[workloadType].SetTransform(internal.GenericTransformFunc(cp.logger, mappedWorkloadType.kind, false))
 		}
 	}
 
@@ -178,6 +190,7 @@ func (cp *swok8sworkloadtypeProcessor) Start(ctx context.Context, _ component.Ho
 			return fmt.Errorf("caches failed to sync: %v", v)
 		}
 	}
+	cp.logger.Info("All informers have synced successfully")
 
 	return nil
 }
