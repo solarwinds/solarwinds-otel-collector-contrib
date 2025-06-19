@@ -1,6 +1,6 @@
 module github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector
 
-go 1.24.3
+go 1.24.4
 
 require (
 	github.com/dgraph-io/ristretto/v2 v2.2.0
