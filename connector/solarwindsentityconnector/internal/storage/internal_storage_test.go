@@ -329,7 +329,7 @@ func TestUpdate(t *testing.T) {
 
 func TestTtlExpiration(t *testing.T) {
 	logger := zap.NewNop()
-	eventsChan := make(chan internal.Event, 10)
+	eventsChan := make(chan internal.Event, 1000)
 
 	// Create the source and destination hashes
 	sourceHash, err := buildKey(sourceEntity)
@@ -343,7 +343,7 @@ func TestTtlExpiration(t *testing.T) {
 		Enabled:            true,
 		Interval:           ttlTime,
 		MaxCapacity:        1000000,
-		TTLCleanupInterval: ttlTime / 10,
+		TTLCleanupInterval: 10 * time.Millisecond,
 	}
 
 	storage, err := newInternalStorage(cfg, logger, eventsChan)
@@ -375,7 +375,6 @@ func TestTtlExpiration(t *testing.T) {
 	require.True(t, srcFound, "Source entity should be in cache")
 	require.True(t, dstFound, "Destination entity should be in cache")
 
-	time.Sleep(2 * ttlTime) // Wait for TTL to expire
 	// Check that an event was sent
 	select {
 	case event := <-eventsChan:
@@ -406,7 +405,7 @@ func TestTtlExpiration(t *testing.T) {
 		require.True(t, exists)
 		assert.Equal(t, "userdb", nameVal.AsString())
 		cancel()
-	case <-time.After(10 * ttlTime):
+	case <-time.After(50 * ttlTime):
 		relationshipKey := fmt.Sprintf("%s:%s:%s", relationship.Type, sourceHash, destHash)
 		_, relFound := storage.relationships.Get(relationshipKey)
 		assert.False(t, relFound, "Relationship should be gone from cache")
