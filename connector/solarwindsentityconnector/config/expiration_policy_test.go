@@ -22,7 +22,7 @@ import (
 
 func TestParseReturnsWithoutErrors(t *testing.T) {
 	capacity := int64(10)
-	cleanupInterval := "5s"
+	cleanupInterval := "10s"
 	expirationPolicy := ExpirationPolicy{
 		Enabled:  true,
 		Interval: "5s",
@@ -104,7 +104,7 @@ func TestParseWithZeroCleanupIntervalReturnsError(t *testing.T) {
 	}
 
 	_, err := expirationPolicy.Parse()
-	assert.ErrorContains(t, err, "ttl cleanup interval must be longer than 0 seconds")
+	assert.ErrorContains(t, err, "ttl cleanup interval must be at least 1 second")
 }
 
 func TestParseMaxCapacityLessThenZeroReturnError(t *testing.T) {
