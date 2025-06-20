@@ -98,7 +98,7 @@ func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em c
 		MaxCost:                maxCost,
 		TtlTickerDurationInSec: ttlCleanupSeconds,
 		BufferItems:            bufferItems,
-		OnExit: func(item storedRelationship) {
+		OnEvict: func(item *ristretto.Item[storedRelationship]) {
 			onRelationshipEvict(item, entityCache, logger, em)
 		},
 	})
@@ -119,26 +119,26 @@ func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em c
 // onRelationshipEvict is a callback function that is called when a relationship item is evicted from the cache.
 // It retrieves the source and destination entities from the entity cache and sends a relationship event.
 func onRelationshipEvict(
-	item storedRelationship,
+	item *ristretto.Item[storedRelationship],
 	entityCache *ristretto.Cache[string, internal.RelationshipEntity],
 	logger *zap.Logger,
 	em chan<- internal.Event) {
 
-	logger.Debug("relationship item evicted", zap.String("relationshipType", item.relationshipType))
-	source, sourceExists := entityCache.Get(item.sourceHash)
+	logger.Debug("relationship item evicted", zap.String("relationshipType", item.Value.relationshipType))
+	source, sourceExists := entityCache.Get(item.Value.sourceHash)
 	if !sourceExists {
-		logger.Warn("source entity not found in cache", zap.String("hash", item.sourceHash))
+		logger.Warn("source entity not found in cache", zap.String("hash", item.Value.sourceHash))
 		return
 	}
 
-	dest, destExists := entityCache.Get(item.destHash)
+	dest, destExists := entityCache.Get(item.Value.destHash)
 	if !destExists {
-		logger.Warn("destination entity not found in cache", zap.String("hash", item.destHash))
+		logger.Warn("destination entity not found in cache", zap.String("hash", item.Value.destHash))
 		return
 	}
 
 	em <- &internal.Relationship{
-		Type: item.relationshipType,
+		Type: item.Value.relationshipType,
 		Source: internal.RelationshipEntity{
 			Type: source.Type,
 			IDs:  source.IDs,

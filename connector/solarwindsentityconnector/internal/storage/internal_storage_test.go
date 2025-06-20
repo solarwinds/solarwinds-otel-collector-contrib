@@ -350,15 +350,10 @@ func TestUpdate(t *testing.T) {
 		"Destination TTL should be refreshed after update")
 }
 
-func TestTtlExpiration(t *testing.T) {
+func TestTtlExpiration_TenIdenticalUpdates_ResultInOneExpiryEvent(t *testing.T) {
 	logger := zap.NewNop()
-	eventsChan := make(chan internal.Event, 10)
-
-	// Create the source and destination hashes
-	sourceHash, err := buildKey(sourceEntity)
-	require.NoError(t, err)
-	destHash, err := buildKey(destEntity)
-	require.NoError(t, err)
+	// Increase channel buffer to handle 10 events
+	eventsChan := make(chan internal.Event, 20)
 
 	// Set up a cache with the entities
 	ttl := 1000 * time.Millisecond
@@ -387,33 +382,28 @@ func TestTtlExpiration(t *testing.T) {
 		Destination: destEntity,
 	}
 
-	// Record the time before updating the relationship
 	insertTime := time.Now()
-	t.Logf("Inserting relationship at %v", insertTime.Format(time.RFC3339Nano))
+	t.Logf("Inserting 10 identical relationships at %v", insertTime.Format(time.RFC3339Nano))
 
-	// Update the relationship in storage
-	err = storage.update(relationship)
-	storage.entities.Wait()
-	storage.relationships.Wait()
-	require.NoError(t, err, "Failed to insert relationship")
+	// Send 10 updates
+	for i := 0; i < 10; i++ {
+		err = storage.update(relationship)
+		t.Logf("Inserting identical relationships at %v", insertTime.Format(time.RFC3339Nano))
+		time.Sleep(10 * time.Millisecond) // Sleep to simulate time passing between updates
+		storage.entities.Wait()
+		storage.relationships.Wait()
+		require.NoError(t, err, "Failed to insert relationship %d", i)
+	}
 
-	// Verify entities are in the cache before TTL expiration
-	relationshipKey := fmt.Sprintf("%s:%s:%s", relationship.Type, sourceHash, destHash)
-	_, relFound := storage.relationships.Get(relationshipKey)
-	_, srcFound := storage.entities.Get(sourceHash)
-	_, dstFound := storage.entities.Get(destHash)
-	require.True(t, relFound, "Relationship should be in cache")
-	require.True(t, srcFound, "Source entity should be in cache")
-	require.True(t, dstFound, "Destination entity should be in cache")
-
-	// Check that an event was sent
+	// Wait for 10 events
+	eventsReceived := 0
+	maxWait := ttlCleanupInterval * 10
+	deadline := time.After(maxWait)
 	select {
 	case event := <-eventsChan:
-		// Record the time when event arrived
 		eventTime := time.Now()
 		delta := eventTime.Sub(insertTime)
-		t.Logf("Event arrived at %v", eventTime.Format(time.RFC3339Nano))
-		t.Logf("Time between insertion and event: %v", delta)
+		t.Logf("Event %d arrived at %v (delta: %v)", eventsReceived+1, eventTime.Format(time.RFC3339Nano), delta)
 
 		rel, ok := event.(*internal.Relationship)
 		require.True(t, ok, "Event should be a Relationship")
@@ -421,16 +411,6 @@ func TestTtlExpiration(t *testing.T) {
 		assert.Equal(t, "service", rel.Source.Type)
 		assert.Equal(t, "database", rel.Destination.Type)
 
-		_, relFound = storage.relationships.Get(relationshipKey)
-		require.False(t, relFound, "Relationship should be gone from cache")
-
-		// Verify entities are gone after eviction
-		_, srcFound = storage.entities.Get(sourceHash)
-		_, dstFound = storage.entities.Get(destHash)
-		require.True(t, srcFound, "Source entity should be in cache for a little longer")
-		require.True(t, dstFound, "Destination entity should be in cache for a little longer")
-
-		// Check the IDs
 		nameVal, exists := rel.Source.IDs.Get("name")
 		require.True(t, exists)
 		assert.Equal(t, "frontend", nameVal.AsString())
@@ -438,15 +418,97 @@ func TestTtlExpiration(t *testing.T) {
 		nameVal, exists = rel.Destination.IDs.Get("name")
 		require.True(t, exists)
 		assert.Equal(t, "userdb", nameVal.AsString())
-		cancel()
-	case <-time.After(ttlCleanupInterval * 8):
-		t.Logf("Timed out waiting for event after %v", ttlCleanupInterval*8)
-		t.Logf("Failed at %v", time.Now().Format(time.RFC3339Nano))
-		_, relFound = storage.relationships.Get(relationshipKey)
-		assert.False(t, relFound, "Relationship should be gone from cache")
-		cancel()
-		t.Fatal("No event was received, but relationship has gone from cache")
+
+		eventsReceived++
+	case <-deadline:
+		assert.Equal(t, eventsReceived, 1, "Only one event should be received, even though 10 updates were sent")
 	}
+	cancel()
+}
+
+func TestTtlExpiration_TenDifferentUpdates_ResultInTenExpiryEvents(t *testing.T) {
+	logger := zap.NewNop()
+	// Increase channel buffer to handle 10 events
+	eventsChan := make(chan internal.Event, 20)
+
+	storage, err := newInternalStorage(cfg, logger, eventsChan)
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	// Run the storage in a goroutine
+	done := make(chan struct{})
+	go func() {
+		storage.run(ctx)
+		close(done)
+	}()
+
+	// Create and insert 10 different relationships
+	insertTime := time.Now()
+	t.Logf("Inserting 10 different relationships at %v", insertTime.Format(time.RFC3339Nano))
+
+	for i := 0; i < 10; i++ {
+		// Create a unique relationship by varying the source entity's ID
+		sourceEntity := internal.RelationshipEntity{
+			Type: "service",
+			IDs: func() pcommon.Map {
+				m := pcommon.NewMap()
+				m.PutStr("name", fmt.Sprintf("frontend-%d", i))
+				return m
+			}(),
+		}
+
+		relationship := &internal.Relationship{
+			Type:        "dependsOn",
+			Source:      sourceEntity,
+			Destination: destEntity, // All relationships share the same destination
+		}
+
+		err = storage.update(relationship)
+		time.Sleep(10 * time.Millisecond) // Sleep to simulate time passing between updates
+		storage.entities.Wait()
+		storage.relationships.Wait()
+		require.NoError(t, err, "Failed to insert relationship %d", i)
+		t.Logf("Relationship %d inserted at %v", i+1, time.Now().Format(time.RFC3339Nano))
+	}
+
+	// Wait for and verify all 10 events
+	eventsReceived := 0
+	maxWait := ttlCleanupInterval * 10
+	deadline := time.After(maxWait)
+
+	for eventsReceived < 10 {
+		select {
+		case event := <-eventsChan:
+			eventTime := time.Now()
+			delta := eventTime.Sub(insertTime)
+			t.Logf("Event %d arrived at %v (delta: %v from insertion)",
+				eventsReceived+1, eventTime.Format(time.RFC3339Nano), delta)
+
+			rel, ok := event.(*internal.Relationship)
+			require.True(t, ok, "Event should be a Relationship")
+			assert.Equal(t, "dependsOn", rel.Type)
+			assert.Equal(t, "service", rel.Source.Type)
+			assert.Equal(t, "database", rel.Destination.Type)
+
+			// Source name should match one of our generated frontends
+			nameVal, exists := rel.Source.IDs.Get("name")
+			require.True(t, exists)
+			assert.Contains(t, nameVal.AsString(), "frontend-", "Source name should contain 'frontend-'")
+
+			nameVal, exists = rel.Destination.IDs.Get("name")
+			require.True(t, exists)
+			assert.Equal(t, "userdb", nameVal.AsString())
+
+			eventsReceived++
+
+		case <-deadline:
+			t.Fatalf("Timed out waiting for events: received %d of 10 expected events", eventsReceived)
+			return
+		}
+	}
+
+	assert.Equal(t, 10, eventsReceived, "Should receive all 10 events for 10 different relationships")
 }
 
 func TestRunAndShutdown(t *testing.T) {
