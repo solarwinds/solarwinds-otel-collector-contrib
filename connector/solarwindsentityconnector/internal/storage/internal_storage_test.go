@@ -499,6 +499,72 @@ func TestTtlExpiration_TenDifferentUpdates_ResultInTenExpiryEvents(t *testing.T)
 	assert.Equal(t, 10, eventsReceived, "Should receive all 10 events for 10 different relationships")
 }
 
+func TestTtlExpiration_RelationshipIsRemovedFirst_EntitiesSecond(t *testing.T) {
+	logger := zap.NewNop()
+	eventsChan := make(chan internal.Event, 10)
+
+	storage, err := newInternalStorage(cfg, logger, eventsChan)
+	require.NoError(t, err)
+
+	err = storage.update(relationship)
+	require.NoError(t, err)
+	storage.entities.Wait()
+	storage.relationships.Wait()
+
+	sourceHash, err := buildKey(relationship.Source)
+	require.NoError(t, err)
+	destHash, err := buildKey(relationship.Destination)
+	require.NoError(t, err)
+	relationshipKey := fmt.Sprintf("%s:%s:%s", relationship.Type, sourceHash, destHash)
+
+	// Wait for the expiry event (relationship should expire first)
+	select {
+	case <-eventsChan:
+		// After event, relationship should be gone, but entities should still exist
+		t.Logf("Received expiry event for relationship")
+		_, found := storage.relationships.Get(relationshipKey)
+		assert.False(t, found, "Relationship should be removed after expiry event")
+		t.Logf("relationship is gone from cache")
+		_, found = storage.entities.Get(sourceHash)
+		assert.True(t, found, "Source entity should still be present after relationship expiry")
+		_, found = storage.entities.Get(destHash)
+		assert.True(t, found, "Destination entity should still be present after relationship expiry")
+		t.Logf("entities are still in cache")
+	case <-time.After(10 * time.Second):
+		t.Fatal("Timed out waiting for relationship expiry event")
+	}
+
+	maxWait := 30 * ttlCleanupInterval
+
+	// Set up ticker for polling and deadline for timeout
+	ticker := time.NewTicker(500 * time.Millisecond)
+	defer ticker.Stop()
+	deadline := time.After(maxWait)
+
+	t.Logf("Waiting for entities to expire...")
+	// Use a single select for both deadline and polling checks
+	for {
+		select {
+		case <-ticker.C:
+			// Check entity status on each tick
+			_, foundSrc := storage.entities.Get(sourceHash)
+			_, foundDst := storage.entities.Get(destHash)
+
+			if !foundSrc && !foundDst {
+				t.Logf("Both entities have been removed from cache")
+				return
+			}
+
+			// Log progress details
+			t.Logf("Entities still in cache: source=%v, destination=%v",
+				foundSrc, foundDst)
+
+		case <-deadline:
+			t.Fatalf("Entities not expired after waiting %v", maxWait)
+		}
+	}
+}
+
 func TestRunAndShutdown(t *testing.T) {
 	logger := zap.NewNop()
 	eventsChan := make(chan internal.Event, 10)
