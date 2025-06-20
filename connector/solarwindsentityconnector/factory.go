@@ -17,6 +17,7 @@ package solarwindsentityconnector
 import (
 	"context"
 	"fmt"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal/metadata"
 	"go.opentelemetry.io/collector/component"
@@ -46,14 +47,20 @@ func createConnector(settings connector.Settings, config component.Config, logs 
 	if !ok {
 		return nil, fmt.Errorf("expected config of type *Config, got %T", config)
 	}
+	events := cfg.Schema.NewEvents(settings.TelemetrySettings)
 
-	solarwindsentity := &solarwindsentity{
-		logger:              settings.Logger,
-		sourcePrefix:        cfg.SourcePrefix,
-		destinationPrefix:   cfg.DestinationPrefix,
-		entitiesDefinitions: cfg.Schema.NewEntities(),
-		events:              cfg.Schema.NewEvents(settings.TelemetrySettings),
-		logsConsumer:        logs,
+	se := &solarwindsentity{
+		logger: settings.Logger,
+		eventDetector: internal.NewEventDetector(
+			cfg.Schema.NewEntities(),
+			cfg.SourcePrefix,
+			cfg.DestinationPrefix,
+			events.LogEvents,
+			events.MetricEvents,
+			settings.Logger,
+		),
+		expirationPolicy: cfg.Expiration,
+		logsConsumer:     logs,
 	}
-	return solarwindsentity, nil
+	return se, nil
 }

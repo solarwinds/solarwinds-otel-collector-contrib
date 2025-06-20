@@ -25,6 +25,12 @@ type Events struct {
 	Entities      []EntityEvent       `mapstructure:"entities"`
 }
 
+type Relationship struct {
+	Type        string `mapstructure:"type"`
+	Source      string `mapstructure:"source_entity"`
+	Destination string `mapstructure:"destination_entity"`
+}
+
 type RelationshipEvent struct {
 	Type        string   `mapstructure:"type"`
 	Source      string   `mapstructure:"source_entity"`

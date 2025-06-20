@@ -13,9 +13,6 @@ resourceLogs:
                       - key: snowflake.id
                         value:
                           stringValue: snowflake-instance-id
-              - key: otel.entity.attributes
-                value:
-                  kvlistValue: {}
               - key: otel.entity.event.type
                 value:
                   stringValue: entity_state
@@ -37,9 +34,6 @@ resourceLogs:
                       - key: aws.ec2.name
                         value:
                           stringValue: aws-instance-name
-              - key: otel.entity.attributes
-                value:
-                  kvlistValue: {}
               - key: otel.entity.event.type
                 value:
                   stringValue: entity_state

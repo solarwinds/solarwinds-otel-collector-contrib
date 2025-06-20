@@ -16,9 +16,6 @@ resourceLogs:
                       - key: k8s.pod.name
                         value:
                           stringValue: test-pod-name
-              - key: otel.entity.attributes
-                value:
-                  kvlistValue: {}
               - key: otel.entity.event.type
                 value:
                   stringValue: entity_state
@@ -40,9 +37,6 @@ resourceLogs:
                       - key: k8s.cluster.name
                         value:
                           stringValue: test-cluster-name
-              - key: otel.entity.attributes
-                value:
-                  kvlistValue: {}
               - key: otel.entity.event.type
                 value:
                   stringValue: entity_state
@@ -71,9 +65,6 @@ resourceLogs:
                       - key: k8s.pod.name
                         value:
                           stringValue: test-pod-name
-              - key: otel.entity_relationship.attributes
-                value:
-                  kvlistValue: {}
               - key: otel.entity_relationship.type
                 value:
                   stringValue: MemberOf
