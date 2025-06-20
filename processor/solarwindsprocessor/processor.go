@@ -52,10 +52,9 @@ func (p *solarwindsprocessor) adjustConfigurationByExtension(
 
 	// Collector name.
 	p.cfg.ResourceAttributes[solarwindsextension.CollectorNameAttribute] = extCfg.CollectorName()
-	return
 }
 
-// TODO: to be exported out.
+// TODO: to be exported out??
 
 func notifySignalSizeLimitExceeded(signal any, limit int, logger *zap.Logger) error {
 	if limit <= 0 {
@@ -109,7 +108,7 @@ func (p *solarwindsprocessor) processLogs(
 	attributesdecorator.DecorateResourceAttributes(logs.ResourceLogs(), p.cfg.ResourceAttributes)
 	err := notifySignalSizeLimitExceeded(logs, p.cfg.MaxSizeMib, p.logger)
 	if err != nil {
-		msg := fmt.Sprintf("failed to notify logs size limit exceeded")
+		msg := "failed to notify logs size limit exceeded"
 		p.logger.Error(msg, zap.Error(err))
 		return plog.Logs{}, fmt.Errorf("%s: %w", msg, err)
 	}
@@ -123,7 +122,7 @@ func (p *solarwindsprocessor) processMetrics(
 	attributesdecorator.DecorateResourceAttributes(metrics.ResourceMetrics(), p.cfg.ResourceAttributes)
 	err := notifySignalSizeLimitExceeded(metrics, p.cfg.MaxSizeMib, p.logger)
 	if err != nil {
-		msg := fmt.Sprintf("failed to notify metrics size limit exceeded")
+		msg := "failed to notify metrics size limit exceeded"
 		p.logger.Error(msg, zap.Error(err))
 		return pmetric.Metrics{}, fmt.Errorf("%s: %w", msg, err)
 	}
@@ -137,7 +136,7 @@ func (p *solarwindsprocessor) processTraces(
 	attributesdecorator.DecorateResourceAttributes(traces.ResourceSpans(), p.cfg.ResourceAttributes)
 	err := notifySignalSizeLimitExceeded(traces, p.cfg.MaxSizeMib, p.logger)
 	if err != nil {
-		msg := fmt.Sprintf("failed to notify traces size limit exceeded")
+		msg := "failed to notify traces size limit exceeded"
 		p.logger.Error(msg, zap.Error(err))
 		return ptrace.Traces{}, fmt.Errorf("%s: %w", msg, err)
 	}

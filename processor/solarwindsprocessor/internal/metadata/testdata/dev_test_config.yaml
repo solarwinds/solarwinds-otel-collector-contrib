@@ -6,15 +6,21 @@ receivers:
 
 extensions:
   solarwinds:
-    token: ${SOLARWINDS_TOKEN}
     without_entity: false
     collector_name: "solarwinds-processor-collector"
-    endpoint_url_override: "otel.collector.na-01.dev-ssp.solarwinds.com:443"
+    #endpoint_url_override: "https://otel.collector.na-02.dev-ssp.solarwinds.com:443"
+    #data_center: "na-02"
+    #token: "${SOLARWINDS_DC02_TOKEN}"
+    grpc: &grpc_settings
+      endpoint: "otel.collector.na-01.dev-ssp.solarwinds.com:443"
+      tls:
+        insecure: false
+      headers: {"Authorization": "Bearer ${SOLARWINDS_TOKEN}"}
 
 processors:
   solarwinds:
     extension: solarwinds
-    max_size_mib: 1
+    max_size_mib: 2
     resource:
       sw.otelcol.receiver.name: "otlp"
       sw.otelcol.integration.id: "test-integration-id"
@@ -22,20 +28,22 @@ processors:
 exporters:
   debug:
     verbosity: detailed
+  otlp: 
+    <<: *grpc_settings
 
 service:
   pipelines:
     metrics:
       receivers: [otlp]
-      exporters: [debug]
+      exporters: [debug, otlp]
       processors: [solarwinds]
     logs:
       receivers: [otlp]
-      exporters: [debug]
+      exporters: [debug, otlp]
       processors: [solarwinds]
     traces:
       receivers: [otlp]
-      exporters: [debug]
+      exporters: [debug, otlp]
       processors: [solarwinds]
 
   extensions: [solarwinds]

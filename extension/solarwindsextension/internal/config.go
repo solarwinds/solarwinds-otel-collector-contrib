@@ -15,7 +15,6 @@
 package internal
 
 import (
-	"errors"
 	"fmt"
 	"maps"
 	"slices"
@@ -26,28 +25,33 @@ import (
 	"go.opentelemetry.io/collector/config/configopaque"
 	"go.opentelemetry.io/collector/config/configtls"
 	"go.opentelemetry.io/collector/exporter/otlpexporter"
+	"go.uber.org/zap"
 )
 
 // Config represents a Solarwinds Extension configuration.
 type Config struct {
+	// DEPRECATED: Use `endpoint` instead.
 	// DataCenter ID (e.g. na-01).
 	DataCenter string `mapstructure:"data_center"`
+	// DEPRECATED: Use `headers` instead.
 	// IngestionToken is your secret generated SolarWinds Observability SaaS ingestion token.
 	IngestionToken configopaque.String `mapstructure:"token"`
 	// CollectorName name of the collector passed in the heartbeat metric
 	CollectorName string `mapstructure:"collector_name"`
+	// DEPRECATED: Use `endpoint` instead.
 	// ⚠️ Warning: For testing purpose only.
 	// EndpointURLOverride sets OTLP endpoint directly, it overrides the DataCenter configuration.
 	EndpointURLOverride string            `mapstructure:"endpoint_url_override"`
 	Resource            map[string]string `mapstructure:"resource"`
 	WithoutEntity       bool              `mapstructure:"without_entity"`
+	GRPCConfig          `mapstructure:"grpc"`
 }
 
-var (
-	ErrMissingDataCenter    = errors.New("invalid configuration: 'data_center' must be set")
-	ErrMissingToken         = errors.New("invalid configuration: 'token' must be set")
-	ErrMissingCollectorName = errors.New("invalid configuration: 'collector_name' must be set")
-)
+// Config represents a gRPC configuration for the Solarwinds Extension, which can be fully re-used
+// in OTLP exporter.
+type GRPCConfig struct {
+	configgrpc.ClientConfig `mapstructure:",squash"`
+}
 
 // NewDefaultConfig creates a new default configuration.
 //
@@ -59,22 +63,44 @@ func NewDefaultConfig() component.Config {
 
 // Validate checks the configuration for its validity.
 func (cfg *Config) Validate() error {
-	if cfg.DataCenter == "" && cfg.EndpointURLOverride == "" {
-		return ErrMissingDataCenter
+	if cfg.GRPCConfig.ClientConfig.Endpoint == "" {
+		if cfg.DataCenter == "" && cfg.EndpointURLOverride == "" {
+			msg := "invalid configuration: 'data_center' must be set, due to its DEPRECATION use rather 'endpoint' setting"
+			return fmt.Errorf("%s", msg)
+		}
+
+		if _, err := cfg.EndpointUrl(); err != nil {
+			msg := "invalid configuration: 'data_center' must be set, due to its DEPRECATION use rather 'endpoint' setting"
+			return fmt.Errorf("%s: %w", msg, err)
+		}
 	}
 
-	if _, err := cfg.EndpointUrl(); err != nil {
-		return fmt.Errorf("invalid 'data_center' value: %w", err)
+	if val, found := cfg.GRPCConfig.ClientConfig.Headers["Authorization"]; !found || val == "" {
+		if cfg.IngestionToken == "" {
+			msg := "invalid configuration: 'token' must be set, due to its DEPRECATION use rather 'headers: {\"Authorization\": \"Bearer ${YOUR_TOKEN}\"}'"
+			return fmt.Errorf("%s", msg)
+		}
 	}
 
-	if cfg.IngestionToken == "" {
-		return ErrMissingToken
-	}
 	if cfg.CollectorName == "" {
-		return ErrMissingCollectorName
+		return fmt.Errorf("%s", "invalid configuration: 'collector_name' must be set")
 	}
 
 	return nil
+}
+
+func (cfg *Config) ReportDeprecatedFields(logger *zap.Logger) {
+	if cfg.DataCenter != "" {
+		logger.Warn("The 'data_center' field is deprecated, use 'endpoint' instead.")
+	}
+
+	if cfg.EndpointURLOverride != "" {
+		logger.Warn("The 'endpoint_url_override' field is deprecated, use 'endpoint' instead.")
+	}
+
+	if cfg.IngestionToken == "" {
+		logger.Warn("The 'token' field is deprecated, use 'headers: {\"Authorization\": \"Bearer ${YOUR_TOKEN}\" instead.")
+	}
 }
 
 // OTLPConfig generates a full OTLP Exporter configuration from the configuration.
@@ -83,15 +109,10 @@ func (cfg *Config) OTLPConfig() (*otlpexporter.Config, error) {
 		return nil, err
 	}
 
+	headers := cfg.Headers()
 	endpointURL, err := cfg.EndpointUrl()
 	if err != nil {
 		return nil, err
-	}
-
-	// Headers - set bearer auth.
-	bearer := configopaque.String(fmt.Sprintf("Bearer %s", string(cfg.IngestionToken)))
-	headers := map[string]configopaque.String{
-		"Authorization": bearer,
 	}
 
 	// gRPC client configuration.
@@ -112,7 +133,23 @@ func (cfg *Config) OTLPConfig() (*otlpexporter.Config, error) {
 	return otlpConfig, nil
 }
 
+func (cfg *Config) Headers() map[string]configopaque.String {
+	if _, found := cfg.GRPCConfig.ClientConfig.Headers["Authorization"]; found {
+		return cfg.GRPCConfig.ClientConfig.Headers
+	}
+
+	bearer := configopaque.String(fmt.Sprintf("Bearer %s", string(cfg.IngestionToken)))
+	headers := map[string]configopaque.String{
+		"Authorization": bearer,
+	}
+	return headers
+}
+
 func (cfg *Config) EndpointUrl() (string, error) {
+	// Use configured OTLP endpoint if provided.
+	if cfg.GRPCConfig.ClientConfig.Endpoint != "" {
+		return cfg.GRPCConfig.ClientConfig.Endpoint, nil
+	}
 	// Use overridden URL if provided.
 	if cfg.EndpointURLOverride != "" {
 		return cfg.EndpointURLOverride, nil
