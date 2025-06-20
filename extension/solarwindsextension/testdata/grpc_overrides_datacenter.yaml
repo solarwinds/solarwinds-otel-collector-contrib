@@ -1,0 +1,9 @@
+collector_name: "test-collector"
+without_entity: true
+data_center: "na-01"
+grpc:
+  endpoint: "grpc.url:443"
+  tls:
+    insecure: false
+  headers:
+    Authorization: "token"
