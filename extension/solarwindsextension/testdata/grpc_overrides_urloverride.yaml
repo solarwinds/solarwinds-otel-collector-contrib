@@ -1,6 +1,6 @@
 collector_name: "test-collector"
 without_entity: true
-data_center: "na-01"
+endpoint_url_override: "url:443"
 grpc:
   endpoint: "grpc.url:443"
   tls:
