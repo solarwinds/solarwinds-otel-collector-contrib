@@ -27,6 +27,16 @@ import (
 	"time"
 )
 
+// Set up a cache with the entities
+var ttl = 1000 * time.Millisecond
+var ttlCleanupInterval = 2 * time.Second
+var cfg = &config.ExpirationSettings{
+	Enabled:                   true,
+	Interval:                  ttl,
+	MaxCapacity:               1000,
+	TTLCleanupIntervalSeconds: ttlCleanupInterval,
+}
+
 var sourceEntity = internal.RelationshipEntity{
 	Type: "service",
 	IDs: func() pcommon.Map {
@@ -63,18 +73,36 @@ func TestNewInternalStorage(t *testing.T) {
 		{
 			name: "Valid configuration",
 			cfg: &config.ExpirationSettings{
-				Interval:           10 * time.Second,
-				MaxCapacity:        1000,
-				TTLCleanupInterval: 1 * time.Second,
+				Interval:                  10 * time.Second,
+				MaxCapacity:               1000,
+				TTLCleanupIntervalSeconds: 20 * time.Second,
 			},
 			expectError: false,
 		},
 		{
 			name: "Zero MaxCapacity",
 			cfg: &config.ExpirationSettings{
-				Interval:           10 * time.Second,
-				MaxCapacity:        0,
-				TTLCleanupInterval: 1 * time.Second,
+				Interval:                  10 * time.Second,
+				MaxCapacity:               0,
+				TTLCleanupIntervalSeconds: 1 * time.Second,
+			},
+			expectError: true,
+		},
+		{
+			name: "Zero TTl not 2x Interval",
+			cfg: &config.ExpirationSettings{
+				Interval:                  1 * time.Second,
+				MaxCapacity:               0,
+				TTLCleanupIntervalSeconds: 1 * time.Second,
+			},
+			expectError: true,
+		},
+		{
+			name: "TTl less than 1 second (nok), but x2 Interval (ok)",
+			cfg: &config.ExpirationSettings{
+				Interval:                  1 * time.Millisecond,
+				MaxCapacity:               100,
+				TTLCleanupIntervalSeconds: 10 * time.Millisecond,
 			},
 			expectError: true,
 		},
@@ -273,11 +301,6 @@ func TestBuildKeyConsistency(t *testing.T) {
 func TestUpdate(t *testing.T) {
 	logger := zap.NewNop()
 	eventsChan := make(chan internal.Event, 10)
-	cfg := &config.ExpirationSettings{
-		Interval:           1 * time.Second,
-		MaxCapacity:        100000,
-		TTLCleanupInterval: 100 * time.Millisecond,
-	}
 
 	storage, err := newInternalStorage(cfg, logger, eventsChan)
 	require.NoError(t, err)
@@ -338,13 +361,13 @@ func TestTtlExpiration(t *testing.T) {
 	require.NoError(t, err)
 
 	// Set up a cache with the entities
-	ttl := 100 * time.Millisecond
+	ttl := 1000 * time.Millisecond
 	ttlCleanupInterval := 2 * time.Second
 	cfg := &config.ExpirationSettings{
-		Enabled:            true,
-		Interval:           ttl,
-		MaxCapacity:        1000000,
-		TTLCleanupInterval: ttlCleanupInterval,
+		Enabled:                   true,
+		Interval:                  ttl,
+		MaxCapacity:               1000,
+		TTLCleanupIntervalSeconds: ttlCleanupInterval,
 	}
 
 	storage, err := newInternalStorage(cfg, logger, eventsChan)
@@ -364,6 +387,10 @@ func TestTtlExpiration(t *testing.T) {
 		Destination: destEntity,
 	}
 
+	// Record the time before updating the relationship
+	insertTime := time.Now()
+	t.Logf("Inserting relationship at %v", insertTime.Format(time.RFC3339Nano))
+
 	// Update the relationship in storage
 	err = storage.update(relationship)
 	storage.entities.Wait()
@@ -382,6 +409,12 @@ func TestTtlExpiration(t *testing.T) {
 	// Check that an event was sent
 	select {
 	case event := <-eventsChan:
+		// Record the time when event arrived
+		eventTime := time.Now()
+		delta := eventTime.Sub(insertTime)
+		t.Logf("Event arrived at %v", eventTime.Format(time.RFC3339Nano))
+		t.Logf("Time between insertion and event: %v", delta)
+
 		rel, ok := event.(*internal.Relationship)
 		require.True(t, ok, "Event should be a Relationship")
 		assert.Equal(t, "dependsOn", rel.Type)
@@ -406,23 +439,19 @@ func TestTtlExpiration(t *testing.T) {
 		require.True(t, exists)
 		assert.Equal(t, "userdb", nameVal.AsString())
 		cancel()
-	case <-time.After(ttlCleanupInterval * 20):
+	case <-time.After(ttlCleanupInterval * 8):
+		t.Logf("Timed out waiting for event after %v", ttlCleanupInterval*8)
+		t.Logf("Failed at %v", time.Now().Format(time.RFC3339Nano))
 		_, relFound = storage.relationships.Get(relationshipKey)
 		assert.False(t, relFound, "Relationship should be gone from cache")
 		cancel()
 		t.Fatal("No event was received, but relationship has gone from cache")
 	}
-
 }
 
 func TestRunAndShutdown(t *testing.T) {
 	logger := zap.NewNop()
 	eventsChan := make(chan internal.Event, 10)
-	cfg := &config.ExpirationSettings{
-		Interval:           1 * time.Second,
-		MaxCapacity:        100,
-		TTLCleanupInterval: 100 * time.Millisecond,
-	}
 
 	storage, err := newInternalStorage(cfg, logger, eventsChan)
 	require.NoError(t, err)

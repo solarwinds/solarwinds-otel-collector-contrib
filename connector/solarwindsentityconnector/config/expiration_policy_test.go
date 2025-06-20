@@ -33,10 +33,10 @@ func TestParseReturnsWithoutErrors(t *testing.T) {
 	}
 
 	expectedExpirationPolicy := ExpirationSettings{
-		Enabled:            true,
-		Interval:           5 * time.Second,
-		TTLCleanupInterval: 5 * time.Second,
-		MaxCapacity:        10,
+		Enabled:                   true,
+		Interval:                  5 * time.Second,
+		TTLCleanupIntervalSeconds: 10 * time.Second,
+		MaxCapacity:               10,
 	}
 	result, err := expirationPolicy.Parse()
 	assert.Nil(t, err)
