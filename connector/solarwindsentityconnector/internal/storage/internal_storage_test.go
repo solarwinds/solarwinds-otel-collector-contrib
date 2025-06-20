@@ -27,7 +27,6 @@ import (
 	"time"
 )
 
-// Set up a cache with the entities
 var ttl = 1000 * time.Millisecond
 var ttlCleanupInterval = 2 * time.Second
 var cfg = &config.ExpirationSettings{
@@ -80,7 +79,7 @@ func TestNewInternalStorage(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name: "Zero MaxCapacity",
+			name: "Zero MaxCapacity throws error",
 			cfg: &config.ExpirationSettings{
 				Interval:                  10 * time.Second,
 				MaxCapacity:               0,
@@ -89,19 +88,19 @@ func TestNewInternalStorage(t *testing.T) {
 			expectError: true,
 		},
 		{
-			name: "Zero TTl not 2x Interval",
+			name: "TTLCleanupIntervalSeconds is not 2x Interval, throws error",
 			cfg: &config.ExpirationSettings{
 				Interval:                  1 * time.Second,
-				MaxCapacity:               0,
+				MaxCapacity:               1000,
 				TTLCleanupIntervalSeconds: 1 * time.Second,
 			},
 			expectError: true,
 		},
 		{
-			name: "TTl less than 1 second (nok), but x2 Interval (ok)",
+			name: "TTl less than 1 second (nok), but x2 Interval (ok), throws error",
 			cfg: &config.ExpirationSettings{
 				Interval:                  1 * time.Millisecond,
-				MaxCapacity:               100,
+				MaxCapacity:               1000,
 				TTLCleanupIntervalSeconds: 10 * time.Millisecond,
 			},
 			expectError: true,
@@ -126,6 +125,10 @@ func TestNewInternalStorage(t *testing.T) {
 	}
 }
 
+// TestBuildKey tests the buildKey function for various scenarios
+// Select test entities are added control group.
+// Everything is checked against the control group. Some expect to find the key in the control group, and some expect not to find themselves
+// because they should generate key unique from everyting in the control group.
 func TestBuildKey(t *testing.T) {
 	tests := []struct {
 		name              string
@@ -226,7 +229,7 @@ func TestBuildKey(t *testing.T) {
 			key, err := buildKey(tt.entity)
 			require.NoError(t, err)
 
-			// There should be a refference key for this test case
+			// There should be a reference key for this test case
 			if tt.addToControlGroup {
 				refKey := referenceKeys[key]
 				require.NotNil(t, refKey)
@@ -242,7 +245,7 @@ func TestBuildKey(t *testing.T) {
 	}
 }
 
-func TestBuildKeySameEntityDifferentIdsOrderHaveSameKeys(t *testing.T) {
+func TestBuildKey_SameEntitiesWithDifferentIdsOrderHaveSameKeys(t *testing.T) {
 	entity := internal.RelationshipEntity{
 		Type: "service",
 		IDs: func() pcommon.Map {
@@ -298,35 +301,35 @@ func TestBuildKeyConsistency(t *testing.T) {
 	}
 }
 
-func TestUpdate(t *testing.T) {
+func TestUpdate_RelationshipUpdate_UpdatesTtl(t *testing.T) {
 	logger := zap.NewNop()
 	eventsChan := make(chan internal.Event, 10)
 
 	storage, err := newInternalStorage(cfg, logger, eventsChan)
 	require.NoError(t, err)
 
+	// First update should succeed
+	err = storage.update(relationship)
+	require.NoError(t, err)
+	// Ensure entities are in cache
+	storage.entities.Wait()
+	storage.relationships.Wait()
+	time.Sleep(200 * time.Millisecond)
+
 	// Calculate the source and destination hashes
 	sourceHash, err := buildKey(relationship.Source)
 	require.NoError(t, err)
 	destHash, err := buildKey(relationship.Destination)
 	require.NoError(t, err)
-
-	// First update should succeed
-	err = storage.update(relationship)
-	require.NoError(t, err)
-
-	// Ensure entities are in cache
-	storage.entities.Wait()
-	storage.relationships.Wait()
-
-	// Simulate some time passing
-	time.Sleep(200 * time.Millisecond)
+	relationshipKey := fmt.Sprintf("%s:%s:%s", relationship.Type, sourceHash, destHash)
 
 	// Get the TTLs after first update
 	srcTtl1, found := storage.entities.GetTTL(sourceHash)
 	require.True(t, found, "Source entity should be in cache")
 	destTtl1, found := storage.entities.GetTTL(destHash)
 	require.True(t, found, "Destination entity should be in cache")
+	relTtl1, found := storage.relationships.GetTTL(relationshipKey)
+	require.True(t, found, "Relationship should be in cache")
 
 	// Update with the same data should also succeed
 	// (this tests the TTL refresh logic)
@@ -342,12 +345,16 @@ func TestUpdate(t *testing.T) {
 	require.True(t, found, "Source entity should still be in cache")
 	destTtl2, found := storage.entities.GetTTL(destHash)
 	require.True(t, found, "Destination entity should still be in cache")
+	relTtl2, found := storage.relationships.GetTTL(relationshipKey)
+	require.True(t, found, "Relationship should still be in cache")
 
 	// Verify that the TTLs were updated (should be higher after refresh)
 	require.Greater(t, sourceTtl2, srcTtl1,
 		"Source TTL should be refreshed after update")
 	require.Greater(t, destTtl2, destTtl1,
 		"Destination TTL should be refreshed after update")
+	require.Greater(t, relTtl2, relTtl1,
+		"Relationship TTL should be refreshed after update")
 }
 
 func TestTtlExpiration_TenIdenticalUpdates_ResultInOneExpiryEvent(t *testing.T) {
