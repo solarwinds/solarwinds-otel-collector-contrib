@@ -375,14 +375,6 @@ func TestTtlExpiration_TenIdenticalUpdates_ResultInOneExpiryEvent(t *testing.T) 
 	storage, err := newInternalStorage(cfg, logger, eventsChan)
 	require.NoError(t, err)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	// Run the storage in a goroutine
-	done := make(chan struct{})
-	go func() {
-		storage.run(ctx)
-		close(done)
-	}()
-
 	relationship := &internal.Relationship{
 		Type:        "dependsOn",
 		Source:      sourceEntity,
@@ -430,7 +422,6 @@ func TestTtlExpiration_TenIdenticalUpdates_ResultInOneExpiryEvent(t *testing.T) 
 	case <-deadline:
 		assert.Equal(t, eventsReceived, 1, "Only one event should be received, even though 10 updates were sent")
 	}
-	cancel()
 }
 
 func TestTtlExpiration_TenDifferentUpdates_ResultInTenExpiryEvents(t *testing.T) {
@@ -440,15 +431,6 @@ func TestTtlExpiration_TenDifferentUpdates_ResultInTenExpiryEvents(t *testing.T)
 
 	storage, err := newInternalStorage(cfg, logger, eventsChan)
 	require.NoError(t, err)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	// Run the storage in a goroutine
-	done := make(chan struct{})
-	go func() {
-		storage.run(ctx)
-		close(done)
-	}()
 
 	// Create and insert 10 different relationships
 	insertTime := time.Now()
@@ -514,7 +496,6 @@ func TestTtlExpiration_TenDifferentUpdates_ResultInTenExpiryEvents(t *testing.T)
 			return
 		}
 	}
-
 	assert.Equal(t, 10, eventsReceived, "Should receive all 10 events for 10 different relationships")
 }
 
