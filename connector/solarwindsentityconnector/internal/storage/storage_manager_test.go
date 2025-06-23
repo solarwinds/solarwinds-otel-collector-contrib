@@ -46,9 +46,9 @@ func (m *mockCache) run(ctx context.Context) {
 
 // mockEventConsumer implements the internal.EventConsumer interface for testing
 type mockEventConsumer struct {
-	mu             sync.Mutex
-	receivedEvents [][]internal.Event
-	calledTimes    int
+	mu                           sync.Mutex
+	receivedEvents               [][]internal.Event
+	sendExpiredEventsCalledTimes int
 }
 
 func (m *mockEventConsumer) SendExpiredEvents(ctx context.Context, events []internal.Event) {
@@ -56,7 +56,7 @@ func (m *mockEventConsumer) SendExpiredEvents(ctx context.Context, events []inte
 	eventsCopy := make([]internal.Event, len(events))
 	copy(eventsCopy, events)
 	m.receivedEvents = append(m.receivedEvents, eventsCopy)
-	m.calledTimes++
+	m.sendExpiredEventsCalledTimes++
 }
 
 // TestUpdate tests the Update method of storage Manager
@@ -184,7 +184,7 @@ func TestReceiveExpired_CanceledContext_ClosesChannel(t *testing.T) {
 	_, isOpen := <-manager.expiredCh
 	assert.False(t, isOpen, "expiredCh should be closed when context is cancelled")
 	// Verify no events were sent
-	assert.Equal(t, 0, mockConsumer.calledTimes, "SendExpiredEvents should not be called when context is cancelled")
+	assert.Equal(t, 0, mockConsumer.sendExpiredEventsCalledTimes, "SendExpiredEvents should not be called when context is cancelled")
 }
 
 func TestReceiveExpired_MultipleBatches(t *testing.T) {
@@ -255,7 +255,7 @@ func TestReceiveExpired_MultipleBatches(t *testing.T) {
 	wg.Wait()
 
 	// Verify the events were batched and sent correctly
-	assert.Equal(t, 2, mockConsumer.calledTimes, "SendExpiredEvents should be called twice")
+	assert.Equal(t, 2, mockConsumer.sendExpiredEventsCalledTimes, "SendExpiredEvents should be called twice")
 	assert.Equal(t, 2, len(mockConsumer.receivedEvents), "Two batches should be received")
 	assert.Equal(t, 3, len(mockConsumer.receivedEvents[0]), "First batch should contain 3 events")
 	assert.Equal(t, 2, len(mockConsumer.receivedEvents[1]), "Second batch should contain 2 events")
@@ -286,7 +286,28 @@ func TestReceiveExpired_EmptyBatch(t *testing.T) {
 		manager.receiveExpired(ctx)
 	}()
 
-	// Let the timer expire without sending any events
+	// Send one event to initialize the batch and timer
+	manager.expiredCh <- &internal.Relationship{
+		Type: "testRelation",
+		Source: internal.RelationshipEntity{
+			Type: "sourceEntity",
+			IDs:  createIDMap("id", "source1"),
+		},
+		Destination: internal.RelationshipEntity{
+			Type: "destEntity",
+			IDs:  createIDMap("id", "dest1"),
+		},
+	}
+
+	// Wait for the first batch to be processed
+	time.Sleep(1500 * time.Millisecond)
+
+	// Verify the first batch was sent
+	assert.Equal(t, 1, mockConsumer.sendExpiredEventsCalledTimes, "SendExpiredEvents should be called once")
+	assert.Equal(t, 1, len(mockConsumer.receivedEvents), "One batch should be received")
+	assert.Equal(t, 1, len(mockConsumer.receivedEvents[0]), "Batch should contain 1 event")
+
+	// Now let the timer expire again without sending more events
 	time.Sleep(1500 * time.Millisecond)
 
 	// Cancel context to stop the goroutine
@@ -295,7 +316,7 @@ func TestReceiveExpired_EmptyBatch(t *testing.T) {
 	// Wait for the goroutine to finish
 	wg.Wait()
 
-	// Verify no events were sent because the batch was empty
-	assert.Equal(t, 0, mockConsumer.calledTimes, "SendExpiredEvents should not be called for empty batch")
-	assert.Equal(t, 0, len(mockConsumer.receivedEvents), "No batches should be received")
+	// Verify no additional batches were sent (count should still be 1)
+	assert.Equal(t, 1, mockConsumer.sendExpiredEventsCalledTimes, "No additional batches should be sent when empty")
+	assert.Equal(t, 1, len(mockConsumer.receivedEvents), "Still only one batch should be received")
 }
