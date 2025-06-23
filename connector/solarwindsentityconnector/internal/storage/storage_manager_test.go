@@ -32,12 +32,19 @@ import (
 type mockCache struct {
 	mu           sync.Mutex
 	updateCalled bool
+	deleteCalled bool
 	lastRel      *internal.Relationship
 	returnErr    error
 }
 
 func (m *mockCache) update(rel *internal.Relationship) error {
 	m.updateCalled = true
+	m.lastRel = rel
+	return m.returnErr
+}
+
+func (m *mockCache) delete(rel *internal.Relationship) error {
+	m.deleteCalled = true
 	m.lastRel = rel
 	return m.returnErr
 }
