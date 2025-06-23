@@ -20,12 +20,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash/fnv"
+	"time"
+
 	"github.com/dgraph-io/ristretto/v2"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal"
 	"go.uber.org/zap"
-	"hash/fnv"
-	"time"
 )
 
 const (
@@ -160,19 +161,12 @@ func onRelationshipEvict(
 }
 
 func (c *internalStorage) run(ctx context.Context) {
-	defer func() {
-		c.logger.Info("closing ristretto caches")
-		c.entities.Close()
-		c.relationships.Close()
-		c.logger.Info("internalStorage stopped")
-	}()
+	<-ctx.Done()
 
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		}
-	}
+	c.logger.Info("closing ristretto caches")
+	c.entities.Close()
+	c.relationships.Close()
+	c.logger.Info("internalStorage stopped")
 }
 
 // Reset TTL for existing entries, or creates a new entries with default TTL, for given relationship
