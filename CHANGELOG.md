@@ -1,6 +1,7 @@
 # Changelog
 
 ## vNext
+- `swoworkloadtypeprocessor` extended to allow searching for owners of Pods
 
 ## v0.127.3
 - `swok8sobjectsreceiver` Change logging of 410 events to debug level
