@@ -15,16 +15,13 @@
 package storage
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/dgraph-io/ristretto/v2"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal"
 	"go.uber.org/zap"
-	"hash/fnv"
 	"time"
 )
 
@@ -66,6 +63,7 @@ type internalStorage struct {
 	ttl                       time.Duration
 	ttlCleanUpIntervalSeconds time.Duration
 	logger                    *zap.Logger
+	keyBuilder                KeyBuilder
 
 	// TODO: Introduce mutex to protect concurrent access to the cache when parallelization is used
 	// in the upper layers (NH-112603).
@@ -123,6 +121,7 @@ func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em c
 		ttl:                       cfg.Interval,
 		ttlCleanUpIntervalSeconds: cfg.TTLCleanupIntervalSeconds,
 		logger:                    logger,
+		keyBuilder:                NewDefaultKeyBuilder(),
 	}, nil
 }
 
@@ -179,17 +178,20 @@ func (c *internalStorage) run(ctx context.Context) {
 func (c *internalStorage) delete(relationship *internal.Relationship) error {
 	c.logger.Debug("deleting relationship from internal storage", zap.String("relationshipType", relationship.Type))
 
-	sourceHash, err := buildKey(relationship.Source)
+	sourceHash, err := c.keyBuilder.BuildEntityKey(relationship.Source)
 	if err != nil {
 		return errors.Join(err, fmt.Errorf("failed to hash key for source entity: %s", relationship.Source.Type))
 	}
-	destHash, err := buildKey(relationship.Destination)
+	destHash, err := c.keyBuilder.BuildEntityKey(relationship.Destination)
 	if err != nil {
 		return errors.Join(err, fmt.Errorf("failed to hash key for destination entity: %s", relationship.Destination.Type))
 	}
 
 	// Remove the relationship from the cache
-	relationshipKey := fmt.Sprintf("%s:%s:%s", relationship.Type, sourceHash, destHash)
+	relationshipKey, err := c.keyBuilder.BuildRelationshipKey(relationship.Type, sourceHash, destHash)
+	if err != nil {
+		return err
+	}
 	c.relationships.Del(relationshipKey)
 	return nil
 }
@@ -201,11 +203,11 @@ func (c *internalStorage) delete(relationship *internal.Relationship) error {
 func (c *internalStorage) update(relationship *internal.Relationship) error {
 	c.logger.Debug("updating relationship in internal storage", zap.String("relationshipType", relationship.Type))
 
-	sourceHash, err := buildKey(relationship.Source)
+	sourceHash, err := c.keyBuilder.BuildEntityKey(relationship.Source)
 	if err != nil {
 		return errors.Join(err, fmt.Errorf("failed to hash key for source entity: %s", relationship.Source.Type))
 	}
-	destHash, err := buildKey(relationship.Destination)
+	destHash, err := c.keyBuilder.BuildEntityKey(relationship.Destination)
 	if err != nil {
 		return errors.Join(err, fmt.Errorf("failed to hash key for destination entity: %s", relationship.Destination.Type))
 	}
@@ -220,7 +222,11 @@ func (c *internalStorage) update(relationship *internal.Relationship) error {
 		return fmt.Errorf("failed to update destination entity: %s", relationship.Destination.Type)
 	}
 
-	relationshipKey := fmt.Sprintf("%s:%s:%s", relationship.Type, sourceHash, destHash)
+	relationshipKey, err := c.keyBuilder.BuildRelationshipKey(relationship.Type, sourceHash, destHash)
+	if err != nil {
+		return err
+	}
+
 	relationshipValue := storedRelationship{
 		sourceHash:       sourceHash,
 		destHash:         destHash,
@@ -232,28 +238,4 @@ func (c *internalStorage) update(relationship *internal.Relationship) error {
 		return fmt.Errorf("failed to update relationship: %s", relationship.Type)
 	}
 	return nil
-}
-
-// buildKey constructs a unique key for the entity referenced in the relationship.
-// The key is composition of entity type and its ID attributes.
-func buildKey(entity internal.RelationshipEntity) (string, error) {
-	var buf bytes.Buffer
-	enc := json.NewEncoder(&buf)
-	err := enc.Encode(struct {
-		Type string
-		IDs  map[string]any
-	}{
-		entity.Type,
-		entity.IDs.AsRaw(),
-	})
-	if err != nil {
-		return "", fmt.Errorf("failed to encode entity: %w", err)
-	}
-
-	h := fnv.New64a()
-	_, err = h.Write(buf.Bytes())
-	if err != nil {
-		return "", fmt.Errorf("failed to write entity bytes to hash: %w", err)
-	}
-	return fmt.Sprintf("%x", h.Sum64()), nil
 }
