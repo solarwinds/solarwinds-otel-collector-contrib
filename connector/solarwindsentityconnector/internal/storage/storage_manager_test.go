@@ -20,8 +20,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.uber.org/zap"
 )
@@ -319,4 +321,64 @@ func TestReceiveExpired_EmptyBatch(t *testing.T) {
 	// Verify no additional batches were sent (count should still be 1)
 	assert.Equal(t, 1, mockConsumer.sendExpiredEventsCalledTimes, "No additional batches should be sent when empty")
 	assert.Equal(t, 1, len(mockConsumer.receivedEvents), "Still only one batch should be received")
+}
+
+// TestNewStorageManager tests the creation of a new storage manager
+func TestNewStorageManager(t *testing.T) {
+	logger := zap.NewNop()
+	mockConsumer := &mockEventConsumer{
+		receivedEvents: make([][]internal.Event, 0),
+	}
+
+	testCases := []struct {
+		name        string
+		cfg         *config.ExpirationSettings
+		expectError bool
+		errorMsg    string
+	}{
+		{
+			name: "valid configuration",
+			cfg: &config.ExpirationSettings{
+				Interval:                  time.Second * 10,
+				MaxCapacity:               1000,
+				TTLCleanupIntervalSeconds: time.Second * 20,
+			},
+			expectError: false,
+		},
+		{
+			name:        "nil configuration",
+			cfg:         nil,
+			expectError: true,
+			errorMsg:    "expiration settings configuration is nil",
+		},
+		{
+			name: "invalid TTLCleanupIntervalSeconds",
+			cfg: &config.ExpirationSettings{
+				Interval:                  time.Second * 10,
+				MaxCapacity:               1000,
+				TTLCleanupIntervalSeconds: time.Millisecond * 500, // Less than 1 second
+			},
+			expectError: true,
+			errorMsg:    "ttlCleanupSeconds has to be bigger than 0",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			manager, err := NewStorageManager(tc.cfg, logger, mockConsumer)
+
+			if tc.expectError {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tc.errorMsg)
+				assert.Nil(t, manager)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, manager)
+				assert.NotNil(t, manager.cache)
+				assert.NotNil(t, manager.expiredCh)
+				assert.Equal(t, mockConsumer, manager.eventConsumer)
+				assert.Equal(t, logger, manager.logger)
+			}
+		})
+	}
 }
