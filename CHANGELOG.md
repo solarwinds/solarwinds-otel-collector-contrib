@@ -2,6 +2,9 @@
 
 ## vNext
 
+## v0.127.3
+- `swok8sobjectsreceiver` Change logging of 410 events to debug level
+
 ## v0.127.2
 - `solarwindsentityconnector` Added optional prefixes support for entity relationships between entities of different types.
 
