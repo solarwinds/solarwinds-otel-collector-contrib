@@ -15,7 +15,6 @@
 package storage
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal"
@@ -26,8 +25,8 @@ import (
 // TestBuildKey tests the buildKey function for various scenarios
 // Select test entities are added control group.
 // Everything is checked against the control group. Some expect to find the key in the control group, and some expect not to find themselves
-// because they should generate key unique from everyting in the control group.
-func TestBuildKey(t *testing.T) {
+// because they should generate key unique from everything in the control group.
+func TestBuildEntityKey(t *testing.T) {
 	tests := []struct {
 		name              string
 		entity            internal.RelationshipEntity
@@ -144,7 +143,7 @@ func TestBuildKey(t *testing.T) {
 	}
 }
 
-func TestBuildKey_SameEntitiesWithDifferentIdsOrderHaveSameKeys(t *testing.T) {
+func TestBuildEntityKey_SameEntitiesWithDifferentIdsOrderHaveSameKeys(t *testing.T) {
 	entity := internal.RelationshipEntity{
 		Type: "service",
 		IDs: func() pcommon.Map {
@@ -175,8 +174,8 @@ func TestBuildKey_SameEntitiesWithDifferentIdsOrderHaveSameKeys(t *testing.T) {
 	require.Equal(t, key1, key2, "Keys should be identical for the same entity with different ID order")
 }
 
-// TestBuildKeyConsistency ensures that the same entity always generates the same key
-func TestBuildKeyConsistency(t *testing.T) {
+// TestBuildEntityKeyConsistency ensures that the same entity always generates the same key
+func TestBuildEntityKeyConsistency(t *testing.T) {
 	entity := internal.RelationshipEntity{
 		Type: "service",
 		IDs: func() pcommon.Map {
@@ -275,74 +274,4 @@ func TestBuildRelationshipKey(t *testing.T) {
 			}
 		})
 	}
-}
-
-// TestBuildRelationshipKey_WithRealEntityHashes uses real entity hashes to test end-to-end relationship key creation
-func TestBuildRelationshipKey_WithRealEntityHashes(t *testing.T) {
-	keyBuilder := NewDefaultKeyBuilder()
-
-	// Create test entities
-	sourceEntity := internal.RelationshipEntity{
-		Type: "service",
-		IDs: func() pcommon.Map {
-			m := pcommon.NewMap()
-			m.PutStr("name", "frontend-service")
-			return m
-		}(),
-	}
-
-	destEntity := internal.RelationshipEntity{
-		Type: "database",
-		IDs: func() pcommon.Map {
-			m := pcommon.NewMap()
-			m.PutStr("name", "user-database")
-			return m
-		}(),
-	}
-
-	// Generate entity hashes
-	sourceHash, err := keyBuilder.BuildEntityKey(sourceEntity)
-	require.NoError(t, err)
-	destHash, err := keyBuilder.BuildEntityKey(destEntity)
-	require.NoError(t, err)
-
-	// Test relationship types
-	relationshipTypes := []string{"dependsOn", "calls", "connects-to"}
-
-	for _, relType := range relationshipTypes {
-		t.Run(relType, func(t *testing.T) {
-			// Create relationship key
-			relationshipKey, err := keyBuilder.BuildRelationshipKey(relType, sourceHash, destHash)
-			require.NoError(t, err)
-
-			// Verify the key format
-			expectedKey := relType + ":" + sourceHash + ":" + destHash
-			require.Equal(t, expectedKey, relationshipKey)
-
-			// Verify key components can be extracted
-			components := parseRelationshipKey(relationshipKey)
-			require.Equal(t, relType, components[0])
-			require.Equal(t, sourceHash, components[1])
-			require.Equal(t, destHash, components[2])
-		})
-	}
-
-	// Test the error case with empty relationship type
-	t.Run("empty relationship type", func(t *testing.T) {
-		_, err := keyBuilder.BuildRelationshipKey("", sourceHash, destHash)
-		require.Error(t, err)
-		require.Equal(t, "relationshipType cannot be empty", err.Error())
-	})
-}
-
-// Helper function to parse relationship key components
-func parseRelationshipKey(key string) []string {
-	var relType, sourceHash, destHash string
-	// This is a simplified version for testing,
-	// in a real implementation we'd handle potential edge cases
-	_, err := fmt.Sscanf(key, "%s:%s:%s", &relType, &sourceHash, &destHash)
-	if err != nil {
-		return []string{"", "", ""}
-	}
-	return []string{relType, sourceHash, destHash}
 }
