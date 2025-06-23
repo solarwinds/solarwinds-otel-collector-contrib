@@ -22,9 +22,27 @@ import (
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal"
 	"github.com/stretchr/testify/assert"
-	"go.opentelemetry.io/collector/pdata/plog"
+	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.uber.org/zap"
 )
+
+// mockCache implements InternalCache interface for testing
+type mockCache struct {
+	mu        sync.Mutex
+	called    bool
+	lastRel   *internal.Relationship
+	returnErr error
+}
+
+func (m *mockCache) update(rel *internal.Relationship) error {
+	m.called = true
+	m.lastRel = rel
+	return m.returnErr
+}
+
+func (m *mockCache) run(ctx context.Context) {
+	// No-op for testing
+}
 
 // mockEventConsumer implements the internal.EventConsumer interface for testing
 type mockEventConsumer struct {
@@ -34,8 +52,6 @@ type mockEventConsumer struct {
 }
 
 func (m *mockEventConsumer) SendExpiredEvents(ctx context.Context, events []internal.Event) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
 	// Make a copy of the events to avoid potential race conditions
 	eventsCopy := make([]internal.Event, len(events))
 	copy(eventsCopy, events)
@@ -43,17 +59,95 @@ func (m *mockEventConsumer) SendExpiredEvents(ctx context.Context, events []inte
 	m.calledTimes++
 }
 
-// mockEvent implements the internal.Event interface for testing
-type mockEvent struct {
-	id string
+// TestUpdate tests the Update method of storage Manager
+func TestUpdate(t *testing.T) {
+	testCases := []struct {
+		name           string
+		event          internal.Event
+		cacheExpectErr bool
+		cacheMockErr   error
+	}{
+		{
+			name: "successful update with relationship",
+			event: &internal.Relationship{
+				Type: "testRelation",
+				Source: internal.RelationshipEntity{
+					Type: "sourceEntity",
+					IDs:  createIDMap("id", "source1"),
+				},
+				Destination: internal.RelationshipEntity{
+					Type: "destEntity",
+					IDs:  createIDMap("id", "dest1"),
+				},
+			},
+			cacheExpectErr: false,
+			cacheMockErr:   nil,
+		},
+		{
+			name: "cache update returns error",
+			event: &internal.Relationship{
+				Type: "testRelation",
+				Source: internal.RelationshipEntity{
+					Type: "sourceEntity",
+					IDs:  createIDMap("id", "source1"),
+				},
+				Destination: internal.RelationshipEntity{
+					Type: "destEntity",
+					IDs:  createIDMap("id", "dest1"),
+				},
+			},
+			cacheExpectErr: true,
+			cacheMockErr:   assert.AnError,
+		},
+		{
+			name: "entity event is ignored, no cache call",
+			event: &internal.Entity{
+				Type: "testEntity",
+				IDs:  createIDMap("id", "source1"),
+			},
+			cacheExpectErr: false,
+			cacheMockErr:   nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockCache := &mockCache{
+				returnErr: tc.cacheMockErr,
+			}
+
+			manager := &Manager{
+				cache:  mockCache,
+				logger: zap.NewNop(),
+			}
+
+			err := manager.Update(tc.event)
+
+			// Check if error matches expectation
+			if tc.cacheExpectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+
+			// If the event is a relationship, verify it was passed to the cache
+			if rel, ok := tc.event.(*internal.Relationship); ok {
+				assert.True(t, mockCache.called)
+				assert.Equal(t, rel, mockCache.lastRel)
+			} else {
+				// If it's not a relationship, cache should not be called
+				assert.False(t, mockCache.called)
+				assert.Nil(t, mockCache.lastRel)
+			}
+		})
+	}
 }
 
-func (m *mockEvent) Update(logRecords *plog.LogRecordSlice) {
-	// No-op for testing
-}
-
-func (m *mockEvent) Delete(logRecords *plog.LogRecordSlice) {
-	// No-op for testing
+// Helper function to create a pcommon.Map with a string key/value pair
+func createIDMap(key, value string) pcommon.Map {
+	m := pcommon.NewMap()
+	m.PutStr(key, value)
+	return m
 }
 
 func TestReceiveExpired_CanceledContext_ClosesChannel(t *testing.T) {
@@ -120,7 +214,17 @@ func TestReceiveExpired_MultipleBatches(t *testing.T) {
 
 	// Send first batch of events
 	for i := 0; i < 3; i++ {
-		manager.expiredCh <- &mockEvent{id: "batch1_" + string(rune('0'+i))}
+		manager.expiredCh <- &internal.Relationship{
+			Type: "batch1" + string(rune('0'+i)),
+			Source: internal.RelationshipEntity{
+				Type: "sourceEntity",
+				IDs:  createIDMap("id", "source"+string(rune('0'+i))),
+			},
+			Destination: internal.RelationshipEntity{
+				Type: "destEntity",
+				IDs:  createIDMap("id", "dest"+string(rune('0'+i))),
+			},
+		}
 	}
 
 	// Wait for the first batch to be processed
@@ -128,7 +232,17 @@ func TestReceiveExpired_MultipleBatches(t *testing.T) {
 
 	// Send second batch of events
 	for i := 0; i < 2; i++ {
-		manager.expiredCh <- &mockEvent{id: "batch2_" + string(rune('0'+i))}
+		manager.expiredCh <- &internal.Relationship{
+			Type: "batch1" + string(rune('0'+i)),
+			Source: internal.RelationshipEntity{
+				Type: "sourceEntity",
+				IDs:  createIDMap("id", "source"+string(rune('0'+i))),
+			},
+			Destination: internal.RelationshipEntity{
+				Type: "destEntity",
+				IDs:  createIDMap("id", "dest"+string(rune('0'+i))),
+			},
+		}
 	}
 
 	// Wait for the second batch to be processed
