@@ -85,11 +85,7 @@ func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em c
 	ttlCleanupSeconds := int64(cfg.TTLCleanupIntervalSeconds.Seconds())
 	// One second is the minimum value for ttlCleanupSeconds, as it is used to control the eviction process for the two caches.
 	if ttlCleanupSeconds <= 0 {
-		return nil, fmt.Errorf("ttlCleanupSeconds has to be bigger than 0")
-	}
-
-	if (cfg.Interval * 2) > time.Duration(ttlCleanupSeconds)*time.Second {
-		return nil, fmt.Errorf("ttlCleanupSeconds (%s) has to be at minimum twice the value of cfg.Interval (%s)", cfg.Interval, cfg.TTLCleanupIntervalSeconds)
+		return nil, fmt.Errorf("ttlCleanupSeconds has to be at least 1 second, got %d", ttlCleanupSeconds)
 	}
 
 	entityCache, err := ristretto.NewCache(&ristretto.Config[string, internal.RelationshipEntity]{
