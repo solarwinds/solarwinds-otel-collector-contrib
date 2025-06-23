@@ -160,10 +160,16 @@ func onRelationshipEvict(
 }
 
 func (c *internalStorage) run(ctx context.Context) {
+	defer func() {
+		c.logger.Info("closing ristretto caches")
+		c.entities.Close()
+		c.relationships.Close()
+		c.logger.Info("internalStorage stopped")
+	}()
+
 	for {
 		select {
 		case <-ctx.Done():
-			c.logger.Info("internalStorage stopped")
 			return
 		}
 	}
