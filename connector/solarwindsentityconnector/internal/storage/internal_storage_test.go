@@ -117,7 +117,7 @@ func TestNewInternalStorage(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, storage)
-				require.Equal(t, tt.cfg.Interval, storage.ttl)
+				require.Equal(t, tt.cfg.Interval, storage.relationshipTtl)
 				require.NotNil(t, storage.entities)
 				require.NotNil(t, storage.relationships)
 			}

@@ -63,7 +63,8 @@ type storedRelationship struct {
 type internalStorage struct {
 	entities                  *ristretto.Cache[string, internal.RelationshipEntity]
 	relationships             *ristretto.Cache[string, storedRelationship]
-	ttl                       time.Duration
+	relationshipTtl           time.Duration
+	entityTtl                 time.Duration
 	ttlCleanUpIntervalSeconds time.Duration
 	logger                    *zap.Logger
 
@@ -114,11 +115,13 @@ func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em c
 	}
 
 	return &internalStorage{
-		entities:                  entityCache,
-		relationships:             relationshipCache,
-		ttl:                       cfg.Interval,
-		ttlCleanUpIntervalSeconds: cfg.TTLCleanupIntervalSeconds,
-		logger:                    logger,
+		entities:        entityCache,
+		relationships:   relationshipCache,
+		relationshipTtl: cfg.Interval,
+		// The entity should live longer than the relationship to be able to send delete event after expiration.
+		// The TTL + clean-up interval should be the longest interval after which the relationship would be evicted.
+		entityTtl: (cfg.Interval + cfg.TTLCleanupIntervalSeconds) * entityTTLFactor,
+		logger:    logger,
 	}, nil
 }
 
@@ -181,12 +184,12 @@ func (c *internalStorage) update(relationship *internal.Relationship) error {
 		return errors.Join(err, fmt.Errorf("failed to hash key for destination entity: %s", relationship.Destination.Type))
 	}
 
-	sourceUpdated := c.entities.SetWithTTL(sourceHash, relationship.Source, itemCost, c.ttlCleanUpIntervalSeconds*entityTTLFactor)
+	sourceUpdated := c.entities.SetWithTTL(sourceHash, relationship.Source, itemCost, c.entityTtl)
 	if !sourceUpdated {
 		return fmt.Errorf("failed to update source entity: %s", relationship.Source.Type)
 	}
 
-	destUpdated := c.entities.SetWithTTL(destHash, relationship.Destination, itemCost, c.ttlCleanUpIntervalSeconds*entityTTLFactor)
+	destUpdated := c.entities.SetWithTTL(destHash, relationship.Destination, itemCost, c.entityTtl)
 	if !destUpdated {
 		return fmt.Errorf("failed to update destination entity: %s", relationship.Destination.Type)
 	}
@@ -198,7 +201,7 @@ func (c *internalStorage) update(relationship *internal.Relationship) error {
 		relationshipType: relationship.Type,
 	}
 
-	relationshipUpdated := c.relationships.SetWithTTL(relationshipKey, relationshipValue, itemCost, c.ttl)
+	relationshipUpdated := c.relationships.SetWithTTL(relationshipKey, relationshipValue, itemCost, c.relationshipTtl)
 	if !relationshipUpdated {
 		return fmt.Errorf("failed to update relationship: %s", relationship.Type)
 	}
