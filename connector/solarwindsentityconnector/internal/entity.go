@@ -76,7 +76,3 @@ func (e Entity) Update(logRecords *plog.LogRecordSlice) {
 }
 
 var _ Event = (*Entity)(nil)
-
-func (e Entity) GetActionType() string {
-	return e.Action
-}

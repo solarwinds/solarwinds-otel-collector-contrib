@@ -127,7 +127,7 @@ func TestCreateEntity(t *testing.T) {
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		nil)
 
-	entityEvent, err := eventDetector.createEntity(resourceAttrs, &config.EntityEvent{Type: entity.Type})
+	entityEvent, err := eventDetector.createEntityEvent(resourceAttrs, &config.EntityEvent{Type: entity.Type, Action: "update"})
 	assert.Nil(t, err)
 	logs := plog.NewLogs()
 	logRecords := CreateEventLog(&logs)
@@ -168,7 +168,7 @@ func TestCreateEntityWithNoAttributes(t *testing.T) {
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		nil)
-	_, err := eventDetector.createEntity(resourceAttrs, &config.EntityEvent{Type: entity.Type})
+	_, err := eventDetector.createEntityEvent(resourceAttrs, &config.EntityEvent{Type: entity.Type})
 	assert.NotNil(t, err)
 }
 
@@ -194,6 +194,7 @@ func TestCreateRelationshipEvent(t *testing.T) {
 		Type:        "MemberOf",
 		Source:      srcEntity.Type,
 		Destination: destEntity.Type,
+		Action:      "update",
 	}
 
 	eventDetector := NewEventDetector(
@@ -207,7 +208,7 @@ func TestCreateRelationshipEvent(t *testing.T) {
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		nil)
 
-	relationshipEvent, err := eventDetector.createRelationship(resourceAttrs, &relationship)
+	relationshipEvent, err := eventDetector.createRelationshipEvent(resourceAttrs, &relationship)
 	assert.Nil(t, err)
 	logs := plog.NewLogs()
 	logRecords := CreateEventLog(&logs)
@@ -260,7 +261,7 @@ func TestCreateRelationshipEventWithNoAttributes(t *testing.T) {
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		nil)
 
-	_, err := eventDetector.createRelationship(resourceAttrs, &relationship)
+	_, err := eventDetector.createRelationshipEvent(resourceAttrs, &relationship)
 	assert.NotNil(t, err)
 }
 
@@ -294,7 +295,7 @@ func TestCreateRelationshipEventWithoutResourceAttributes(t *testing.T) {
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		nil)
 
-	_, err := eventDetector.createRelationship(resourceAttrs, &relationship)
+	_, err := eventDetector.createRelationshipEvent(resourceAttrs, &relationship)
 	assert.NotNil(t, err)
 }
 
@@ -314,6 +315,7 @@ func TestCreateSameTypeRelationshipEvent(t *testing.T) {
 		Type:        "VirtualizationTopologyConnection",
 		Source:      "KubernetesCluster",
 		Destination: "KubernetesCluster",
+		Action:      "update",
 	}
 
 	eventDetector := NewEventDetector(
@@ -326,7 +328,7 @@ func TestCreateSameTypeRelationshipEvent(t *testing.T) {
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		nil)
 
-	relationshipEvent, err := eventDetector.createRelationship(resourceAttrs, &relationship)
+	relationshipEvent, err := eventDetector.createRelationshipEvent(resourceAttrs, &relationship)
 	assert.Nil(t, err)
 	logs := plog.NewLogs()
 	logRecords := CreateEventLog(&logs)
@@ -373,7 +375,7 @@ func TestCreateSameTypeRelationshipEventWithNoAttributesSameType(t *testing.T) {
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		nil)
 
-	_, err := eventDetector.createRelationship(resourceAttrs, &relationship)
+	_, err := eventDetector.createRelationshipEvent(resourceAttrs, &relationship)
 	assert.NotNil(t, err)
 }
 
@@ -401,7 +403,7 @@ func TestCreateSameTypeRelationshipEventWithoutResourceAttributes(t *testing.T) 
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		nil)
 
-	_, err := eventDetector.createRelationship(resourceAttrs, &relationship)
+	_, err := eventDetector.createRelationshipEvent(resourceAttrs, &relationship)
 	assert.NotNil(t, err)
 }
 
@@ -422,7 +424,9 @@ func TestCollectEventsWithEntitiesWhenAttributesArePresent(t *testing.T) {
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		nil)
-	events, err := eventBuilder.collectEvents(resourceAttrs, []*config.EntityEvent{{Type: testEntity.Type}}, nil)
+	events, err := eventBuilder.collectEvents(resourceAttrs, []*config.EntityEvent{{
+		Type:   testEntity.Type,
+		Action: "update"}}, nil)
 	require.NoError(t, err)
 	require.Len(t, events, 1)
 	logs := plog.NewLogs()
@@ -485,7 +489,9 @@ func TestCollectEventsWithEntitiesWhenAttributeIsMissing(t *testing.T) {
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		nil)
-	events, err := eventBuilder.collectEvents(resourceAttrs, []*config.EntityEvent{{Type: testEntity.Type}}, nil)
+	events, err := eventBuilder.collectEvents(resourceAttrs, []*config.EntityEvent{{
+		Type:   testEntity.Type,
+		Action: "update"}}, nil)
 	require.NoError(t, err)
 	require.Len(t, events, 1)
 	logs := plog.NewLogs()
@@ -512,7 +518,10 @@ func TestCollectEventsWithRelationshipsWhenAttributesArePresent(t *testing.T) {
 	// arrange
 	srcEntity := config.Entity{Type: "KubernetesCluster", IDs: []string{"id1"}, Attributes: []string{"attr1"}}
 	destEntity := config.Entity{Type: "KubernetesNamespace", IDs: []string{"id2"}, Attributes: []string{"attr2"}}
-	testRelationship := config.RelationshipEvent{Source: srcEntity.Type, Destination: destEntity.Type}
+	testRelationship := config.RelationshipEvent{
+		Source:      srcEntity.Type,
+		Destination: destEntity.Type,
+		Action:      "update"}
 	resourceAttrs := pcommon.NewMap()
 	resourceAttrs.PutStr("id1", "idvalue1")
 	resourceAttrs.PutStr("id2", "idvalue2")
@@ -563,7 +572,10 @@ func TestCollectEventsWithRelationshipsWhenAttributesArePresent(t *testing.T) {
 func TestAppendSameTypeRelationshipUpdateEventWhenAttributesArePresent(t *testing.T) {
 	// arrange
 	entity := config.Entity{Type: "KubernetesCluster", IDs: []string{"id"}, Attributes: []string{"attr"}}
-	testRelationship := config.RelationshipEvent{Source: "KubernetesCluster", Destination: "KubernetesCluster"}
+	testRelationship := config.RelationshipEvent{
+		Source:      "KubernetesCluster",
+		Destination: "KubernetesCluster",
+		Action:      "update"}
 	resourceAttrs := pcommon.NewMap()
 	resourceAttrs.PutStr("src.id", "idvalue1")
 	resourceAttrs.PutStr("dst.id", "idvalue2")
@@ -669,7 +681,11 @@ func TestCollectEventsWithRelationshipAttribute(t *testing.T) {
 	// arrange
 	srcEntity := config.Entity{Type: "KubernetesCluster", IDs: []string{"id1"}}
 	destEntity := config.Entity{Type: "KubernetesNamespace", IDs: []string{"id2"}}
-	testRelationship := config.RelationshipEvent{Source: "KubernetesCluster", Destination: "KubernetesNamespace", Attributes: []string{"relationshipAttr"}}
+	testRelationship := config.RelationshipEvent{
+		Source:      "KubernetesCluster",
+		Destination: "KubernetesNamespace",
+		Attributes:  []string{"relationshipAttr"},
+		Action:      "update"}
 	resourceAttrs := pcommon.NewMap()
 	resourceAttrs.PutStr("id1", "idvalue1")
 	resourceAttrs.PutStr("id2", "idvalue2")
@@ -710,7 +726,11 @@ func TestCollectEventsWithRelationshipAttribute(t *testing.T) {
 func TestAppendSameTypeRelationshipUpdateEventWithRelationshipAttribute(t *testing.T) {
 	// arrange
 	entity := config.Entity{Type: "KubernetesCluster", IDs: []string{"id"}}
-	testRelationship := config.RelationshipEvent{Source: "KubernetesCluster", Destination: "KubernetesCluster", Attributes: []string{"relationshipAttr"}}
+	testRelationship := config.RelationshipEvent{
+		Source:      "KubernetesCluster",
+		Destination: "KubernetesCluster",
+		Attributes:  []string{"relationshipAttr"},
+		Action:      "update"}
 	resourceAttrs := pcommon.NewMap()
 	resourceAttrs.PutStr("src.id", "idvalue1")
 	resourceAttrs.PutStr("dst.id", "idvalue2")
