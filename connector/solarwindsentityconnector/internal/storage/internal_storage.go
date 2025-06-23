@@ -113,7 +113,7 @@ func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em c
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to create relaitonship cache: %w", err)
+		return nil, fmt.Errorf("failed to create relationship cache: %w", err)
 	}
 
 	return &internalStorage{
