@@ -37,10 +37,10 @@ type CacheConfiguration struct {
 }
 
 type ExpirationSettings struct {
-	Enabled            bool
-	Interval           time.Duration
-	TTLCleanupInterval time.Duration
-	MaxCapacity        int64
+	Enabled                   bool
+	Interval                  time.Duration
+	TTLCleanupIntervalSeconds time.Duration
+	MaxCapacity               int64
 }
 
 func (e *ExpirationPolicy) Parse() (*ExpirationSettings, error) {
@@ -66,10 +66,10 @@ func (e *ExpirationPolicy) Parse() (*ExpirationSettings, error) {
 	}
 
 	return &ExpirationSettings{
-		Enabled:            true,
-		Interval:           interval,
-		TTLCleanupInterval: ttlCleanupInterval,
-		MaxCapacity:        maxCapacity,
+		Enabled:                   true,
+		Interval:                  interval,
+		TTLCleanupIntervalSeconds: ttlCleanupInterval,
+		MaxCapacity:               maxCapacity,
 	}, nil
 }
 
@@ -91,8 +91,8 @@ func (e *ExpirationPolicy) getTTLCleanupInterval() (time.Duration, error) {
 		if err != nil {
 			return time.Duration(0), errors.New("invalid TTL cleanup interval format")
 		}
-		if parsedCleanupInterval <= 0 {
-			return time.Duration(0), errors.New("ttl cleanup interval must be longer than 0 seconds")
+		if parsedCleanupInterval < time.Duration(1)*time.Second {
+			return time.Duration(0), errors.New("ttl cleanup interval must be at least 1 second")
 		}
 
 		return parsedCleanupInterval, nil

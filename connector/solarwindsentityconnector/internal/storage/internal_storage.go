@@ -44,6 +44,15 @@ const (
 	bufferItems = 64
 )
 
+// InternalCache defines the interface for cache operations used by Manager
+type InternalCache interface {
+	update(relationship *internal.Relationship) error
+	run(ctx context.Context)
+}
+
+// internalStorage implements InternalCache interface.
+var _ InternalCache = (*internalStorage)(nil)
+
 type storedRelationship struct {
 	sourceHash       string
 	destHash         string
@@ -51,11 +60,11 @@ type storedRelationship struct {
 }
 
 type internalStorage struct {
-	entities      *ristretto.Cache[string, internal.RelationshipEntity]
-	relationships *ristretto.Cache[string, storedRelationship]
-	ttl           time.Duration
-	interval      time.Duration
-	logger        *zap.Logger
+	entities                  *ristretto.Cache[string, internal.RelationshipEntity]
+	relationships             *ristretto.Cache[string, storedRelationship]
+	ttl                       time.Duration
+	ttlCleanUpIntervalSeconds time.Duration
+	logger                    *zap.Logger
 
 	// TODO: Introduce mutex to protect concurrent access to the cache when parallelization is used
 	// in the upper layers (NH-112603).
@@ -70,14 +79,22 @@ func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em c
 	// numCounters are internal setting for ristretto cache that helps to manage eviction mechanism.
 	// It is recommended to set it to 10 times the maximum capacity for most of the use cases.
 	numCounters := cfg.MaxCapacity * 10
-	// ttlCleanup sets the interval for sequence scan of the evicted items. When item is evicted,
+	// ttlCleanupSeconds sets the interval for sequence scan of the evicted items. When item is evicted,
 	// it is not immediately removed from the cache.
-	ttlCleanup := int64(cfg.TTLCleanupInterval.Seconds())
+	ttlCleanupSeconds := int64(cfg.TTLCleanupIntervalSeconds.Seconds())
+	// One second is the minimum value for ttlCleanupSeconds, as it is used to control the eviction process for the two caches.
+	if ttlCleanupSeconds <= 0 {
+		return nil, fmt.Errorf("ttlCleanupSeconds has to be bigger than 0")
+	}
+
+	if (cfg.Interval * 2) > time.Duration(ttlCleanupSeconds)*time.Second {
+		return nil, fmt.Errorf("ttlCleanupSeconds (%s) has to be at minimum twice the value of cfg.Interval (%s)", cfg.Interval, cfg.TTLCleanupIntervalSeconds)
+	}
 
 	entityCache, err := ristretto.NewCache(&ristretto.Config[string, internal.RelationshipEntity]{
 		NumCounters:            numCounters,
 		MaxCost:                maxCost,
-		TtlTickerDurationInSec: ttlCleanup * entityTTLCleanupFactor,
+		TtlTickerDurationInSec: ttlCleanupSeconds * entityTTLCleanupFactor,
 		BufferItems:            bufferItems,
 	})
 
@@ -88,7 +105,7 @@ func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em c
 	relationshipCache, err := ristretto.NewCache(&ristretto.Config[string, storedRelationship]{
 		NumCounters:            numCounters,
 		MaxCost:                maxCost,
-		TtlTickerDurationInSec: ttlCleanup,
+		TtlTickerDurationInSec: ttlCleanupSeconds,
 		BufferItems:            bufferItems,
 		OnEvict: func(item *ristretto.Item[storedRelationship]) {
 			onRelationshipEvict(item, entityCache, logger, em)
@@ -100,10 +117,11 @@ func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em c
 	}
 
 	return &internalStorage{
-		entities:      entityCache,
-		relationships: relationshipCache,
-		ttl:           cfg.Interval,
-		logger:        logger,
+		entities:                  entityCache,
+		relationships:             relationshipCache,
+		ttl:                       cfg.Interval,
+		ttlCleanUpIntervalSeconds: cfg.TTLCleanupIntervalSeconds,
+		logger:                    logger,
 	}, nil
 }
 
@@ -124,7 +142,7 @@ func onRelationshipEvict(
 
 	dest, destExists := entityCache.Get(item.Value.destHash)
 	if !destExists {
-		logger.Warn("destination entity not found in cache", zap.String("hash", item.Value.sourceHash))
+		logger.Warn("destination entity not found in cache", zap.String("hash", item.Value.destHash))
 		return
 	}
 
@@ -142,10 +160,16 @@ func onRelationshipEvict(
 }
 
 func (c *internalStorage) run(ctx context.Context) {
+	defer func() {
+		c.logger.Info("closing ristretto caches")
+		c.entities.Close()
+		c.relationships.Close()
+		c.logger.Info("internalStorage stopped")
+	}()
+
 	for {
 		select {
 		case <-ctx.Done():
-			c.logger.Info("internalStorage stopped")
 			return
 		}
 	}
@@ -171,6 +195,8 @@ func (c *internalStorage) delete(relationship *internal.Relationship) error {
 
 // Reset TTL for existing entries, or creates a new entries with default TTL, for given relationship
 // as well as source and destination entities.
+// Entities have minimum TTL of ttlCleanUpIntervalSeconds * entityTTLFactor, which is minimum 5 seconds as ttlCleanUpIntervalSeconds has 1s minimum.
+// Relationships have TTL which can be anything, even milliseconds.
 func (c *internalStorage) update(relationship *internal.Relationship) error {
 	c.logger.Debug("updating relationship in internal storage", zap.String("relationshipType", relationship.Type))
 
@@ -183,14 +209,14 @@ func (c *internalStorage) update(relationship *internal.Relationship) error {
 		return errors.Join(err, fmt.Errorf("failed to hash key for destination entity: %s", relationship.Destination.Type))
 	}
 
-	sourceUpdated := c.entities.SetWithTTL(sourceHash, relationship.Source, itemCost, c.ttl*entityTTLFactor)
+	sourceUpdated := c.entities.SetWithTTL(sourceHash, relationship.Source, itemCost, c.ttlCleanUpIntervalSeconds*entityTTLFactor)
 	if !sourceUpdated {
 		return fmt.Errorf("failed to update source entity: %s", relationship.Source.Type)
 	}
 
-	destUpdated := c.entities.SetWithTTL(destHash, relationship.Destination, itemCost, c.ttl*entityTTLFactor)
+	destUpdated := c.entities.SetWithTTL(destHash, relationship.Destination, itemCost, c.ttlCleanUpIntervalSeconds*entityTTLFactor)
 	if !destUpdated {
-		return fmt.Errorf("failed to update relationship entity: %s", relationship.Destination.Type)
+		return fmt.Errorf("failed to update destination entity: %s", relationship.Destination.Type)
 	}
 
 	relationshipKey := fmt.Sprintf("%s:%s:%s", relationship.Type, sourceHash, destHash)
