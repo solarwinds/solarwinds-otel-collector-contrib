@@ -16,11 +16,12 @@ package internal
 
 import (
 	"context"
+	"testing"
+
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottlmetric"
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.uber.org/zap"
-	"testing"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
@@ -29,6 +30,125 @@ import (
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/pdata/plog"
 )
+
+func TestDetectLog_EntityAndRelationshipEvents(t *testing.T) {
+	ctx := context.Background()
+	settings := componenttest.NewNopTelemetrySettings()
+	logger := zap.NewNop()
+
+	// Prepare OTTL parser and condition sequence that always evaluates to true
+	parserLog, err := ottllog.NewParser(nil, settings)
+	require.NoError(t, err)
+	stmts, err := parserLog.ParseConditions([]string{"true"})
+	require.NoError(t, err)
+	seq := ottl.NewConditionSequence(stmts, settings)
+
+	// Prepare entity and relationship events
+	relationshipType := "MemberOf"
+	entity := config.Entity{
+		Type:       "Entity",
+		IDs:        []string{"id"},
+		Attributes: []string{"attr"},
+	}
+	entityEvent := config.ParsedEntityEvent[ottllog.TransformContext]{
+		Definition:   &config.EntityEvent{Type: entity.Type},
+		ConditionSeq: seq,
+	}
+	relationshipEvent := config.ParsedRelationshipEvent[ottllog.TransformContext]{
+		Definition:   &config.RelationshipEvent{Type: relationshipType, Source: entity.Type, Destination: entity.Type},
+		ConditionSeq: seq,
+	}
+	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
+		Entities:      []config.ParsedEntityEvent[ottllog.TransformContext]{entityEvent},
+		Relationships: []config.ParsedRelationshipEvent[ottllog.TransformContext]{relationshipEvent},
+		Parser:        &parserLog,
+	}
+
+	// Prepare resource attributes
+	resourceAttrs := pcommon.NewMap()
+	resourceAttrs.PutStr("id", "idvalue1")
+	resourceAttrs.PutStr("attr", "attrvalue1")
+	resourceAttrs.PutStr("src.id", "idvalue1")
+	resourceAttrs.PutStr("src.attr", "attrvalue1")
+	resourceAttrs.PutStr("dst.id", "idvalue2")
+	resourceAttrs.PutStr("dst.attr", "attrvalue2")
+
+	// Prepare transform context
+	logs := plog.NewLogs()
+	rLogs := logs.ResourceLogs().AppendEmpty()
+	scopeLogs := rLogs.ScopeLogs().AppendEmpty()
+	logRecord := scopeLogs.LogRecords().AppendEmpty()
+	resource := rLogs.Resource()
+	scope := scopeLogs.Scope()
+	tc := ottllog.NewTransformContext(logRecord, scope, resource, scopeLogs, rLogs)
+
+	// Create EventDetector
+	eventDetector := NewEventDetector(
+		map[string]config.Entity{entity.Type: entity},
+		"src.", "dst.",
+		eventsGroup,
+		config.EventsGroup[ottlmetric.TransformContext]{},
+		logger,
+	)
+
+	events, err := eventDetector.DetectLog(ctx, resourceAttrs, tc)
+	require.NoError(t, err)
+	require.NotNil(t, events)
+	require.Len(t, events, 2)
+}
+
+func TestDetectLog_NoEvents(t *testing.T) {
+	ctx := context.Background()
+	settings := componenttest.NewNopTelemetrySettings()
+	logger := zap.NewNop()
+
+	// Prepare OTTL parser and condition sequence that always evaluates to false
+	parserLog, err := ottllog.NewParser(nil, settings)
+	require.NoError(t, err)
+	stmts, err := parserLog.ParseConditions([]string{"false"})
+	require.NoError(t, err)
+	seq := ottl.NewConditionSequence(stmts, settings)
+
+	entity := config.Entity{
+		Type:       "Entity",
+		IDs:        []string{"id"},
+		Attributes: []string{"attr"},
+	}
+	entityEvent := config.ParsedEntityEvent[ottllog.TransformContext]{
+		Definition:   &config.EntityEvent{Type: entity.Type},
+		ConditionSeq: seq,
+	}
+	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
+		Entities:      []config.ParsedEntityEvent[ottllog.TransformContext]{entityEvent},
+		Relationships: nil,
+		Parser:        &parserLog,
+	}
+
+	resourceAttrs := pcommon.NewMap()
+	resourceAttrs.PutStr("id", "idvalue")
+	resourceAttrs.PutStr("attr", "attrvalue")
+
+	logs := plog.NewLogs()
+	rLogs := logs.ResourceLogs().AppendEmpty()
+	scopeLogs := rLogs.ScopeLogs().AppendEmpty()
+	logRecord := scopeLogs.LogRecords().AppendEmpty()
+	resource := rLogs.Resource()
+	scope := scopeLogs.Scope()
+	tc := ottllog.NewTransformContext(logRecord, scope, resource, scopeLogs, rLogs)
+
+	eventDetector := NewEventDetector(
+		map[string]config.Entity{entity.Type: entity},
+		"", "",
+		eventsGroup,
+		config.EventsGroup[ottlmetric.TransformContext]{},
+		logger,
+	)
+
+	events, err := eventDetector.DetectLog(ctx, resourceAttrs, tc)
+	require.NoError(t, err)
+	require.NotNil(t, events)
+	require.Len(t, events, 0)
+}
 
 func TestConditionTrue(t *testing.T) {
 	// Initialize test data
