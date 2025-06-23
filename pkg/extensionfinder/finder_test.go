@@ -45,7 +45,7 @@ func (m *mockHost) InsertExtension(
 
 func Test_FindExtension_SuceedsOnExactNameAndType(t *testing.T) {
 	extName := "testingextension/aliased"
-
+	l := zap.NewNop()
 	host := &mockHost{
 		extensions: make(map[component.ID]component.Component),
 	}
@@ -53,25 +53,43 @@ func Test_FindExtension_SuceedsOnExactNameAndType(t *testing.T) {
 	host.InsertExtension(t, "testingextension", &testingExtension{Name: "nomatch"})
 	host.InsertExtension(t, extName, &testingExtension{Name: "match"})
 
-	foundExt, err := FindExtension[*testingExtension](new(zap.Logger), extName, host)
-	assert.NoError(t, err, "should not return an error when finding the extension")
+	foundExt, err := FindExtension[*testingExtension](l, extName, host)
 
+	assert.NoError(t, err, "should not return an error when finding the extension")
 	assert.Equal(t, "match", foundExt.Name, "should return the correct extension")
 }
 
-/*func Test_FinsExtension_FailsOnCorrectTypeButWrongName(t *testing.T) {
+func Test_FinsExtension_FailsOnCorrectTypeButWrongName(t *testing.T) {
+	l := zap.NewNop()
 	host := &mockHost{
 		extensions: make(map[component.ID]component.Component),
 	}
-	host.InsertExtension(t, "incorrectextension", &incorrectExtension{Name: "nomatch"})
 	host.InsertExtension(t, "testingextension", &testingExtension{Name: "nomatch"})
 	host.InsertExtension(t, "testingextension/nonmatching", &testingExtension{Name: "nomatch"})
 
-	_, err := FindExtension[*testingExtension](new(zap.Logger), "testingextension/aliased", host)
-	assert.Error()
-	assert.Error(t, err, "should not return an error when finding the extension")
+	_, err := FindExtension[*testingExtension](l, "testingextension/aliased", host)
+
+	assert.ErrorContains(
+		t,
+		err,
+		"extension \"testingextension/aliased\" not found",
+		"should return an error when the extension is not found",
+	)
 }
 
-func Test_FindExtension_FailsOnWrongName(t *testing.T) {
+func Test_FindExtension_FailsOnIncorrectType(t *testing.T) {
+	l := zap.NewNop()
+	host := &mockHost{
+		extensions: make(map[component.ID]component.Component),
+	}
+	host.InsertExtension(t, "testingextension", &incorrectExtension{Name: "nomatch"})
+
+	_, err := FindExtension[*testingExtension](l, "testingextension", host)
+
+	assert.ErrorContains(
+		t,
+		err,
+		"extension \"testingextension\" is not a *extensionfinder.testingExtension",
+		"should return an error when the extension is not of the correct type",
+	)
 }
-*/

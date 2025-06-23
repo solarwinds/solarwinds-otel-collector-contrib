@@ -28,7 +28,7 @@ func FindExtension[E any](
 
 	castedExtension, castedOK := ext.(E)
 	if !castedOK {
-		msg := fmt.Sprintf("extension %q is not a %T", extensionName, (*E)(nil))
+		msg := fmt.Sprintf("extension %q is not a %T", extensionName, *new(E))
 		l.Error(msg)
 		return *new(E), fmt.Errorf("%s", msg)
 	}

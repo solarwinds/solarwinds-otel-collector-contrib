@@ -54,8 +54,6 @@ func (p *solarwindsprocessor) adjustConfigurationByExtension(
 	p.cfg.ResourceAttributes[solarwindsextension.CollectorNameAttribute] = extCfg.CollectorName()
 }
 
-// TODO: to be exported out??
-
 func notifySignalSizeLimitExceeded(signal any, limit int, logger *zap.Logger) error {
 	if limit <= 0 {
 		return nil // No limit set, skip the check.
@@ -98,8 +96,6 @@ func notifySignalSizeLimitExceeded(signal any, limit int, logger *zap.Logger) er
 
 	return nil
 }
-
-// End of to be exported out.
 
 func (p *solarwindsprocessor) processLogs(
 	ctx context.Context,
