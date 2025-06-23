@@ -65,7 +65,7 @@ func (m *Manager) Update(s internal.Event) error {
 	return nil
 }
 
-// Delete last seen of a relationship from the cache.
+// Delete relationship from the cache. Entities stay until expiration.
 func (m *Manager) Delete(s internal.Event) error {
 	if r, ok := s.(*internal.Relationship); ok {
 		return m.cache.delete(r)
