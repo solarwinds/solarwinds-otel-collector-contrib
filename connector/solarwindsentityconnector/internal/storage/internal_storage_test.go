@@ -88,16 +88,7 @@ func TestNewInternalStorage(t *testing.T) {
 			expectError: true,
 		},
 		{
-			name: "TTLCleanupIntervalSeconds is not 2x Interval, throws error",
-			cfg: &config.ExpirationSettings{
-				Interval:                  1 * time.Second,
-				MaxCapacity:               1000,
-				TTLCleanupIntervalSeconds: 1 * time.Second,
-			},
-			expectError: true,
-		},
-		{
-			name: "TTl less than 1 second (nok), but x2 Interval (ok), throws error",
+			name: "TTl is less than 1 second, throws error",
 			cfg: &config.ExpirationSettings{
 				Interval:                  1 * time.Millisecond,
 				MaxCapacity:               1000,
@@ -117,7 +108,7 @@ func TestNewInternalStorage(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, storage)
-				require.Equal(t, tt.cfg.Interval, storage.ttl)
+				require.Equal(t, tt.cfg.Interval, storage.relationshipTtl)
 				require.NotNil(t, storage.entities)
 				require.NotNil(t, storage.relationships)
 			}

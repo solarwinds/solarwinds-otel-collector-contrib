@@ -366,7 +366,6 @@ func TestNewStorageManager(t *testing.T) {
 				TTLCleanupIntervalSeconds: time.Millisecond * 500, // Less than 1 second
 			},
 			expectError: true,
-			errorMsg:    "ttlCleanupSeconds has to be bigger than 0",
 		},
 	}
 

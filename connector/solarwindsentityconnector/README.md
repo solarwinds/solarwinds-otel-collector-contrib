@@ -1,9 +1,9 @@
 # Solarwinds Entity Connector
 
-| Status        |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-|---------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Stability     | [development]: metrics_to_logs, logs_to_logs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| Distributions | []                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| Status        |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+|---------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Stability     | [development]: metrics_to_logs, logs_to_logs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| Distributions | []                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | Issues        | [![Open issues](https://img.shields.io/github/issues-search/solarwinds/solarwinds-otel-collector-contrib?query=is%3Aissue%20is%3Aopen%20label%3Aconnector%2Fsolarwindsentity%20&label=open&color=orange&logo=opentelemetry)](https://github.com/solarwinds/solarwinds-otel-collector-contrib/issues?q=is%3Aopen%20is%3Aissue%20label%3Aconnector%2Fsolarwindsentity) [![Closed issues](https://img.shields.io/github/issues-search/solarwinds/solarwinds-otel-collector-contrib?query=is%3Aissue%20is%3Aclosed%20label%3Aconnector%2Fsolarwindsentity%20&label=closed&color=blue&logo=opentelemetry)](https://github.com/solarwinds/solarwinds-otel-collector-contrib/issues?q=is%3Aclosed%20is%3Aissue%20label%3Aconnector%2Fsolarwindsentity) |
 
 [development]: https://github.com/open-telemetry/opentelemetry-collector/blob/main/docs/component-stability.md#development
@@ -23,6 +23,12 @@ connectors:
   solarwindsentity:
     source_prefix: "source."
     destination_prefix: "dest."
+    expiration_policy:
+      enabled: true
+      interval: 5m
+      cache_configuration:
+        ttl_cleanup_interval: 10m
+        max_capacity: 1000000
     schema:
       entities:
         - entity: KubernetesPod
@@ -67,6 +73,14 @@ connectors:
   - For different-type relationships:
     - Prefixes are supported for source and destination entity ID attributes, but are not required.
   - No defaults are provided for these prefixes, so they must be set explicitly in the configuration if same-type relationships are expected or the prefix is used for different-type relationships.
+
+#### Expiration Policy
+- `expiration_policy` defines the expiration policy for relationships.
+  - `enabled` enables the expiration policy.
+  - `interval` defines how often the cache is cleaned up in time.Duration format (e.g., `5m` for 5 minutes).
+  - `cache_configuration` defines the cache configuration.
+    - `ttl_cleanup_interval` defines how often the cache is cleaned up in time.Duration format (e.g., `5m` for 5 minutes).
+    - `max_capacity` defines the maximum number of relationships that can be stored in the cache.
 
 #### Schema
 Defines the entities and relationships to be created/updated/deleted from incoming telemetry. To have action performed, the event

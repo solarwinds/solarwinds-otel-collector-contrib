@@ -26,13 +26,15 @@ const (
 )
 
 type ExpirationPolicy struct {
-	Enabled            bool                `mapstructure:"enabled"`
+	Enabled bool `mapstructure:"enabled"`
+	// TTL of relationships in the format accepted by time.ParseDuration, e.g. "5s", "1m", etc.
 	Interval           string              `mapstructure:"interval"`
 	CacheConfiguration *CacheConfiguration `mapstructure:"cache_configuration"`
 }
 
 type CacheConfiguration struct {
-	MaxCapacity        *int64  `mapstructure:"max_capacity"`
+	MaxCapacity *int64 `mapstructure:"max_capacity"`
+	// In the format accepted by time.ParseDuration, e.g. "5s", "1m", etc. Granularity is 1 second and it's also a minimal value.
 	TTLCleanupInterval *string `mapstructure:"ttl_cleanup_interval"`
 }
 
@@ -91,7 +93,7 @@ func (e *ExpirationPolicy) getTTLCleanupInterval() (time.Duration, error) {
 		if err != nil {
 			return time.Duration(0), errors.New("invalid TTL cleanup interval format")
 		}
-		if parsedCleanupInterval < time.Duration(1)*time.Second {
+		if parsedCleanupInterval < time.Second {
 			return time.Duration(0), errors.New("ttl cleanup interval must be at least 1 second")
 		}
 
