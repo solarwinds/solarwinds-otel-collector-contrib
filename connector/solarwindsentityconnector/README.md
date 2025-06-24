@@ -51,6 +51,7 @@ connectors:
             type: KubernetesPod
             conditions:
               - metric.name == "k8s.tcp.bytes"
+            action: "update"
         relationships:
           - context: metric
             conditions: 
@@ -60,6 +61,7 @@ connectors:
             destination_entity: KubernetesDeployment
             attributes:
               - sw.connection.status
+            action: "delete"
 ```
 
 ### Configuration Options
@@ -93,6 +95,7 @@ has to be defined in the `schema.events` section.
 
 #### Events
 Events define rules for creating entity/relationship from incoming telemetry. Both works with [conditions](#conditions) and `context` (log or metric).
+Events have two possible `action` types: `update` and `delete`. Use the corresponding action to create or delete an entity/relationship in SolarWinds Observability SaaS.
 
 - `entities` defines rules for creating entity events.
   - Entity is matched by the entity type.
