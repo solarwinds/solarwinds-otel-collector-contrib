@@ -119,9 +119,9 @@ func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em c
 		relationshipTtl: cfg.Interval,
 		// The entity should live longer than the relationship to be able to send delete event after expiration.
 		// The TTL + clean-up interval should be the longest interval after which the relationship would be evicted.
-		entityTtl: (cfg.Interval + cfg.TTLCleanupIntervalSeconds) * entityTTLFactor,
-		logger:    logger,
-		keyBuilder:                NewDefaultKeyBuilder(),
+		entityTtl:  (cfg.Interval + cfg.TTLCleanupIntervalSeconds) * entityTTLFactor,
+		logger:     logger,
+		keyBuilder: NewDefaultKeyBuilder(),
 	}, nil
 }
 
@@ -170,6 +170,7 @@ func (c *internalStorage) run(ctx context.Context) {
 
 // Delete removes a relationship from the internal storage.
 // Entities are not removed, they will be removed when they expire.
+// Delete does not trigger onEvict callback, only ttl expiration does.
 func (c *internalStorage) delete(relationship *internal.Relationship) error {
 	c.logger.Debug("deleting relationship from internal storage", zap.String("relationshipType", relationship.Type))
 
@@ -187,7 +188,13 @@ func (c *internalStorage) delete(relationship *internal.Relationship) error {
 	if err != nil {
 		return err
 	}
-	c.relationships.Del(relationshipKey)
+	_, found := c.relationships.Get(relationshipKey)
+	if found {
+		c.logger.Debug("deleting relationship from cache %s", zap.String("relationshipKey", relationshipKey))
+		c.relationships.Del(relationshipKey)
+	} else {
+		c.logger.Debug("relationship has already been deleted or does not exist, %s", zap.String("relationshipKey", relationshipKey))
+	}
 	return nil
 }
 

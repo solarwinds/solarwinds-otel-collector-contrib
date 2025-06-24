@@ -336,6 +336,57 @@ func TestMetricsToLogs(t *testing.T) {
 	}
 }
 
+// Using cache.
+// Sending relationship update first to populate cache, then
+// sending delete action, should send delete log event.
+func TestRelationshipDeleteWithCache(t *testing.T) {
+	testFolder := filepath.Join("testdata", "metricsToLogs", "relationship/different-types-relationship/delete-action-cached")
+	cfg, err := loadConfigFromFile(t, filepath.Join(testFolder, "config.yaml"))
+	require.NoError(t, err)
+	factory := NewFactory()
+	sink := &consumertest.LogsSink{}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	conn, err := factory.CreateMetricsToLogs(ctx,
+		connectortest.NewNopSettings(metadata.Type), cfg, sink)
+	require.NoError(t, err)
+	require.NotNil(t, conn)
+
+	require.NoError(t, conn.Start(ctx, componenttest.NewNopHost()))
+	defer func() {
+		assert.NoError(t, conn.Shutdown(ctx))
+	}()
+
+	// 1st incoming log, relationship update
+	inputFile := filepath.Join(testFolder, "input1.yaml")
+	testMetrics, err := golden.ReadMetrics(inputFile)
+	assert.NoError(t, err)
+	assert.NoError(t, conn.ConsumeMetrics(ctx, testMetrics))
+
+	allLogs := sink.AllLogs()
+	expectedFile := filepath.Join(testFolder, "expected-output1.yaml")
+
+	expected, err := golden.ReadLogs(expectedFile)
+	assert.NoError(t, err)
+	assert.Equal(t, expected.LogRecordCount(), allLogs[0].LogRecordCount())
+	assert.NoError(t, plogtest.CompareLogs(expected, allLogs[0], plogtest.IgnoreObservedTimestamp()))
+
+	// 2nd incoming log, relationship delete
+	inputFile2 := filepath.Join(testFolder, "input2.yaml")
+	sink.Reset()
+	testMetrics2, err := golden.ReadMetrics(inputFile2)
+	assert.NoError(t, err)
+	assert.NoError(t, conn.ConsumeMetrics(ctx, testMetrics2))
+	allLogs2 := sink.AllLogs()
+
+	expectedFile2 := filepath.Join(testFolder, "expected-output2.yaml")
+	expected2, err := golden.ReadLogs(expectedFile2)
+	assert.NoError(t, err)
+	assert.Equal(t, expected.LogRecordCount(), allLogs2[0].LogRecordCount())
+	assert.NoError(t, plogtest.CompareLogs(expected2, allLogs2[0], plogtest.IgnoreObservedTimestamp()))
+
+}
+
 func loadConfigFromFile(t *testing.T, path string) (*Config, error) {
 	t.Helper()
 
@@ -379,14 +430,16 @@ func TestRelationshipCacheExpiration(t *testing.T) {
 
 	// Wait for the cache expiration to ensure that the relationship delete event is produced
 	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+	timeout := time.After(10 * time.Second)
 	for sink.LogRecordCount() < 4 { // 2 entities, 1 relationship and 1 delete event
 		select {
-		case <-ticker.C:
-			fmt.Printf("Waiting for logs to be processed...\n")
-		case <-time.After(10 * time.Second):
-			require.Fail(t, "timed out waiting for logs to be processed")
 		case <-ctx.Done():
 			require.Fail(t, "context cancelled before logs were processed")
+		case <-timeout:
+			require.Fail(t, "timed out waiting for logs to be processed")
+		case <-ticker.C:
+			fmt.Printf("Waiting for logs to be processed...\n")
 		}
 	}
 

@@ -66,6 +66,7 @@ func (m *Manager) Update(s internal.Event) error {
 }
 
 // Delete relationship from the cache. Entities stay until expiration.
+// Does not trigger onEvict callback, and thus does not send the event to the consumer.
 func (m *Manager) Delete(s internal.Event) error {
 	if r, ok := s.(*internal.Relationship); ok {
 		return m.cache.delete(r)
