@@ -6,45 +6,58 @@ and carry event type such as update or deletion.
 
 ## Event Logs
 The SolarWinds Entity Connector generates resource logs that contain event logs and relationship logs as
-log records. There can be multiple log records in a single resource log with different
-entity types, different even type (update/delete), etc. All mentioned entity types, relationship types
-and attributes must match to definition in SWO.
+log records. 
+
+- There can be multiple log records in a single resource log with different
+entity types, different even type (update/delete), etc. 
+- All mentioned entity types, relationship types
+and attributes must match to definitions in SWO. 
+- Body of the log record is empty, all required information is stored in attributes.
 
 ```json
 {
-    "resourceLogs": [
+  "resourceLogs": [
+    {
+      "resource": {},
+      "scopeLogs": [
         {
-            "resource": {},
-            "scopeLogs": [
-                {
-                    "scope": {
-                        "attributes": [
-                            {
-                                "key": "otel.entity.event_as_log",
-                                "value": {
-                                    "boolValue": true
-                                }
-                            }
-                        ]
-                    },
-                    "logRecords": [
-                      < event log event >
-                      < relationship log event >
-                    ]
+          "scope": {
+            "attributes": [
+              {
+                "key": "otel.entity.event_as_log",
+                "value": {
+                  "boolValue": true
                 }
+              }
             ]
+          },
+          "logRecords": [
+            {
+              "tip": "see entity log event below"
+            },
+            {
+              "tip": "see relationship log event below"
+            }
+          ]
         }
-    ]
+      ]
+    }
+  ]
 }
 ```
 
 ## Entity Log Event
-The SolarWinds Entity Connector generates logs in the following format:
+The SolarWinds Entity Connector generates logs in the format below. The event types are:
+- `entity_state` for update events
+- `entity_delete` for deletion events. Optionally, in this case we can set type of the delete action. 
+Use attribute `otel.entity.delete.type` can have one of the following values:
+  - `set_unknown` (default and can be skipped)
+  - `soft_delete`
 
 ```json
 {
   "observedTimeUnixNano": "...",
-  "body": {}, // body is empty
+  "body": {},
   "attributes": [
     {
       "key": "otel.entity.type",
@@ -70,7 +83,7 @@ The SolarWinds Entity Connector generates logs in the following format:
     {
       "key": "otel.entity.event.type",
       "value": {
-        "stringValue": "entity_state" // means update event, or entity_delete` for deletion event
+        "stringValue": "entity_state"
       }
     }
   ]
@@ -78,12 +91,14 @@ The SolarWinds Entity Connector generates logs in the following format:
 ```
 
 ## Relationship Log Event
-The SolarWinds Entity Connector generates logs in the following format:
+The SolarWinds Entity Connector generates logs in the format below. The event types are:
+- `entity_relationship_state` for update events
+- `entity_relationship_delete` for deletion events
 
 ```json
 {
   "observedTimeUnixNano": "...",
-  "body": {}, // body is empty
+  "body": {},
   "attributes": [
     {
       "key": "otel.entity_relationship.source_entity.id",
@@ -136,7 +151,7 @@ The SolarWinds Entity Connector generates logs in the following format:
     {
       "key": "otel.entity.event.type",
       "value": {
-        "stringValue": "entity_relationship_state" // means update event, or `entity_relationship_delete` for deletion event
+        "stringValue": "entity_relationship_state"
       }
     }
   ]
