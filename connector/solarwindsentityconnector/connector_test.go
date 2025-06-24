@@ -353,16 +353,24 @@ func TestRelationshipCacheExpiration(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, conn.ConsumeLogs(context.Background(), testLogs))
 
-	// Wait for the cache expiration to ensure that the relationship delete event is produced
-	// TODO: Rewrite to non-blocking polling method
-	time.Sleep(10 * time.Second)
-
-	// Check that the relationship event is produced
-	allLogs := sink.AllLogs()
 	expectedFile := filepath.Join(testFolder, "expected-output.yaml")
 	expected, err := golden.ReadLogs(expectedFile)
-
 	require.NoError(t, err)
-	assert.Equal(t, expected.LogRecordCount(), allLogs[0].LogRecordCount())
-	assert.NoError(t, plogtest.CompareLogs(expected, allLogs[0], plogtest.IgnoreObservedTimestamp()))
+
+	// Wait for the cache expiration to ensure that the relationship delete event is produced
+	ticker := time.NewTicker(1 * time.Second)
+	for sink.LogRecordCount() < 4 { // 2 entities, 1 relationship and 1 delete event
+		select {
+		case <-ticker.C:
+			fmt.Printf("Waiting for logs to be processed...\n")
+		case <-time.After(10 * time.Second):
+			require.Fail(t, "timed out waiting for logs to be processed")
+		}
+	}
+
+	allLogs := sink.AllLogs()
+
+	// Check that the delete relationship event is produced
+	assert.Equal(t, expected.LogRecordCount(), allLogs[1].LogRecordCount())
+	assert.NoError(t, plogtest.CompareLogs(expected, allLogs[1], plogtest.IgnoreObservedTimestamp()))
 }
