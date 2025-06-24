@@ -353,10 +353,6 @@ func TestRelationshipCacheExpiration(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, conn.ConsumeLogs(context.Background(), testLogs))
 
-	expectedFile := filepath.Join(testFolder, "expected-output.yaml")
-	expected, err := golden.ReadLogs(expectedFile)
-	require.NoError(t, err)
-
 	// Wait for the cache expiration to ensure that the relationship delete event is produced
 	ticker := time.NewTicker(1 * time.Second)
 	for sink.LogRecordCount() < 4 { // 2 entities, 1 relationship and 1 delete event
@@ -371,6 +367,9 @@ func TestRelationshipCacheExpiration(t *testing.T) {
 	allLogs := sink.AllLogs()
 
 	// Check that the delete relationship event is produced
+	expectedFile := filepath.Join(testFolder, "expected-output.yaml")
+	expected, err := golden.ReadLogs(expectedFile)
+	require.NoError(t, err)
 	assert.Equal(t, expected.LogRecordCount(), allLogs[1].LogRecordCount())
 	assert.NoError(t, plogtest.CompareLogs(expected, allLogs[1], plogtest.IgnoreObservedTimestamp()))
 }
