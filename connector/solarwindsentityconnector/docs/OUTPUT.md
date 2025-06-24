@@ -7,7 +7,8 @@ and carry event type such as update or deletion.
 ## Event Logs
 The SolarWinds Entity Connector generates resource logs that contain event logs and relationship logs as
 log records. There can be multiple log records in a single resource log with different
-entity types, different even type (update/delete), etc.
+entity types, different even type (update/delete), etc. All mentioned entity types, relationship types
+and attributes must match to definition in SWO.
 
 ```json
 {
@@ -27,8 +28,8 @@ entity types, different even type (update/delete), etc.
                         ]
                     },
                     "logRecords": [
-                      { event log event }
-                      { relationship log event }
+                      < event log event >
+                      < relationship log event >
                     ]
                 }
             ]
@@ -48,7 +49,7 @@ The SolarWinds Entity Connector generates logs in the following format:
     {
       "key": "otel.entity.type",
       "value": {
-        "stringValue": "<entity-type-as-defined-in-SWO>"
+        "stringValue": "<entity-type>"
       }
     },
     {
@@ -69,7 +70,7 @@ The SolarWinds Entity Connector generates logs in the following format:
     {
       "key": "otel.entity.event.type",
       "value": {
-        "stringValue": "entity_state" // means update event
+        "stringValue": "entity_state" // means update event, or entity_delete` for deletion event
       }
     }
   ]
@@ -117,30 +118,29 @@ The SolarWinds Entity Connector generates logs in the following format:
     {
       "key": "otel.entity_relationship.type",
       "value": {
-        "stringValue": "<relationship-type-as-defined-in-SWO>"
+        "stringValue": "<relationship-type>"
       }
     },
     {
       "key": "otel.entity_relationship.source_entity.type",
       "value": {
-        "stringValue": "<entity-type-as-defined-in-SWO>"
+        "stringValue": "<entity-type>"
       }
     },
     {
       "key": "otel.entity_relationship.destination_entity.type",
       "value": {
-        "stringValue": "<entity-type-as-defined-in-SWO>"
+        "stringValue": "<entity-type>"
       }
     },
     {
       "key": "otel.entity.event.type",
       "value": {
-        "stringValue": "entity_relationship_state" // means update event
+        "stringValue": "entity_relationship_state" // means update event, or `entity_relationship_delete` for deletion event
       }
     }
   ]
 }
 
 ```
-
 Note: `traceId`, `spanId` are omited for simplicity in presented jsons.
