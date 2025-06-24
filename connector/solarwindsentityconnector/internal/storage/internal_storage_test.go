@@ -515,3 +515,146 @@ func TestInternalStorage_Delete(t *testing.T) {
 		})
 	}
 }
+
+func TestDelete_DoesNotTriggerOnRelationshipEvict(t *testing.T) {
+	t.Skip("this test must be run manually only")
+	logger := zap.NewNop()
+	eventsChan := make(chan internal.Event, 10)
+
+	// Create test storage with short TTL for quick testing
+	ttl := 60 * time.Second
+	cleanupInterval := 2 * time.Second
+	cfg := &config.ExpirationSettings{
+		Enabled:                   true,
+		Interval:                  ttl,
+		MaxCapacity:               1000,
+		TTLCleanupIntervalSeconds: cleanupInterval,
+	}
+
+	storage, err := newInternalStorage(cfg, logger, eventsChan)
+	require.NoError(t, err)
+
+	// First, add the relationship to the cache
+	err = storage.update(relationship)
+	require.NoError(t, err)
+	storage.entities.Wait()
+	storage.relationships.Wait()
+
+	// Get the keys to verify presence in cache
+	sourceHash, err := storage.keyBuilder.BuildEntityKey(relationship.Source)
+	require.NoError(t, err)
+	destHash, err := storage.keyBuilder.BuildEntityKey(relationship.Destination)
+	require.NoError(t, err)
+	relationshipKey, err := storage.keyBuilder.BuildRelationshipKey(relationship.Type, sourceHash, destHash)
+	require.NoError(t, err)
+
+	// Verify relationship is in cache
+	_, found := storage.relationships.Get(relationshipKey)
+	require.True(t, found, "Relationship should be in cache before deletion")
+
+	// Now delete the relationship
+	err = storage.delete(relationship)
+	require.NoError(t, err)
+	storage.relationships.Wait()
+
+	// Verify relationship is no longer in cache
+	_, found = storage.relationships.Get(relationshipKey)
+	assert.False(t, found, "Relationship should no longer be in cache after deletion")
+
+	// Check that no event was sent to the channel (meaning onRelationshipEvict wasn't called)
+	select {
+	case event := <-eventsChan:
+		t.Fatalf("Unexpected event received: %+v", event)
+	case <-time.After(10 * time.Second):
+		// This is good - no event was received
+	}
+
+	// Verify entities are still in cache (delete only removes relationships, not entities)
+	_, foundSource := storage.entities.Get(sourceHash)
+	assert.True(t, foundSource, "Source entity should still be in cache after relationship deletion")
+	_, foundDest := storage.entities.Get(destHash)
+	assert.True(t, foundDest, "Destination entity should still be in cache after relationship deletion")
+}
+
+// Ttl expiration should trigger an event, but deletion should not.
+func TestDelete_ComparedToTTLExpiration(t *testing.T) {
+	logger := zap.NewNop()
+	eventsChan := make(chan internal.Event, 10)
+
+	// Create test storage with very short TTL for quick testing
+	ttl := 1 * time.Second
+	cleanupInterval := 2 * time.Second
+	cfg := &config.ExpirationSettings{
+		Enabled:                   true,
+		Interval:                  ttl,
+		MaxCapacity:               1000,
+		TTLCleanupIntervalSeconds: cleanupInterval,
+	}
+
+	storage, err := newInternalStorage(cfg, logger, eventsChan)
+	require.NoError(t, err)
+
+	// Create two identical relationships - one to delete manually, one to expire via TTL
+	createTestRelationship := func(suffix string) *internal.Relationship {
+		return &internal.Relationship{
+			Type: "testRelation" + suffix,
+			Source: internal.RelationshipEntity{
+				Type: "sourceType",
+				IDs: func() pcommon.Map {
+					m := pcommon.NewMap()
+					m.PutStr("id", "source-"+suffix)
+					return m
+				}(),
+			},
+			Destination: internal.RelationshipEntity{
+				Type: "destType",
+				IDs: func() pcommon.Map {
+					m := pcommon.NewMap()
+					m.PutStr("id", "dest-"+suffix)
+					return m
+				}(),
+			},
+		}
+	}
+
+	relToDelete := createTestRelationship("delete")
+	relToExpire := createTestRelationship("expire")
+
+	// Add both relationships to the cache
+	err = storage.update(relToDelete)
+	require.NoError(t, err)
+	err = storage.update(relToExpire)
+	require.NoError(t, err)
+	storage.entities.Wait()
+	storage.relationships.Wait()
+
+	// Delete one relationship manually
+	err = storage.delete(relToDelete)
+	require.NoError(t, err)
+	storage.relationships.Wait()
+
+	// Wait for the other relationship to expire via TTL
+	waitTime := 10 * time.Second
+	t.Logf("Waiting %v for TTL expiration...", waitTime)
+
+	// Use a select to wait for eviction event
+	select {
+	case event := <-eventsChan:
+		// We should receive exactly one event from the TTL expired relationship
+		rel, ok := event.(*internal.Relationship)
+		require.True(t, ok, "Event should be a Relationship")
+
+		// Verify it's the expired relationship, not the deleted one
+		sourceIDVal, exists := rel.Source.IDs.Get("id")
+		require.True(t, exists)
+		assert.Equal(t, "source-expire", sourceIDVal.AsString(),
+			"Should receive event for the expired relationship, not the deleted one")
+
+		// Check no more events
+		time.Sleep(500 * time.Millisecond)
+		assert.Equal(t, 0, len(eventsChan), "Should not receive additional events")
+
+	case <-time.After(waitTime):
+		t.Fatal("Timed out waiting for TTL expiration event")
+	}
+}
