@@ -17,11 +17,15 @@ expiration_policy:
 
 ## Events
 ### Incoming Events
-The storage reacts to Relationship Update event.
+The storage reacts to Relationship Update and Delete events.
 - On Relationship Update event:
   - The entities of the relationship are either created or their TTL is reset in the entity cache.
   - The relationship is created or its TTL is reset in the relationship cache.
 
+- On Relationship Delete event:
+  - The relationship is removed from the relationship cache.
+  - The entities of the relationship are not actively removed, they will expire after their TTL.
+  
 The storage does not react to Entity Update events, as it does not need to track entity updates, if we
 do not support entity expiration.
 

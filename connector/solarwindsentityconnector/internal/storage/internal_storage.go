@@ -175,6 +175,8 @@ func (c *internalStorage) run(ctx context.Context) {
 	}
 }
 
+// Delete removes a relationship from the internal storage.
+// Entities are not removed, they will be removed when they expire.
 func (c *internalStorage) delete(relationship *internal.Relationship) error {
 	c.logger.Debug("deleting relationship from internal storage", zap.String("relationshipType", relationship.Type))
 
