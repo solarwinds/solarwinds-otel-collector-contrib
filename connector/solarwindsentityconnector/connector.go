@@ -163,7 +163,7 @@ func (s *solarwindsentity) handleEvent(event internal.Event, eventLogs *plog.Log
 	if s.storageManager != nil {
 		err := s.storageManager.Update(event)
 		if err != nil {
-			s.logger.Error("Failed to update storage with event", zap.Error(err))
+			s.logger.Error("failed to update storage with event", zap.Error(err))
 			return err
 		}
 	}
