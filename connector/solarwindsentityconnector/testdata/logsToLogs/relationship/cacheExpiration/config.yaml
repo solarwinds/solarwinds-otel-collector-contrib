@@ -1,6 +1,6 @@
 expiration_policy:
   enabled: true
-  interval: 1s
+  interval: 1ms
   cache_configuration:
     ttl_cleanup_interval: 1s
 schema:
