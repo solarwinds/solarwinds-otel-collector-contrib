@@ -33,6 +33,9 @@ const (
 	// ristretto cache provides cost management, but we need to set the same cost for all items.
 	// Additionally, when itemCost is set to 1 the MaxCost is equal to the maximum number of items in the cache.
 	itemCost = 1
+	// Every relationship has 2 entities, thus the entity cache
+	// needs to be at least twice the size of the relationship cache.
+	entityCapacityFactor = 2
 	// When dealing with TTL for entities we do not need to be as precise as with relationships.
 	// Thus cleaning up the cache every 10 times the interval.
 	entityTTLCleanupFactor = 10
@@ -91,7 +94,7 @@ func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em c
 
 	entityCache, err := ristretto.NewCache(&ristretto.Config[string, internal.RelationshipEntity]{
 		NumCounters:            numCounters,
-		MaxCost:                maxCost,
+		MaxCost:                maxCost * entityCapacityFactor,
 		TtlTickerDurationInSec: ttlCleanupSeconds * entityTTLCleanupFactor,
 		BufferItems:            bufferItems,
 	})
