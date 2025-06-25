@@ -54,7 +54,7 @@ jobs:
       - name: Upload Benchmark Log
         uses: actions/upload-artifact@v4
         with:
-          name: benchmark-log
+          name: benchmark
           path: benchmark.txt
 
   build_and_test_windows:
