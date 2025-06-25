@@ -48,6 +48,9 @@ jobs:
       - name: Run Tests
         run: ${{ env.SHARED_SCRIPTS }}/build-and-test.sh
         shell: bash
+      - name: Run Benchmark Connector
+        run: go test -C connector/solarwindsentityconnector -run=^$ -bench .
+        shell: bash
 
   build_and_test_windows:
     runs-on: windows-latest
