@@ -116,127 +116,87 @@ func TestNewInternalStorage(t *testing.T) {
 	}
 }
 
-// TestBuildKey tests the buildKey function for various scenarios
-// Select test entities are added control group.ß
-// Everything is checked against the control group. Some expect to find the key in the control group, and some expect not to find themselves
-// because they should generate key unique from everything in the control group.
-func TestBuildKey(t *testing.T) {
-	tests := []struct {
-		name              string
-		entity            internal.RelationshipEntity
-		addToControlGroup bool
-	}{
-		{
-			name: "Simple entity",
-			entity: internal.RelationshipEntity{
-				Type: "service",
-				IDs: func() pcommon.Map {
-					m := pcommon.NewMap()
-					m.PutStr("id", "service-123")
-					return m
-				}(),
-			},
-			addToControlGroup: true,
-		},
-		{
-			name: "Complex entity",
-			entity: internal.RelationshipEntity{
-				Type: "pod",
-				IDs: func() pcommon.Map {
-					m := pcommon.NewMap()
-					m.PutStr("namespace", "default")
-					m.PutStr("pod_name", "my-pod")
-					return m
-				}(),
-			},
-			addToControlGroup: true,
-		},
-		{
-			name: "Different type, same IDs",
-			entity: internal.RelationshipEntity{
-				Type: "deployment",
-				IDs: func() pcommon.Map {
-					m := pcommon.NewMap()
-					m.PutStr("id", "service-123")
-					return m
-				}(),
-			},
-			addToControlGroup: false, // Different type should produce different hash
-		},
-		{
-			name: "Same type, different IDs",
-			entity: internal.RelationshipEntity{
-				Type: "service",
-				IDs: func() pcommon.Map {
-					m := pcommon.NewMap()
-					m.PutStr("id", "service-456")
-					return m
-				}(),
-			},
-			addToControlGroup: false, // Different IDs should produce different hash
-		},
-		{
-			name: "Empty IDs",
-			entity: internal.RelationshipEntity{
-				Type: "service",
-				IDs:  pcommon.NewMap(),
-			},
-			addToControlGroup: false, // Empty IDs should be different from non-empty ones
-		},
-		{
-			name: "Various data types",
-			entity: internal.RelationshipEntity{
-				Type: "resource",
-				IDs: func() pcommon.Map {
-					m := pcommon.NewMap()
-					m.PutStr("name", "test-resource")
-					m.PutInt("count", 42)
-					m.PutDouble("cpu", 2.5)
-					m.PutBool("active", true)
-					slice := m.PutEmptySlice("tags")
-					slice.AppendEmpty().SetStr("tag1")
-					slice.AppendEmpty().SetStr("tag2")
-					return m
-				}(),
-			},
-			addToControlGroup: true,
-		},
+// TestBuildKey_DifferentTypesWithSameAttributes_HaveDifferentHashes tests that entities with the same
+// attributes but different types produce different hash keys
+func TestBuildKey_DifferentTypesWithSameAttributes_HaveDifferentHashes(t *testing.T) {
+	entity1 := internal.RelationshipEntity{
+		Type: "service",
+		IDs: func() pcommon.Map {
+			m := pcommon.NewMap()
+			m.PutStr("id", "service-123")
+			return m
+		}(),
 	}
 
-	// First generate reference keys for comparison
-	// All tests with addToControlGroup=true will generate a reference key map.
-	referenceKeys := make(map[string]string)
-	for _, tt := range tests {
-		if tt.addToControlGroup {
-			key, err := buildKey(tt.entity)
-			require.NoError(t, err)
-			referenceKeys[key] = tt.name
-		}
+	entity2 := internal.RelationshipEntity{
+		Type: "deployment",
+		IDs: func() pcommon.Map {
+			m := pcommon.NewMap()
+			m.PutStr("id", "service-123")
+			return m
+		}(),
 	}
 
-	// Then run the actual tests
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			key, err := buildKey(tt.entity)
-			require.NoError(t, err)
+	key1, err := buildKey(entity1)
+	require.NoError(t, err)
 
-			// There should be a reference key for this test case
-			if tt.addToControlGroup {
-				refKey := referenceKeys[key]
-				require.NotNil(t, refKey)
-			} else {
-				// For tests with controlGroup=false, the key should not match any reference key
-				for refName, refKey := range referenceKeys {
-					if refName != tt.name {
-						require.NotEqual(t, refKey, key, "Key should be different from %s", refName)
-					}
-				}
-			}
-		})
-	}
+	key2, err := buildKey(entity2)
+	require.NoError(t, err)
+
+	require.NotEqual(t, key1, key2, "Entities with different types but same attributes should have different keys")
 }
 
-func TestBuildKey_SameEntitiesWithDifferentIds_OrderHaveSameKeys(t *testing.T) {
+func TestBuildKey_EmptyIds_HaveSameHashes(t *testing.T) {
+	entityWithIds := internal.RelationshipEntity{
+		Type: "service",
+		IDs:  pcommon.NewMap(),
+	}
+
+	entityWithEmptyIds := internal.RelationshipEntity{
+		Type: "service",
+		IDs:  pcommon.NewMap(),
+	}
+
+	keyWithIds, err := buildKey(entityWithIds)
+	require.NoError(t, err)
+
+	keyWithEmptyIds, err := buildKey(entityWithEmptyIds)
+	require.NoError(t, err)
+
+	require.Equal(t, keyWithIds, keyWithEmptyIds, "Hashes should be the same for entities with empty IDs")
+}
+
+// TestBuildKey_SameIdsButOfDifferentTypes_ResultInDifferentHashes tests that the same ID values
+// but of different data types result in different hash keys
+func TestBuildKey_SameIdsButOfDifferentTypes_ResultInDifferentHashes(t *testing.T) {
+	entityWithStringId := internal.RelationshipEntity{
+		Type: "resource",
+		IDs: func() pcommon.Map {
+			m := pcommon.NewMap()
+			m.PutStr("value", "42")
+			return m
+		}(),
+	}
+
+	entityWithIntId := internal.RelationshipEntity{
+		Type: "resource",
+		IDs: func() pcommon.Map {
+			m := pcommon.NewMap()
+			m.PutInt("value", 42)
+			return m
+		}(),
+	}
+
+	keyWithStringId, err := buildKey(entityWithStringId)
+	require.NoError(t, err)
+
+	keyWithIntId, err := buildKey(entityWithIntId)
+	require.NoError(t, err)
+
+	require.NotEqual(t, keyWithStringId, keyWithIntId, "Same ID values but of different types should result in different hash keys")
+}
+
+func TestBuildKey_SameTypesWithDifferentlyOrderedIds_HaveSameKeys(t *testing.T) {
 	entity := internal.RelationshipEntity{
 		Type: "service",
 		IDs: func() pcommon.Map {
