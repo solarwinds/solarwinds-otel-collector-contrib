@@ -24,7 +24,7 @@ import (
 )
 
 type Manager struct {
-	cache         InternalCache
+	cache         InternalStorage
 	expiredCh     chan internal.Event
 	eventConsumer internal.EventConsumer
 

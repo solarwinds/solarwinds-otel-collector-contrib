@@ -28,7 +28,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// mockCache implements InternalCache interface for testing
+// mockCache implements InternalStorage interface for testing
 type mockCache struct {
 	mu           sync.Mutex
 	updateCalled bool
