@@ -23,7 +23,7 @@ func NewFactory() processor.Factory {
 
 func createDefaultConfig() component.Config {
 	return &Config{
-		MaxSizeMib:         0,
+		MaxSizeMib:         6,
 		ResourceAttributes: make(map[string]string),
 	}
 }
