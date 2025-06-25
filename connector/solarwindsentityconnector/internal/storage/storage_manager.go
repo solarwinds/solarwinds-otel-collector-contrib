@@ -82,6 +82,8 @@ func (m *Manager) receiveExpired(ctx context.Context) {
 		case rel := <-m.expiredCh:
 			if batch == nil {
 				batch = make([]internal.Event, 0)
+				// when expiration item is received and no other timer is running,
+				// we will trigger one second interval to listen for all expired events in that time window
 				timer = time.NewTimer(1 * time.Second)
 				timerC = timer.C
 			}
