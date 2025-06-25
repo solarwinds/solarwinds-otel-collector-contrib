@@ -17,7 +17,6 @@ package solarwindsentityconnector
 import (
 	"context"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"
 	"testing"
@@ -30,6 +29,7 @@ import (
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/connector/connectortest"
 	"go.opentelemetry.io/collector/consumer/consumertest"
+	"gopkg.in/yaml.v3"
 )
 
 func TestLogsToLogs(t *testing.T) {
@@ -134,7 +134,7 @@ func TestLogsToLogs(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			cfg, err := loadConfigFromFile(t, filepath.Join("testdata", "logsToLogs", tc.folder, "config.yaml"))
+			cfg, err := loadConfigFromFileTesting(t, filepath.Join("testdata", "integration", "logsToLogs", tc.folder, "config.yaml"))
 			require.NoError(t, err)
 			factory := NewFactory()
 			sink := &consumertest.LogsSink{}
@@ -148,14 +148,14 @@ func TestLogsToLogs(t *testing.T) {
 				assert.NoError(t, conn.Shutdown(context.Background()))
 			}()
 
-			inputFile := filepath.Join("testdata", "logsToLogs", tc.folder, "input.yaml")
+			inputFile := filepath.Join("testdata", "integration", "logsToLogs", tc.folder, "input.yaml")
 			testLogs, err := golden.ReadLogs(inputFile)
 
 			assert.NoError(t, err)
 			assert.NoError(t, conn.ConsumeLogs(context.Background(), testLogs))
 
 			allLogs := sink.AllLogs()
-			expectedFile := filepath.Join("testdata", "logsToLogs", tc.folder, "expected-output.yaml")
+			expectedFile := filepath.Join("testdata", "integration", "logsToLogs", tc.folder, "expected-output.yaml")
 
 			if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
 				assert.Len(t, allLogs, 0)
@@ -272,7 +272,7 @@ func TestMetricsToLogs(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			cfg, err := loadConfigFromFile(t, filepath.Join("testdata", "metricsToLogs", tc.folder, "config.yaml"))
+			cfg, err := loadConfigFromFileTesting(t, filepath.Join("testdata", "integration", "metricsToLogs", tc.folder, "config.yaml"))
 			require.NoError(t, err)
 			factory := NewFactory()
 			sink := &consumertest.LogsSink{}
@@ -286,14 +286,14 @@ func TestMetricsToLogs(t *testing.T) {
 				assert.NoError(t, conn.Shutdown(context.Background()))
 			}()
 
-			inputFile := filepath.Join("testdata", "metricsToLogs", tc.folder, "input.yaml")
+			inputFile := filepath.Join("testdata", "integration", "metricsToLogs", tc.folder, "input.yaml")
 			testMetrics, err := golden.ReadMetrics(inputFile)
 
 			assert.NoError(t, err)
 			assert.NoError(t, conn.ConsumeMetrics(context.Background(), testMetrics))
 
 			allLogs := sink.AllLogs()
-			expectedFile := filepath.Join("testdata", "metricsToLogs", tc.folder, "expected-output.yaml")
+			expectedFile := filepath.Join("testdata", "integration", "metricsToLogs", tc.folder, "expected-output.yaml")
 
 			if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
 				assert.Len(t, allLogs, 0)
@@ -309,7 +309,7 @@ func TestMetricsToLogs(t *testing.T) {
 	}
 }
 
-func loadConfigFromFile(t *testing.T, path string) (*Config, error) {
+func loadConfigFromFileTesting(t *testing.T, path string) (*Config, error) {
 	t.Helper()
 
 	yamlFile, err := os.ReadFile(path)

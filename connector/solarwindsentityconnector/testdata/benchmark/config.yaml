@@ -1,0 +1,35 @@
+schema:
+  entities:
+    - type: "kubernetes.cluster"
+      ids: ["k8s.cluster.id", "k8s.cluster.name"]
+      attributes: ["k8s.cluster.port"]
+    - type: "kubernetes.node"
+      ids: ["k8s.node.id", "k8s.node.name"]
+      attributes: ["k8s.node.ip"]
+  events:
+    entities:
+      - type: "kubernetes.cluster"
+        conditions: ["true"]
+        context: "log"
+      - type: "kubernetes.node"
+        conditions: ["true"]
+        context: "log"
+      - type: "kubernetes.cluster"
+        conditions: ["true"]
+        context: "metric"
+      - type: "kubernetes.node"
+        conditions: ["true"]
+        context: "metric"
+    relationships:
+      - context: "log"
+        conditions: ["true"]
+        type: "test"
+        source: "kubernetes.cluster"
+        destination: "kubernetes.node"
+        attributes:
+      - context: "metric"
+        conditions: ["true"]
+        type: "test"
+        source: "kubernetes.cluster"
+        destination: "kubernetes.node"
+        attributes:
