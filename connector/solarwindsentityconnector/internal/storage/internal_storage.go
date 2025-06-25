@@ -44,6 +44,7 @@ const (
 
 // InternalStorage defines the interface for cache operations used by Manager
 type InternalStorage interface {
+	delete(relationship *internal.Relationship) error
 	update(relationship *internal.Relationship) error
 	run(ctx context.Context)
 }

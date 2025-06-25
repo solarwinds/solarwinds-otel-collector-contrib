@@ -112,7 +112,7 @@ func (e *EventDetector) createEntityEvent(resourceAttrs pcommon.Map, event *conf
 		entityAttrs = pcommon.NewMap()
 	}
 
-	action, err := getActionType(event.Action)
+	action, err := GetActionString(event.Action)
 	if err != nil {
 		e.logger.Debug("failed to get action type for entity event", zap.Error(err))
 		return nil, err
@@ -123,7 +123,7 @@ func (e *EventDetector) createEntityEvent(resourceAttrs pcommon.Map, event *conf
 		Type:       entity.Type,
 		IDs:        ids,
 		Attributes: entityAttrs,
-	}, err
+	}, nil
 }
 
 func (e *EventDetector) createRelationshipEvent(resourceAttrs pcommon.Map, relationship *config.RelationshipEvent) (*Relationship, error) {
@@ -163,7 +163,7 @@ func (e *EventDetector) createRelationshipEvent(resourceAttrs pcommon.Map, relat
 
 	sourceIds, _ := attrs.Get(relationshipSrcEntityIds)
 	destIds, _ := attrs.Get(relationshipDestEntityIds)
-	action, err := getActionType(relationship.Action)
+	action, err := GetActionString(relationship.Action)
 	if err != nil {
 		e.logger.Debug("failed to get action type for relationship event", zap.Error(err))
 		return nil, err
@@ -181,15 +181,6 @@ func (e *EventDetector) createRelationshipEvent(resourceAttrs pcommon.Map, relat
 		},
 		Attributes: relAttrs,
 	}, nil
-}
-
-func getActionType(input string) (string, error) {
-	if input == EventUpdateAction {
-		return EventUpdateAction, nil
-	} else if input == EventDeleteAction {
-		return EventDeleteAction, nil
-	}
-	return "", fmt.Errorf("failed to get action type from input: %s", input)
 }
 
 // ProcessEvents evaluates the conditions for entities and relationships events.

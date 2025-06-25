@@ -35,8 +35,8 @@ type KeyBuilder interface {
 // defaultKeyBuilder provides the default implementation of KeyBuilder interface
 type defaultKeyBuilder struct{}
 
-// NewDefaultKeyBuilder creates a new instance of the default key builder
-func NewDefaultKeyBuilder() KeyBuilder {
+// NewKeyBuilder creates a new instance of the default key builder
+func NewKeyBuilder() KeyBuilder {
 	return &defaultKeyBuilder{}
 }
 

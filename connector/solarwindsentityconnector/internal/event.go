@@ -28,10 +28,19 @@ type Event interface {
 func GetActionType(e Event) (string, error) {
 	switch e.(type) {
 	case *Entity:
-		return e.(*Entity).Action, nil
+		return GetActionString(e.(*Entity).Action)
 	case *Relationship:
-		return e.(*Relationship).Action, nil
+		return GetActionString(e.(*Relationship).Action)
 	default:
 		return "", fmt.Errorf("unsupported event type: %T", e)
 	}
+}
+
+func GetActionString(input string) (string, error) {
+	if input == EventUpdateAction {
+		return EventUpdateAction, nil
+	} else if input == EventDeleteAction {
+		return EventDeleteAction, nil
+	}
+	return "", fmt.Errorf("failed to get action type from input: %s", input)
 }
