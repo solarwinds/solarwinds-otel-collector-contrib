@@ -45,14 +45,14 @@ const (
 	bufferItems = 64
 )
 
-// InternalCache defines the interface for cache operations used by Manager
-type InternalCache interface {
+// InternalStorage defines the interface for cache operations used by Manager
+type InternalStorage interface {
 	update(relationship *internal.Relationship) error
 	run(ctx context.Context)
 }
 
-// internalStorage implements InternalCache interface.
-var _ InternalCache = (*internalStorage)(nil)
+// internalStorage implements InternalStorage interface.
+var _ InternalStorage = (*internalStorage)(nil)
 
 type storedRelationship struct {
 	sourceHash       string
