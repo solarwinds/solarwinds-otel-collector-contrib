@@ -26,9 +26,6 @@ connectors:
     expiration_policy:
       enabled: true
       interval: 5m
-      cache_configuration:
-        ttl_cleanup_interval: 10m
-        max_capacity: 1000000
     schema:
       entities:
         - entity: KubernetesPod
