@@ -12,7 +12,7 @@ expiration_policy:
     interval: 5s # TTL interval for relationship
     cache_configuration:
         max_capacity: 1000000 # Maximum number of relationships and entities in the cache
-        ttl_cleanup_interval: 10s # Interval for periodic cleanup of expired relationships
+        ttl_cleanup_interval: 10s # Interval for periodic cleanup of expired relationships. Minimum is 1s.
 ```
 
 ## Events
