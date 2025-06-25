@@ -9,7 +9,7 @@ The SolarWinds Entity Connector generates resource logs that contain event logs 
 log records. 
 
 - There can be multiple log records in a single resource log with different
-entity types, different even type (update/delete), etc. 
+entity types, different event type (update/delete), etc. 
 - All mentioned entity types, relationship types
 and attributes must match to definitions in SWO. 
 - Body of the log record is empty, all required information is stored in attributes.
