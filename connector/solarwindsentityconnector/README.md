@@ -78,12 +78,12 @@ connectors:
 
 #### Expiration Policy
 
-- `expiration_policy` defines the expiration policy for relationships.
-  - `enabled` enables the expiration policy.
-  - `interval` defines TTL of the relationships in time.Duration format (e.g., `5m` for 5 minutes). After this interval, the relationship is considered expired and a delete event is sent to SolarWinds Observability SaaS.
-  - `cache_configuration` defines the cache configuration.
-    - `ttl_cleanup_interval` defines how often the cache is cleaned up in time.Duration format (e.g., `5m` for 5 minutes). This is the time, when the expired relationships are removed from the cache and delete events are sent to SolarWinds Observability SaaS.
-    - `max_capacity` defines the maximum number of relationships that can be stored in the cache.
+- `expiration_policy` section defines the expiration policy for relationships.
+  - `enabled` Optional, `false` by default. Enables the expiration policy.
+  - `interval` Mandatory (when expiration policy is enabled). Defines TTL of the relationships in time.Duration format (e.g., `5m` for 5 minutes). After this interval, the relationship is considered expired and a delete event is sent to SolarWinds Observability SaaS.
+  - `cache_configuration` section defines the cache configuration.
+    - `ttl_cleanup_interval` Optional, `5s` by default. Defines how often the cache is cleaned up in time.Duration format (e.g., `5m` for 5 minutes). This is the time, when the expired relationships are removed from the cache and delete events are sent to SolarWinds Observability SaaS. Minimum value is `1s`.
+    - `max_capacity` Optional, `1 000 000` by default. Defines the maximum number of relationships that can be stored in the cache.
 
 #### Schema
 Defines the entities and relationships to be created/updated/deleted from incoming telemetry. To have action performed, the event
