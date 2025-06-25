@@ -112,7 +112,7 @@ func TestBuildEntityKey(t *testing.T) {
 	// First generate reference keys for comparison
 	// All tests with addToControlGroup=true will generate a reference key map.
 	referenceKeys := make(map[string]string)
-	kb := NewDefaultKeyBuilder()
+	kb := NewKeyBuilder()
 	for _, tt := range tests {
 		if tt.addToControlGroup {
 			key, err := kb.BuildEntityKey(tt.entity)
@@ -164,7 +164,7 @@ func TestBuildEntityKey_SameEntitiesWithDifferentIdsOrderHaveSameKeys(t *testing
 		}(),
 	}
 
-	kb := NewDefaultKeyBuilder()
+	kb := NewKeyBuilder()
 	key1, err1 := kb.BuildEntityKey(entity)
 	require.NoError(t, err1)
 
@@ -188,7 +188,7 @@ func TestBuildEntityKeyConsistency(t *testing.T) {
 
 	// Generate the key multiple times
 	keys := make([]string, 5)
-	kb := NewDefaultKeyBuilder()
+	kb := NewKeyBuilder()
 	for i := 0; i < 5; i++ {
 		key, err := kb.BuildEntityKey(entity)
 		require.NoError(t, err)
@@ -204,7 +204,7 @@ func TestBuildEntityKeyConsistency(t *testing.T) {
 // TestBuildRelationshipKey ensures that relationship keys are built with the proper format
 // and validates input parameters
 func TestBuildRelationshipKey(t *testing.T) {
-	keyBuilder := NewDefaultKeyBuilder()
+	keyBuilder := NewKeyBuilder()
 
 	tests := []struct {
 		name             string

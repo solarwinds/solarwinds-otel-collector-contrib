@@ -120,7 +120,7 @@ func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em c
 		// The TTL + clean-up interval should be the longest interval after which the relationship would be evicted.
 		entityTtl:  (cfg.Interval + cfg.TTLCleanupIntervalSeconds) * entityTTLFactor,
 		logger:     logger,
-		keyBuilder: NewDefaultKeyBuilder(),
+		keyBuilder: NewKeyBuilder(),
 	}, nil
 }
 

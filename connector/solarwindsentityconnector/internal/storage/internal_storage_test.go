@@ -326,7 +326,7 @@ func TestTtlExpiration_RelationshipIsRemovedFirst_EntitiesSecond(t *testing.T) {
 	storage.entities.Wait()
 	storage.relationships.Wait()
 
-	kb := NewDefaultKeyBuilder()
+	kb := NewKeyBuilder()
 	sourceHash, err := kb.BuildEntityKey(relationship.Source)
 	require.NoError(t, err)
 	destHash, err := kb.BuildEntityKey(relationship.Destination)
