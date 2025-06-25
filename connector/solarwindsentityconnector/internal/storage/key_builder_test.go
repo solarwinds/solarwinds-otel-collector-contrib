@@ -143,7 +143,7 @@ func TestBuildEntityKey(t *testing.T) {
 	}
 }
 
-func TestBuildEntityKey_SameEntitiesWithDifferentIdsOrderHaveSameKeys(t *testing.T) {
+func TestBuildEntityKey_SameEntitiesWithDifferentIdsOrder_HaveSameKeys(t *testing.T) {
 	entity := internal.RelationshipEntity{
 		Type: "service",
 		IDs: func() pcommon.Map {
@@ -174,8 +174,8 @@ func TestBuildEntityKey_SameEntitiesWithDifferentIdsOrderHaveSameKeys(t *testing
 	require.Equal(t, key1, key2, "Keys should be identical for the same entity with different ID order")
 }
 
-// TestBuildEntityKeyConsistency ensures that the same entity always generates the same key
-func TestBuildEntityKeyConsistency(t *testing.T) {
+// TestBuildEntityKey_Consistency ensures that the same entity always generates the same key
+func TestBuildEntityKey_Consistency(t *testing.T) {
 	entity := internal.RelationshipEntity{
 		Type: "service",
 		IDs: func() pcommon.Map {
