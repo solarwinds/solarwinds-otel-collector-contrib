@@ -270,10 +270,10 @@ func TestDetectMetric_NoEvents(t *testing.T) {
 	events, err := eventDetector.DetectMetric(ctx, resourceAttrs, tc)
 	require.NoError(t, err)
 	require.NotNil(t, events)
-	require.Len(t, events, 0)
+	require.Empty(t, events)
 }
 
-func TestConditionTrue(t *testing.T) {
+func TestProcessEvents_ConditionTrue_EventsCreated(t *testing.T) {
 	// Initialize test data
 	ctx := context.Background()
 	settings := componenttest.NewNopTelemetrySettings()
@@ -307,12 +307,14 @@ func TestConditionTrue(t *testing.T) {
 	tc := ottllog.NewTransformContext(logRecord, scope, resource, scopeLogs, rLogs)
 
 	// Tested function
-	_, _, err = processEvents(ctx, eventsGroup, tc)
+	entities, relationships, err := processEvents(ctx, eventsGroup, tc)
 	require.NoError(t, err)
 
+	require.Len(t, entities, 1)
+	require.Len(t, relationships, 1)
 }
 
-func TestConditionFalse(t *testing.T) {
+func TestProcessEvents_ConditionFalse_EventsNotCreated(t *testing.T) {
 	// Initialize test data
 	ctx := context.Background()
 	settings := componenttest.NewNopTelemetrySettings()
@@ -346,8 +348,10 @@ func TestConditionFalse(t *testing.T) {
 	tc := ottllog.NewTransformContext(logRecord, scope, resource, scopeLogs, rLogs)
 
 	// Tested function
-	_, _, err = processEvents(ctx, eventsGroup, tc)
+	entities, relationships, err := processEvents(ctx, eventsGroup, tc)
 	require.NoError(t, err)
+	require.Empty(t, entities)
+	require.Empty(t, relationships)
 }
 
 func TestCreateEntity(t *testing.T) {
