@@ -117,9 +117,9 @@ func TestNewInternalStorage(t *testing.T) {
 }
 
 // TestBuildKey tests the buildKey function for various scenarios
-// Select test entities are added control group.
+// Select test entities are added control group.ß
 // Everything is checked against the control group. Some expect to find the key in the control group, and some expect not to find themselves
-// because they should generate key unique from everyting in the control group.
+// because they should generate key unique from everything in the control group.
 func TestBuildKey(t *testing.T) {
 	tests := []struct {
 		name              string
@@ -236,7 +236,7 @@ func TestBuildKey(t *testing.T) {
 	}
 }
 
-func TestBuildKey_SameEntitiesWithDifferentIdsOrderHaveSameKeys(t *testing.T) {
+func TestBuildKey_SameEntitiesWithDifferentIds_OrderHaveSameKeys(t *testing.T) {
 	entity := internal.RelationshipEntity{
 		Type: "service",
 		IDs: func() pcommon.Map {
@@ -266,8 +266,8 @@ func TestBuildKey_SameEntitiesWithDifferentIdsOrderHaveSameKeys(t *testing.T) {
 	require.Equal(t, key1, key2, "Keys should be identical for the same entity with different ID order")
 }
 
-// TestBuildKeyConsistency ensures that the same entity always generates the same key
-func TestBuildKeyConsistency(t *testing.T) {
+// TestBuildKey_Consistency ensures that the same entity always generates the same key
+func TestBuildKey_Consistency(t *testing.T) {
 	entity := internal.RelationshipEntity{
 		Type: "service",
 		IDs: func() pcommon.Map {
