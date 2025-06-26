@@ -1255,6 +1255,210 @@ func TestProcessorMetricsPipelineForDifferentContextsWhenSearchingByAddress(t *t
 	}
 }
 
+func TestProcessorMetricsPipelineWhenPreferringPodOwner(t *testing.T) {
+
+	tests := []struct {
+		name                 string
+		existingPods         []*corev1.Pod
+		existingDeployments  []*appsv1.Deployment
+		existingReplicaSets  []*appsv1.ReplicaSet
+		existingStatefulSets []*appsv1.StatefulSet
+		workloadMappings     []*K8sWorkloadMappingConfig
+		receivedMetricAttrs  map[string]any
+		expectedMetricAttrs  map[string]any
+	}{
+		{
+			name: "mapping matches existing deployment's pod",
+			existingPods: []*corev1.Pod{{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test_pod",
+					Namespace: "test_namespace",
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							Kind: "ReplicaSet",
+							Name: "test_replicaset",
+						},
+					},
+				},
+			}},
+			existingDeployments: []*appsv1.Deployment{{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test_deployment",
+					Namespace: "test_namespace",
+				},
+			}},
+			existingReplicaSets: []*appsv1.ReplicaSet{{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test_replicaset",
+					Namespace: "test_namespace",
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							Kind: "Deployment",
+							Name: "test_deployment",
+						},
+					},
+				},
+			}},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					NameAttr:              "src_workload",
+					NamespaceAttr:         "src_namespace",
+					WorkloadTypeAttr:      "src_type",
+					WorkloadNameAttr:      "src_workload_name",
+					WorkloadNamespaceAttr: "src_workload_namespace",
+					ExpectedTypes:         []string{"pods"},
+					PreferOwnerForPods:    true,
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_workload":  "test_pod",
+				"src_namespace": "test_namespace",
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_workload":           "test_pod",
+				"src_namespace":          "test_namespace",
+				"src_type":               "Deployment",
+				"src_workload_name":      "test_deployment",
+				"src_workload_namespace": "test_namespace",
+			},
+		},
+		{
+			name: "mapping matches existing replicaset's pod",
+			existingPods: []*corev1.Pod{{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test_pod",
+					Namespace: "test_namespace",
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							Kind: "ReplicaSet",
+							Name: "test_replicaset",
+						},
+					},
+				},
+			}},
+			existingReplicaSets: []*appsv1.ReplicaSet{{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test_replicaset",
+					Namespace: "test_namespace",
+				},
+			}},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					NameAttr:              "src_workload",
+					NamespaceAttr:         "src_namespace",
+					WorkloadTypeAttr:      "src_type",
+					WorkloadNameAttr:      "src_workload_name",
+					WorkloadNamespaceAttr: "src_workload_namespace",
+					ExpectedTypes:         []string{"pods"},
+					PreferOwnerForPods:    true,
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_workload":  "test_pod",
+				"src_namespace": "test_namespace",
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_workload":           "test_pod",
+				"src_namespace":          "test_namespace",
+				"src_type":               "ReplicaSet",
+				"src_workload_name":      "test_replicaset",
+				"src_workload_namespace": "test_namespace",
+			},
+		},
+		{
+			name: "mapping matches existing statefulset's pod",
+			existingPods: []*corev1.Pod{{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test_pod",
+					Namespace: "test_namespace",
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							Kind: "StatefulSet",
+							Name: "test_statefulset",
+						},
+					},
+				},
+			}},
+			existingStatefulSets: []*appsv1.StatefulSet{{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test_statefulset",
+					Namespace: "test_namespace",
+				},
+			}},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					NameAttr:              "src_workload",
+					NamespaceAttr:         "src_namespace",
+					WorkloadTypeAttr:      "src_type",
+					WorkloadNameAttr:      "src_workload_name",
+					WorkloadNamespaceAttr: "src_workload_namespace",
+					ExpectedTypes:         []string{"pods"},
+					PreferOwnerForPods:    true,
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_workload":  "test_pod",
+				"src_namespace": "test_namespace",
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_workload":           "test_pod",
+				"src_namespace":          "test_namespace",
+				"src_type":               "StatefulSet",
+				"src_workload_name":      "test_statefulset",
+				"src_workload_namespace": "test_namespace",
+			},
+		},
+		{
+			name: "mapping matches pod when no owner is found",
+			existingPods: []*corev1.Pod{{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test_pod",
+					Namespace: "test_namespace",
+				},
+			}},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					NameAttr:              "src_workload",
+					NamespaceAttr:         "src_namespace",
+					WorkloadTypeAttr:      "src_type",
+					WorkloadNameAttr:      "src_workload_name",
+					WorkloadNamespaceAttr: "src_workload_namespace",
+					ExpectedTypes:         []string{"pods"},
+					PreferOwnerForPods:    true,
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_workload":  "test_pod",
+				"src_namespace": "test_namespace",
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_workload":           "test_pod",
+				"src_namespace":          "test_namespace",
+				"src_type":               "Pod",
+				"src_workload_name":      "test_pod",
+				"src_workload_namespace": "test_namespace",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock, reset := MockKubeClient()
+			defer reset()
+
+			MockExistingObjectsInKubeClient(mock, tt.existingPods)
+			MockExistingObjectsInKubeClient(mock, tt.existingDeployments)
+			MockExistingObjectsInKubeClient(mock, tt.existingReplicaSets)
+			MockExistingObjectsInKubeClient(mock, tt.existingStatefulSets)
+
+			output := runProcessorMetricsPipelineTest(t, tt.workloadMappings, generateGaugeForTestProcessorMetricsPipeline(tt.receivedMetricAttrs))
+
+			attrs := output[0].ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics().At(0).Gauge().DataPoints().At(0).Attributes().AsRaw()
+			require.Equal(t, tt.expectedMetricAttrs, attrs, "Expected attributes should match the actual attributes on metric exiting the processor")
+		})
+	}
+}
+
 func generateGaugeForTestProcessorMetricsPipeline(attrs map[string]any) pmetric.Metrics {
 	metrics, m := generateEmptyMetricForTestProcessorMetricsPipeline()
 	dp := m.SetEmptyGauge().DataPoints().AppendEmpty()

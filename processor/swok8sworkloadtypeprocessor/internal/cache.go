@@ -23,7 +23,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-func PodTransformFunc(logger *zap.Logger) cache.TransformFunc {
+func PodTransformFunc(logger *zap.Logger, keepOwnerReferences bool) cache.TransformFunc {
 	return func(obj any) (any, error) {
 		pod, ok := obj.(*corev1.Pod)
 		if !ok {
@@ -31,13 +31,20 @@ func PodTransformFunc(logger *zap.Logger) cache.TransformFunc {
 			return obj, nil
 		}
 		logger.Debug("Received pod", zap.String("name", pod.Name), zap.String("namespace", pod.Namespace))
+
+		var ownerRefs []metav1.OwnerReference
+		if keepOwnerReferences {
+			ownerRefs = copyOwnerReferences(pod)
+		}
+
 		return &corev1.Pod{
 			TypeMeta: metav1.TypeMeta{
 				Kind: PodKind,
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      pod.Name,
-				Namespace: pod.Namespace,
+				Name:            pod.Name,
+				Namespace:       pod.Namespace,
+				OwnerReferences: ownerRefs,
 			},
 			Spec: corev1.PodSpec{
 				HostNetwork: pod.Spec.HostNetwork,
@@ -73,7 +80,7 @@ func ServiceTransformFunc(logger *zap.Logger) cache.TransformFunc {
 	}
 }
 
-func GenericTransformFunc(logger *zap.Logger, kind string) cache.TransformFunc {
+func GenericTransformFunc(logger *zap.Logger, kind string, keepOwnerReferences bool) cache.TransformFunc {
 	return func(obj any) (any, error) {
 		workload, ok := obj.(metav1.Object)
 		if !ok {
@@ -81,16 +88,35 @@ func GenericTransformFunc(logger *zap.Logger, kind string) cache.TransformFunc {
 			return obj, nil
 		}
 		logger.Debug("Received workload", zap.String("workloadName", workload.GetName()), zap.String("workloadNamespace", workload.GetNamespace()))
+
+		var ownerRefs []metav1.OwnerReference
+		if keepOwnerReferences {
+			ownerRefs = copyOwnerReferences(workload)
+		}
+
 		return &metav1.PartialObjectMetadata{
 			TypeMeta: metav1.TypeMeta{
 				Kind: kind,
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      workload.GetName(),
-				Namespace: workload.GetNamespace(),
+				Name:            workload.GetName(),
+				Namespace:       workload.GetNamespace(),
+				OwnerReferences: ownerRefs,
 			},
 		}, nil
 	}
+}
+
+func copyOwnerReferences(workload metav1.Object) []metav1.OwnerReference {
+	origOwnerRefs := workload.GetOwnerReferences()
+	copiedRefs := make([]metav1.OwnerReference, len(origOwnerRefs))
+	for i, ref := range origOwnerRefs {
+		copiedRefs[i] = metav1.OwnerReference{
+			Kind: ref.Kind,
+			Name: ref.Name,
+		}
+	}
+	return copiedRefs
 }
 
 const (
