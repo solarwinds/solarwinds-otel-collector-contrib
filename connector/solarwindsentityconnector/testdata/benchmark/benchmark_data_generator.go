@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package solarwindsentityconnector
+package benchmark
 
 import (
 	"fmt"
@@ -22,6 +22,7 @@ import (
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottlmetric"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/pdata/pmetric"
@@ -34,7 +35,7 @@ import (
 // The `count` parameter specifies the total number of metrics to generate, including both valid and rubbish metrics.
 // The `rubbishRatio` parameter defines the proportion of invalid metrics.
 // The `composite` parameter determines whether to return a single composite metric instead of multiple individual metrics.
-func genMetricsFromConfig(b *testing.B, cfg *Config, count int, rubbishRatio float32, composite bool) []pmetric.Metrics {
+func genMetricsFromConfig(b *testing.B, cfg *solarwindsentityconnector.Config, count int, rubbishRatio float32, composite bool) []pmetric.Metrics {
 	b.Helper()
 
 	var uniqueMetrics []pmetric.Metrics
@@ -58,6 +59,9 @@ func genMetricsFromConfig(b *testing.B, cfg *Config, count int, rubbishRatio flo
 	normalCount := count - rubbishCount
 
 	finalMetrics := make([]pmetric.Metrics, 0, count)
+
+	// If composite flag is true, will be build a single composite metric
+	// that contains all unique metrics repeated as provided by the count.
 	if composite {
 		finalMetrics = append(finalMetrics, buildCompositeMetric(b, count, uniqueMetrics))
 	} else {
@@ -89,7 +93,7 @@ func buildEmptyMetric(b *testing.B) pmetric.Metrics {
 	return metric
 }
 
-func buildEntityMetric(b *testing.B, cfg *Config, entityType string) pmetric.Metrics {
+func buildEntityMetric(b *testing.B, cfg *solarwindsentityconnector.Config, entityType string) pmetric.Metrics {
 	b.Helper()
 
 	metric := buildEmptyMetric(b)
@@ -108,21 +112,22 @@ func buildEntityMetric(b *testing.B, cfg *Config, entityType string) pmetric.Met
 	return metric
 }
 
-func buildRelationshipMetric(b *testing.B, cfg *Config, relType, sourceType, destType string) pmetric.Metrics {
+func buildRelationshipMetric(b *testing.B, cfg *solarwindsentityconnector.Config, relType, sourceType, destType string) pmetric.Metrics {
 	b.Helper()
 
 	metric := buildEmptyMetric(b)
 	attrs := metric.ResourceMetrics().At(0).Resource().Attributes()
 
 	for _, ent := range cfg.Schema.Entities {
-		switch ent.Type {
-		case sourceType:
+		if ent.Type == sourceType {
 			for _, id := range ent.IDs {
-				attrs.PutStr(id, fmt.Sprintf("%s.%s.%s", id, ent.Type, relType))
+				attrs.PutStr(fmt.Sprintf("src.%s", id), fmt.Sprintf("%s.%s.%s", id, ent.Type, relType))
 			}
-		case destType:
+		}
+
+		if ent.Type == destType {
 			for _, id := range ent.IDs {
-				attrs.PutStr(id, fmt.Sprintf("%s.%s.%s", id, ent.Type, relType))
+				attrs.PutStr(fmt.Sprintf("dst.%s", id), fmt.Sprintf("%s.%s.%s", id, ent.Type, relType))
 			}
 		}
 	}
@@ -162,7 +167,7 @@ func buildCompositeMetric(b *testing.B, count int, metrics []pmetric.Metrics) pm
 // The `count` parameter specifies the total number of logs to generate, including both valid and rubbish logs.
 // The `rubbishRatio` parameter defines the proportion of invalid logs.
 // The `composite` parameter determines whether to return a single composite log instead of multiple individual logs.
-func genLogsFromConfig(b *testing.B, cfg *Config, count int, rubbishRatio float32, composite bool) []plog.Logs {
+func genLogsFromConfig(b *testing.B, cfg *solarwindsentityconnector.Config, count int, rubbishRatio float32, composite bool) []plog.Logs {
 	b.Helper()
 	var uniqueLogs []plog.Logs
 
@@ -187,7 +192,7 @@ func genLogsFromConfig(b *testing.B, cfg *Config, count int, rubbishRatio float3
 
 	finalLogs := make([]plog.Logs, 0, count)
 
-	// If composite logs are requested, we will build a single composite log
+	// If composite flag is true, will be build a single composite log
 	// that contains all unique logs repeated as provided by the count.
 	if composite {
 		finalLogs = append(finalLogs, buildCompositeLog(b, count, uniqueLogs))
@@ -215,7 +220,7 @@ func buildEmptyLog(b *testing.B) plog.Logs {
 	return log
 }
 
-func buildEntityLog(b *testing.B, cfg *Config, entityType string) plog.Logs {
+func buildEntityLog(b *testing.B, cfg *solarwindsentityconnector.Config, entityType string) plog.Logs {
 	b.Helper()
 
 	log := buildEmptyLog(b)
@@ -233,21 +238,22 @@ func buildEntityLog(b *testing.B, cfg *Config, entityType string) plog.Logs {
 	return log
 }
 
-func buildRelationshipLog(b *testing.B, cfg *Config, relType, sourceType, destType string) plog.Logs {
+func buildRelationshipLog(b *testing.B, cfg *solarwindsentityconnector.Config, relType, sourceType, destType string) plog.Logs {
 	b.Helper()
 
 	log := buildEmptyLog(b)
 	attrs := log.ResourceLogs().At(0).Resource().Attributes()
 
 	for _, ent := range cfg.Schema.Entities {
-		switch ent.Type {
-		case sourceType:
+		if ent.Type == sourceType {
 			for _, id := range ent.IDs {
-				attrs.PutStr(id, fmt.Sprintf("%s.%s.%s", id, ent.Type, relType))
+				attrs.PutStr(fmt.Sprintf("src.%s", id), fmt.Sprintf("%s.%s.%s", id, ent.Type, relType))
 			}
-		case destType:
+		}
+
+		if ent.Type == destType {
 			for _, id := range ent.IDs {
-				attrs.PutStr(id, fmt.Sprintf("%s.%s.%s", id, ent.Type, relType))
+				attrs.PutStr(fmt.Sprintf("dst.%s", id), fmt.Sprintf("%s.%s.%s", id, ent.Type, relType))
 			}
 		}
 	}
@@ -280,7 +286,7 @@ func buildCompositeLog(b *testing.B, amount int, logs []plog.Logs) plog.Logs {
 	return compositeLog
 }
 
-func loadConfigFromFileBenchmark(b *testing.B, path string) (*Config, error) {
+func loadConfigFromFileBenchmark(b *testing.B, path string) (*solarwindsentityconnector.Config, error) {
 	b.Helper()
 
 	yamlFile, err := os.ReadFile(path)
@@ -288,7 +294,7 @@ func loadConfigFromFileBenchmark(b *testing.B, path string) (*Config, error) {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}
 
-	var cfg Config
+	var cfg solarwindsentityconnector.Config
 	if err := yaml.Unmarshal(yamlFile, &cfg); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}

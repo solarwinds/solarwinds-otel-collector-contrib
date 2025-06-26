@@ -1,3 +1,5 @@
+source_prefix: "src."
+destination_prefix: "dst."
 schema:
   entities:
     - type: "kubernetes.cluster"
@@ -31,5 +33,17 @@ schema:
         conditions: ["true"]
         type: "test"
         source: "kubernetes.cluster"
+        destination: "kubernetes.node"
+        attributes:
+      - context: "log"
+        conditions: ["true"]
+        type: "test"
+        source: "kubernetes.node"
+        destination: "kubernetes.node"
+        attributes:
+      - context: "metric"
+        conditions: ["true"]
+        type: "test"
+        source: "kubernetes.node"
         destination: "kubernetes.node"
         attributes:

@@ -12,13 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package solarwindsentityconnector
+package benchmark
 
 import (
 	"context"
 	"path/filepath"
 	"testing"
 
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal/metadata"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -68,9 +69,9 @@ func BenchmarkMetrics(b *testing.B) {
 
 	for _, tc := range testCases {
 		b.Run("ConsumeMetrics", func(b *testing.B) {
-			cfg, err := loadConfigFromFileBenchmark(b, filepath.Join("testdata", "benchmark", "config.yaml"))
+			cfg, err := loadConfigFromFileBenchmark(b, filepath.Join("config.yaml"))
 			require.NoError(b, err)
-			factory := NewFactory()
+			factory := solarwindsentityconnector.NewFactory()
 			sink := &consumertest.LogsSink{}
 
 			conn, err := factory.CreateMetricsToLogs(context.Background(),
@@ -144,9 +145,9 @@ func BenchmarkLogs(b *testing.B) {
 
 	for _, tc := range testCases {
 		b.Run("ConsumeLogs", func(b *testing.B) {
-			cfg, err := loadConfigFromFileBenchmark(b, filepath.Join("testdata", "benchmark", "config.yaml"))
+			cfg, err := loadConfigFromFileBenchmark(b, filepath.Join("config.yaml"))
 			require.NoError(b, err)
-			factory := NewFactory()
+			factory := solarwindsentityconnector.NewFactory()
 			sink := &consumertest.LogsSink{}
 
 			conn, err := factory.CreateLogsToLogs(context.Background(),
@@ -163,7 +164,6 @@ func BenchmarkLogs(b *testing.B) {
 			b.ReportAllocs()
 			b.ResetTimer()
 			for _, log := range logs {
-				// golden.WriteLogsToFile(fmt.Sprintf("benchmark_%s_%d.log", tc.name, i), log)
 				assert.NoError(b, conn.ConsumeLogs(context.Background(), log))
 			}
 			b.StopTimer()
