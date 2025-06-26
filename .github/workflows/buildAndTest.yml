@@ -48,8 +48,8 @@ jobs:
       - name: Run Tests
         run: ${{ env.SHARED_SCRIPTS }}/build-and-test.sh
         shell: bash
-      - name: Run Benchmark Connector
-        run: go test -C connector/solarwindsentityconnector -run=^$ -bench . > benchmark.txt
+      - name: Run Benchmark
+        run: go test -C connector/solarwindsentityconnector/testdata/benchmark -run=^$ -bench . > benchmark.txt
         shell: bash
       - name: Upload Benchmark Log
         uses: actions/upload-artifact@v4
