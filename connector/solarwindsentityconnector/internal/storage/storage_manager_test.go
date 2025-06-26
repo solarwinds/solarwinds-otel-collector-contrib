@@ -37,19 +37,15 @@ type mockCache struct {
 	returnErr    error
 }
 
+var _ InternalStorage = (*mockCache)(nil)
+
 func (m *mockCache) update(rel *internal.Relationship) error {
 	m.updateCalled = true
 	m.lastRel = rel
 	return m.returnErr
 }
 
-func (m *mockCache) delete(rel *internal.Relationship) error {
-	m.deleteCalled = true
-	m.lastRel = rel
-	return m.returnErr
-}
-
-func (m *mockCache) run(ctx context.Context) {
+func (m *mockCache) close() {
 	// No-op for testing
 }
 

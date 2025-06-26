@@ -40,8 +40,6 @@ type solarwindsentity struct {
 
 	expirationPolicy config.ExpirationPolicy
 	storageManager   *storage.Manager
-
-	component.ShutdownFunc
 }
 
 var _ connector.Metrics = (*solarwindsentity)(nil)
@@ -51,7 +49,7 @@ func (s *solarwindsentity) Capabilities() consumer.Capabilities {
 	return consumer.Capabilities{MutatesData: false}
 }
 
-func (s *solarwindsentity) Start(ctx context.Context, _ component.Host) error {
+func (s *solarwindsentity) Start(context.Context, component.Host) error {
 	if s.expirationPolicy.Enabled {
 		expirationCfg, err := s.expirationPolicy.Parse()
 		if err != nil {
@@ -66,7 +64,7 @@ func (s *solarwindsentity) Start(ctx context.Context, _ component.Host) error {
 		}
 
 		s.storageManager = sm
-		err = s.storageManager.Start(ctx)
+		err = s.storageManager.Start()
 
 		if err != nil {
 			s.logger.Error("failed to start storage manager", zap.Error(err))
@@ -77,6 +75,20 @@ func (s *solarwindsentity) Start(ctx context.Context, _ component.Host) error {
 		s.logger.Info("expiration policy is disabled, no expiration logs will be generated")
 	}
 
+	return nil
+}
+
+func (s *solarwindsentity) Shutdown(context.Context) error {
+	if s.storageManager != nil {
+		err := s.storageManager.Shutdown()
+		if err != nil {
+			s.logger.Error("failed to shutdown storage manager", zap.Error(err))
+			return err
+		}
+		s.logger.Info("storage manager shutdown successfully")
+	}
+
+	s.logger.Info("solarwindsentity connector shutdown successfully")
 	return nil
 }
 

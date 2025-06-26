@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottlmetric"
-
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
@@ -93,12 +92,12 @@ func (e *EventDetector) collectEvents(attrs pcommon.Map, ee []*config.EntityEven
 	return events, nil
 }
 
-func (e *EventDetector) createEntityEvent(resourceAttrs pcommon.Map, event *config.EntityEvent) (*Entity, error) {
+func (e *EventDetector) createEntityEvent(resourceAttrs pcommon.Map, event *config.EntityEvent) (Entity, error) {
 	attrs := pcommon.NewMap()
 	entity := e.entities[event.Type]
 	err := setIdAttributes(attrs, entity.IDs, resourceAttrs, entityIds)
 	if err != nil {
-		return nil, fmt.Errorf("failed to set ID attributes for entity %s: %w", entity.Type, err)
+		return Entity{}, fmt.Errorf("failed to set ID attributes for entity %s: %w", entity.Type, err)
 	}
 	idsValue, _ := attrs.Get(entityIds)
 	ids := idsValue.Map()
@@ -115,10 +114,10 @@ func (e *EventDetector) createEntityEvent(resourceAttrs pcommon.Map, event *conf
 	action, err := GetActionString(event.Action)
 	if err != nil {
 		e.logger.Debug("failed to get action type for entity event", zap.Error(err))
-		return nil, err
+		return Entity{}, err
 	}
 
-	return &Entity{
+	return Entity{
 		Action:     action,
 		Type:       entity.Type,
 		IDs:        ids,
