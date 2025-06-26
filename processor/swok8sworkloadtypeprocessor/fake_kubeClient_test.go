@@ -82,7 +82,7 @@ func (c *FakeKubeClient) MockServerPreferredResources(groupVersion string, name 
 
 // MockExistingObjectsInKubeClient creates the provided items in the fake Kubernetes client.
 // It will also mock the ServerPreferredResources for the respective kind if it is not already mocked.
-func MockExistingObjectsInKubeClient[T corev1.Pod | appsv1.Deployment | appsv1.StatefulSet | appsv1.DaemonSet | corev1.Service](c *FakeKubeClient, items []*T) {
+func MockExistingObjectsInKubeClient[T corev1.Pod | appsv1.Deployment | appsv1.StatefulSet | appsv1.DaemonSet | corev1.Service | appsv1.ReplicaSet](c *FakeKubeClient, items []*T) {
 	for _, item := range items {
 		switch v := any(item).(type) {
 		case *corev1.Pod:
@@ -100,6 +100,9 @@ func MockExistingObjectsInKubeClient[T corev1.Pod | appsv1.Deployment | appsv1.S
 		case *corev1.Service:
 			c.MockServerPreferredResources("v1", "services", "Service")
 			c.CoreV1().Services(v.Namespace).Create(context.Background(), v, metav1.CreateOptions{})
+		case *appsv1.ReplicaSet:
+			c.MockServerPreferredResources("apps/v1", "replicasets", "ReplicaSet")
+			c.AppsV1().ReplicaSets(v.Namespace).Create(context.Background(), v, metav1.CreateOptions{})
 		}
 	}
 }
