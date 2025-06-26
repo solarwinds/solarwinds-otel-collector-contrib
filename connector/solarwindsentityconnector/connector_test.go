@@ -343,7 +343,9 @@ func TestRelationshipCacheExpiration(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, conn)
 	require.NoError(t, conn.Start(context.Background(), componenttest.NewNopHost()))
-	defer assert.NoError(t, conn.Shutdown(context.Background()))
+	defer func() {
+		assert.NoError(t, conn.Shutdown(context.Background()))
+	}()
 
 	// Consume input logs or metrics that infer a relationship
 	inputFile := filepath.Join(testFolder, "input.yaml")

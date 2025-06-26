@@ -27,6 +27,7 @@ type Manager struct {
 	cache         InternalStorage
 	expiredCh     chan internal.Event
 	eventConsumer internal.EventConsumer
+	cancelBatcher context.CancelFunc // Used to cancel the batch processing goroutine
 
 	logger *zap.Logger
 }
@@ -50,13 +51,16 @@ func NewStorageManager(cfg *config.ExpirationSettings, logger *zap.Logger, logsC
 	}, nil
 }
 
-func (m *Manager) Start(ctx context.Context) error {
-	go m.receiveExpired(ctx)
+func (m *Manager) Start() error {
+	batcherCtx, cancelBatcher := context.WithCancel(context.Background())
+	go m.receiveExpired(batcherCtx)
+	m.cancelBatcher = cancelBatcher
 	return nil
 }
 
-func (m *Manager) Shutdown(context.Context) error {
+func (m *Manager) Shutdown() error {
 	m.cache.close()
+	m.cancelBatcher()
 	return nil
 }
 
