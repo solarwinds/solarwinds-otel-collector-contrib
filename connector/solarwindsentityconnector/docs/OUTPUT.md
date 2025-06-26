@@ -52,7 +52,7 @@ The SolarWinds Entity Connector generates logs in the format below. The event ty
 - `entity_delete` for deletion events. Optionally, in this case we can set type of the delete action. 
 Use attribute `otel.entity.delete.type` can have one of the following values:
   - `set_unknown` (default and can be skipped)
-  - `soft_delete`
+  - `soft_delete` (marks entity as deleted and deletes it afterwards)
 
 ```json
 {
