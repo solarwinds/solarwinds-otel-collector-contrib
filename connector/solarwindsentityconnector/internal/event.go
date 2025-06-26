@@ -27,8 +27,8 @@ type Event interface {
 
 func GetActionType(e Event) (string, error) {
 	switch e.(type) {
-	case *Entity:
-		return GetActionString(e.(*Entity).Action)
+	case Entity:
+		return GetActionString(e.(Entity).Action)
 	case *Relationship:
 		return GetActionString(e.(*Relationship).Action)
 	default:

@@ -45,6 +45,12 @@ func (m *mockCache) update(rel *internal.Relationship) error {
 	return m.returnErr
 }
 
+func (m *mockCache) delete(rel *internal.Relationship) error {
+	m.deleteCalled = true
+	m.lastRel = rel
+	return m.returnErr
+}
+
 func (m *mockCache) close() {
 	// No-op for testing
 }
