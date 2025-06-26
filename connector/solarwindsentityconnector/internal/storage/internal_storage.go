@@ -16,7 +16,6 @@ package storage
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -51,7 +50,7 @@ const (
 // InternalStorage defines the interface for cache operations used by Manager
 type InternalStorage interface {
 	update(relationship *internal.Relationship) error
-	run(ctx context.Context)
+	close()
 }
 
 // internalStorage implements InternalStorage interface.
@@ -162,9 +161,7 @@ func onRelationshipEvict(
 	}
 }
 
-func (c *internalStorage) run(ctx context.Context) {
-	<-ctx.Done()
-
+func (c *internalStorage) close() {
 	c.logger.Info("closing ristretto caches")
 	c.entities.Close()
 	c.relationships.Close()

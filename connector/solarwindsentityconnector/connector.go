@@ -40,8 +40,6 @@ type solarwindsentity struct {
 
 	expirationPolicy config.ExpirationPolicy
 	storageManager   *storage.Manager
-
-	component.ShutdownFunc
 }
 
 var _ connector.Metrics = (*solarwindsentity)(nil)
@@ -77,6 +75,20 @@ func (s *solarwindsentity) Start(ctx context.Context, _ component.Host) error {
 		s.logger.Info("expiration policy is disabled, no expiration logs will be generated")
 	}
 
+	return nil
+}
+
+func (s *solarwindsentity) Shutdown(ctx context.Context) error {
+	if s.storageManager != nil {
+		err := s.storageManager.Shutdown(ctx)
+		if err != nil {
+			s.logger.Error("failed to shutdown storage manager", zap.Error(err))
+			return err
+		}
+		s.logger.Info("storage manager shutdown successfully")
+	}
+
+	s.logger.Info("solarwindsentity connector shutdown successfully")
 	return nil
 }
 

@@ -52,8 +52,11 @@ func NewStorageManager(cfg *config.ExpirationSettings, logger *zap.Logger, logsC
 
 func (m *Manager) Start(ctx context.Context) error {
 	go m.receiveExpired(ctx)
-	go m.cache.run(ctx)
+	return nil
+}
 
+func (m *Manager) Shutdown(context.Context) error {
+	m.cache.close()
 	return nil
 }
 

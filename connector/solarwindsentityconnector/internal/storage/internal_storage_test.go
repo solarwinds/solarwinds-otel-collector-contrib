@@ -15,7 +15,6 @@
 package storage
 
 import (
-	"context"
 	"fmt"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal"
@@ -513,33 +512,5 @@ func TestTtlExpiration_RelationshipIsRemovedFirst_EntitiesSecond(t *testing.T) {
 		case <-deadline:
 			t.Fatalf("Entities not expired after waiting %v", maxWait)
 		}
-	}
-}
-
-func TestRunAndShutdown(t *testing.T) {
-	logger := zap.NewNop()
-	eventsChan := make(chan internal.Event, 10)
-
-	storage, err := newInternalStorage(cfg, logger, eventsChan)
-	require.NoError(t, err)
-
-	ctx, cancel := context.WithCancel(context.Background())
-
-	// Run the storage in a goroutine
-	done := make(chan struct{})
-	go func() {
-		storage.run(ctx)
-		close(done)
-	}()
-
-	// Cancel should terminate the run loop
-	cancel()
-
-	// Wait for the goroutine to exit
-	select {
-	case <-done:
-		// Success - the run method exited
-	case <-time.After(1 * time.Second):
-		t.Fatal("Storage run did not exit after context cancellation")
 	}
 }

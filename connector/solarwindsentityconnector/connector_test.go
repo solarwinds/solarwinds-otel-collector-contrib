@@ -338,20 +338,18 @@ func TestRelationshipCacheExpiration(t *testing.T) {
 
 	factory := NewFactory()
 	sink := &consumertest.LogsSink{}
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	conn, err := factory.CreateLogsToLogs(ctx,
+	conn, err := factory.CreateLogsToLogs(context.Background(),
 		connectortest.NewNopSettings(metadata.Type), cfg, sink)
 	require.NoError(t, err)
 	require.NotNil(t, conn)
-	require.NoError(t, conn.Start(ctx, componenttest.NewNopHost()))
-	defer assert.NoError(t, conn.Shutdown(ctx))
+	require.NoError(t, conn.Start(context.Background(), componenttest.NewNopHost()))
+	defer assert.NoError(t, conn.Shutdown(context.Background()))
 
 	// Consume input logs or metrics that infer a relationship
 	inputFile := filepath.Join(testFolder, "input.yaml")
 	testLogs, err := golden.ReadLogs(inputFile)
 	require.NoError(t, err)
-	require.NoError(t, conn.ConsumeLogs(ctx, testLogs))
+	require.NoError(t, conn.ConsumeLogs(context.Background(), testLogs))
 
 	// Wait for the cache expiration to ensure that the relationship delete event is produced
 	ticker := time.NewTicker(1 * time.Second)
@@ -361,8 +359,6 @@ func TestRelationshipCacheExpiration(t *testing.T) {
 			fmt.Printf("Waiting for logs to be processed...\n")
 		case <-time.After(10 * time.Second):
 			require.Fail(t, "timed out waiting for logs to be processed")
-		case <-ctx.Done():
-			require.Fail(t, "context cancelled before logs were processed")
 		}
 	}
 
