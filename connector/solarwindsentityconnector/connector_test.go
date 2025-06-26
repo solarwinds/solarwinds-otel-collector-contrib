@@ -37,12 +37,10 @@ import (
 )
 
 func TestConnector(t *testing.T) {
-	// Entity tests
 	entityTests := []struct {
 		name   string
 		folder string
 	}{
-		// ~~~~~~ ENTITIES TESTS ~~~~~~
 		{
 			name:   "when log for entity has valid complex condition, log event is sent",
 			folder: "condition-met",
@@ -69,8 +67,6 @@ func TestConnector(t *testing.T) {
 			folder: "no-match",
 		},
 	}
-
-	// Same type relationship tests
 	sameTypeRelationshipTests := []struct {
 		name   string
 		folder string
@@ -109,8 +105,6 @@ func TestConnector(t *testing.T) {
 			folder: "no-match",
 		},
 	}
-
-	// Different type relationship tests
 	differentTypeRelationshipTests := []struct {
 		name   string
 		folder string
@@ -168,8 +162,8 @@ func TestConnector(t *testing.T) {
 	)
 
 	// Function to run a specific test with appropriate paths
-	runTest := func(t *testing.T, connectorType string, testName string, folder string, baseFolderPath string) {
-		t.Run(fmt.Sprintf("%s_%s", connectorType, testName), func(t *testing.T) {
+	runTest := func(t *testing.T, signalTypeFolder string, testName string, folder string, baseFolderPath string) {
+		t.Run(fmt.Sprintf("%s_%s", signalTypeFolder, testName), func(t *testing.T) {
 			var basePath string
 			var conn component.Component
 			var err error
@@ -183,7 +177,7 @@ func TestConnector(t *testing.T) {
 			testFolder := filepath.Join(baseFolderPath, folder)
 
 			// Prepare paths and create connector based on type
-			if connectorType == "logs_to_logs" {
+			if signalTypeFolder == "logs_to_logs" {
 				basePath = filepath.Join("testdata", "logsToLogs", testFolder)
 			} else {
 				basePath = filepath.Join("testdata", "metricsToLogs", testFolder)
@@ -194,7 +188,7 @@ func TestConnector(t *testing.T) {
 			cfg, err := loadConfigFromFile(t, configPath)
 			require.NoError(t, err)
 
-			if connectorType == "logs_to_logs" {
+			if signalTypeFolder == "logs_to_logs" {
 				conn, err = factory.CreateLogsToLogs(ctx, connectortest.NewNopSettings(metadata.Type), cfg, sink)
 			} else {
 				conn, err = factory.CreateMetricsToLogs(ctx, connectortest.NewNopSettings(metadata.Type), cfg, sink)
@@ -209,7 +203,7 @@ func TestConnector(t *testing.T) {
 
 			// Consume the appropriate input data
 			inputFile := filepath.Join(basePath, "input.yaml")
-			if connectorType == "logs_to_logs" {
+			if signalTypeFolder == "logs_to_logs" {
 				testLogs, err := golden.ReadLogs(inputFile)
 				assert.NoError(t, err)
 				assert.NoError(t, conn.(connector.Logs).ConsumeLogs(ctx, testLogs))
@@ -236,21 +230,21 @@ func TestConnector(t *testing.T) {
 	}
 
 	// Test both logs-to-logs and metrics-to-logs
-	for _, connType := range []string{"logs_to_logs", "metrics_to_logs"} {
-		t.Run(connType, func(t *testing.T) {
+	for _, signalType := range []string{"logs_to_logs", "metrics_to_logs"} {
+		t.Run(signalType, func(t *testing.T) {
 			// Run entity tests
 			for _, test := range entityTests {
-				runTest(t, connType, test.name, test.folder, entityPath)
+				runTest(t, signalType, test.name, test.folder, entityPath)
 			}
 
 			// Run same type relationship tests
 			for _, test := range sameTypeRelationshipTests {
-				runTest(t, connType, test.name, test.folder, sameTypeRelationshipPath)
+				runTest(t, signalType, test.name, test.folder, sameTypeRelationshipPath)
 			}
 
 			// Run different type relationship tests
 			for _, test := range differentTypeRelationshipTests {
-				runTest(t, connType, test.name, test.folder, differentTypeRelationshipPath)
+				runTest(t, signalType, test.name, test.folder, differentTypeRelationshipPath)
 			}
 		})
 	}
