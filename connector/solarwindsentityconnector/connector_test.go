@@ -17,10 +17,12 @@ package solarwindsentityconnector
 import (
 	"context"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
+
+	"gopkg.in/yaml.v3"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest/plogtest"
@@ -272,7 +274,8 @@ func TestMetricsToLogs(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			cfg, err := loadConfigFromFile(t, filepath.Join("testdata", "metricsToLogs", tc.folder, "config.yaml"))
+			testFolder := filepath.Join("testdata", "metricsToLogs", tc.folder)
+			cfg, err := loadConfigFromFile(t, filepath.Join(testFolder, "config.yaml"))
 			require.NoError(t, err)
 			factory := NewFactory()
 			sink := &consumertest.LogsSink{}
@@ -286,14 +289,14 @@ func TestMetricsToLogs(t *testing.T) {
 				assert.NoError(t, conn.Shutdown(context.Background()))
 			}()
 
-			inputFile := filepath.Join("testdata", "metricsToLogs", tc.folder, "input.yaml")
+			inputFile := filepath.Join(testFolder, "input.yaml")
 			testMetrics, err := golden.ReadMetrics(inputFile)
 
 			assert.NoError(t, err)
 			assert.NoError(t, conn.ConsumeMetrics(context.Background(), testMetrics))
 
 			allLogs := sink.AllLogs()
-			expectedFile := filepath.Join("testdata", "metricsToLogs", tc.folder, "expected-output.yaml")
+			expectedFile := filepath.Join(testFolder, "expected-output.yaml")
 
 			if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
 				assert.Len(t, allLogs, 0)
@@ -323,4 +326,50 @@ func loadConfigFromFile(t *testing.T, path string) (*Config, error) {
 	}
 
 	return &cfg, nil
+}
+
+// Test that the connector consumes a log or metric from which
+// it infers a relationship, produces a relationship event and
+// then waits for the cache expiration to ensure that the relationship delete event is produced.
+func TestRelationshipCacheExpiration(t *testing.T) {
+	testFolder := filepath.Join("testdata", "logsToLogs", "relationship", "cacheExpiration")
+	cfg, err := loadConfigFromFile(t, filepath.Join(testFolder, "config.yaml"))
+	require.NoError(t, err)
+
+	factory := NewFactory()
+	sink := &consumertest.LogsSink{}
+	conn, err := factory.CreateLogsToLogs(context.Background(),
+		connectortest.NewNopSettings(metadata.Type), cfg, sink)
+	require.NoError(t, err)
+	require.NotNil(t, conn)
+	require.NoError(t, conn.Start(context.Background(), componenttest.NewNopHost()))
+	defer func() {
+		assert.NoError(t, conn.Shutdown(context.Background()))
+	}()
+
+	// Consume input logs or metrics that infer a relationship
+	inputFile := filepath.Join(testFolder, "input.yaml")
+	testLogs, err := golden.ReadLogs(inputFile)
+	require.NoError(t, err)
+	require.NoError(t, conn.ConsumeLogs(context.Background(), testLogs))
+
+	// Wait for the cache expiration to ensure that the relationship delete event is produced
+	ticker := time.NewTicker(1 * time.Second)
+	for sink.LogRecordCount() < 4 { // 2 entities, 1 relationship and 1 delete event
+		select {
+		case <-ticker.C:
+			fmt.Printf("Waiting for logs to be processed...\n")
+		case <-time.After(10 * time.Second):
+			require.Fail(t, "timed out waiting for logs to be processed")
+		}
+	}
+
+	allLogs := sink.AllLogs()
+
+	// Check that the delete relationship event is produced
+	expectedFile := filepath.Join(testFolder, "expected-output.yaml")
+	expected, err := golden.ReadLogs(expectedFile)
+	require.NoError(t, err)
+	assert.Equal(t, expected.LogRecordCount(), allLogs[1].LogRecordCount())
+	assert.NoError(t, plogtest.CompareLogs(expected, allLogs[1], plogtest.IgnoreObservedTimestamp()))
 }
