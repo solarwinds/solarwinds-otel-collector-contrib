@@ -16,7 +16,6 @@ package solarwindsentityconnector
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -29,7 +28,6 @@ import (
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/connector/connectortest"
 	"go.opentelemetry.io/collector/consumer/consumertest"
-	"gopkg.in/yaml.v3"
 )
 
 func TestLogsToLogs(t *testing.T) {
@@ -134,7 +132,7 @@ func TestLogsToLogs(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			cfg, err := loadConfigFromFileTesting(t, filepath.Join("testdata", "integration", "logsToLogs", tc.folder, "config.yaml"))
+			cfg, err := LoadConfigFromFile(t, filepath.Join("testdata", "integration", "logsToLogs", tc.folder, "config.yaml"))
 			require.NoError(t, err)
 			factory := NewFactory()
 			sink := &consumertest.LogsSink{}
@@ -272,7 +270,7 @@ func TestMetricsToLogs(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			cfg, err := loadConfigFromFileTesting(t, filepath.Join("testdata", "integration", "metricsToLogs", tc.folder, "config.yaml"))
+			cfg, err := LoadConfigFromFile(t, filepath.Join("testdata", "integration", "metricsToLogs", tc.folder, "config.yaml"))
 			require.NoError(t, err)
 			factory := NewFactory()
 			sink := &consumertest.LogsSink{}
@@ -307,20 +305,4 @@ func TestMetricsToLogs(t *testing.T) {
 			assert.NoError(t, plogtest.CompareLogs(expected, allLogs[0], plogtest.IgnoreObservedTimestamp()))
 		})
 	}
-}
-
-func loadConfigFromFileTesting(t *testing.T, path string) (*Config, error) {
-	t.Helper()
-
-	yamlFile, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read config file: %w", err)
-	}
-
-	var cfg Config
-	if err := yaml.Unmarshal(yamlFile, &cfg); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
-	}
-
-	return &cfg, nil
 }

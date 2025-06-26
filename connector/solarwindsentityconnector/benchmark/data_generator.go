@@ -16,7 +16,6 @@ package benchmark
 
 import (
 	"fmt"
-	"os"
 	"testing"
 	"time"
 
@@ -26,16 +25,15 @@ import (
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/pdata/pmetric"
-	"gopkg.in/yaml.v3"
 )
 
 // Helper function to generate metrics based on the provided configuration.
 // It creates metrics for each entity and relationship defined in the configuration,
-// and adds a specified amount of "rubbish" metrics to the final output.
-// The `count` parameter specifies the total number of metrics to generate, including both valid and rubbish metrics.
-// The `rubbishRatio` parameter defines the proportion of invalid metrics.
-// The `composite` parameter determines whether to return a single composite metric instead of multiple individual metrics.
-func genMetricsFromConfig(b *testing.B, cfg *solarwindsentityconnector.Config, count int, rubbishRatio float32, composite bool) []pmetric.Metrics {
+// and adds a specified amount of "invalid" metrics to the final output.
+// The `count` parameter specifies the total number of metrics to generate, including both valid and invalid metrics.
+// The `invalidRatio` parameter defines the proportion of invalid metrics.
+// The `multiple` parameter determines whether to return a multiple metric instead of single metrics.
+func genMetricsFromConfig(b *testing.B, cfg *solarwindsentityconnector.Config, count int, invalidRatio float32, multiple bool) []pmetric.Metrics {
 	b.Helper()
 
 	var uniqueMetrics []pmetric.Metrics
@@ -55,23 +53,23 @@ func genMetricsFromConfig(b *testing.B, cfg *solarwindsentityconnector.Config, c
 		uniqueMetrics = append(uniqueMetrics, metric)
 	}
 
-	rubbishCount := int(float32(count) * rubbishRatio)
-	normalCount := count - rubbishCount
+	invalidCount := int(float32(count) * invalidRatio)
+	validCount := count - invalidCount
 
 	finalMetrics := make([]pmetric.Metrics, 0, count)
 
-	// If composite flag is true, will be build a single composite metric
+	// If multiple flag is true, will build a multiple metric
 	// that contains all unique metrics repeated as provided by the count.
-	if composite {
-		finalMetrics = append(finalMetrics, buildCompositeMetric(b, count, uniqueMetrics))
+	if multiple {
+		finalMetrics = append(finalMetrics, buildMultipleMetric(b, count, uniqueMetrics))
 	} else {
-		for i := 0; i < normalCount; i++ {
+		for i := 0; i < validCount; i++ {
 			finalMetrics = append(finalMetrics, uniqueMetrics[i%len(uniqueMetrics)])
 		}
 	}
 
-	for i := 0; i < rubbishCount; i++ {
-		finalMetrics = append(finalMetrics, buildRubbishMetric(b, i))
+	for i := 0; i < invalidCount; i++ {
+		finalMetrics = append(finalMetrics, buildInvalidMetric(b, i))
 	}
 
 	return finalMetrics
@@ -135,39 +133,39 @@ func buildRelationshipMetric(b *testing.B, cfg *solarwindsentityconnector.Config
 	return metric
 }
 
-func buildRubbishMetric(b *testing.B, i int) pmetric.Metrics {
+func buildInvalidMetric(b *testing.B, i int) pmetric.Metrics {
 	b.Helper()
 
 	metric := buildEmptyMetric(b)
 	attrs := metric.ResourceMetrics().At(0).Resource().Attributes()
-	attrs.PutStr("NotValid", fmt.Sprintf("%d", i))
+	attrs.PutStr("InValid", fmt.Sprintf("%d", i))
 
 	return metric
 }
 
-func buildCompositeMetric(b *testing.B, count int, metrics []pmetric.Metrics) pmetric.Metrics {
+func buildMultipleMetric(b *testing.B, count int, metrics []pmetric.Metrics) pmetric.Metrics {
 	b.Helper()
 
-	composite := pmetric.NewMetrics()
+	multiple := pmetric.NewMetrics()
 	for i := 0; i < count; i++ {
 		metric := metrics[i%len(metrics)]
 		for j := 0; j < metric.ResourceMetrics().Len(); j++ {
 			src := metric.ResourceMetrics().At(j)
-			dst := composite.ResourceMetrics().AppendEmpty()
+			dst := multiple.ResourceMetrics().AppendEmpty()
 			src.MoveTo(dst)
 		}
 	}
 
-	return composite
+	return multiple
 }
 
 // Helper function to generate logs based on the provided configuration.
 // It creates logs for each entity and relationship defined in the configuration,
-// and adds a specified amount of "rubbish" logs to the final output.
-// The `count` parameter specifies the total number of logs to generate, including both valid and rubbish logs.
-// The `rubbishRatio` parameter defines the proportion of invalid logs.
-// The `composite` parameter determines whether to return a single composite log instead of multiple individual logs.
-func genLogsFromConfig(b *testing.B, cfg *solarwindsentityconnector.Config, count int, rubbishRatio float32, composite bool) []plog.Logs {
+// and adds a specified amount of "invalid" logs to the final output.
+// The `count` parameter specifies the total number of logs to generate, including both valid and invalid logs.
+// The `invalidRatio` parameter defines the proportion of invalid logs.
+// The `multiple` parameter determines whether to return a multiple log instead of single logs.
+func genLogsFromConfig(b *testing.B, cfg *solarwindsentityconnector.Config, count int, invalidRatio float32, multiple bool) []plog.Logs {
 	b.Helper()
 	var uniqueLogs []plog.Logs
 
@@ -187,23 +185,23 @@ func genLogsFromConfig(b *testing.B, cfg *solarwindsentityconnector.Config, coun
 		uniqueLogs = append(uniqueLogs, log)
 	}
 
-	rubbishCount := int(float32(count) * rubbishRatio)
-	normalCount := count - rubbishCount
+	invalidCount := int(float32(count) * invalidRatio)
+	validCount := count - invalidCount
 
 	finalLogs := make([]plog.Logs, 0, count)
 
-	// If composite flag is true, will be build a single composite log
+	// If multiple flag is true, will build a multiple log
 	// that contains all unique logs repeated as provided by the count.
-	if composite {
-		finalLogs = append(finalLogs, buildCompositeLog(b, count, uniqueLogs))
+	if multiple {
+		finalLogs = append(finalLogs, buildMultipleLog(b, count, uniqueLogs))
 	} else {
-		for i := 0; i < normalCount; i++ {
+		for i := 0; i < validCount; i++ {
 			finalLogs = append(finalLogs, uniqueLogs[i%len(uniqueLogs)])
 		}
 	}
 
-	for i := 0; i < rubbishCount; i++ {
-		finalLogs = append(finalLogs, buildRubbishLog(b, i))
+	for i := 0; i < invalidCount; i++ {
+		finalLogs = append(finalLogs, buildInvalidLog(b, i))
 	}
 
 	return finalLogs
@@ -260,44 +258,28 @@ func buildRelationshipLog(b *testing.B, cfg *solarwindsentityconnector.Config, r
 	return log
 }
 
-func buildRubbishLog(b *testing.B, i int) plog.Logs {
+func buildInvalidLog(b *testing.B, i int) plog.Logs {
 	b.Helper()
 
 	log := buildEmptyLog(b)
 	attrs := log.ResourceLogs().At(0).Resource().Attributes()
-	attrs.PutStr("NotValid", fmt.Sprintf("%d", i))
+	attrs.PutStr("InValid", fmt.Sprintf("%d", i))
 	return log
 }
 
-func buildCompositeLog(b *testing.B, amount int, logs []plog.Logs) plog.Logs {
+func buildMultipleLog(b *testing.B, amount int, logs []plog.Logs) plog.Logs {
 	b.Helper()
 
-	compositeLog := plog.NewLogs()
+	multipleLog := plog.NewLogs()
 
 	for i := 0; i < amount; i++ {
 		log := logs[i%len(logs)]
 		for j := 0; j < log.ResourceLogs().Len(); j++ {
 			srcRL := log.ResourceLogs().At(j)
-			dstRL := compositeLog.ResourceLogs().AppendEmpty()
+			dstRL := multipleLog.ResourceLogs().AppendEmpty()
 			srcRL.MoveTo(dstRL)
 		}
 	}
 
-	return compositeLog
-}
-
-func loadConfigFromFileBenchmark(b *testing.B, path string) (*solarwindsentityconnector.Config, error) {
-	b.Helper()
-
-	yamlFile, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read config file: %w", err)
-	}
-
-	var cfg solarwindsentityconnector.Config
-	if err := yaml.Unmarshal(yamlFile, &cfg); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
-	}
-
-	return &cfg, nil
+	return multipleLog
 }
