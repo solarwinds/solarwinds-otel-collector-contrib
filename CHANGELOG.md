@@ -1,6 +1,7 @@
 # Changelog
 
 ## vNext
+- `solarwindsentityconnector` Relationships now expire (configurable), and a delete event is sent after the expiration.
 
 ## v0.127.3
 - `swok8sobjectsreceiver` Change logging of 410 events to debug level
