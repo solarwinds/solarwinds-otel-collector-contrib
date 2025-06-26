@@ -24,10 +24,22 @@ swok8sworkloadtype:
       namespace_attr: "dest_workload_namespace"
       workload_type_attr: "dest_workload_type"
       expected_types:
-        - services
+        - deployments
+        - pods
+    - address_attr: "dest_workload_address"
+      workload_name_attr: "dest_workload_name"
+      workload_namespace_attr: "dest_workload_namespace"
+      workload_type_attr: "dest_workload_type"
+      prefer_owner_for_pods: true
+      expected_types:
+        - deployments
         - pods
 ```
 
-In the example, the processor is configured to look for datapoint attributes `dest_workload` and `dest_workload_namespace`. And if they exist, the processor looks for a k8s service or pod workload (in that order) matching the name and namespace. If such workload is found, its Kind (`Service` or `Pod`) is put into the attribute `dest_workload_type`.
+In the example, the processor is configured to look for datapoint attributes `dest_workload` and `dest_workload_namespace`. And if they exist, the processor looks for a k8s deployment or pod workload (in that order) matching the name and namespace. If such workload is found, its Kind (`Deployment` or `Pod`) is put into the attribute `dest_workload_type`.
+
+Then the second mapping is executed. If the `dest_workload_type` attribute still doesn't have any value, the processor tries to map the URL in attribute `dest_workload_address` to a k8s workload. And if successful, it puts the workload's name, namespace and Kind into attributes `dest_workload_name`, `dest_workload_namespace` and `dest_workload_type`, respectively.
+
+Since the second mapping has `prefer_owner_for_pods` set to `true`, if the found workload is a Pod, the processor looks for its owner instead. StatefulSets as owners are skipped if they have an owner of their own, e.g. a Deployment.
 
 Please refer to [config.go](./config.go) for the config spec. Refer to [config.yaml](./testdata/config.yaml) for detailed examples on using the processor.
