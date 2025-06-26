@@ -1,8 +1,8 @@
 expiration_policy:
   enabled: true
-  interval: 300s
+  interval: 2s
   cache_configuration:
-    ttl_cleanup_interval: 2s
+    ttl_cleanup_interval: 1s
 schema:
   entities:
     - type: "Kubernetes Pod"

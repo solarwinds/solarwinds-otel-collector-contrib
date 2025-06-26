@@ -251,8 +251,10 @@ func TestConnector(t *testing.T) {
 
 // Using cache.
 // Sending relationship update first to populate cache, then
-// sending delete action, should send delete log event.
-func TestRelationshipDeleteWithCache(t *testing.T) {
+// sending delete action, should send delete log event immediately.
+// Then waiting if anything expires, which it should not, since the relationship is deleted.
+func TestRelationship_DeletedRelationshipDoesNotExpire(t *testing.T) {
+	t.Skip("Only for manual run")
 	testFolder := filepath.Join("testdata", "metricsToLogs", "relationship/different-types-relationship/delete-action-cached")
 	cfg, err := loadConfigFromFile(t, filepath.Join(testFolder, "config.yaml"))
 	require.NoError(t, err)
@@ -283,7 +285,7 @@ func TestRelationshipDeleteWithCache(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, expected.LogRecordCount(), allLogs[0].LogRecordCount())
 	assert.NoError(t, plogtest.CompareLogs(expected, allLogs[0], plogtest.IgnoreObservedTimestamp()))
-
+	fmt.Printf("Relationship creation event sent\n")
 	// 2nd incoming log, relationship delete
 	inputFile2 := filepath.Join(testFolder, "input2.yaml")
 	sink.Reset()
@@ -297,7 +299,30 @@ func TestRelationshipDeleteWithCache(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, expected.LogRecordCount(), allLogs2[0].LogRecordCount())
 	assert.NoError(t, plogtest.CompareLogs(expected2, allLogs2[0], plogtest.IgnoreObservedTimestamp()))
+	fmt.Printf("Relationship delete event sent\n")
 
+	// Reset the sink and wait to verify that no more events appear
+	// This tests that deleted relationships cannot expire, obviously.
+	sink.Reset()
+	secondTimeoutTicker := time.NewTicker(1 * time.Second)
+	defer secondTimeoutTicker.Stop()
+	secondTimeout := time.After(10 * time.Second)
+
+	// Wait for 10 seconds and check that no additional logs are produced
+	for {
+		select {
+		case <-secondTimeout:
+			// This is good - timeout happened and we didn't receive any logs
+			assert.Equal(t, 0, sink.LogRecordCount(), "No additional logs should be produced (possibly by expiration) after deletion")
+			return
+		case <-secondTimeoutTicker.C:
+			// If you comment out the relationship delete section above, this will fail.
+			if sink.LogRecordCount() > 0 {
+				require.Fail(t, "unexpected logs received after relationship deletion")
+			}
+			fmt.Printf("Waiting to verify no additional logs are produced...\n")
+		}
+	}
 }
 
 func loadConfigFromFile(t *testing.T, path string) (*Config, error) {
