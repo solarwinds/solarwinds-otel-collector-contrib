@@ -121,3 +121,10 @@ One condition can be composed (using operands like and, or, etc...) as OTTL form
 - If *no condition* items are specified, an event will always be created.
 - `context` is required, `conditions` are optional
 - You can find more information about OTTL paths and syntax examples in the [OTTL contexts documentation](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/pkg/ottl/contexts)
+
+
+## Recommendations
+See [RECOMMENDATIONS](docs/RECOMMENDATIONS.md) for more information on how to use the SolarWinds Entity Connector effectively.
+
+## Generated Logs
+See [OUTPUT](docs/OUTPUT.md) for more information on the output format of the SolarWinds Entity Connector.
