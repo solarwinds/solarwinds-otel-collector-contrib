@@ -105,6 +105,7 @@ func TestConnector(t *testing.T) {
 			folder: "no-match",
 		},
 	}
+
 	differentTypeRelationshipTests := []struct {
 		name   string
 		folder string
@@ -231,22 +232,20 @@ func TestConnector(t *testing.T) {
 
 	// Test both logs-to-logs and metrics-to-logs
 	for _, signalType := range []string{"logs_to_logs", "metrics_to_logs"} {
-		t.Run(signalType, func(t *testing.T) {
-			// Run entity tests
-			for _, test := range entityTests {
-				runTest(t, signalType, test.name, test.folder, entityPath)
-			}
+		// Run entity tests
+		for _, test := range entityTests {
+			runTest(t, signalType, test.name, test.folder, entityPath)
+		}
 
-			// Run same type relationship tests
-			for _, test := range sameTypeRelationshipTests {
-				runTest(t, signalType, test.name, test.folder, sameTypeRelationshipPath)
-			}
+		// Run same type relationship tests
+		for _, test := range sameTypeRelationshipTests {
+			runTest(t, signalType, test.name, test.folder, sameTypeRelationshipPath)
+		}
 
-			// Run different type relationship tests
-			for _, test := range differentTypeRelationshipTests {
-				runTest(t, signalType, test.name, test.folder, differentTypeRelationshipPath)
-			}
-		})
+		// Run different type relationship tests
+		for _, test := range differentTypeRelationshipTests {
+			runTest(t, signalType, test.name, test.folder, differentTypeRelationshipPath)
+		}
 	}
 }
 
