@@ -5,6 +5,10 @@ status:
   class: exporter
   stability:
     development: [traces, metrics, logs]
+  deprecation:
+    solarwindsexporter:
+      date: "2025-07-30"
+      migration: "For full parity with `solarwinds` exporter use combination of `solarwinds` processor and `otlp` exporter. See [solarwinds processor readme](../../processor/solarwindsprocessor/README.md) for more information."
 
 tests:
   # skipped because the exporter requires solarwindsextension to run

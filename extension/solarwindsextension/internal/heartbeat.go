@@ -33,6 +33,7 @@ const (
 	CollectorNameAttribute    = "sw.otelcol.collector.name"
 	CollectorVersionAttribute = "sw.otelcol.collector.version"
 	EntityCreation            = "sw.otelcol.collector.entity_creation"
+	EntityCreationValue       = "on"
 )
 
 type MetricsExporter interface {
@@ -170,7 +171,7 @@ func (h *Heartbeat) decorateResourceAttributes(resource pcommon.Resource) error 
 		resource.Attributes().PutStr(CollectorNameAttribute, h.collectorName)
 	}
 	if !h.withoutEntity {
-		resource.Attributes().PutStr(EntityCreation, "on")
+		resource.Attributes().PutStr(EntityCreation, EntityCreationValue)
 	}
 	resource.Attributes().PutStr(CollectorVersionAttribute, version.Version)
 	return nil
