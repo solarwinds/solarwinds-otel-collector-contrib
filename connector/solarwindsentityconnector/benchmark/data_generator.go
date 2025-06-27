@@ -61,7 +61,7 @@ func genMetricsFromConfig(b *testing.B, cfg *solarwindsentityconnector.Config, c
 	// If multiple flag is true, will build a multiple metric
 	// that contains all unique metrics repeated as provided by the count.
 	if multiple {
-		finalMetrics = append(finalMetrics, buildMultipleMetric(b, count, uniqueMetrics))
+		finalMetrics = append(finalMetrics, buildMultipleMetric(b, validCount, uniqueMetrics))
 	} else {
 		for i := 0; i < validCount; i++ {
 			finalMetrics = append(finalMetrics, uniqueMetrics[i%len(uniqueMetrics)])
@@ -152,7 +152,7 @@ func buildMultipleMetric(b *testing.B, count int, metrics []pmetric.Metrics) pme
 		for j := 0; j < metric.ResourceMetrics().Len(); j++ {
 			src := metric.ResourceMetrics().At(j)
 			dst := multiple.ResourceMetrics().AppendEmpty()
-			src.MoveTo(dst)
+			src.CopyTo(dst)
 		}
 	}
 
@@ -193,7 +193,7 @@ func genLogsFromConfig(b *testing.B, cfg *solarwindsentityconnector.Config, coun
 	// If multiple flag is true, will build a multiple log
 	// that contains all unique logs repeated as provided by the count.
 	if multiple {
-		finalLogs = append(finalLogs, buildMultipleLog(b, count, uniqueLogs))
+		finalLogs = append(finalLogs, buildMultipleLog(b, validCount, uniqueLogs))
 	} else {
 		for i := 0; i < validCount; i++ {
 			finalLogs = append(finalLogs, uniqueLogs[i%len(uniqueLogs)])
@@ -277,7 +277,7 @@ func buildMultipleLog(b *testing.B, amount int, logs []plog.Logs) plog.Logs {
 		for j := 0; j < log.ResourceLogs().Len(); j++ {
 			srcRL := log.ResourceLogs().At(j)
 			dstRL := multipleLog.ResourceLogs().AppendEmpty()
-			srcRL.MoveTo(dstRL)
+			srcRL.CopyTo(dstRL)
 		}
 	}
 
