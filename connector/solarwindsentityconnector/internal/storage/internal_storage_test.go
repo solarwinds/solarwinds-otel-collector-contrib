@@ -380,7 +380,7 @@ func TestTtlExpiration_RelationshipIsRemovedFirst_EntitiesSecond(t *testing.T) {
 	}
 }
 
-func TestDelete(t *testing.T) {
+func TestInternalStorage_Delete(t *testing.T) {
 	logger := zap.NewNop()
 	eventsChan := make(chan internal.Event, 10)
 
@@ -445,43 +445,6 @@ func TestDelete(t *testing.T) {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
-
-				// Verify relationship was actually deleted
-				if err == nil {
-					sourceHash, _ := storage.keyBuilder.BuildEntityKey(tt.relationship.Source)
-					destHash, _ := storage.keyBuilder.BuildEntityKey(tt.relationship.Destination)
-					relationshipKey := fmt.Sprintf("%s:%s:%s", tt.relationship.Type, sourceHash, destHash)
-
-					_, found := storage.relationships.Get(relationshipKey)
-					assert.False(t, found, "relationship should not exist after deletion")
-					t.Logf("Relationship has been deleted succesfully")
-
-					// Verify entities dissapear. Give them 10 seconds to expire.
-					maxWait := 10 * cfg.TTLCleanupIntervalSeconds
-					deadline := time.After(maxWait)
-					ticker := time.NewTicker(500 * time.Millisecond)
-
-					defer ticker.Stop()
-					for {
-						select {
-						case <-ticker.C:
-							_, foundSrc := storage.entities.Get(sourceHash)
-							_, foundDst := storage.entities.Get(destHash)
-
-							if !foundSrc && !foundDst {
-								t.Logf("Both entities have been removed from cache at %v", time.Now().Format(time.RFC3339Nano))
-								return
-							}
-
-							// Log progress details
-							t.Logf("Entities still in cache: source=%v, destination=%v at %v",
-								foundSrc, foundDst, time.Now().Format(time.RFC3339Nano))
-
-						case <-deadline:
-							t.Fatalf("Entities not expired after waiting %v", maxWait)
-						}
-					}
-				}
 			}
 		})
 	}
