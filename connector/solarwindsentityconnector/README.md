@@ -92,7 +92,7 @@ has to be defined in the `schema.events` section.
 
 #### Events
 Events define rules for creating entity/relationship from incoming telemetry. Both works with [conditions](#conditions) and `context` (log or metric).
-Events have two possible `action` types: `update` and `delete`. Use the corresponding action to upsert (update or insert if new) or delete an entity/relationship in SolarWinds Observability SaaS.
+Events have two possible `action` types: `update` and `delete`. Use the corresponding action to `update` (update or insert if new) or `delete` an entity/relationship in SolarWinds Observability SaaS.
 
 - `entities` defines rules for creating entity events.
   - Entity is matched by the entity type.
