@@ -115,142 +115,6 @@ func TestNewInternalStorage(t *testing.T) {
 	}
 }
 
-// TestBuildKey_DifferentTypesWithSameAttributes_HaveDifferentHashes tests that entities with the same
-// attributes but different types produce different hash keys
-func TestBuildKey_DifferentTypesWithSameAttributes_HaveDifferentHashes(t *testing.T) {
-	entity1 := internal.RelationshipEntity{
-		Type: "service",
-		IDs: func() pcommon.Map {
-			m := pcommon.NewMap()
-			m.PutStr("id", "service-123")
-			return m
-		}(),
-	}
-
-	entity2 := internal.RelationshipEntity{
-		Type: "deployment",
-		IDs: func() pcommon.Map {
-			m := pcommon.NewMap()
-			m.PutStr("id", "service-123")
-			return m
-		}(),
-	}
-
-	key1, err := buildKey(entity1)
-	require.NoError(t, err)
-
-	key2, err := buildKey(entity2)
-	require.NoError(t, err)
-
-	require.NotEqual(t, key1, key2, "Entities with different types but same attributes should have different keys")
-}
-
-func TestBuildKey_EmptyIds_HaveSameHashes(t *testing.T) {
-	entityWithIds := internal.RelationshipEntity{
-		Type: "service",
-		IDs:  pcommon.NewMap(),
-	}
-
-	entityWithEmptyIds := internal.RelationshipEntity{
-		Type: "service",
-		IDs:  pcommon.NewMap(),
-	}
-
-	keyWithIds, err := buildKey(entityWithIds)
-	require.NoError(t, err)
-
-	keyWithEmptyIds, err := buildKey(entityWithEmptyIds)
-	require.NoError(t, err)
-
-	require.Equal(t, keyWithIds, keyWithEmptyIds, "Hashes should be the same for entities with empty IDs")
-}
-
-// TestBuildKey_SameIdsButOfDifferentTypes_ResultInDifferentHashes tests that the same ID values
-// but of different data types result in different hash keys
-func TestBuildKey_SameIdsButOfDifferentTypes_ResultInDifferentHashes(t *testing.T) {
-	entityWithStringId := internal.RelationshipEntity{
-		Type: "resource",
-		IDs: func() pcommon.Map {
-			m := pcommon.NewMap()
-			m.PutStr("value", "42")
-			return m
-		}(),
-	}
-
-	entityWithIntId := internal.RelationshipEntity{
-		Type: "resource",
-		IDs: func() pcommon.Map {
-			m := pcommon.NewMap()
-			m.PutInt("value", 42)
-			return m
-		}(),
-	}
-
-	keyWithStringId, err := buildKey(entityWithStringId)
-	require.NoError(t, err)
-
-	keyWithIntId, err := buildKey(entityWithIntId)
-	require.NoError(t, err)
-
-	require.NotEqual(t, keyWithStringId, keyWithIntId, "Same ID values but of different types should result in different hash keys")
-}
-
-func TestBuildKey_SameTypesWithDifferentlyOrderedIds_HaveSameKeys(t *testing.T) {
-	entity := internal.RelationshipEntity{
-		Type: "service",
-		IDs: func() pcommon.Map {
-			m := pcommon.NewMap()
-			m.PutStr("id", "service-123")
-			m.PutStr("environment", "production")
-			return m
-		}(),
-	}
-
-	entityDifferentOrder := internal.RelationshipEntity{
-		Type: "service",
-		IDs: func() pcommon.Map {
-			m := pcommon.NewMap()
-			m.PutStr("environment", "production")
-			m.PutStr("id", "service-123")
-			return m
-		}(),
-	}
-
-	key1, err1 := buildKey(entity)
-	require.NoError(t, err1)
-
-	key2, err2 := buildKey(entityDifferentOrder)
-	require.NoError(t, err2)
-
-	require.Equal(t, key1, key2, "Keys should be identical for the same entity with different ID order")
-}
-
-// TestBuildKey_Consistency ensures that the same entity always generates the same key
-func TestBuildKey_Consistency(t *testing.T) {
-	entity := internal.RelationshipEntity{
-		Type: "service",
-		IDs: func() pcommon.Map {
-			m := pcommon.NewMap()
-			m.PutStr("id", "service-123")
-			m.PutStr("environment", "production")
-			return m
-		}(),
-	}
-
-	// Generate the key multiple times
-	keys := make([]string, 5)
-	for i := 0; i < 5; i++ {
-		key, err := buildKey(entity)
-		require.NoError(t, err)
-		keys[i] = key
-	}
-
-	// Verify all keys are identical
-	for i := 1; i < 5; i++ {
-		require.Equal(t, keys[0], keys[i], "Keys should be consistent across multiple calls")
-	}
-}
-
 func TestUpdate_RelationshipUpdate_UpdatesTtl(t *testing.T) {
 	logger := zap.NewNop()
 	eventsChan := make(chan internal.Event, 10)
@@ -267,9 +131,9 @@ func TestUpdate_RelationshipUpdate_UpdatesTtl(t *testing.T) {
 	time.Sleep(200 * time.Millisecond)
 
 	// Calculate the source and destination hashes
-	sourceHash, err := buildKey(relationship.Source)
+	sourceHash, err := storage.cacheKeyBuilder.BuildEntityKey(relationship.Source)
 	require.NoError(t, err)
-	destHash, err := buildKey(relationship.Destination)
+	destHash, err := storage.cacheKeyBuilder.BuildEntityKey(relationship.Destination)
 	require.NoError(t, err)
 	relationshipKey := fmt.Sprintf("%s:%s:%s", relationship.Type, sourceHash, destHash)
 
@@ -461,9 +325,10 @@ func TestTtlExpiration_RelationshipIsRemovedFirst_EntitiesSecond(t *testing.T) {
 	storage.entities.Wait()
 	storage.relationships.Wait()
 
-	sourceHash, err := buildKey(relationship.Source)
+	kb := NewKeyBuilder()
+	sourceHash, err := kb.BuildEntityKey(relationship.Source)
 	require.NoError(t, err)
-	destHash, err := buildKey(relationship.Destination)
+	destHash, err := kb.BuildEntityKey(relationship.Destination)
 	require.NoError(t, err)
 	relationshipKey := fmt.Sprintf("%s:%s:%s", relationship.Type, sourceHash, destHash)
 
@@ -512,5 +377,218 @@ func TestTtlExpiration_RelationshipIsRemovedFirst_EntitiesSecond(t *testing.T) {
 		case <-deadline:
 			t.Fatalf("Entities not expired after waiting %v", maxWait)
 		}
+	}
+}
+
+func TestInternalStorage_Delete(t *testing.T) {
+	logger := zap.NewNop()
+	eventsChan := make(chan internal.Event, 10)
+
+	tests := []struct {
+		name         string
+		relationship *internal.Relationship
+		setupCache   func(*internalStorage)
+		expectError  bool
+	}{
+		{
+			name:         "Successfully delete relationship",
+			relationship: relationship,
+			setupCache: func(s *internalStorage) {
+				// First add the relationship to the cache
+				err := s.update(relationship)
+				require.NoError(t, err)
+
+				// Verify it exists in the cache
+				sourceHash, _ := s.cacheKeyBuilder.BuildEntityKey(sourceEntity)
+				destHash, _ := s.cacheKeyBuilder.BuildEntityKey(destEntity)
+				relationshipKey := fmt.Sprintf("%s:%s:%s", relationship.Type, sourceHash, destHash)
+				s.entities.Wait()
+				s.relationships.Wait()
+
+				_, found := s.relationships.Get(relationshipKey)
+				require.True(t, found, "relationship not found in cache before deletion")
+			},
+			expectError: false,
+		},
+		{
+			name: "Error building relationship hash key",
+			relationship: &internal.Relationship{
+				Type: "", // Empty type should cause an error when building the key
+				Source: internal.RelationshipEntity{
+					Type: "service",
+					IDs:  pcommon.NewMap(),
+				},
+				Destination: destEntity,
+			},
+			setupCache:  func(s *internalStorage) {},
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a new storage instance for each test case
+			storage, err := newInternalStorage(cfg, logger, eventsChan)
+			require.NoError(t, err)
+			defer storage.entities.Close()
+			defer storage.relationships.Close()
+
+			// Setup cache with test data if needed
+			tt.setupCache(storage)
+
+			// Execute the delete operation
+			err = storage.delete(tt.relationship)
+			storage.entities.Wait()
+			storage.relationships.Wait()
+
+			if tt.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestDelete_DoesNotTriggerOnRelationshipEvict(t *testing.T) {
+	t.Skip("this test must be run manually only")
+	logger := zap.NewNop()
+	eventsChan := make(chan internal.Event, 10)
+
+	// Create test storage with short TTL for quick testing
+	ttl := 60 * time.Second
+	cleanupInterval := 2 * time.Second
+	cfg := &config.ExpirationSettings{
+		Enabled:                   true,
+		Interval:                  ttl,
+		MaxCapacity:               1000,
+		TTLCleanupIntervalSeconds: cleanupInterval,
+	}
+
+	storage, err := newInternalStorage(cfg, logger, eventsChan)
+	require.NoError(t, err)
+
+	// First, add the relationship to the cache
+	err = storage.update(relationship)
+	require.NoError(t, err)
+	storage.entities.Wait()
+	storage.relationships.Wait()
+
+	// Get the keys to verify presence in cache
+	sourceHash, err := storage.cacheKeyBuilder.BuildEntityKey(relationship.Source)
+	require.NoError(t, err)
+	destHash, err := storage.cacheKeyBuilder.BuildEntityKey(relationship.Destination)
+	require.NoError(t, err)
+	relationshipKey, err := storage.cacheKeyBuilder.BuildRelationshipKey(relationship.Type, sourceHash, destHash)
+	require.NoError(t, err)
+
+	// Verify relationship is in cache
+	_, found := storage.relationships.Get(relationshipKey)
+	require.True(t, found, "Relationship should be in cache before deletion")
+
+	// Now delete the relationship
+	err = storage.delete(relationship)
+	require.NoError(t, err)
+	storage.relationships.Wait()
+
+	// Verify relationship is no longer in cache
+	_, found = storage.relationships.Get(relationshipKey)
+	assert.False(t, found, "Relationship should no longer be in cache after deletion")
+
+	// Check that no event was sent to the channel (meaning onRelationshipEvict wasn't called)
+	select {
+	case event := <-eventsChan:
+		t.Fatalf("Unexpected event received: %+v", event)
+	case <-time.After(10 * time.Second):
+		// This is good - no event was received
+	}
+
+	// Verify entities are still in cache (delete only removes relationships, not entities)
+	_, foundSource := storage.entities.Get(sourceHash)
+	assert.True(t, foundSource, "Source entity should still be in cache after relationship deletion")
+	_, foundDest := storage.entities.Get(destHash)
+	assert.True(t, foundDest, "Destination entity should still be in cache after relationship deletion")
+}
+
+// Ttl expiration should trigger an event, but deletion should not.
+func TestDelete_ComparedToTTLExpiration(t *testing.T) {
+	logger := zap.NewNop()
+	eventsChan := make(chan internal.Event, 10)
+
+	// Create test storage with very short TTL for quick testing
+	ttl := 1 * time.Second
+	cleanupInterval := 2 * time.Second
+	cfg := &config.ExpirationSettings{
+		Enabled:                   true,
+		Interval:                  ttl,
+		MaxCapacity:               1000,
+		TTLCleanupIntervalSeconds: cleanupInterval,
+	}
+
+	storage, err := newInternalStorage(cfg, logger, eventsChan)
+	require.NoError(t, err)
+
+	// Create two identical relationships - one to delete manually, one to expire via TTL
+	createTestRelationship := func(suffix string) *internal.Relationship {
+		return &internal.Relationship{
+			Type: "testRelation" + suffix,
+			Source: internal.RelationshipEntity{
+				Type: "sourceType",
+				IDs: func() pcommon.Map {
+					m := pcommon.NewMap()
+					m.PutStr("id", "source-"+suffix)
+					return m
+				}(),
+			},
+			Destination: internal.RelationshipEntity{
+				Type: "destType",
+				IDs: func() pcommon.Map {
+					m := pcommon.NewMap()
+					m.PutStr("id", "dest-"+suffix)
+					return m
+				}(),
+			},
+		}
+	}
+
+	relToDelete := createTestRelationship("delete")
+	relToExpire := createTestRelationship("expire")
+
+	// Add both relationships to the cache
+	err = storage.update(relToDelete)
+	require.NoError(t, err)
+	err = storage.update(relToExpire)
+	require.NoError(t, err)
+	storage.entities.Wait()
+	storage.relationships.Wait()
+
+	// Delete one relationship manually
+	err = storage.delete(relToDelete)
+	require.NoError(t, err)
+	storage.relationships.Wait()
+
+	// Wait for the other relationship to expire via TTL
+	waitTime := 10 * time.Second
+	t.Logf("Waiting %v for TTL expiration...", waitTime)
+
+	// Use a select to wait for eviction event
+	select {
+	case event := <-eventsChan:
+		// We should receive exactly one event from the TTL expired relationship
+		rel, ok := event.(*internal.Relationship)
+		require.True(t, ok, "Event should be a Relationship")
+
+		// Verify it's the expired relationship, not the deleted one
+		sourceIDVal, exists := rel.Source.IDs.Get("id")
+		require.True(t, exists)
+		assert.Equal(t, "source-expire", sourceIDVal.AsString(),
+			"Should receive event for the expired relationship, not the deleted one")
+
+		// Check no more events
+		time.Sleep(500 * time.Millisecond)
+		assert.Equal(t, 0, len(eventsChan), "Should not receive additional events")
+
+	case <-time.After(waitTime):
+		t.Fatal("Timed out waiting for TTL expiration event")
 	}
 }

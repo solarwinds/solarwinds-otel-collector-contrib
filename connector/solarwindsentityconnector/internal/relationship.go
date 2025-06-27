@@ -26,6 +26,7 @@ type RelationshipEntity struct {
 }
 
 type Relationship struct {
+	Action      string
 	Type        string
 	Source      RelationshipEntity
 	Destination RelationshipEntity

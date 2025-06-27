@@ -116,6 +116,7 @@ func TestSendExpiredEventsWithEntity(t *testing.T) {
 				m.PutStr("environment", "production")
 				return m
 			}(),
+			Action: entityDeleteEventType,
 		},
 	}
 
@@ -132,5 +133,23 @@ func TestSendExpiredEventsWithEntity(t *testing.T) {
 
 	// Verify LogRecords
 	logRecords := allLogs[0].ResourceLogs().At(0).ScopeLogs().At(0).LogRecords()
-	assert.Equal(t, 0, logRecords.Len(), "LogRecords should be empty because entity delete events are not implemented yet")
+	assert.Equal(t, 1, logRecords.Len(), "Should have received exactly one logRecords")
+
+	// Verify LogRecords attributes
+	attributes := allLogs[0].ResourceLogs().At(0).ScopeLogs().At(0).LogRecords().At(0).Attributes()
+	assert.Equal(t, attributes.Len(), 5)
+	value1, _ := attributes.Get("otel.entity.event.type")
+	assert.Equal(t, "entity_delete", value1.AsString())
+
+	value2, _ := attributes.Get("otel.entity.delete.type")
+	assert.Equal(t, "soft_delete", value2.AsString())
+
+	value3, _ := attributes.Get("otel.entity.type")
+	assert.Equal(t, "service", value3.AsString())
+
+	value4, _ := attributes.Get("otel.entity.id")
+	assert.Equal(t, "{\"instance_id\":\"i-987xyz\",\"service_id\":\"service-abc-123\"}", value4.AsString())
+
+	value5, _ := attributes.Get("otel.entity.attributes")
+	assert.Equal(t, "{\"environment\":\"production\"}", value5.AsString())
 }

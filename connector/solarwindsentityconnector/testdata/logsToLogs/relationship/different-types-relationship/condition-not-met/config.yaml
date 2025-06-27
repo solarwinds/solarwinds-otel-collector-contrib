@@ -14,10 +14,13 @@ schema:
         attributes: ["k8s.cluster.port"]
         conditions: ['resource.attributes["k8s.cluster.name"] == "non-matching-cluster-name"']
         context: "log"
+        action: "update"
     entities:
       - type: "Kubernetes Pod"
         conditions: ["true"]
         context: "log"
+        action: "update"
       - type: "Kubernetes Cluster"
         conditions: ['resource.attributes["k8s.cluster.name"] == "non-matching-test-cluster-name"']
         context: "log"
+        action: "update"
