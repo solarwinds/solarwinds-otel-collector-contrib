@@ -70,7 +70,7 @@ type internalStorage struct {
 	entityTtl                 time.Duration
 	ttlCleanUpIntervalSeconds time.Duration
 	logger                    *zap.Logger
-	keyBuilder                KeyBuilder
+	cacheKeyBuilder           KeyBuilder
 
 	// TODO: Introduce mutex to protect concurrent access to the cache when parallelization is used
 	// in the upper layers (NH-112603).
@@ -124,9 +124,9 @@ func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em c
 		relationshipTtl: cfg.Interval,
 		// The entity should live longer than the relationship to be able to send delete event after expiration.
 		// The TTL + clean-up interval should be the longest interval after which the relationship would be evicted.
-		entityTtl:  (cfg.Interval + cfg.TTLCleanupIntervalSeconds) * entityTTLFactor,
-		logger:     logger,
-		keyBuilder: NewKeyBuilder(),
+		entityTtl:       (cfg.Interval + cfg.TTLCleanupIntervalSeconds) * entityTTLFactor,
+		logger:          logger,
+		cacheKeyBuilder: NewKeyBuilder(),
 	}, nil
 }
 
@@ -177,17 +177,17 @@ func (c *internalStorage) close() {
 func (c *internalStorage) delete(relationship *internal.Relationship) error {
 	c.logger.Debug("deleting relationship from internal storage", zap.String("relationshipType", relationship.Type))
 
-	sourceHash, err := c.keyBuilder.BuildEntityKey(relationship.Source)
+	sourceHash, err := c.cacheKeyBuilder.BuildEntityKey(relationship.Source)
 	if err != nil {
 		return errors.Join(err, fmt.Errorf("failed to hash key for source entity: %s", relationship.Source.Type))
 	}
-	destHash, err := c.keyBuilder.BuildEntityKey(relationship.Destination)
+	destHash, err := c.cacheKeyBuilder.BuildEntityKey(relationship.Destination)
 	if err != nil {
 		return errors.Join(err, fmt.Errorf("failed to hash key for destination entity: %s", relationship.Destination.Type))
 	}
 
 	// Remove the relationship from the cache
-	relationshipKey, err := c.keyBuilder.BuildRelationshipKey(relationship.Type, sourceHash, destHash)
+	relationshipKey, err := c.cacheKeyBuilder.BuildRelationshipKey(relationship.Type, sourceHash, destHash)
 	if err != nil {
 		return err
 	}
@@ -208,11 +208,11 @@ func (c *internalStorage) delete(relationship *internal.Relationship) error {
 func (c *internalStorage) update(relationship *internal.Relationship) error {
 	c.logger.Debug("updating relationship in internal storage", zap.String("relationshipType", relationship.Type))
 
-	sourceHash, err := c.keyBuilder.BuildEntityKey(relationship.Source)
+	sourceHash, err := c.cacheKeyBuilder.BuildEntityKey(relationship.Source)
 	if err != nil {
 		return errors.Join(err, fmt.Errorf("failed to hash key for source entity: %s", relationship.Source.Type))
 	}
-	destHash, err := c.keyBuilder.BuildEntityKey(relationship.Destination)
+	destHash, err := c.cacheKeyBuilder.BuildEntityKey(relationship.Destination)
 	if err != nil {
 		return errors.Join(err, fmt.Errorf("failed to hash key for destination entity: %s", relationship.Destination.Type))
 	}
@@ -227,7 +227,7 @@ func (c *internalStorage) update(relationship *internal.Relationship) error {
 		return fmt.Errorf("failed to update destination entity: %s", relationship.Destination.Type)
 	}
 
-	relationshipKey, err := c.keyBuilder.BuildRelationshipKey(relationship.Type, sourceHash, destHash)
+	relationshipKey, err := c.cacheKeyBuilder.BuildRelationshipKey(relationship.Type, sourceHash, destHash)
 	if err != nil {
 		return err
 	}

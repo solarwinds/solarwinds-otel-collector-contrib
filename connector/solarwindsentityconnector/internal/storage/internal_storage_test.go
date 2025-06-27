@@ -131,9 +131,9 @@ func TestUpdate_RelationshipUpdate_UpdatesTtl(t *testing.T) {
 	time.Sleep(200 * time.Millisecond)
 
 	// Calculate the source and destination hashes
-	sourceHash, err := storage.keyBuilder.BuildEntityKey(relationship.Source)
+	sourceHash, err := storage.cacheKeyBuilder.BuildEntityKey(relationship.Source)
 	require.NoError(t, err)
-	destHash, err := storage.keyBuilder.BuildEntityKey(relationship.Destination)
+	destHash, err := storage.cacheKeyBuilder.BuildEntityKey(relationship.Destination)
 	require.NoError(t, err)
 	relationshipKey := fmt.Sprintf("%s:%s:%s", relationship.Type, sourceHash, destHash)
 
@@ -399,8 +399,8 @@ func TestInternalStorage_Delete(t *testing.T) {
 				require.NoError(t, err)
 
 				// Verify it exists in the cache
-				sourceHash, _ := s.keyBuilder.BuildEntityKey(sourceEntity)
-				destHash, _ := s.keyBuilder.BuildEntityKey(destEntity)
+				sourceHash, _ := s.cacheKeyBuilder.BuildEntityKey(sourceEntity)
+				destHash, _ := s.cacheKeyBuilder.BuildEntityKey(destEntity)
 				relationshipKey := fmt.Sprintf("%s:%s:%s", relationship.Type, sourceHash, destHash)
 				s.entities.Wait()
 				s.relationships.Wait()
@@ -475,11 +475,11 @@ func TestDelete_DoesNotTriggerOnRelationshipEvict(t *testing.T) {
 	storage.relationships.Wait()
 
 	// Get the keys to verify presence in cache
-	sourceHash, err := storage.keyBuilder.BuildEntityKey(relationship.Source)
+	sourceHash, err := storage.cacheKeyBuilder.BuildEntityKey(relationship.Source)
 	require.NoError(t, err)
-	destHash, err := storage.keyBuilder.BuildEntityKey(relationship.Destination)
+	destHash, err := storage.cacheKeyBuilder.BuildEntityKey(relationship.Destination)
 	require.NoError(t, err)
-	relationshipKey, err := storage.keyBuilder.BuildRelationshipKey(relationship.Type, sourceHash, destHash)
+	relationshipKey, err := storage.cacheKeyBuilder.BuildRelationshipKey(relationship.Type, sourceHash, destHash)
 	require.NoError(t, err)
 
 	// Verify relationship is in cache
