@@ -380,7 +380,7 @@ func TestTtlExpiration_RelationshipIsRemovedFirst_EntitiesSecond(t *testing.T) {
 	}
 }
 
-func TestInternalStorage_Delete(t *testing.T) {
+func TestDelete(t *testing.T) {
 	logger := zap.NewNop()
 	eventsChan := make(chan internal.Event, 10)
 
