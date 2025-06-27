@@ -16,9 +16,6 @@ resourceLogs:
                       - key: aws.ec2.name
                         value:
                           stringValue: aws-instance-name-common
-              - key: otel.entity.attributes
-                value:
-                  kvlistValue: {}
               - key: otel.entity.event.type
                 value:
                   stringValue: entity_state
@@ -40,9 +37,6 @@ resourceLogs:
                       - key: aws.ec2.name
                         value:
                           stringValue: aws-instance-name-common
-              - key: otel.entity.attributes
-                value:
-                  kvlistValue: {}
               - key: otel.entity.event.type
                 value:
                   stringValue: entity_state

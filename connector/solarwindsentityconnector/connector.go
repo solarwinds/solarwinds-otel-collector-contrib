@@ -16,6 +16,9 @@ package solarwindsentityconnector
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal/storage"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottlmetric"
@@ -32,14 +35,11 @@ import (
 type solarwindsentity struct {
 	logger *zap.Logger
 
-	logsConsumer        consumer.Logs
-	entitiesDefinitions map[string]config.Entity
-	sourcePrefix        string
-	destinationPrefix   string
-	events              config.ParsedEvents
+	logsConsumer  consumer.Logs
+	eventDetector *internal.EventDetector
 
-	component.StartFunc
-	component.ShutdownFunc
+	expirationPolicy config.ExpirationPolicy
+	storageManager   *storage.Manager
 }
 
 var _ connector.Metrics = (*solarwindsentity)(nil)
@@ -49,9 +49,52 @@ func (s *solarwindsentity) Capabilities() consumer.Capabilities {
 	return consumer.Capabilities{MutatesData: false}
 }
 
+func (s *solarwindsentity) Start(context.Context, component.Host) error {
+	if s.expirationPolicy.Enabled {
+		expirationCfg, err := s.expirationPolicy.Parse()
+		if err != nil {
+			return errors.Join(err, fmt.Errorf("expiration policy is invalid"))
+		}
+
+		ec := internal.NewEventConsumer(s.logsConsumer)
+		sm, err := storage.NewStorageManager(expirationCfg, s.logger, ec)
+		if err != nil {
+			s.logger.Error("failed to create storage manager", zap.Error(err))
+			return err
+		}
+
+		s.storageManager = sm
+		err = s.storageManager.Start()
+
+		if err != nil {
+			s.logger.Error("failed to start storage manager", zap.Error(err))
+			return err
+		}
+		s.logger.Info("expiration policy is enabled and started, expiration logs will be generated")
+	} else {
+		s.logger.Info("expiration policy is disabled, no expiration logs will be generated")
+	}
+
+	return nil
+}
+
+func (s *solarwindsentity) Shutdown(context.Context) error {
+	if s.storageManager != nil {
+		err := s.storageManager.Shutdown()
+		if err != nil {
+			s.logger.Error("failed to shutdown storage manager", zap.Error(err))
+			return err
+		}
+		s.logger.Info("storage manager shutdown successfully")
+	}
+
+	s.logger.Info("solarwindsentity connector shutdown successfully")
+	return nil
+}
+
 func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.Metrics) error {
 	eventLogs := plog.NewLogs()
-	eventBuilder := internal.NewEventBuilder(s.entitiesDefinitions, s.sourcePrefix, s.destinationPrefix, &eventLogs, s.logger)
+	logRecords := internal.CreateEventLog(&eventLogs)
 
 	for i := 0; i < metrics.ResourceMetrics().Len(); i++ {
 		resourceMetric := metrics.ResourceMetrics().At(i)
@@ -63,10 +106,18 @@ func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.M
 				metric := scopeMetric.Metrics().At(k)
 
 				tc := ottlmetric.NewTransformContext(metric, scopeMetric.Metrics(), scopeMetric.Scope(), resourceMetric.Resource(), scopeMetric, resourceMetric)
-				err := internal.ProcessEvents(ctx, eventBuilder, s.events.MetricEvents, resourceAttrs, tc)
+				events, err := s.eventDetector.DetectMetric(ctx, resourceAttrs, tc)
+
 				if err != nil {
 					s.logger.Error("Failed to process metric condition", zap.Error(err))
 					return err
+				}
+				for _, event := range events {
+					err := s.handleEvent(event, logRecords)
+					if err != nil {
+						s.logger.Error("failed to handle event", zap.Error(err))
+						return err
+					}
 				}
 			}
 		}
@@ -81,7 +132,7 @@ func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.M
 
 func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) error {
 	eventLogs := plog.NewLogs()
-	eventBuilder := internal.NewEventBuilder(s.entitiesDefinitions, s.sourcePrefix, s.destinationPrefix, &eventLogs, s.logger)
+	logRecords := internal.CreateEventLog(&eventLogs)
 
 	for i := 0; i < logs.ResourceLogs().Len(); i++ {
 		resourceLog := logs.ResourceLogs().At(i)
@@ -94,10 +145,19 @@ func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) erro
 				logRecord := scopeLog.LogRecords().At(k)
 
 				tc := ottllog.NewTransformContext(logRecord, scopeLog.Scope(), resourceLog.Resource(), scopeLog, resourceLog)
-				err := internal.ProcessEvents(ctx, eventBuilder, s.events.LogEvents, resourceAttrs, tc)
+				events, err := s.eventDetector.DetectLog(ctx, resourceAttrs, tc)
+
 				if err != nil {
 					s.logger.Error("Failed to process logs condition", zap.Error(err))
 					return err
+				}
+
+				for _, event := range events {
+					err := s.handleEvent(event, logRecords)
+					if err != nil {
+						s.logger.Error("failed to handle event", zap.Error(err))
+						return err
+					}
 				}
 			}
 		}
@@ -108,4 +168,16 @@ func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) erro
 	}
 
 	return s.logsConsumer.ConsumeLogs(ctx, eventLogs)
+}
+
+func (s *solarwindsentity) handleEvent(event internal.Event, eventLogs *plog.LogRecordSlice) error {
+	event.Update(eventLogs)
+	if s.storageManager != nil {
+		err := s.storageManager.Update(event)
+		if err != nil {
+			s.logger.Error("failed to update storage with event", zap.Error(err))
+			return err
+		}
+	}
+	return nil
 }
