@@ -48,6 +48,14 @@ jobs:
       - name: Run Tests
         run: ${{ env.SHARED_SCRIPTS }}/build-and-test.sh
         shell: bash
+      - name: Run Benchmark
+        run: go test -C connector/solarwindsentityconnector/benchmark -run=^$ -bench . > benchmark.txt
+        shell: bash
+      - name: Upload Benchmark Log
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark
+          path: benchmark.txt
 
   build_and_test_windows:
     runs-on: windows-latest

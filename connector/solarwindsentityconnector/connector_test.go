@@ -22,8 +22,6 @@ import (
 	"testing"
 	"time"
 
-	"gopkg.in/yaml.v3"
-
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest/plogtest"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal/metadata"
@@ -136,7 +134,8 @@ func TestLogsToLogs(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			cfg, err := loadConfigFromFile(t, filepath.Join("testdata", "logsToLogs", tc.folder, "config.yaml"))
+			testFolder := filepath.Join("testdata", "integration", "logsToLogs", tc.folder)
+			cfg, err := LoadConfigFromFile(t, filepath.Join(testFolder, "config.yaml"))
 			require.NoError(t, err)
 			factory := NewFactory()
 			sink := &consumertest.LogsSink{}
@@ -150,14 +149,14 @@ func TestLogsToLogs(t *testing.T) {
 				assert.NoError(t, conn.Shutdown(context.Background()))
 			}()
 
-			inputFile := filepath.Join("testdata", "logsToLogs", tc.folder, "input.yaml")
+			inputFile := filepath.Join(testFolder, "input.yaml")
 			testLogs, err := golden.ReadLogs(inputFile)
 
 			assert.NoError(t, err)
 			assert.NoError(t, conn.ConsumeLogs(context.Background(), testLogs))
 
 			allLogs := sink.AllLogs()
-			expectedFile := filepath.Join("testdata", "logsToLogs", tc.folder, "expected-output.yaml")
+			expectedFile := filepath.Join(testFolder, "expected-output.yaml")
 
 			if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
 				assert.Len(t, allLogs, 0)
@@ -274,8 +273,8 @@ func TestMetricsToLogs(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			testFolder := filepath.Join("testdata", "metricsToLogs", tc.folder)
-			cfg, err := loadConfigFromFile(t, filepath.Join(testFolder, "config.yaml"))
+			testFolder := filepath.Join("testdata", "integration", "metricsToLogs", tc.folder)
+			cfg, err := LoadConfigFromFile(t, filepath.Join(testFolder, "config.yaml"))
 			require.NoError(t, err)
 			factory := NewFactory()
 			sink := &consumertest.LogsSink{}
@@ -312,28 +311,12 @@ func TestMetricsToLogs(t *testing.T) {
 	}
 }
 
-func loadConfigFromFile(t *testing.T, path string) (*Config, error) {
-	t.Helper()
-
-	yamlFile, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read config file: %w", err)
-	}
-
-	var cfg Config
-	if err := yaml.Unmarshal(yamlFile, &cfg); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
-	}
-
-	return &cfg, nil
-}
-
 // Test that the connector consumes a log or metric from which
 // it infers a relationship, produces a relationship event and
 // then waits for the cache expiration to ensure that the relationship delete event is produced.
 func TestRelationshipCacheExpiration(t *testing.T) {
-	testFolder := filepath.Join("testdata", "logsToLogs", "relationship", "cacheExpiration")
-	cfg, err := loadConfigFromFile(t, filepath.Join(testFolder, "config.yaml"))
+	testFolder := filepath.Join("testdata", "integration", "logsToLogs", "relationship", "cacheExpiration")
+	cfg, err := LoadConfigFromFile(t, filepath.Join(testFolder, "config.yaml"))
 	require.NoError(t, err)
 
 	factory := NewFactory()
