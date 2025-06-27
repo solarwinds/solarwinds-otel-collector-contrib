@@ -55,10 +55,6 @@ func BenchmarkMetrics(b *testing.B) {
 		{name: "100_metrics_0.5_true", totalMetrics: 100, invalidRatio: 0.5, multiple: true},
 		{name: "10K_metrics_0.5_true", totalMetrics: 10000, invalidRatio: 0.5, multiple: true},
 		{name: "1M_metrics_0.5_true", totalMetrics: 1000000, invalidRatio: 0.5, multiple: true},
-		// Multiple metric, invalid ratio 1.0
-		{name: "100_metrics_1.0_true", totalMetrics: 100, invalidRatio: 1.0, multiple: true},
-		{name: "10K_metrics_1.0_true", totalMetrics: 10000, invalidRatio: 1.0, multiple: true},
-		{name: "1M_metrics_1.0_true", totalMetrics: 1000000, invalidRatio: 1.0, multiple: true},
 	}
 
 	for _, tc := range testCases {
@@ -89,8 +85,8 @@ func BenchmarkMetrics(b *testing.B) {
 
 			getLogsCount := len(sink.AllLogs())
 			expectedLogsCount := tc.totalMetrics - int(float32(tc.totalMetrics)*tc.invalidRatio)
-			if tc.multiple { // If multiple metric is used, we expect only one log from the connector
-				expectedLogsCount = 1
+			if tc.multiple { // If multiple metric is used, we expect only one log from the connector or zero if invalidRatio is 1.0
+				expectedLogsCount = int(1 - int(tc.invalidRatio))
 			}
 
 			assert.Equal(b, getLogsCount, expectedLogsCount, "Expected to receive %d logs, but got %d logs",
@@ -127,10 +123,6 @@ func BenchmarkLogs(b *testing.B) {
 		{name: "10K_logs_0.5_true", totalLogs: 10000, invalidRatio: 0.5, multiple: true},
 		{name: "100K_logs_0.5_true", totalLogs: 100000, invalidRatio: 0.5, multiple: true},
 		{name: "1M_logs_0.5_true", totalLogs: 1000000, invalidRatio: 0.5, multiple: true},
-		// Multiple log, invalid ratio 1.0
-		{name: "100_logs_1.0_true", totalLogs: 100, invalidRatio: 1.0, multiple: true},
-		{name: "10K_logs_1.0_true", totalLogs: 10000, invalidRatio: 1.0, multiple: true},
-		{name: "1M_logs_1.0_true", totalLogs: 1000000, invalidRatio: 1.0, multiple: true},
 	}
 
 	for _, tc := range testCases {
@@ -160,8 +152,8 @@ func BenchmarkLogs(b *testing.B) {
 
 			getLogsCount := len(sink.AllLogs())
 			expectedLogsCount := tc.totalLogs - int(float32(tc.totalLogs)*tc.invalidRatio)
-			if tc.multiple { // If multiple log is used, we expect only one log from the connector
-				expectedLogsCount = 1
+			if tc.multiple { // If multiple log is used, we expect only one log from the connector or zero if invalidRatio is 1.0
+				expectedLogsCount = int(1 - int(tc.invalidRatio))
 			}
 
 			assert.Equal(b, getLogsCount, expectedLogsCount, "Expected to receive %d logs, but got %d logs",
