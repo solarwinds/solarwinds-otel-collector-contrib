@@ -74,7 +74,7 @@ func BenchmarkMetrics(b *testing.B) {
 				assert.NoError(b, conn.Shutdown(context.Background()))
 			}()
 
-			metrics := genMetricsFromConfig(b, cfg, tc.totalMetrics, tc.invalidRatio, tc.multiple)
+			metrics := genTestMetrics(b, cfg, tc.totalMetrics, tc.invalidRatio, tc.multiple)
 
 			b.ReportAllocs()
 			b.ResetTimer()
@@ -141,7 +141,7 @@ func BenchmarkLogs(b *testing.B) {
 				assert.NoError(b, conn.Shutdown(context.Background()))
 			}()
 
-			logs := genLogsFromConfig(b, cfg, tc.totalLogs, tc.invalidRatio, tc.multiple)
+			logs := genTestLogs(b, cfg, tc.totalLogs, tc.invalidRatio, tc.multiple)
 
 			b.ReportAllocs()
 			b.ResetTimer()
