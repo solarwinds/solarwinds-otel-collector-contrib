@@ -44,7 +44,7 @@ resourceLogs:
             observedTimeUnixNano: "1748423037322290000"
             spanId: ""
             traceId: ""
-          # Expected relationship delete log record
+          # Expected relationship update log record
           - attributes:
               - key: otel.entity_relationship.source_entity.id
                 value:
