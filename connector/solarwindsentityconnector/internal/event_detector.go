@@ -95,12 +95,10 @@ func (e *EventDetector) collectEvents(attrs pcommon.Map, ee []*config.EntityEven
 func (e *EventDetector) createEntityEvent(resourceAttrs pcommon.Map, event *config.EntityEvent) (Entity, error) {
 	attrs := pcommon.NewMap()
 	entity := e.entities[event.Type]
-	err := setIdAttributes(attrs, entity.IDs, resourceAttrs, entityIds)
+	ids, err := getIDAttributes(entity.IDs, resourceAttrs)
 	if err != nil {
 		return Entity{}, fmt.Errorf("failed to set ID attributes for entity %s: %w", entity.Type, err)
 	}
-	idsValue, _ := attrs.Get(entityIds)
-	ids := idsValue.Map()
 
 	setAttributes(attrs, entity.Attributes, resourceAttrs, entityAttributes)
 	var entityAttrs pcommon.Map

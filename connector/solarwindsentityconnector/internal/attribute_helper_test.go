@@ -27,8 +27,7 @@ func TestSetIdAttributesDefaultEmpty(t *testing.T) {
 	resourceAttrs.PutStr("id1", "idvalue1")
 	resourceAttrs.PutStr("id2", "idvalue2")
 
-	destination := plog.NewLogRecord()
-	err := setIdAttributes(destination.Attributes(), []string{}, resourceAttrs, entityIds)
+	_, err := getIDAttributes([]string{}, resourceAttrs)
 	assert.NotNil(t, err)
 }
 
@@ -48,12 +47,8 @@ func TestSetIdAttributesDefaultNoMatch(t *testing.T) {
 	resourceAttrs.PutStr("id1", "idvalue1")
 	resourceAttrs.PutStr("id2", "idvalue2")
 
-	destination := plog.NewLogRecord()
-	err := setIdAttributes(destination.Attributes(), []string{"id3"}, resourceAttrs, entityIds)
+	_, err := getIDAttributes([]string{"id3"}, resourceAttrs)
 	assert.NotNil(t, err)
-	ids, exists := destination.Attributes().Get(entityIds)
-	assert.True(t, exists)
-	assert.Equal(t, 0, ids.Map().Len())
 }
 
 func TestSetIdAttributesSameTypetIdNoMatch(t *testing.T) {
@@ -89,13 +84,10 @@ func TestSetIdAttributesDefaultMultiple(t *testing.T) {
 	resourceAttrs.PutStr("id1", "idvalue1")
 	resourceAttrs.PutStr("id2", "idvalue2")
 
-	destination := plog.NewLogRecord()
-	err := setIdAttributes(destination.Attributes(), []string{"id1"}, resourceAttrs, entityIds)
+	ids, err := getIDAttributes([]string{"id1"}, resourceAttrs)
 	assert.Nil(t, err)
-	ids, exists := destination.Attributes().Get(entityIds)
-	assert.True(t, exists)
-	assert.Equal(t, 1, ids.Map().Len())
-	id, exists := ids.Map().Get("id1")
+	assert.Equal(t, 1, ids.Len())
+	id, exists := ids.Get("id1")
 	assert.True(t, exists)
 	assert.Equal(t, "idvalue1", id.Str())
 }

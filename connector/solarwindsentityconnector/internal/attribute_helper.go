@@ -21,27 +21,27 @@ import (
 	"go.opentelemetry.io/collector/pdata/pcommon"
 )
 
-// setIdAttributes sets the entity id attributes in the log record as needed by SWO.
+// getIDAttributes sets the entity id attributes in the log record as needed by SWO.
 // Attributes are used to infer the entity in the system.
 //
 // Returns error if any of the attributes are missing in the resourceAttrs.
 // If any ID attribute is missing, the entity would not be inferred.
-func setIdAttributes(attrs pcommon.Map, entityIds []string, resourceAttrs pcommon.Map, name string) error {
+func getIDAttributes(entityIds []string, resourceAttrs pcommon.Map) (pcommon.Map, error) {
 	if len(entityIds) == 0 {
-		return fmt.Errorf("entity ID attributes are empty")
+		return pcommon.Map{}, fmt.Errorf("entity ID attributes are empty")
 	}
 
-	logIds := attrs.PutEmptyMap(name)
+	attrs := pcommon.NewMap()
 	for _, id := range entityIds {
-
 		value, exists := findAttribute(id, resourceAttrs)
+
 		if !exists {
-			return fmt.Errorf("missing entity ID attribute: %s", id)
+			return pcommon.Map{}, fmt.Errorf("missing entity ID attribute: %s", id)
 		}
 
-		putAttribute(&logIds, id, value)
+		putAttribute(&attrs, id, value)
 	}
-	return nil
+	return attrs, nil
 }
 
 // setIdAttributesForRelationships sets the entity id attributes in the log record as needed by SWO for relationships.
