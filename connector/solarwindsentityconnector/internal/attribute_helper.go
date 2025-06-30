@@ -21,6 +21,84 @@ import (
 	"go.opentelemetry.io/collector/pdata/pcommon"
 )
 
+func getEntities(entityIds []string, attrs Attributes) (entityAttributes []pcommon.Map, err error) {
+	if len(entityIds) == 0 {
+		return entityAttributes, fmt.Errorf("no entity ids provided")
+	}
+
+	ids, allAttributesFound := getDirectedEntity(entityIds, attrs.Common, attrs.Source)
+	if allAttributesFound {
+		entityAttributes = append(entityAttributes, ids)
+	}
+
+	ids, allAttributesFound = getDirectedEntity(entityIds, attrs.Common, attrs.Destination)
+	if allAttributesFound {
+		entityAttributes = append(entityAttributes, ids)
+	}
+
+	if len(entityAttributes) == 2 {
+		return entityAttributes, nil
+	}
+
+	ids = pcommon.NewMap()
+	putAttributes(entityIds, attrs.Common, &ids)
+	if ids.Len() != len(entityIds) {
+		return entityAttributes, fmt.Errorf("not all entity ids found in common attributes")
+	}
+
+	entityAttributes = append(entityAttributes, ids)
+	return entityAttributes, nil
+}
+
+func getDirectedEntity(entityIds []string, commonAttrs, directedAttrs map[string]pcommon.Value) (pcommon.Map, bool) {
+	isDirected := isSubsetOfEntityIds(entityIds, directedAttrs)
+	if !isDirected {
+		return pcommon.NewMap(), false
+	}
+
+	ids := pcommon.NewMap()
+	putAttributes(entityIds, directedAttrs, &ids)
+	putAttributes(entityIds, commonAttrs, &ids)
+	if ids.Len() != len(entityIds) {
+		return pcommon.NewMap(), false
+	}
+
+	return ids, true
+}
+
+func putAttributes(entityIds []string, attrs map[string]pcommon.Value, dest *pcommon.Map) {
+	for _, entityId := range entityIds {
+		// check whether attribute is already in destination, if yes we do not want to override
+		_, alreadyExists := dest.Get(entityId)
+		if alreadyExists {
+			continue
+		}
+
+		value, exists := attrs[entityId]
+		if exists {
+			putAttribute(dest, entityId, value)
+		}
+	}
+
+}
+
+func isSubsetOfEntityIds(entityIds []string, subset map[string]pcommon.Value) bool {
+	for key, _ := range subset {
+		found := false
+		for _, entityId := range entityIds {
+			if entityId == key {
+				found = true
+				break
+			}
+		}
+		if found == false {
+			return false
+		}
+	}
+
+	return true
+}
+
 // getIDAttributes sets the entity id attributes in the log record as needed by SWO.
 // Attributes are used to infer the entity in the system.
 //
