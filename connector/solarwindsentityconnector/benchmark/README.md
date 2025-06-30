@@ -21,11 +21,11 @@ Each row in the benchmark output follows this general format:
 
 
 ### Example
-| Benchmark name                          | Iterations | Time per op       | Bytes per op     | Allocs per op       |
-|----------------------------------------|------------|--------------------|------------------|----------------------|
-| BenchmarkMetrics/100_metrics_0.0_false-10 | 1000000000 | 0.0002275 ns/op     | 0 B/op           | 0 allocs/op          |
-| BenchmarkMetrics/10K_metrics_0.0_false-10 | 1000000000 | 0.03321 ns/op       | 0 B/op           | 0 allocs/op          |
-| BenchmarkMetrics/1M_metrics_0.0_false-10  | 1          | 3017625833 ns/op    | 3534081728 B/op  | 80000377 allocs/op   |
+| Benchmark name                       | Iterations | Time per op        | Bytes per op     | Allocs per op       |
+|--------------------------------------|------------|--------------------|------------------|---------------------|
+BenchmarkMetrics/100_metrics_0.0_false | 2360	    | 522211 ns/op	     | 410380 B/op	    | 10166 allocs/op
+BenchmarkMetrics/10K_metrics_0.0_false | 22	        | 51158437 ns/op	 | 41474485 B/op	| 1015050 allocs/op
+BenchmarkMetrics/1M_metrics_0.0_false  | 1	        | 5850317708 ns/op	 | 4190139808 B/op	| 101500820 allocs/op
 
 ## Benchmark Test Case Format
 The benchmark cases are defined using the following structure:
