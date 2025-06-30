@@ -41,3 +41,78 @@ The benchmark cases are defined using the following structure:
 - **Multiple** – defines how the data is passed:
     - false – metrics/logs are passed separately.
     - true – metrics/logs are grouped and passed as a single batch.
+    #### Examples 
+    ##### Grouped (multiple = true)
+    ```
+    {
+    "resource_logs": [
+        {
+        "resource": {
+            "attributes": [
+            {
+                "key": "k8s.cluster.name",
+                "value": { "stringValue": "Cluster 1" }
+            }
+            ]
+        },
+        "scope_logs": [
+            {
+            "log_records": [
+                {
+                "observedTimeUnixNano": 1719740310000000000,
+                "body": { "value": { "stringValue": "test" } }
+                }
+            ]
+            }
+        ]
+        },
+        {
+        "resource": {
+            "attributes": [
+            {
+                "key": "k8s.cluster.name",
+                "value": { "stringValue": "Cluster 2" }
+            }
+            ]
+        },
+        "scope_logs": [
+            {
+            "log_records": [
+                {
+                "observedTimeUnixNano": 1719740315000000000,
+                "body": { "value": { "stringValue": "test" } }
+                }
+            ]
+            }
+        ]
+        }
+    ]
+    }
+    ```
+    ##### Separate (multiple = false)
+    ```
+    {
+    "resource_logs": [
+        {
+        "resource": {
+            "attributes": [
+            {
+                "key": "k8s.cluster.name",
+                "value": { "stringValue": "Cluster 1" }
+            }
+            ]
+        },
+        "scope_logs": [
+            {
+            "log_records": [
+                {
+                "observedTimeUnixNano": 1719740310000000000,
+                "body": { "value": { "stringValue": "test" } }
+                }
+            ]
+            }
+        ]
+        }
+    ]
+    }
+    ```
