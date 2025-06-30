@@ -14,7 +14,7 @@ resource_attributes:
     type: string
   sw.otelcol.collector.entity_creation:
     enabled: false
-    description: "Defines if entity should be created from signal. Value is taken from `solarwinds` extension."
+    description: "Defines if collector entity should be created from signal. Value is taken from `solarwinds` extension."
     type: string
 
 tests:
