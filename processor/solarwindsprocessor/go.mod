@@ -6,7 +6,7 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension v0.127.3
 	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/attributesdecorator v0.127.3
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/extensionfinder v0.127.31
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/extensionfinder v0.127.3
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/collector/component v1.33.0
 	go.opentelemetry.io/collector/component/componenttest v0.127.0
