@@ -74,7 +74,7 @@ func BenchmarkMetrics(b *testing.B) {
 				assert.NoError(b, conn.Shutdown(context.Background()))
 			}()
 
-			metrics := genTestMetrics(b, cfg, tc.totalMetrics, tc.invalidRatio, tc.multiple)
+			metrics := generateTestMetrics(b, cfg, tc.totalMetrics, tc.invalidRatio, tc.multiple)
 
 			b.ReportAllocs()
 			for b.Loop() {
@@ -127,7 +127,6 @@ func BenchmarkLogs(b *testing.B) {
 		// Multiple log, invalid ratio 0.5
 		{name: "100_logs_0.5_true", totalLogs: 100, invalidRatio: 0.5, multiple: true},
 		{name: "10K_logs_0.5_true", totalLogs: 10000, invalidRatio: 0.5, multiple: true},
-		{name: "100K_logs_0.5_true", totalLogs: 100000, invalidRatio: 0.5, multiple: true},
 		{name: "1M_logs_0.5_true", totalLogs: 1000000, invalidRatio: 0.5, multiple: true},
 	}
 
@@ -147,7 +146,7 @@ func BenchmarkLogs(b *testing.B) {
 				assert.NoError(b, conn.Shutdown(context.Background()))
 			}()
 
-			logs := genTestLogs(b, cfg, tc.totalLogs, tc.invalidRatio, tc.multiple)
+			logs := generateTestLogs(b, cfg, tc.totalLogs, tc.invalidRatio, tc.multiple)
 
 			b.ReportAllocs()
 			for b.Loop() {

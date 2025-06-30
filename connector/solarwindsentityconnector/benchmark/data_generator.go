@@ -15,7 +15,6 @@
 package benchmark
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -33,7 +32,7 @@ import (
 // The count parameter specifies the total number of metrics to generate, including both valid and invalid metrics.
 // The invalidRatio parameter defines the proportion of invalid metrics.
 // The multiple parameter determines whether to return a multiple metric instead of single metrics.
-func genTestMetrics(b *testing.B, cfg *solarwindsentityconnector.Config, count int, invalidRatio float32, multiple bool) []pmetric.Metrics {
+func generateTestMetrics(b *testing.B, cfg *solarwindsentityconnector.Config, count int, invalidRatio float32, multiple bool) []pmetric.Metrics {
 	b.Helper()
 
 	var finalMetrics []pmetric.Metrics
@@ -71,10 +70,10 @@ func buildInvalidMetric(b *testing.B, count int) []pmetric.Metrics {
 	b.Helper()
 
 	var invalidMetric []pmetric.Metrics
-	for i := 0; i < count; i++ {
+	for range count {
 		metric := buildEmptyMetric(b)
 		attrs := metric.ResourceMetrics().At(0).Resource().Attributes()
-		attrs.PutStr("InValid", fmt.Sprintf("%d", i))
+		attrs.PutStr("invalid", "test-value")
 		invalidMetric = append(invalidMetric, metric)
 	}
 
@@ -111,7 +110,7 @@ func buildSingleMetrics(b *testing.B, count int, configuredMetrics []pmetric.Met
 
 	var metric []pmetric.Metrics
 	for i := 0; i < count; i++ {
-		metric = append(metric, configuredMetrics[i%len(configuredMetrics)])
+		metric = append(metric, configuredMetrics[i%len(configuredMetrics)]) // Loop through the metrics cyclically
 	}
 
 	return metric
@@ -123,12 +122,10 @@ func buildMultipleMetric(b *testing.B, count int, metrics []pmetric.Metrics) pme
 
 	multiple := pmetric.NewMetrics()
 	for i := 0; i < count; i++ {
-		metric := metrics[i%len(metrics)]
-		for j := 0; j < metric.ResourceMetrics().Len(); j++ {
-			src := metric.ResourceMetrics().At(j)
-			dst := multiple.ResourceMetrics().AppendEmpty()
-			src.CopyTo(dst)
-		}
+		metric := metrics[i%len(metrics)]       // Loop through the metrics cyclically
+		srcRM := metric.ResourceMetrics().At(0) // There is only one resource metric in each metric
+		dstRM := multiple.ResourceMetrics().AppendEmpty()
+		srcRM.CopyTo(dstRM)
 	}
 
 	return multiple
@@ -163,7 +160,7 @@ func buildEntityMetric(b *testing.B, cfg *solarwindsentityconnector.Config, enti
 			continue
 		}
 		for _, id := range ent.IDs {
-			attrs.PutStr(id, fmt.Sprintf("%s.%s", id, ent.Type))
+			attrs.PutStr(id, "test-value")
 		}
 		break
 	}
@@ -181,13 +178,13 @@ func buildRelationshipMetric(b *testing.B, cfg *solarwindsentityconnector.Config
 	for _, ent := range cfg.Schema.Entities {
 		if ent.Type == sourceType {
 			for _, id := range ent.IDs {
-				attrs.PutStr(fmt.Sprintf("src.%s", id), fmt.Sprintf("%s.%s.%s", id, ent.Type, relType))
+				attrs.PutStr("src."+id, "test-value")
 			}
 		}
 
 		if ent.Type == destType {
 			for _, id := range ent.IDs {
-				attrs.PutStr(fmt.Sprintf("dst.%s", id), fmt.Sprintf("%s.%s.%s", id, ent.Type, relType))
+				attrs.PutStr("dst."+id, "test-value")
 			}
 		}
 	}
@@ -201,7 +198,7 @@ func buildRelationshipMetric(b *testing.B, cfg *solarwindsentityconnector.Config
 // The count parameter specifies the total number of logs to generate, including both valid and invalid logs.
 // The invalidRatio parameter defines the proportion of invalid logs.
 // The multiple parameter determines whether to return a multiple log instead of single logs.
-func genTestLogs(b *testing.B, cfg *solarwindsentityconnector.Config, count int, invalidRatio float32, multiple bool) []plog.Logs {
+func generateTestLogs(b *testing.B, cfg *solarwindsentityconnector.Config, count int, invalidRatio float32, multiple bool) []plog.Logs {
 	b.Helper()
 
 	var finalLogs []plog.Logs
@@ -238,10 +235,10 @@ func buildValidLogs(b *testing.B, count int, cfg *solarwindsentityconnector.Conf
 func buildInvalidLog(b *testing.B, count int) []plog.Logs {
 	b.Helper()
 	var invalidLogs []plog.Logs
-	for i := 0; i < count; i++ {
+	for range count {
 		log := buildEmptyLog(b)
 		attrs := log.ResourceLogs().At(0).Resource().Attributes()
-		attrs.PutStr("InValid", fmt.Sprintf("%d", i))
+		attrs.PutStr("invalid", "test-value")
 		invalidLogs = append(invalidLogs, log)
 	}
 	return invalidLogs
@@ -277,7 +274,7 @@ func buildSingleLogs(b *testing.B, count int, configuredLogs []plog.Logs) []plog
 
 	var logs []plog.Logs
 	for i := 0; i < count; i++ {
-		logs = append(logs, configuredLogs[i%len(configuredLogs)])
+		logs = append(logs, configuredLogs[i%len(configuredLogs)]) // Loop through the logs cyclically
 	}
 	return logs
 }
@@ -289,12 +286,10 @@ func buildMultipleLog(b *testing.B, amount int, logs []plog.Logs) plog.Logs {
 	multipleLog := plog.NewLogs()
 
 	for i := 0; i < amount; i++ {
-		log := logs[i%len(logs)]
-		for j := 0; j < log.ResourceLogs().Len(); j++ {
-			srcRL := log.ResourceLogs().At(j)
-			dstRL := multipleLog.ResourceLogs().AppendEmpty()
-			srcRL.CopyTo(dstRL)
-		}
+		log := logs[i%len(logs)]          // Loop through the logs cyclically
+		srcRL := log.ResourceLogs().At(0) // There is only one resource log in each log
+		dstRL := multipleLog.ResourceLogs().AppendEmpty()
+		srcRL.CopyTo(dstRL)
 	}
 
 	return multipleLog
@@ -324,7 +319,7 @@ func buildEntityLog(b *testing.B, cfg *solarwindsentityconnector.Config, entityT
 			continue
 		}
 		for _, id := range ent.IDs {
-			attrs.PutStr(id, fmt.Sprintf("%s.%s", id, ent.Type))
+			attrs.PutStr(id, "test-value")
 		}
 		break
 	}
@@ -341,13 +336,13 @@ func buildRelationshipLog(b *testing.B, cfg *solarwindsentityconnector.Config, r
 	for _, ent := range cfg.Schema.Entities {
 		if ent.Type == sourceType {
 			for _, id := range ent.IDs {
-				attrs.PutStr(fmt.Sprintf("src.%s", id), fmt.Sprintf("%s.%s.%s", id, ent.Type, relType))
+				attrs.PutStr("src."+id, "test-value")
 			}
 		}
 
 		if ent.Type == destType {
 			for _, id := range ent.IDs {
-				attrs.PutStr(fmt.Sprintf("dst.%s", id), fmt.Sprintf("%s.%s.%s", id, ent.Type, relType))
+				attrs.PutStr("dst."+id, "test-value")
 			}
 		}
 	}
