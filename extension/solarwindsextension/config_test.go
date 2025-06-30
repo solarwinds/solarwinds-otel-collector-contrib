@@ -211,7 +211,7 @@ func TestConfigOTLPDataCenterOverridenByGrpc(t *testing.T) {
 	assert.Equal(t, "grpc.url:443", otlpCfg.ClientConfig.Endpoint)
 }
 
-func TestConfigOTLPUrlOverridendByGrpc(t *testing.T) {
+func TestConfig_UrlOverridendByGrpc(t *testing.T) {
 	cfgFile := testutil.LoadConfigTestdata(t, "grpc_overrides_urloverride")
 
 	// Parse configuration.
@@ -227,7 +227,7 @@ func TestConfigOTLPUrlOverridendByGrpc(t *testing.T) {
 	assert.Equal(t, "grpc.url:443", otlpCfg.ClientConfig.Endpoint)
 }
 
-func TestConfigOTLPTokenOverridendByGrpc(t *testing.T) {
+func TestConfig_TokenOverridendByGrpc(t *testing.T) {
 	cfgFile := testutil.LoadConfigTestdata(t, "grpc_overrides_token")
 
 	// Parse configuration.

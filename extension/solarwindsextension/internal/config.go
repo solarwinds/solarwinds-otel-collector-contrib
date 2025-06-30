@@ -98,7 +98,7 @@ func (cfg *Config) ReportDeprecatedFields(logger *zap.Logger) {
 		logger.Warn("The 'endpoint_url_override' field is deprecated, use 'endpoint' instead.")
 	}
 
-	if cfg.IngestionToken == "" {
+	if cfg.IngestionToken != "" {
 		logger.Warn("The 'token' field is deprecated, use 'headers: {\"Authorization\": \"Bearer ${YOUR_TOKEN}\" instead.")
 	}
 }
