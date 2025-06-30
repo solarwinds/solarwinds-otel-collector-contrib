@@ -355,9 +355,12 @@ func TestProcessEvents_ConditionFalse_EventsNotCreated(t *testing.T) {
 }
 
 func TestCreateEntity(t *testing.T) {
-	resourceAttrs := pcommon.NewMap()
-	resourceAttrs.PutStr("id1", "idvalue1")
-	resourceAttrs.PutStr("attr1", "attrvalue1")
+	resourceAttrs := Attributes{
+		Common: map[string]pcommon.Value{
+			"id1":   pcommon.NewValueStr("idvalue1"),
+			"attr1": pcommon.NewValueStr("attrvalue1"),
+		},
+	}
 
 	entity := config.Entity{
 		Type:       "KubernetesCluster",
@@ -378,7 +381,9 @@ func TestCreateEntity(t *testing.T) {
 	assert.Nil(t, err)
 	logs := plog.NewLogs()
 	logRecords := CreateEventLog(&logs)
-	entityEvent.Update(logRecords)
+
+	ee := entityEvent[0]
+	ee.Update(logRecords)
 	logRecord := logRecords.At(0)
 	assert.Equal(t, 4, logRecord.Attributes().Len())
 
@@ -400,8 +405,11 @@ func TestCreateEntity(t *testing.T) {
 }
 
 func TestCreateEntityWithNoAttributes(t *testing.T) {
-	resourceAttrs := pcommon.NewMap()
-	resourceAttrs.PutStr("id1", "idvalue1")
+	resourceAttrs := Attributes{
+		Common: map[string]pcommon.Value{
+			"id1": pcommon.NewValueStr("idvalue1"),
+		},
+	}
 
 	entity := config.Entity{
 		Type: "KubernetesCluster",
@@ -420,10 +428,13 @@ func TestCreateEntityWithNoAttributes(t *testing.T) {
 }
 
 func TestCreateRelationshipEvent(t *testing.T) {
-	resourceAttrs := pcommon.NewMap()
-	resourceAttrs.PutStr("id1", "idvalue1")
-	resourceAttrs.PutStr("id2", "idvalue2")
-	resourceAttrs.PutStr("attr1", "attrvalue1")
+	resourceAttrs := Attributes{
+		Common: map[string]pcommon.Value{
+			"id1":   pcommon.NewValueStr("idvalue1"),
+			"id2":   pcommon.NewValueStr("idvalue2"),
+			"attr1": pcommon.NewValueStr("attrvalue1"),
+		},
+	}
 
 	srcEntity := config.Entity{
 		Type:       "KubernetesCluster",
@@ -477,9 +488,12 @@ func TestCreateRelationshipEvent(t *testing.T) {
 }
 
 func TestCreateRelationshipEventWithNoAttributes(t *testing.T) {
-	resourceAttrs := pcommon.NewMap()
-	resourceAttrs.PutStr("id1", "idvalue1")
-	resourceAttrs.PutStr("id2", "idvalue2")
+	resourceAttrs := Attributes{
+		Common: map[string]pcommon.Value{
+			"id1": pcommon.NewValueStr("idvalue1"),
+			"id2": pcommon.NewValueStr("idvalue2"),
+		},
+	}
 
 	srcEntity := config.Entity{
 		Type: "KubernetesCluster",
@@ -513,8 +527,7 @@ func TestCreateRelationshipEventWithNoAttributes(t *testing.T) {
 }
 
 func TestCreateRelationshipEventWithoutResourceAttributes(t *testing.T) {
-	resourceAttrs := pcommon.NewMap()
-
+	resourceAttrs := Attributes{}
 	srcEntity := config.Entity{
 		Type: "KubernetesCluster",
 		IDs:  []string{"id1"},
@@ -547,10 +560,17 @@ func TestCreateRelationshipEventWithoutResourceAttributes(t *testing.T) {
 }
 
 func TestCreateSameTypeRelationshipEvent(t *testing.T) {
-	resourceAttrs := pcommon.NewMap()
-	resourceAttrs.PutStr("src.id", "idvalue1")
-	resourceAttrs.PutStr("dst.id", "idvalue2")
-	resourceAttrs.PutStr("attr1", "attrvalue1")
+	resourceAttrs := Attributes{
+		Common: map[string]pcommon.Value{
+			"attr1": pcommon.NewValueStr("attrvalue1"),
+		},
+		Source: map[string]pcommon.Value{
+			"id": pcommon.NewValueStr("idvalue1"),
+		},
+		Destination: map[string]pcommon.Value{
+			"id": pcommon.NewValueStr("idvalue2"),
+		},
+	}
 
 	entity := config.Entity{
 		Type:       "KubernetesCluster",
@@ -597,9 +617,14 @@ func TestCreateSameTypeRelationshipEvent(t *testing.T) {
 }
 
 func TestCreateSameTypeRelationshipEventWithNoAttributesSameType(t *testing.T) {
-	resourceAttrs := pcommon.NewMap()
-	resourceAttrs.PutStr("src.id", "idvalue1")
-	resourceAttrs.PutStr("dst.id", "idvalue2")
+	resourceAttrs := Attributes{
+		Source: map[string]pcommon.Value{
+			"id": pcommon.NewValueStr("idvalue1"),
+		},
+		Destination: map[string]pcommon.Value{
+			"id": pcommon.NewValueStr("idvalue2"),
+		},
+	}
 
 	entity := config.Entity{
 		Type: "KubernetesCluster",
@@ -627,7 +652,7 @@ func TestCreateSameTypeRelationshipEventWithNoAttributesSameType(t *testing.T) {
 }
 
 func TestCreateSameTypeRelationshipEventWithoutResourceAttributes(t *testing.T) {
-	resourceAttrs := pcommon.NewMap()
+	resourceAttrs := Attributes{}
 
 	entity := config.Entity{
 		Type: "KubernetesCluster",
@@ -657,11 +682,14 @@ func TestCreateSameTypeRelationshipEventWithoutResourceAttributes(t *testing.T) 
 func TestCollectEventsWithEntitiesWhenAttributesArePresent(t *testing.T) {
 	// arrange
 	testEntity := config.Entity{Type: "testEntityType", IDs: []string{"id1", "id2"}, Attributes: []string{"attr1", "attr2"}}
-	resourceAttrs := pcommon.NewMap()
-	resourceAttrs.PutStr("id1", "idvalue1")
-	resourceAttrs.PutStr("id2", "idvalue2")
-	resourceAttrs.PutStr("attr1", "attrvalue1")
-	resourceAttrs.PutStr("attr2", "attrvalue2")
+	resourceAttrs := Attributes{
+		Common: map[string]pcommon.Value{
+			"id1":   pcommon.NewValueStr("idvalue1"),
+			"id2":   pcommon.NewValueStr("idvalue2"),
+			"attr1": pcommon.NewValueStr("attrvalue1"),
+			"attr2": pcommon.NewValueStr("attrvalue2"),
+		},
+	}
 
 	// act
 	eventBuilder := NewEventDetector(
@@ -701,8 +729,13 @@ func TestCollectEventsWithEntitiesWhenAttributesArePresent(t *testing.T) {
 func TestDoesNotCollectEventsWithEntitiesWhenIDAttributeIsMissing(t *testing.T) {
 	// arrange
 	testEntity := config.Entity{Type: "testEntityType", IDs: []string{"id1", "id2"}, Attributes: []string{}}
-	resourceAttrs := pcommon.NewMap()
-	resourceAttrs.PutStr("id1", "idvalue1")
+
+	resourceAttrs := Attributes{
+		Common: map[string]pcommon.Value{
+			"id1": pcommon.NewValueStr("idvalue1"),
+		},
+	}
+
 	logger := zap.NewNop()
 
 	// act
@@ -724,9 +757,12 @@ func TestDoesNotCollectEventsWithEntitiesWhenIDAttributeIsMissing(t *testing.T) 
 func TestCollectEventsWithEntitiesWhenAttributeIsMissing(t *testing.T) {
 	// arrange
 	testEntity := config.Entity{Type: "testEntityType", IDs: []string{"id1"}, Attributes: []string{"attr1", "attr2"}}
-	resourceAttrs := pcommon.NewMap()
-	resourceAttrs.PutStr("id1", "idvalue1")
-	resourceAttrs.PutStr("attr1", "attrvalue1")
+	resourceAttrs := Attributes{
+		Common: map[string]pcommon.Value{
+			"id1":   pcommon.NewValueStr("idvalue1"),
+			"attr1": pcommon.NewValueStr("attrvalue1"),
+		},
+	}
 
 	// act
 	eventBuilder := NewEventDetector(
@@ -769,11 +805,16 @@ func TestCollectEventsWithRelationshipsWhenAttributesArePresent(t *testing.T) {
 		Source:      srcEntity.Type,
 		Destination: destEntity.Type,
 		Action:      "update"}
-	resourceAttrs := pcommon.NewMap()
-	resourceAttrs.PutStr("id1", "idvalue1")
-	resourceAttrs.PutStr("id2", "idvalue2")
-	resourceAttrs.PutStr("attr1", "attrvalue1")
-	resourceAttrs.PutStr("attr2", "attrvalue2")
+
+	resourceAttrs := Attributes{
+		Common: map[string]pcommon.Value{
+			"id1":   pcommon.NewValueStr("idvalue1"),
+			"id2":   pcommon.NewValueStr("idvalue2"),
+			"attr1": pcommon.NewValueStr("attrvalue1"),
+			"attr2": pcommon.NewValueStr("attrvalue2"),
+		},
+	}
+
 	logger := zap.NewNop()
 
 	// act
@@ -823,10 +864,19 @@ func TestAppendSameTypeRelationshipUpdateEventWhenAttributesArePresent(t *testin
 		Source:      "KubernetesCluster",
 		Destination: "KubernetesCluster",
 		Action:      "update"}
-	resourceAttrs := pcommon.NewMap()
-	resourceAttrs.PutStr("src.id", "idvalue1")
-	resourceAttrs.PutStr("dst.id", "idvalue2")
-	resourceAttrs.PutStr("attr", "attrvalue")
+
+	resourceAttrs := Attributes{
+		Common: map[string]pcommon.Value{
+			"attr": pcommon.NewValueStr("attrvalue"),
+		},
+		Source: map[string]pcommon.Value{
+			"id": pcommon.NewValueStr("idvalue1"),
+		},
+		Destination: map[string]pcommon.Value{
+			"id": pcommon.NewValueStr("idvalue2"),
+		},
+	}
+
 	logger := zap.NewNop()
 
 	// act
@@ -867,13 +917,18 @@ func TestAppendSameTypeRelationshipUpdateEventWhenAttributesArePresent(t *testin
 	assertRelationshipEntityType(t, actualLogRecord.Attributes(), entity.Type, destEntityType)
 }
 
-func TestDoesNotcollectEventsWhenIDAttributeIsMissing(t *testing.T) {
+func TestDoesNotCollectEventsWhenIDAttributeIsMissing(t *testing.T) {
 	// arrange
 	srcEntity := config.Entity{Type: "KubernetesCluster", IDs: []string{"id1"}, Attributes: []string{}}
 	destEntity := config.Entity{Type: "KubernetesNamespace", IDs: []string{"id2"}, Attributes: []string{}}
 	testRelationship := config.RelationshipEvent{Source: "KubernetesCluster", Destination: "KubernetesNamespace"}
-	resourceAttrs := pcommon.NewMap()
-	resourceAttrs.PutStr("id1", "idvalue1")
+
+	resourceAttrs := Attributes{
+		Common: map[string]pcommon.Value{
+			"id1": pcommon.NewValueStr("idvalue1"),
+		},
+	}
+
 	logger := zap.NewNop()
 	// act
 	eventBuilder := NewEventDetector(
@@ -901,8 +956,12 @@ func TestDoesNotAppendSameTypeRelationshipUpdateEventWhenIDAttributeIsMissing(t 
 	// arrange
 	entity := config.Entity{Type: "KubernetesCluster", IDs: []string{"id"}, Attributes: []string{}}
 	testRelationship := config.RelationshipEvent{Source: "KubernetesCluster", Destination: "KubernetesCluster"}
-	resourceAttrs := pcommon.NewMap()
-	resourceAttrs.PutStr("src.id", "idvalue1")
+
+	resourceAttrs := Attributes{
+		Source: map[string]pcommon.Value{
+			"id": pcommon.NewValueStr("idvalue1"),
+		},
+	}
 	logger := zap.NewNop()
 	// act
 	eventBuilder := NewEventDetector(
@@ -933,10 +992,14 @@ func TestCollectEventsWithRelationshipAttribute(t *testing.T) {
 		Destination: "KubernetesNamespace",
 		Attributes:  []string{"relationshipAttr"},
 		Action:      "update"}
-	resourceAttrs := pcommon.NewMap()
-	resourceAttrs.PutStr("id1", "idvalue1")
-	resourceAttrs.PutStr("id2", "idvalue2")
-	resourceAttrs.PutStr("relationshipAttr", "relationshipValue")
+
+	resourceAttrs := Attributes{
+		Common: map[string]pcommon.Value{
+			"id1":              pcommon.NewValueStr("idvalue1"),
+			"id2":              pcommon.NewValueStr("idvalue2"),
+			"relationshipAttr": pcommon.NewValueStr("relationshipValue"),
+		},
+	}
 	logger := zap.NewNop()
 
 	// act
@@ -978,10 +1041,19 @@ func TestAppendSameTypeRelationshipUpdateEventWithRelationshipAttribute(t *testi
 		Destination: "KubernetesCluster",
 		Attributes:  []string{"relationshipAttr"},
 		Action:      "update"}
-	resourceAttrs := pcommon.NewMap()
-	resourceAttrs.PutStr("src.id", "idvalue1")
-	resourceAttrs.PutStr("dst.id", "idvalue2")
-	resourceAttrs.PutStr("relationshipAttr", "relationshipValue")
+
+	resourceAttrs := Attributes{
+		Common: map[string]pcommon.Value{
+			"relationshipAttr": pcommon.NewValueStr("relationshipValue"),
+		},
+		Source: map[string]pcommon.Value{
+			"id": pcommon.NewValueStr("idvalue1"),
+		},
+		Destination: map[string]pcommon.Value{
+			"id": pcommon.NewValueStr("idvalue2"),
+		},
+	}
+
 	logger := zap.NewNop()
 
 	// act

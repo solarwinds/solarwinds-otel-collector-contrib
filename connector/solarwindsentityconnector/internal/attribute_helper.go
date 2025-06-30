@@ -154,19 +154,21 @@ func setIdAttributesForRelationships(attrs pcommon.Map, entityIds []string, reso
 
 // setEntityAttributes sets the entity attributes in the log record as needed by SWO.
 // Attributes are used to update the entity.
-func setAttributes(attrs pcommon.Map, entityAttrs []string, resourceAttrs pcommon.Map, name string) {
+func getAttributes(entityAttrs []string, resourceAttrs pcommon.Map) pcommon.Map {
 	if len(entityAttrs) == 0 {
-		return
+		return pcommon.Map{}
 	}
 
-	logIds := attrs.PutEmptyMap(name)
+	attributes := pcommon.NewMap()
 	for _, attr := range entityAttrs {
 		value, exists := findAttribute(attr, resourceAttrs)
 		if !exists {
 			continue
 		}
-		putAttribute(&logIds, attr, value)
+		putAttribute(&attributes, attr, value)
 	}
+
+	return attributes
 }
 
 // findAttribute checks if the attribute identified as key exists in the source pcommon.Map.

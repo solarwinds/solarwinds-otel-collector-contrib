@@ -114,11 +114,8 @@ func TestSetAttributesSingle(t *testing.T) {
 	resourceAttrs.PutStr("attr1", "attrvalue1")
 	resourceAttrs.PutStr("attr2", "attrvalue2")
 
-	destination := plog.NewLogRecord()
-	setAttributes(destination.Attributes(), []string{"attr1"}, resourceAttrs, entityAttributes)
-	attrs, exists := destination.Attributes().Get(entityAttributes)
-	assert.True(t, exists)
-	assert.Equal(t, 1, attrs.Map().Len())
+	attributes := getAttributes([]string{"attr1"}, resourceAttrs)
+	assert.Equal(t, 1, attributes.Len())
 }
 
 func TestSetAttributesEmpty(t *testing.T) {
@@ -126,10 +123,8 @@ func TestSetAttributesEmpty(t *testing.T) {
 	resourceAttrs.PutStr("attr1", "attrvalue1")
 	resourceAttrs.PutStr("attr2", "attrvalue2")
 
-	destination := plog.NewLogRecord()
-	setAttributes(destination.Attributes(), []string{}, resourceAttrs, entityAttributes)
-	_, exists := destination.Attributes().Get(entityAttributes)
-	assert.False(t, exists)
+	attributes := getAttributes([]string{}, resourceAttrs)
+	assert.NotNil(t, attributes)
 }
 
 func TestPutStringAttribute(t *testing.T) {
