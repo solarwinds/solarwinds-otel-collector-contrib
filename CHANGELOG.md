@@ -1,7 +1,7 @@
 # Changelog
 
 ## vNext
-- `solarwindsentityconnector` Relationships now expire (configurable), and a delete event is sent after the expiration.
+- `solarwindsentityconnector` Relationships now expire (configurable), and a delete event is sent after the expiration. A benchmark test was added to check the connector’s performance.
 - `swoworkloadtypeprocessor` Extended the processor to allow searching for owners of Pods.
 
 ## v0.127.3
