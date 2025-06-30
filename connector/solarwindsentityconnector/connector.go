@@ -171,12 +171,28 @@ func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) erro
 }
 
 func (s *solarwindsentity) handleEvent(event internal.Event, eventLogs *plog.LogRecordSlice) error {
-	event.Update(eventLogs)
-	if s.storageManager != nil {
-		err := s.storageManager.Update(event)
-		if err != nil {
-			s.logger.Error("failed to update storage with event", zap.Error(err))
-			return err
+	action, err := internal.GetActionType(event)
+	if err != nil {
+		return err
+	}
+	switch action {
+	case internal.EventUpdateAction:
+		event.Update(eventLogs)
+		if s.storageManager != nil {
+			err := s.storageManager.Update(event)
+			if err != nil {
+				s.logger.Error("Failed to update storage with event", zap.Error(err))
+				return err
+			}
+		}
+	case internal.EventDeleteAction:
+		event.Delete(eventLogs)
+		if s.storageManager != nil {
+			err := s.storageManager.Delete(event)
+			if err != nil {
+				s.logger.Error("Failed to delete event from storage", zap.Error(err))
+				return err
+			}
 		}
 	}
 	return nil

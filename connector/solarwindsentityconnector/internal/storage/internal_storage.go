@@ -49,6 +49,7 @@ const (
 
 // InternalStorage defines the interface for cache operations used by Manager
 type InternalStorage interface {
+	delete(relationship *internal.Relationship) error
 	update(relationship *internal.Relationship) error
 	close()
 }
@@ -69,6 +70,7 @@ type internalStorage struct {
 	entityTtl                 time.Duration
 	ttlCleanUpIntervalSeconds time.Duration
 	logger                    *zap.Logger
+	cacheKeyBuilder           KeyBuilder
 
 	// TODO: Introduce mutex to protect concurrent access to the cache when parallelization is used
 	// in the upper layers (NH-112603).
@@ -122,8 +124,9 @@ func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em c
 		relationshipTtl: cfg.Interval,
 		// The entity should live longer than the relationship to be able to send delete event after expiration.
 		// The TTL + clean-up interval should be the longest interval after which the relationship would be evicted.
-		entityTtl: (cfg.Interval + cfg.TTLCleanupIntervalSeconds) * entityTTLFactor,
-		logger:    logger,
+		entityTtl:       (cfg.Interval + cfg.TTLCleanupIntervalSeconds) * entityTTLFactor,
+		logger:          logger,
+		cacheKeyBuilder: NewKeyBuilder(),
 	}, nil
 }
 
@@ -168,6 +171,36 @@ func (c *internalStorage) close() {
 	c.logger.Info("internalStorage stopped")
 }
 
+// Delete removes a relationship from the internal storage.
+// Entities are not removed, they will be removed when they expire.
+// Delete does not trigger onEvict callback, only ttl expiration does.
+func (c *internalStorage) delete(relationship *internal.Relationship) error {
+	c.logger.Debug("deleting relationship from internal storage", zap.String("relationshipType", relationship.Type))
+
+	sourceHash, err := c.cacheKeyBuilder.BuildEntityKey(relationship.Source)
+	if err != nil {
+		return errors.Join(err, fmt.Errorf("failed to hash key for source entity: %s", relationship.Source.Type))
+	}
+	destHash, err := c.cacheKeyBuilder.BuildEntityKey(relationship.Destination)
+	if err != nil {
+		return errors.Join(err, fmt.Errorf("failed to hash key for destination entity: %s", relationship.Destination.Type))
+	}
+
+	// Remove the relationship from the cache
+	relationshipKey, err := c.cacheKeyBuilder.BuildRelationshipKey(relationship.Type, sourceHash, destHash)
+	if err != nil {
+		return err
+	}
+	_, found := c.relationships.Get(relationshipKey)
+	if found {
+		c.logger.Debug("deleting relationship from cache %s", zap.String("relationshipKey", relationshipKey))
+		c.relationships.Del(relationshipKey)
+	} else {
+		c.logger.Debug("relationship has already been deleted or does not exist, %s", zap.String("relationshipKey", relationshipKey))
+	}
+	return nil
+}
+
 // Reset TTL for existing entries, or creates a new entries with default TTL, for given relationship
 // as well as source and destination entities.
 // Entities have minimum TTL of ttlCleanUpIntervalSeconds * entityTTLFactor, which is minimum 5 seconds as ttlCleanUpIntervalSeconds has 1s minimum.
@@ -175,11 +208,11 @@ func (c *internalStorage) close() {
 func (c *internalStorage) update(relationship *internal.Relationship) error {
 	c.logger.Debug("updating relationship in internal storage", zap.String("relationshipType", relationship.Type))
 
-	sourceHash, err := buildKey(relationship.Source)
+	sourceHash, err := c.cacheKeyBuilder.BuildEntityKey(relationship.Source)
 	if err != nil {
 		return errors.Join(err, fmt.Errorf("failed to hash key for source entity: %s", relationship.Source.Type))
 	}
-	destHash, err := buildKey(relationship.Destination)
+	destHash, err := c.cacheKeyBuilder.BuildEntityKey(relationship.Destination)
 	if err != nil {
 		return errors.Join(err, fmt.Errorf("failed to hash key for destination entity: %s", relationship.Destination.Type))
 	}
@@ -194,7 +227,11 @@ func (c *internalStorage) update(relationship *internal.Relationship) error {
 		return fmt.Errorf("failed to update destination entity: %s", relationship.Destination.Type)
 	}
 
-	relationshipKey := fmt.Sprintf("%s:%s:%s", relationship.Type, sourceHash, destHash)
+	relationshipKey, err := c.cacheKeyBuilder.BuildRelationshipKey(relationship.Type, sourceHash, destHash)
+	if err != nil {
+		return err
+	}
+
 	relationshipValue := storedRelationship{
 		sourceHash:       sourceHash,
 		destHash:         destHash,

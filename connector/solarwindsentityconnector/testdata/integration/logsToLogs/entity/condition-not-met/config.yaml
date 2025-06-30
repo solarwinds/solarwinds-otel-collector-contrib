@@ -7,3 +7,4 @@ schema:
       - type: "Kubernetes Cluster"
         conditions: ['attributes["k8s.cluster.port"] == "8080" or attributes["k8s.cluster.port"] == "9090" and attributes["k8s.cluster.name"] == "test-cluster-name"']
         context: "log"
+        action: "update"

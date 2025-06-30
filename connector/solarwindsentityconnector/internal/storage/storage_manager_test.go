@@ -32,6 +32,7 @@ import (
 type mockCache struct {
 	mu           sync.Mutex
 	updateCalled bool
+	deleteCalled bool
 	lastRel      *internal.Relationship
 	returnErr    error
 }
@@ -40,6 +41,12 @@ var _ InternalStorage = (*mockCache)(nil)
 
 func (m *mockCache) update(rel *internal.Relationship) error {
 	m.updateCalled = true
+	m.lastRel = rel
+	return m.returnErr
+}
+
+func (m *mockCache) delete(rel *internal.Relationship) error {
+	m.deleteCalled = true
 	m.lastRel = rel
 	return m.returnErr
 }
@@ -379,6 +386,90 @@ func TestNewStorageManager(t *testing.T) {
 				assert.NotNil(t, manager.expiredCh)
 				assert.Equal(t, mockConsumer, manager.eventConsumer)
 				assert.Equal(t, logger, manager.logger)
+			}
+		})
+	}
+}
+
+// TestDelete tests the Delete method of storage Manager
+func TestDelete(t *testing.T) {
+	testCases := []struct {
+		name           string
+		event          internal.Event
+		cacheExpectErr bool
+		cacheMockErr   error
+	}{
+		{
+			name: "successful delete with relationship",
+			event: &internal.Relationship{
+				Type: "testRelation",
+				Source: internal.RelationshipEntity{
+					Type: "sourceEntity",
+					IDs:  createIDMap("id", "source1"),
+				},
+				Destination: internal.RelationshipEntity{
+					Type: "destEntity",
+					IDs:  createIDMap("id", "dest1"),
+				},
+			},
+			cacheExpectErr: false,
+			cacheMockErr:   nil,
+		},
+		{
+			name: "cache delete returns error",
+			event: &internal.Relationship{
+				Type: "testRelation",
+				Source: internal.RelationshipEntity{
+					Type: "sourceEntity",
+					IDs:  createIDMap("id", "source2"),
+				},
+				Destination: internal.RelationshipEntity{
+					Type: "destEntity",
+					IDs:  createIDMap("id", "dest2"),
+				},
+			},
+			cacheExpectErr: true,
+			cacheMockErr:   assert.AnError,
+		},
+		{
+			name: "entity event is ignored, no cache call",
+			event: &internal.Entity{
+				Type: "testEntity",
+				IDs:  createIDMap("id", "entity1"),
+			},
+			cacheExpectErr: false,
+			cacheMockErr:   nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockCache := &mockCache{
+				returnErr: tc.cacheMockErr,
+			}
+
+			manager := &Manager{
+				cache:  mockCache,
+				logger: zap.NewNop(),
+			}
+
+			err := manager.Delete(tc.event)
+
+			// Check if error matches expectation
+			if tc.cacheExpectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+
+			// If the event is a relationship, verify it was passed to the cache
+			if rel, ok := tc.event.(*internal.Relationship); ok {
+				assert.True(t, mockCache.deleteCalled)
+				assert.Equal(t, rel, mockCache.lastRel)
+			} else {
+				// If it's not a relationship, cache should not be called
+				assert.False(t, mockCache.deleteCalled)
+				assert.Nil(t, mockCache.lastRel)
 			}
 		})
 	}

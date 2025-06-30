@@ -14,10 +14,33 @@
 
 package internal
 
-import "go.opentelemetry.io/collector/pdata/plog"
+import (
+	"fmt"
+	"go.opentelemetry.io/collector/pdata/plog"
+)
 
 // Event interface defines methods for handling events related to entities and relationships.
 type Event interface {
 	Update(logRecords *plog.LogRecordSlice)
 	Delete(logRecords *plog.LogRecordSlice)
+}
+
+func GetActionType(e Event) (string, error) {
+	switch e.(type) {
+	case Entity:
+		return GetActionString(e.(Entity).Action)
+	case *Relationship:
+		return GetActionString(e.(*Relationship).Action)
+	default:
+		return "", fmt.Errorf("unsupported event type: %T", e)
+	}
+}
+
+func GetActionString(input string) (string, error) {
+	if input == EventUpdateAction {
+		return EventUpdateAction, nil
+	} else if input == EventDeleteAction {
+		return EventDeleteAction, nil
+	}
+	return "", fmt.Errorf("failed to get action type from input: %s", input)
 }

@@ -18,37 +18,45 @@ schema:
       - type: "kubernetes.cluster"
         conditions: ["true"]
         context: "log"
+        action: "update"
       - type: "kubernetes.node"
         conditions: ["true"]
         context: "log"
+        action: "update"
       - type: "kubernetes.cluster"
         conditions: ["true"]
+        action: "update"
         context: "metric"
       - type: "kubernetes.node"
         conditions: ["true"]
         context: "metric"
+        action: "update"
     relationships:
       - context: "log"
         conditions: ["true"]
         type: "test"
         source: "kubernetes.cluster"
         destination: "kubernetes.node"
+        action: "update"
         attributes:
       - context: "metric"
         conditions: ["true"]
         type: "test"
         source: "kubernetes.cluster"
         destination: "kubernetes.node"
+        action: "update"
         attributes:
       - context: "log"
         conditions: ["true"]
         type: "test"
         source: "kubernetes.node"
         destination: "kubernetes.node"
+        action: "update"
         attributes:
       - context: "metric"
         conditions: ["true"]
         type: "test"
         source: "kubernetes.node"
         destination: "kubernetes.node"
+        action: "update"
         attributes:

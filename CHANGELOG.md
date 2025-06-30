@@ -1,7 +1,9 @@
 # Changelog
 
 ## vNext
-- `solarwindsentityconnector` Relationships now expire (configurable), and a delete event is sent after the expiration. A benchmark test was added to check the connector’s performance.
+- `solarwindsentityconnector`Added benchmark tests to check the connector’s performance.
+- `solarwindsentityconnector` Added support for delete events. Entities and relationships can be now deleted based on OTTL conditions.
+- `solarwindsentityconnector` Relationships now expire (configurable), and a delete event is sent after the expiration.
 - `swoworkloadtypeprocessor` Extended the processor to allow searching for owners of Pods.
 
 ## v0.127.3
