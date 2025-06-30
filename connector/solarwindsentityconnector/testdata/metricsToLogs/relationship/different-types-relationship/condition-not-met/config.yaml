@@ -18,6 +18,8 @@ schema:
       - type: "Kubernetes Pod"
         conditions: ["true"]
         context: "metric"
+        action: "update"
       - type: "Kubernetes Cluster"
         conditions: ["true"]
         context: "metric"
+        action: "update"

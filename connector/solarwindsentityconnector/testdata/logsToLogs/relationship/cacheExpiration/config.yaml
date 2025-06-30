@@ -1,0 +1,31 @@
+expiration_policy:
+  enabled: true
+  interval: 1ms
+  cache_configuration:
+    ttl_cleanup_interval: 1s
+schema:
+  entities:
+    - type: "Kubernetes Pod"
+      ids: ["k8s.pod.id", "k8s.pod.name"]
+      attributes: ["k8s.pod.port"]
+    - type: "Kubernetes Cluster"
+      ids: ["k8s.cluster.id", "k8s.cluster.name"]
+      attributes: ["k8s.cluster.port"]
+  events:
+    relationships:
+      - type: "MemberOf"
+        source: "Kubernetes Cluster"
+        destination: "Kubernetes Pod"
+        attributes: ["k8s.cluster.port"]
+        conditions: ['attributes["k8s.cluster.port"] == "8080" or attributes["k8s.cluster.port"] == "9090" and attributes["k8s.cluster.name"] == "test-cluster-name"']
+        context: "log"
+        action: "update"
+    entities:
+      - type: "Kubernetes Pod"
+        conditions: ["true"]
+        context: "log"
+        action: "update"
+      - type: "Kubernetes Cluster"
+        conditions: ['attributes["k8s.cluster.port"] == "8080" or attributes["k8s.cluster.port"] == "9090" and attributes["k8s.cluster.name"] == "test-cluster-name"']
+        context: "log"
+        action: "update"

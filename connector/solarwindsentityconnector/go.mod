@@ -1,8 +1,9 @@
 module github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector
 
-go 1.24.3
+go 1.24.4
 
 require (
+	github.com/dgraph-io/ristretto/v2 v2.2.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.127.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl v0.127.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.127.0
@@ -24,6 +25,7 @@ require (
 	github.com/alecthomas/participle/v2 v2.1.4 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect

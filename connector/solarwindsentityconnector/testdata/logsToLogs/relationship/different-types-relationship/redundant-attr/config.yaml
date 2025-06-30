@@ -17,19 +17,24 @@ schema:
         attributes: []
         conditions: ["true"]
         context: "log"
+        action: "update"
       - type: "MemberOf"
         source: "Snowflake"
         destination: "Kubernetes Pod"
         attributes: ["k8s.pod.port"]
         conditions: ["true"]
         context: "log"
+        action: "update"
     entities:
       - type: "Snowflake"
         conditions: []
         context: "log"
+        action: "update"
       - type: "AWS EC2"
         conditions: ["true"]
         context: "log"
+        action: "update"
       - type: "Kubernetes Pod"
         conditions: ["true"]
         context: "log"
+        action: "update"
