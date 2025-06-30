@@ -77,20 +77,26 @@ func BenchmarkMetrics(b *testing.B) {
 			metrics := genTestMetrics(b, cfg, tc.totalMetrics, tc.invalidRatio, tc.multiple)
 
 			b.ReportAllocs()
-			b.ResetTimer()
-			for _, metric := range metrics {
-				assert.NoError(b, conn.ConsumeMetrics(context.Background(), metric))
-			}
-			b.StopTimer()
+			for b.Loop() {
 
-			getLogsCount := len(sink.AllLogs())
-			expectedLogsCount := tc.totalMetrics - int(float32(tc.totalMetrics)*tc.invalidRatio)
-			if tc.multiple { // If multiple metric is used, we expect only one log from the connector or zero if invalidRatio is 1.0
-				expectedLogsCount = int(1 - int(tc.invalidRatio))
-			}
+				for _, metric := range metrics {
+					assert.NoError(b, conn.ConsumeMetrics(context.Background(), metric))
+				}
 
-			assert.Equal(b, getLogsCount, expectedLogsCount, "Expected to receive %d logs, but got %d logs",
-				expectedLogsCount, getLogsCount)
+				b.StopTimer()
+
+				getLogsCount := len(sink.AllLogs())
+				expectedLogsCount := tc.totalMetrics - int(float32(tc.totalMetrics)*tc.invalidRatio)
+				if tc.multiple { // If multiple metric is used, we expect only one log from the connector or zero if invalidRatio is 1.0
+					expectedLogsCount = int(1 - int(tc.invalidRatio))
+				}
+
+				assert.Equal(b, getLogsCount, expectedLogsCount, "Expected to receive %d logs, but got %d logs",
+					expectedLogsCount, getLogsCount)
+				sink.Reset()
+
+				b.StartTimer()
+			}
 		})
 	}
 }
@@ -144,20 +150,26 @@ func BenchmarkLogs(b *testing.B) {
 			logs := genTestLogs(b, cfg, tc.totalLogs, tc.invalidRatio, tc.multiple)
 
 			b.ReportAllocs()
-			b.ResetTimer()
-			for _, log := range logs {
-				assert.NoError(b, conn.ConsumeLogs(context.Background(), log))
-			}
-			b.StopTimer()
+			for b.Loop() {
 
-			getLogsCount := len(sink.AllLogs())
-			expectedLogsCount := tc.totalLogs - int(float32(tc.totalLogs)*tc.invalidRatio)
-			if tc.multiple { // If multiple log is used, we expect only one log from the connector or zero if invalidRatio is 1.0
-				expectedLogsCount = int(1 - int(tc.invalidRatio))
-			}
+				for _, log := range logs {
+					assert.NoError(b, conn.ConsumeLogs(context.Background(), log))
+				}
 
-			assert.Equal(b, getLogsCount, expectedLogsCount, "Expected to receive %d logs, but got %d logs",
-				expectedLogsCount, getLogsCount)
+				b.StopTimer()
+
+				getLogsCount := len(sink.AllLogs())
+				expectedLogsCount := tc.totalLogs - int(float32(tc.totalLogs)*tc.invalidRatio)
+				if tc.multiple { // If multiple log is used, we expect only one log from the connector or zero if invalidRatio is 1.0
+					expectedLogsCount = int(1 - int(tc.invalidRatio))
+				}
+
+				assert.Equal(b, getLogsCount, expectedLogsCount, "Expected to receive %d logs, but got %d logs",
+					expectedLogsCount, getLogsCount)
+				sink.Reset()
+
+				b.StartTimer()
+			}
 		})
 
 	}
