@@ -8,21 +8,13 @@ status:
     development: [ metrics, logs, traces ]
 
 resource_attributes:
-  sw.otelcol.receiver.name:
-    enabled: true
-    description: "Integration type."
-    type: string
-  sw.otelcol.integration.id:
-    enabled: true
-    description: "Integration ID."
-    type: string
   sw.otelcol.collector.name:
     enabled: true
-    description: "SolarWinds OTEL Collector name."
+    description: "SolarWinds OTEL Collector name. Value is taken from `solarwinds` extension."
     type: string
   sw.otelcol.collector.entity_creation:
     enabled: false
-    description: "Defines if entity should be created from signal."
+    description: "Defines if entity should be created from signal. Value is taken from `solarwinds` extension."
     type: string
 
 tests:
