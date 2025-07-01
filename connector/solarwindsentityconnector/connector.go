@@ -98,7 +98,6 @@ func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.M
 	for i := 0; i < metrics.ResourceMetrics().Len(); i++ {
 		resourceMetric := metrics.ResourceMetrics().At(i)
 		resourceAttrs := resourceMetric.Resource().Attributes()
-		attrs := internal.IdentifyAttributes(resourceAttrs, "src", "dst")
 		for j := 0; j < resourceMetric.ScopeMetrics().Len(); j++ {
 			scopeMetric := resourceMetric.ScopeMetrics().At(j)
 
@@ -106,7 +105,7 @@ func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.M
 				metric := scopeMetric.Metrics().At(k)
 
 				tc := ottlmetric.NewTransformContext(metric, scopeMetric.Metrics(), scopeMetric.Scope(), resourceMetric.Resource(), scopeMetric, resourceMetric)
-				events, err := s.eventDetector.DetectMetric(ctx, attrs, tc)
+				events, err := s.eventDetector.DetectMetric(ctx, resourceAttrs, tc)
 
 				if err != nil {
 					s.logger.Error("Failed to process metric condition", zap.Error(err))

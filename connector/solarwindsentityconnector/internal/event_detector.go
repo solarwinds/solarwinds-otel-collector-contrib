@@ -26,12 +26,13 @@ import (
 )
 
 type EventDetector struct {
-	entities     map[string]config.Entity
-	logEvents    config.EventsGroup[ottllog.TransformContext]
-	metricEvents config.EventsGroup[ottlmetric.TransformContext]
-	sourcePrefix string
-	destPrefix   string
-	logger       *zap.Logger
+	entities         map[string]config.Entity
+	entityIdentifier EntityIdentifier
+	logEvents        config.EventsGroup[ottllog.TransformContext]
+	metricEvents     config.EventsGroup[ottlmetric.TransformContext]
+	sourcePrefix     string
+	destPrefix       string
+	logger           *zap.Logger
 }
 
 func NewEventDetector(
@@ -41,13 +42,15 @@ func NewEventDetector(
 	metricEvents config.EventsGroup[ottlmetric.TransformContext],
 	logger *zap.Logger,
 ) *EventDetector {
+	ei := EntityIdentifier{entities: entities}
 	return &EventDetector{
-		entities:     entities,
-		logEvents:    logEvents,
-		metricEvents: metricEvents,
-		sourcePrefix: sourcePrefix,
-		destPrefix:   destPrefix,
-		logger:       logger,
+		entities:         entities,
+		entityIdentifier: ei,
+		logEvents:        logEvents,
+		metricEvents:     metricEvents,
+		sourcePrefix:     sourcePrefix,
+		destPrefix:       destPrefix,
+		logger:           logger,
 	}
 }
 
@@ -56,8 +59,9 @@ func (e *EventDetector) DetectLog(ctx context.Context, resourceAttrs pcommon.Map
 	if err != nil {
 		return nil, err
 	}
+	attrs := IdentifyAttributes(resourceAttrs, "src", "dst")
 
-	return e.collectEvents(Attributes{}, ee, re)
+	return e.collectEvents(resourceAttrs, attrs, ee, re)
 }
 
 func (e *EventDetector) DetectMetric(ctx context.Context, resourceAttrs pcommon.Map, transformCtx ottlmetric.TransformContext) ([]Event, error) {
@@ -65,26 +69,30 @@ func (e *EventDetector) DetectMetric(ctx context.Context, resourceAttrs pcommon.
 	if err != nil {
 		return nil, err
 	}
-	return e.collectEvents(Attributes{}, ee, re)
+	attrs := IdentifyAttributes(resourceAttrs, "src", "dst")
+
+	return e.collectEvents(resourceAttrs, attrs, ee, re)
 
 }
 
-func (e *EventDetector) collectEvents(attrs Attributes, ee []*config.EntityEvent, re []*config.RelationshipEvent) ([]Event, error) {
+func (e *EventDetector) collectEvents(resAttrs pcommon.Map, attrs Attributes, ee []*config.EntityEvent, re []*config.RelationshipEvent) ([]Event, error) {
 	events := make([]Event, 0, len(ee)+len(re))
 	for _, entityEvent := range ee {
-		newEvents, err := e.createEntityEvent(attrs, entityEvent)
+		newEvents, err := e.entityIdentifier.getEntities(entityEvent.Type, attrs)
 		if err != nil {
 			e.logger.Debug("failed to create entity update event", zap.Error(err))
 			continue
 		}
 
+		action, err := GetActionString(entityEvent.Action)
 		for _, newEvent := range newEvents {
+			newEvent.Action = action
 			events = append(events, newEvent)
 		}
 	}
 
 	for _, relationshipEvent := range re {
-		newRel, err := e.createRelationshipEvent(attrs, relationshipEvent)
+		newRel, err := e.createRelationshipEvent(resAttrs, relationshipEvent)
 		if err != nil {
 			e.logger.Debug("failed to create relationship update event", zap.Error(err))
 			continue
@@ -95,35 +103,7 @@ func (e *EventDetector) collectEvents(attrs Attributes, ee []*config.EntityEvent
 	return events, nil
 }
 
-func (e *EventDetector) createEntityEvent(resourceAttrs Attributes, event *config.EntityEvent) (result []Entity, err error) {
-	entity := e.entities[event.Type]
-	idMaps, err := getEntities(entity.IDs, resourceAttrs)
-
-	if err != nil {
-		return result, fmt.Errorf("failed to set ID attributes for entity %s: %w", entity.Type, err)
-	}
-
-	entityAttrs := getAttributes(entity.Attributes, pcommon.Map{})
-	action, err := GetActionString(event.Action)
-	if err != nil {
-		e.logger.Debug("failed to get action type for entity event", zap.Error(err))
-		return result, err
-	}
-
-	for _, ids := range idMaps {
-		result = append(result, Entity{
-			Action:     action,
-			Type:       entity.Type,
-			IDs:        ids,
-			Attributes: entityAttrs,
-		})
-
-	}
-
-	return result, nil
-}
-
-func (e *EventDetector) createRelationshipEvent(resourceAttrs Attributes, relationship *config.RelationshipEvent) (*Relationship, error) {
+func (e *EventDetector) createRelationshipEvent(resourceAttrs pcommon.Map, relationship *config.RelationshipEvent) (*Relationship, error) {
 	source, ok := e.entities[relationship.Source]
 	if !ok {
 		return nil, fmt.Errorf("bad source entity")
@@ -138,17 +118,17 @@ func (e *EventDetector) createRelationshipEvent(resourceAttrs Attributes, relati
 	attrs := lr.Attributes()
 
 	if source.Type == dest.Type {
-		if err := e.setAttributesForSameTypeRelationships(attrs, source, dest, pcommon.NewMap()); err != nil {
+		if err := e.setAttributesForSameTypeRelationships(attrs, source, dest, resourceAttrs); err != nil {
 			return nil, err
 		}
 
 	} else {
-		if err := e.setAttributesForDifferentTypeRelationships(attrs, source, dest, pcommon.NewMap()); err != nil {
+		if err := e.setAttributesForDifferentTypeRelationships(attrs, source, dest, resourceAttrs); err != nil {
 			return nil, err
 		}
 	}
 
-	relationshipAttrs := getAttributes(relationship.Attributes, pcommon.Map{})
+	relationshipAttrs := getAttributes(relationship.Attributes, resourceAttrs)
 
 	sourceIds, _ := attrs.Get(relationshipSrcEntityIds)
 	destIds, _ := attrs.Get(relationshipDestEntityIds)
