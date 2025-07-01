@@ -18,6 +18,9 @@ resource_attributes:
     type: string
 
 tests:
-  # skipped because the exporter requires solarwindsextension to run
+  config:
+    # This additional setup needs to be available to pass component tests.
+    extension: solarwindsextension
+  # Skipped because the exporter requires solarwindsextension to run.
   skip_lifecycle: true
 
