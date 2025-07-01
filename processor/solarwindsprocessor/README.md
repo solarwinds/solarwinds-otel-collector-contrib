@@ -18,7 +18,7 @@ SolarWinds processor provides modifying functionality to OTEL signals (metrics, 
 ## Feature Set
 Currently there are two major functionalities provided by SolarWinds processor:
 - Signals decoration by configured resource attributes. For this functionality `resource` configuration should be used. See some integration examples stored in [solarwinds-otel-collector-releases repository](https://github.com/solarwinds/solarwinds-otel-collector-releases/tree/main/examples/integrations).
-- Checks on outgoing signal size in serialized form. Making sure our ingestion pipeline is capable of ingest signal. When serialized signal size is exceeded warning message is recorded in log. For this functionality `max_size_mib` property is used. Default value for this check is 6MiB.
+- Checks on outgoing signal size in serialized form. Making sure our ingestion pipeline is capable of ingest signal. When serialized signal size is exceeded warning message is recorded in log. For this functionality `max_size_mib` property is used. Default value for this check is 6MiB. If there is a need to switch off signal size check, set `max_size_mib` to zero and check will be skipped.
 
 ## `solarwinds` Extension Requirement
 

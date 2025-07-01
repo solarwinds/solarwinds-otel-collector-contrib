@@ -44,7 +44,10 @@ func TestDecorateResourceAttributesForMetrics(t *testing.T) {
 	assert.NoError(t, err)
 
 	actualAttributes := ms.ResourceMetrics().At(0).Resource().Attributes()
-	assert.Equal(t, expectedAttributes, actualAttributes)
+
+	aaRaw := actualAttributes.AsRaw()
+	eaRaw := expectedAttributes.AsRaw()
+	assert.Equal(t, eaRaw, aaRaw, "Expected and actual attributes should match")
 }
 
 func TestDecorateResourceAttributesForLogs(t *testing.T) {
@@ -67,7 +70,10 @@ func TestDecorateResourceAttributesForLogs(t *testing.T) {
 	assert.NoError(t, err)
 
 	actualAttributes := ls.ResourceLogs().At(0).Resource().Attributes()
-	assert.Equal(t, expectedAttributes, actualAttributes)
+
+	aaRaw := actualAttributes.AsRaw()
+	eaRaw := expectedAttributes.AsRaw()
+	assert.Equal(t, eaRaw, aaRaw, "Expected and actual attributes should match")
 }
 
 func TestDecorateResourceAttributesForTraces(t *testing.T) {
@@ -90,5 +96,8 @@ func TestDecorateResourceAttributesForTraces(t *testing.T) {
 	assert.NoError(t, err)
 
 	actualAttributes := ts.ResourceSpans().At(0).Resource().Attributes()
-	assert.Equal(t, expectedAttributes, actualAttributes)
+
+	aaRaw := actualAttributes.AsRaw()
+	eaRaw := expectedAttributes.AsRaw()
+	assert.Equal(t, eaRaw, aaRaw, "Expected and actual attributes should match")
 }
