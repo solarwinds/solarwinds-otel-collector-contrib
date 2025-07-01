@@ -60,7 +60,7 @@ func (p *solarwindsprocessor) adjustConfigurationByExtension(
 	extCfg := swiExtension.GetCommonConfig()
 
 	// Without entity flag.
-	if extCfg.WithoutEntity() {
+	if !extCfg.WithoutEntity() {
 		p.cfg.ResourceAttributes[solarwindsextension.EntityCreation] = solarwindsextension.EntityCreationValue
 	}
 
