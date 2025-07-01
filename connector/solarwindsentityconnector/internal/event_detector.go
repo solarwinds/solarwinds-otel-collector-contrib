@@ -61,7 +61,7 @@ func (e *EventDetector) DetectLog(ctx context.Context, resourceAttrs pcommon.Map
 	}
 	attrs := IdentifyAttributes(resourceAttrs, "src", "dst")
 
-	return e.collectEvents(resourceAttrs, attrs, ee, re)
+	return e.collectEvents(attrs, ee, re)
 }
 
 func (e *EventDetector) DetectMetric(ctx context.Context, resourceAttrs pcommon.Map, transformCtx ottlmetric.TransformContext) ([]Event, error) {
@@ -71,11 +71,11 @@ func (e *EventDetector) DetectMetric(ctx context.Context, resourceAttrs pcommon.
 	}
 	attrs := IdentifyAttributes(resourceAttrs, "src", "dst")
 
-	return e.collectEvents(resourceAttrs, attrs, ee, re)
+	return e.collectEvents(attrs, ee, re)
 
 }
 
-func (e *EventDetector) collectEvents(resAttrs pcommon.Map, attrs Attributes, ee []*config.EntityEvent, re []*config.RelationshipEvent) ([]Event, error) {
+func (e *EventDetector) collectEvents(attrs Attributes, ee []*config.EntityEvent, re []*config.RelationshipEvent) ([]Event, error) {
 	events := make([]Event, 0, len(ee)+len(re))
 	for _, entityEvent := range ee {
 		newEvents, err := e.entityIdentifier.getEntities(entityEvent.Type, attrs)

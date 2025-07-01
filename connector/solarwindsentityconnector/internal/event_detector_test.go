@@ -706,7 +706,7 @@ func TestCollectEventsWithEntitiesWhenAttributesArePresent(t *testing.T) {
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		nil)
-	events, err := eventBuilder.collectEvents(transformToPcommonMap(resourceAttrs),
+	events, err := eventBuilder.collectEvents(
 		resourceAttrs, []*config.EntityEvent{{
 			Type:   testEntity.Type,
 			Action: "update"}}, nil)
@@ -756,7 +756,6 @@ func TestDoesNotCollectEventsWithEntitiesWhenIDAttributeIsMissing(t *testing.T) 
 		logger)
 
 	events, err := eventBuilder.collectEvents(
-		transformToPcommonMap(resourceAttrs),
 		resourceAttrs,
 		[]*config.EntityEvent{{Type: testEntity.Type}}, nil)
 	require.NoError(t, err)
@@ -784,7 +783,6 @@ func TestCollectEventsWithEntitiesWhenAttributeIsMissing(t *testing.T) {
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		nil)
 	events, err := eventBuilder.collectEvents(
-		transformToPcommonMap(resourceAttrs),
 		resourceAttrs, []*config.EntityEvent{{
 			Type:   testEntity.Type,
 			Action: "update"}}, nil)
@@ -842,7 +840,6 @@ func TestCollectEventsWithRelationshipsWhenAttributesArePresent(t *testing.T) {
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		logger)
 	events, err := eventBuilder.collectEvents(
-		transformToPcommonMap(resourceAttrs),
 		resourceAttrs,
 		nil,
 		[]*config.RelationshipEvent{&testRelationship})
@@ -903,7 +900,6 @@ func TestAppendSameTypeRelationshipUpdateEventWhenAttributesArePresent(t *testin
 		logger)
 
 	events, err := eventBuilder.collectEvents(
-		transformToPcommonMap(resourceAttrs),
 		resourceAttrs,
 		nil,
 		[]*config.RelationshipEvent{&testRelationship})
@@ -958,7 +954,6 @@ func TestDoesNotCollectEventsWhenIDAttributeIsMissing(t *testing.T) {
 		logger)
 
 	events, err := eventBuilder.collectEvents(
-		transformToPcommonMap(resourceAttrs),
 		resourceAttrs,
 		nil,
 		[]*config.RelationshipEvent{{Type: testRelationship.Type}})
@@ -990,7 +985,6 @@ func TestDoesNotAppendSameTypeRelationshipUpdateEventWhenIDAttributeIsMissing(t 
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		logger)
 	events, err := eventBuilder.collectEvents(
-		transformToPcommonMap(resourceAttrs),
 		resourceAttrs,
 		nil,
 		[]*config.RelationshipEvent{{Type: testRelationship.Type}})
@@ -1031,7 +1025,6 @@ func TestCollectEventsWithRelationshipAttribute(t *testing.T) {
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		logger)
 	events, err := eventBuilder.collectEvents(
-		transformToPcommonMap(resourceAttrs),
 		resourceAttrs,
 		nil,
 		[]*config.RelationshipEvent{&testRelationship})
@@ -1083,7 +1076,6 @@ func TestAppendSameTypeRelationshipUpdateEventWithRelationshipAttribute(t *testi
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		logger)
 	events, err := eventBuilder.collectEvents(
-		transformToPcommonMap(resourceAttrs),
 		resourceAttrs,
 		nil,
 		[]*config.RelationshipEvent{&testRelationship})
