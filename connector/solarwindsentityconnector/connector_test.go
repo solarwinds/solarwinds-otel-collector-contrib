@@ -22,8 +22,6 @@ import (
 	"testing"
 	"time"
 
-	"gopkg.in/yaml.v3"
-
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest/plogtest"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal/metadata"
@@ -179,14 +177,14 @@ func TestConnector(t *testing.T) {
 
 			// Prepare paths and create connector based on type
 			if signalTypeFolder == "logs_to_logs" {
-				basePath = filepath.Join("testdata", "logsToLogs", testFolder)
+				basePath = filepath.Join("testdata", "integration", "logsToLogs", testFolder)
 			} else {
-				basePath = filepath.Join("testdata", "metricsToLogs", testFolder)
+				basePath = filepath.Join("testdata", "integration", "metricsToLogs", testFolder)
 			}
 
 			// Configure and create the appropriate connector
 			configPath := filepath.Join(basePath, "config.yaml")
-			cfg, err := loadConfigFromFile(t, configPath)
+			cfg, err := LoadConfigFromFile(t, configPath)
 			require.NoError(t, err)
 
 			if signalTypeFolder == "logs_to_logs" {
@@ -255,8 +253,8 @@ func TestConnector(t *testing.T) {
 // Then waiting if anything expires, which it should not, since the relationship is deleted.
 func TestRelationship_DeletedRelationshipDoesNotExpire(t *testing.T) {
 	t.Skip("Only for manual run")
-	testFolder := filepath.Join("testdata", "metricsToLogs", "relationship/different-types-relationship/delete-action-cached")
-	cfg, err := loadConfigFromFile(t, filepath.Join(testFolder, "config.yaml"))
+	testFolder := filepath.Join("testdata", "integration", "metricsToLogs", "relationship/different-types-relationship/delete-action-cached")
+	cfg, err := LoadConfigFromFile(t, filepath.Join(testFolder, "config.yaml"))
 	require.NoError(t, err)
 	factory := NewFactory()
 	sink := &consumertest.LogsSink{}
@@ -325,28 +323,12 @@ func TestRelationship_DeletedRelationshipDoesNotExpire(t *testing.T) {
 	}
 }
 
-func loadConfigFromFile(t *testing.T, path string) (*Config, error) {
-	t.Helper()
-
-	yamlFile, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read config file: %w", err)
-	}
-
-	var cfg Config
-	if err := yaml.Unmarshal(yamlFile, &cfg); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
-	}
-
-	return &cfg, nil
-}
-
 // Test that the connector consumes a log or metric from which
 // it infers a relationship, produces a relationship event and
 // then waits for the cache expiration to ensure that the relationship delete event is produced.
 func TestRelationshipCacheExpiration(t *testing.T) {
-	testFolder := filepath.Join("testdata", "logsToLogs", "relationship", "cacheExpiration")
-	cfg, err := loadConfigFromFile(t, filepath.Join(testFolder, "config.yaml"))
+	testFolder := filepath.Join("testdata", "integration", "logsToLogs", "relationship", "cacheExpiration")
+	cfg, err := LoadConfigFromFile(t, filepath.Join(testFolder, "config.yaml"))
 	require.NoError(t, err)
 
 	factory := NewFactory()
