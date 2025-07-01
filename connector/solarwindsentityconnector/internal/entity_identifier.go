@@ -136,6 +136,9 @@ func isSuperSet(subset []string, superset map[string]pcommon.Value) bool {
 }
 
 func getRequiredAttributes(configuredAttrs []string, actualAttrs ...map[string]pcommon.Value) (pcommon.Map, error) {
+	if len(configuredAttrs) == 0 {
+		return pcommon.NewMap(), fmt.Errorf("required attributes not configured")
+	}
 	required := pcommon.NewMap()
 	allAttrs := mergeMaps(actualAttrs...)
 

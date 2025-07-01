@@ -435,7 +435,6 @@ func TestCreateRelationshipEvent(t *testing.T) {
 			"attr1": pcommon.NewValueStr("attrvalue1"),
 		},
 	}
-	resourceAttrs := transformToPcommonMap(ra)
 
 	srcEntity := config.Entity{
 		Type:       "KubernetesCluster",
@@ -467,7 +466,7 @@ func TestCreateRelationshipEvent(t *testing.T) {
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		nil)
 
-	relationshipEvent, err := eventDetector.createRelationshipEvent(resourceAttrs, &relationship)
+	relationshipEvent, err := eventDetector.entityIdentifier.getRelationship(&relationship, ra)
 	assert.Nil(t, err)
 	logs := plog.NewLogs()
 	logRecords := CreateEventLog(&logs)
@@ -495,7 +494,6 @@ func TestCreateRelationshipEventWithNoAttributes(t *testing.T) {
 			"id2": pcommon.NewValueStr("idvalue2"),
 		},
 	}
-	resourceAttrs := transformToPcommonMap(ra)
 
 	srcEntity := config.Entity{
 		Type: "KubernetesCluster",
@@ -524,12 +522,11 @@ func TestCreateRelationshipEventWithNoAttributes(t *testing.T) {
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		nil)
 
-	_, err := eventDetector.createRelationshipEvent(resourceAttrs, &relationship)
+	_, err := eventDetector.entityIdentifier.getRelationship(&relationship, ra)
 	assert.NotNil(t, err)
 }
 
 func TestCreateRelationshipEventWithoutResourceAttributes(t *testing.T) {
-	resourceAttrs := pcommon.NewMap()
 	srcEntity := config.Entity{
 		Type: "KubernetesCluster",
 		IDs:  []string{"id1"},
@@ -557,7 +554,8 @@ func TestCreateRelationshipEventWithoutResourceAttributes(t *testing.T) {
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		nil)
 
-	_, err := eventDetector.createRelationshipEvent(resourceAttrs, &relationship)
+	_, err := eventDetector.entityIdentifier.getRelationship(&relationship, Attributes{})
+
 	assert.NotNil(t, err)
 }
 
@@ -573,8 +571,6 @@ func TestCreateSameTypeRelationshipEvent(t *testing.T) {
 			"id": pcommon.NewValueStr("idvalue2"),
 		},
 	}
-
-	resourceAttrs := transformToPcommonMap(ra)
 
 	entity := config.Entity{
 		Type:       "KubernetesCluster",
@@ -599,7 +595,7 @@ func TestCreateSameTypeRelationshipEvent(t *testing.T) {
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		nil)
 
-	relationshipEvent, err := eventDetector.createRelationshipEvent(resourceAttrs, &relationship)
+	relationshipEvent, err := eventDetector.entityIdentifier.getRelationship(&relationship, ra)
 	assert.Nil(t, err)
 	logs := plog.NewLogs()
 	logRecords := CreateEventLog(&logs)
@@ -630,8 +626,6 @@ func TestCreateSameTypeRelationshipEventWithNoAttributesSameType(t *testing.T) {
 		},
 	}
 
-	resourceAttrs := transformToPcommonMap(ra)
-
 	entity := config.Entity{
 		Type: "KubernetesCluster",
 		IDs:  []string{},
@@ -653,13 +647,11 @@ func TestCreateSameTypeRelationshipEventWithNoAttributesSameType(t *testing.T) {
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		nil)
 
-	_, err := eventDetector.createRelationshipEvent(resourceAttrs, &relationship)
+	_, err := eventDetector.entityIdentifier.getRelationship(&relationship, ra)
 	assert.NotNil(t, err)
 }
 
 func TestCreateSameTypeRelationshipEventWithoutResourceAttributes(t *testing.T) {
-	resourceAttrs := pcommon.NewMap()
-
 	entity := config.Entity{
 		Type: "KubernetesCluster",
 		IDs:  []string{"id"},
@@ -681,8 +673,8 @@ func TestCreateSameTypeRelationshipEventWithoutResourceAttributes(t *testing.T) 
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		nil)
 
-	_, err := eventDetector.createRelationshipEvent(
-		resourceAttrs, &relationship)
+	_, err := eventDetector.entityIdentifier.getRelationship(&relationship, Attributes{})
+
 	assert.NotNil(t, err)
 }
 
@@ -1134,18 +1126,4 @@ func getMap(attrs pcommon.Map, key string) pcommon.Map {
 		return val.Map()
 	}
 	return pcommon.Map{}
-}
-
-func transformToPcommonMap(input Attributes) pcommon.Map {
-	result := pcommon.NewMap()
-	for key, value := range input.Source {
-		result.PutStr("src."+key, value.Str())
-	}
-	for key, value := range input.Destination {
-		result.PutStr("dst."+key, value.Str())
-	}
-	for key, value := range input.Common {
-		result.PutStr(key, value.Str())
-	}
-	return result
 }

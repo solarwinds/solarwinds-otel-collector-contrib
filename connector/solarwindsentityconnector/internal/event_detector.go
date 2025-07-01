@@ -16,12 +16,10 @@ package internal
 
 import (
 	"context"
-	"fmt"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottlmetric"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"go.opentelemetry.io/collector/pdata/pcommon"
-	"go.opentelemetry.io/collector/pdata/plog"
 	"go.uber.org/zap"
 )
 
@@ -110,55 +108,6 @@ func (e *EventDetector) collectEvents(attrs Attributes, ee []*config.EntityEvent
 	return events, nil
 }
 
-func (e *EventDetector) createRelationshipEvent(resourceAttrs pcommon.Map, relationship *config.RelationshipEvent) (*Relationship, error) {
-	source, ok := e.entities[relationship.Source]
-	if !ok {
-		return nil, fmt.Errorf("bad source entity")
-	}
-
-	dest, ok := e.entities[relationship.Destination]
-	if !ok {
-		return nil, fmt.Errorf("bad destination entity")
-	}
-
-	lr := plog.NewLogRecord()
-	attrs := lr.Attributes()
-
-	if source.Type == dest.Type {
-		if err := e.setAttributesForSameTypeRelationships(attrs, source, dest, resourceAttrs); err != nil {
-			return nil, err
-		}
-
-	} else {
-		if err := e.setAttributesForDifferentTypeRelationships(attrs, source, dest, resourceAttrs); err != nil {
-			return nil, err
-		}
-	}
-
-	relationshipAttrs := getAttributes(relationship.Attributes, resourceAttrs)
-
-	sourceIds, _ := attrs.Get(relationshipSrcEntityIds)
-	destIds, _ := attrs.Get(relationshipDestEntityIds)
-	action, err := GetActionString(relationship.Action)
-	if err != nil {
-		e.logger.Debug("failed to get action type for relationship event", zap.Error(err))
-		return nil, err
-	}
-	return &Relationship{
-		Action: action,
-		Type:   relationship.Type,
-		Source: RelationshipEntity{
-			Type: relationship.Source,
-			IDs:  sourceIds.Map(),
-		},
-		Destination: RelationshipEntity{
-			Type: relationship.Destination,
-			IDs:  destIds.Map(),
-		},
-		Attributes: relationshipAttrs,
-	}, nil
-}
-
 // ProcessEvents evaluates the conditions for entities and relationships events.
 // If the conditions are met, it appends the corresponding entity or relationship update event to the event builder.
 // Multiple condition items are evaluated using OR logic.
@@ -193,35 +142,4 @@ func processEvents[C any](
 		}
 	}
 	return entityEvents, relationshipEvents, nil
-}
-
-func (e *EventDetector) setAttributesForSameTypeRelationships(attrs pcommon.Map, source config.Entity, dest config.Entity, resourceAttrs pcommon.Map) error {
-	if e.sourcePrefix == "" || e.destPrefix == "" {
-		return fmt.Errorf("prefixes are mandatory for same type relationships")
-	}
-
-	hasPrefixSrc, err := setIdAttributesForRelationships(attrs, source.IDs, resourceAttrs, relationshipSrcEntityIds, e.sourcePrefix)
-	if err != nil || !hasPrefixSrc {
-		return fmt.Errorf("missing prefixed ID attribute for source entity")
-	}
-
-	hasPrefixDst, err := setIdAttributesForRelationships(attrs, dest.IDs, resourceAttrs, relationshipDestEntityIds, e.destPrefix)
-	if err != nil || !hasPrefixDst {
-		return fmt.Errorf("missing prefixed ID attribute for destination entity")
-	}
-	return nil
-}
-
-func (e *EventDetector) setAttributesForDifferentTypeRelationships(attrs pcommon.Map, source config.Entity, dest config.Entity, resourceAttrs pcommon.Map) error {
-	// For different type relationships, prefixes are optional.
-	_, err := setIdAttributesForRelationships(attrs, source.IDs, resourceAttrs, relationshipSrcEntityIds, e.sourcePrefix)
-	if err != nil {
-		return fmt.Errorf("missing ID attribute for source entity")
-	}
-
-	_, err = setIdAttributesForRelationships(attrs, dest.IDs, resourceAttrs, relationshipDestEntityIds, e.destPrefix)
-	if err != nil {
-		return fmt.Errorf("missing ID attribute for destination entity")
-	}
-	return nil
 }
