@@ -19,7 +19,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/collector/config/configgrpc"
 	"go.opentelemetry.io/collector/config/configopaque"
+	"go.opentelemetry.io/collector/config/configtls"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil"
 
@@ -155,6 +157,92 @@ func TestConfigOTLPWithOverride(t *testing.T) {
 	assert.Equal(
 		t,
 		map[string]configopaque.String{"Authorization": "Bearer YOUR-INGESTION-TOKEN"},
+		otlpCfg.ClientConfig.Headers,
+	)
+}
+
+func TestConfigUnmarshalWithGrpc(t *testing.T) {
+	cfgFile := testutil.LoadConfigTestdata(t, "grpc")
+
+	// Parse configuration.
+	factory := NewFactory()
+	cfg := factory.CreateDefaultConfig()
+	require.NoError(t, cfgFile.Unmarshal(&cfg))
+
+	// Verify the values.
+	assert.Equal(
+		t,
+		&internal.Config{
+			CollectorName:       "test-collector",
+			EndpointURLOverride: "",
+			Resource:            nil,
+			WithoutEntity:       true,
+			GRPCConfig: internal.GRPCConfig{
+				ClientConfig: configgrpc.ClientConfig{
+					Endpoint: "url",
+					TLSSetting: configtls.ClientConfig{
+						Insecure: false,
+					},
+					Headers: map[string]configopaque.String{
+						"Authorization": "token",
+					},
+				},
+			},
+			DataCenter:     "",
+			IngestionToken: "",
+		},
+		cfg,
+	)
+}
+
+func TestConfigOTLPDataCenterOverridenByGrpc(t *testing.T) {
+	cfgFile := testutil.LoadConfigTestdata(t, "grpc_overrides_datacenter")
+
+	// Parse configuration.
+	factory := NewFactory()
+	cfg := factory.CreateDefaultConfig()
+	require.NoError(t, cfgFile.Unmarshal(&cfg))
+
+	// Convert it to the OTLP Exporter configuration.
+	otlpCfg, err := cfg.(*internal.Config).OTLPConfig()
+	require.NoError(t, err)
+
+	// Verify that the gRPC configuration was propagated correctly.
+	assert.Equal(t, "grpc.url:443", otlpCfg.ClientConfig.Endpoint)
+}
+
+func TestConfig_UrlOverridendByGrpc(t *testing.T) {
+	cfgFile := testutil.LoadConfigTestdata(t, "grpc_overrides_urloverride")
+
+	// Parse configuration.
+	factory := NewFactory()
+	cfg := factory.CreateDefaultConfig()
+	require.NoError(t, cfgFile.Unmarshal(&cfg))
+
+	// Convert it to the OTLP Exporter configuration.
+	otlpCfg, err := cfg.(*internal.Config).OTLPConfig()
+	require.NoError(t, err)
+
+	// Verify that the gRPC configuration was propagated correctly.
+	assert.Equal(t, "grpc.url:443", otlpCfg.ClientConfig.Endpoint)
+}
+
+func TestConfig_TokenOverridendByGrpc(t *testing.T) {
+	cfgFile := testutil.LoadConfigTestdata(t, "grpc_overrides_token")
+
+	// Parse configuration.
+	factory := NewFactory()
+	cfg := factory.CreateDefaultConfig()
+	require.NoError(t, cfgFile.Unmarshal(&cfg))
+
+	// Convert it to the OTLP Exporter configuration.
+	otlpCfg, err := cfg.(*internal.Config).OTLPConfig()
+	require.NoError(t, err)
+
+	// Verify that the gRPC configuration was propagated correctly.
+	assert.Equal(
+		t,
+		map[string]configopaque.String{"Authorization": "Bearer grpc_token"},
 		otlpCfg.ClientConfig.Headers,
 	)
 }
