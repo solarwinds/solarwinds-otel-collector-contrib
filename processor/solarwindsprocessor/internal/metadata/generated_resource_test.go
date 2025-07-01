@@ -15,17 +15,15 @@ func TestResourceBuilder(t *testing.T) {
 			rb := NewResourceBuilder(cfg)
 			rb.SetSwOtelcolCollectorEntityCreation("sw.otelcol.collector.entity_creation-val")
 			rb.SetSwOtelcolCollectorName("sw.otelcol.collector.name-val")
-			rb.SetSwOtelcolIntegrationID("sw.otelcol.integration.id-val")
-			rb.SetSwOtelcolReceiverName("sw.otelcol.receiver.name-val")
 
 			res := rb.Emit()
 			assert.Equal(t, 0, rb.Emit().Attributes().Len()) // Second call should return empty Resource
 
 			switch tt {
 			case "default":
-				assert.Equal(t, 3, res.Attributes().Len())
+				assert.Equal(t, 1, res.Attributes().Len())
 			case "all_set":
-				assert.Equal(t, 4, res.Attributes().Len())
+				assert.Equal(t, 2, res.Attributes().Len())
 			case "none_set":
 				assert.Equal(t, 0, res.Attributes().Len())
 				return
@@ -42,16 +40,6 @@ func TestResourceBuilder(t *testing.T) {
 			assert.True(t, ok)
 			if ok {
 				assert.Equal(t, "sw.otelcol.collector.name-val", val.Str())
-			}
-			val, ok = res.Attributes().Get("sw.otelcol.integration.id")
-			assert.True(t, ok)
-			if ok {
-				assert.Equal(t, "sw.otelcol.integration.id-val", val.Str())
-			}
-			val, ok = res.Attributes().Get("sw.otelcol.receiver.name")
-			assert.True(t, ok)
-			if ok {
-				assert.Equal(t, "sw.otelcol.receiver.name-val", val.Str())
 			}
 		})
 	}

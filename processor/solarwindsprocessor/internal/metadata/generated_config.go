@@ -29,8 +29,6 @@ func (rac *ResourceAttributeConfig) Unmarshal(parser *confmap.Conf) error {
 type ResourceAttributesConfig struct {
 	SwOtelcolCollectorEntityCreation ResourceAttributeConfig `mapstructure:"sw.otelcol.collector.entity_creation"`
 	SwOtelcolCollectorName           ResourceAttributeConfig `mapstructure:"sw.otelcol.collector.name"`
-	SwOtelcolIntegrationID           ResourceAttributeConfig `mapstructure:"sw.otelcol.integration.id"`
-	SwOtelcolReceiverName            ResourceAttributeConfig `mapstructure:"sw.otelcol.receiver.name"`
 }
 
 func DefaultResourceAttributesConfig() ResourceAttributesConfig {
@@ -39,12 +37,6 @@ func DefaultResourceAttributesConfig() ResourceAttributesConfig {
 			Enabled: false,
 		},
 		SwOtelcolCollectorName: ResourceAttributeConfig{
-			Enabled: true,
-		},
-		SwOtelcolIntegrationID: ResourceAttributeConfig{
-			Enabled: true,
-		},
-		SwOtelcolReceiverName: ResourceAttributeConfig{
 			Enabled: true,
 		},
 	}

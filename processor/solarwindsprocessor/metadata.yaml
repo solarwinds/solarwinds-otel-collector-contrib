@@ -18,4 +18,6 @@ resource_attributes:
     type: string
 
 tests:
-  config:
+  # skipped because the exporter requires solarwindsextension to run
+  skip_lifecycle: true
+

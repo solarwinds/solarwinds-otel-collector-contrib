@@ -35,20 +35,6 @@ func (rb *ResourceBuilder) SetSwOtelcolCollectorName(val string) {
 	}
 }
 
-// SetSwOtelcolIntegrationID sets provided value as "sw.otelcol.integration.id" attribute.
-func (rb *ResourceBuilder) SetSwOtelcolIntegrationID(val string) {
-	if rb.config.SwOtelcolIntegrationID.Enabled {
-		rb.res.Attributes().PutStr("sw.otelcol.integration.id", val)
-	}
-}
-
-// SetSwOtelcolReceiverName sets provided value as "sw.otelcol.receiver.name" attribute.
-func (rb *ResourceBuilder) SetSwOtelcolReceiverName(val string) {
-	if rb.config.SwOtelcolReceiverName.Enabled {
-		rb.res.Attributes().PutStr("sw.otelcol.receiver.name", val)
-	}
-}
-
 // Emit returns the built resource and resets the internal builder state.
 func (rb *ResourceBuilder) Emit() pcommon.Resource {
 	r := rb.res

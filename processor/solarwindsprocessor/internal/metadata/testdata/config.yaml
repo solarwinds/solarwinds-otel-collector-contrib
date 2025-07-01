@@ -5,17 +5,9 @@ all_set:
       enabled: true
     sw.otelcol.collector.name:
       enabled: true
-    sw.otelcol.integration.id:
-      enabled: true
-    sw.otelcol.receiver.name:
-      enabled: true
 none_set:
   resource_attributes:
     sw.otelcol.collector.entity_creation:
       enabled: false
     sw.otelcol.collector.name:
-      enabled: false
-    sw.otelcol.integration.id:
-      enabled: false
-    sw.otelcol.receiver.name:
       enabled: false

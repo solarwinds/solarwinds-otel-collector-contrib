@@ -27,8 +27,6 @@ func TestResourceAttributesConfig(t *testing.T) {
 			want: ResourceAttributesConfig{
 				SwOtelcolCollectorEntityCreation: ResourceAttributeConfig{Enabled: true},
 				SwOtelcolCollectorName:           ResourceAttributeConfig{Enabled: true},
-				SwOtelcolIntegrationID:           ResourceAttributeConfig{Enabled: true},
-				SwOtelcolReceiverName:            ResourceAttributeConfig{Enabled: true},
 			},
 		},
 		{
@@ -36,8 +34,6 @@ func TestResourceAttributesConfig(t *testing.T) {
 			want: ResourceAttributesConfig{
 				SwOtelcolCollectorEntityCreation: ResourceAttributeConfig{Enabled: false},
 				SwOtelcolCollectorName:           ResourceAttributeConfig{Enabled: false},
-				SwOtelcolIntegrationID:           ResourceAttributeConfig{Enabled: false},
-				SwOtelcolReceiverName:            ResourceAttributeConfig{Enabled: false},
 			},
 		},
 	}
