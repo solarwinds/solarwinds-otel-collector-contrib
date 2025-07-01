@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"errors"
 	"fmt"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -21,24 +22,27 @@ func (e *EntityIdentifier) getEntities(entityType string, attrs Attributes) (ent
 	}
 
 	if isSubset(entity.IDs, attrs.Source) {
-		newEntity, created := createEntity(entity, attrs.Source, attrs.Common)
-		if created {
-			entities = append(entities, newEntity)
+		newEntity, err := createEntity(entity, attrs.Source, attrs.Common)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create entity for type %s: %w", entityType, err)
 		}
+		entities = append(entities, newEntity)
 	}
 
 	if isSubset(entity.IDs, attrs.Destination) {
-		newEntity, created := createEntity(entity, attrs.Destination, attrs.Common)
-		if created {
-			entities = append(entities, newEntity)
+		newEntity, err := createEntity(entity, attrs.Destination, attrs.Common)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create entity for type %s: %w", entityType, err)
 		}
+		entities = append(entities, newEntity)
 	}
 
 	if isSuperSet(entity.IDs, attrs.Common) {
-		newEntity, created := createEntity(entity, attrs.Common)
-		if created {
-			entities = append(entities, newEntity)
+		newEntity, err := createEntity(entity, attrs.Common)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create entity for type %s: %w", entityType, err)
 		}
+		entities = append(entities, newEntity)
 	}
 
 	if len(entities) == 0 {
@@ -48,18 +52,57 @@ func (e *EntityIdentifier) getEntities(entityType string, attrs Attributes) (ent
 	return entities, nil
 }
 
-func createEntity(entity config.Entity, attrs ...map[string]pcommon.Value) (Entity, bool) {
-	ids, allAttributesFound := getEntityAttributes(entity.IDs, attrs...)
-	if allAttributesFound {
-		ea, _ := getEntityAttributes(entity.Attributes, attrs...)
-		return Entity{
-			IDs:        ids,
-			Attributes: ea,
-			Type:       entity.Type,
-		}, true
+func (e *EntityIdentifier) getRelationship(relationship *config.RelationshipEvent, attrs Attributes) (*Relationship, error) {
+	source, ok := e.entities[relationship.Source]
+	if !ok {
+		return nil, fmt.Errorf("unexpected source entity type")
 	}
 
-	return Entity{}, false
+	dest, ok := e.entities[relationship.Destination]
+	if !ok {
+		return nil, fmt.Errorf("unexpected destination entity type")
+	}
+
+	sourceAttributes, err := getRequiredAttributes(source.IDs, attrs.Source, attrs.Common)
+	if err != nil {
+		return nil, errors.Join(fmt.Errorf("failed to create source entity %s", source.Type), err)
+
+	}
+
+	destAttributes, err := getRequiredAttributes(dest.IDs, attrs.Destination, attrs.Common)
+	if err != nil {
+		return nil, errors.Join(fmt.Errorf("failed to create destination entity %s", dest.Type), err)
+	}
+
+	r := Relationship{
+		Type: relationship.Type,
+		Source: RelationshipEntity{
+			Type: source.Type,
+			IDs:  sourceAttributes,
+		},
+		Destination: RelationshipEntity{
+			Type: dest.Type,
+			IDs:  destAttributes,
+		},
+		Attributes: getOptionalAttributes(relationship.Attributes, attrs.Common),
+	}
+
+	return &r, nil
+}
+
+func createEntity(entity config.Entity, attrs ...map[string]pcommon.Value) (Entity, error) {
+	ids, err := getRequiredAttributes(entity.IDs, attrs...)
+	if err != nil {
+		return Entity{}, fmt.Errorf("failed to get ID attributes for entity %s: %w", entity.Type, err)
+	}
+
+	ea := getOptionalAttributes(entity.Attributes, attrs...)
+
+	return Entity{
+		IDs:        ids,
+		Attributes: ea,
+		Type:       entity.Type,
+	}, nil
 }
 
 func isSubset(superset []string, subset map[string]pcommon.Value) bool {
@@ -92,10 +135,39 @@ func isSuperSet(subset []string, superset map[string]pcommon.Value) bool {
 	return true
 }
 
-func getEntityAttributes(configuredAttrs []string, actualAttrs ...map[string]pcommon.Value) (pcommon.Map, bool) {
-	ids := pcommon.NewMap()
-	for _, attrsMap := range actualAttrs {
-		putAttributes(configuredAttrs, attrsMap, &ids)
+func getRequiredAttributes(configuredAttrs []string, actualAttrs ...map[string]pcommon.Value) (pcommon.Map, error) {
+	required := pcommon.NewMap()
+	allAttrs := mergeMaps(actualAttrs...)
+
+	for _, requiredAttr := range configuredAttrs {
+		value, exists := allAttrs[requiredAttr]
+		if !exists {
+			return pcommon.NewMap(), fmt.Errorf("required attribute %s not found in actual attributes", requiredAttr)
+		}
+		putAttribute(&required, requiredAttr, value)
 	}
-	return ids, true
+	return required, nil
+}
+
+func getOptionalAttributes(configuredAttrs []string, actualAttrs ...map[string]pcommon.Value) pcommon.Map {
+	optional := pcommon.NewMap()
+	allAttrs := mergeMaps(actualAttrs...)
+
+	for _, requiredAttr := range configuredAttrs {
+		value, exists := allAttrs[requiredAttr]
+		if exists {
+			putAttribute(&optional, requiredAttr, value)
+		}
+	}
+	return optional
+}
+
+func mergeMaps(maps ...map[string]pcommon.Value) map[string]pcommon.Value {
+	merged := make(map[string]pcommon.Value)
+	for _, m := range maps {
+		for k, v := range m {
+			merged[k] = v
+		}
+	}
+	return merged
 }

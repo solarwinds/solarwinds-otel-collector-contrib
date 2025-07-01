@@ -21,22 +21,6 @@ import (
 	"go.opentelemetry.io/collector/pdata/pcommon"
 )
 
-func putAttributes(entityIds []string, attrs map[string]pcommon.Value, dest *pcommon.Map) {
-	for _, entityId := range entityIds {
-		// check whether attribute is already in destination, if yes we do not want to override
-		_, alreadyExists := dest.Get(entityId)
-		if alreadyExists {
-			continue
-		}
-
-		value, exists := attrs[entityId]
-		if exists {
-			putAttribute(dest, entityId, value)
-		}
-	}
-
-}
-
 // getIDAttributes sets the entity id attributes in the log record as needed by SWO.
 // Attributes are used to infer the entity in the system.
 //

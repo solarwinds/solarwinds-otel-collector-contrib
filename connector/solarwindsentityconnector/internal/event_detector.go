@@ -92,11 +92,18 @@ func (e *EventDetector) collectEvents(resAttrs pcommon.Map, attrs Attributes, ee
 	}
 
 	for _, relationshipEvent := range re {
-		newRel, err := e.createRelationshipEvent(resAttrs, relationshipEvent)
+		newRel, err := e.entityIdentifier.getRelationship(relationshipEvent, attrs)
 		if err != nil {
 			e.logger.Debug("failed to create relationship update event", zap.Error(err))
 			continue
 		}
+
+		action, err := GetActionString(relationshipEvent.Action)
+		if err != nil {
+			e.logger.Debug("failed to get action type for relationship event", zap.Error(err))
+			continue
+		}
+		newRel.Action = action
 		events = append(events, newRel)
 	}
 
