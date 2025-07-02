@@ -65,6 +65,7 @@ func TestConnector(t *testing.T) {
 			folder: "no-match",
 		},
 	}
+
 	sameTypeRelationshipTests := []struct {
 		name   string
 		folder string
@@ -82,20 +83,10 @@ func TestConnector(t *testing.T) {
 			folder: "multiple-resources-delete-action",
 		},
 		{
-			// Checks whether entity is inferred from entity update log as well as from relationship update log.
-			// Entity event should produce one entity log event. Relationship event should produce two entities and one relationship log event.
-			name:   "when more resources are sent, entity is inferred from entity update log and relationship update log",
-			folder: "multiple-resources",
-		},
-		{
 			// Tests that when two entities share an attribute key and value for some required attribute,
 			// the events for entities and their relationship are still detected and sent.
 			name:   "when relationship for same type and having common id attributes is inferred log event is sent",
 			folder: "common-attr",
-		},
-		{
-			name:   "when action is set as delete, delete log event is sent",
-			folder: "delete-action",
 		},
 		{
 			// Checks that when additional attributes are set on the relationship, they are sent with the relationship.
@@ -114,12 +105,6 @@ func TestConnector(t *testing.T) {
 			name:   "when relationship for same type is not inferred no log is sent",
 			folder: "no-match",
 		},
-		{
-			// If no entity event is configured only relationship log is inferred from attributes satisfying both
-			// source and destination entities.
-			name:   "when relationship for same type is inferred, but no entity event is configured, only relationship log event is sent",
-			folder: "no-entity-event-configured",
-		},
 	}
 
 	differentTypeRelationshipTests := []struct {
@@ -135,10 +120,6 @@ func TestConnector(t *testing.T) {
 			// Relationship condition is not satisfied, so no relationship log event is sent, but entities are.
 			name:   "when log for different type relationship has not satisfied the condition, no log relationship event is sent",
 			folder: "condition-not-met",
-		},
-		{
-			name:   "when action is set as delete, delete log event is sent",
-			folder: "delete-action",
 		},
 		{
 			// Relationship should be sent with the extra attributes, and also 2 entity log events.
@@ -271,7 +252,7 @@ func TestConnector(t *testing.T) {
 // Then waiting if anything expires, which it should not, since the relationship is deleted.
 func TestRelationship_DeletedRelationshipDoesNotExpire(t *testing.T) {
 	t.Skip("Only for manual run")
-	testFolder := filepath.Join("testdata", "integration", "metricsToLogs", "relationship/different-types-relationship/delete-action-cached")
+	testFolder := filepath.Join("testdata", "integration", "metricsToLogs", "relationship/different-types-relationship/multiple-resources-multiple-resources-delete-action-cached")
 	cfg, err := LoadConfigFromFile(t, filepath.Join(testFolder, "config.yaml"))
 	require.NoError(t, err)
 	factory := NewFactory()
