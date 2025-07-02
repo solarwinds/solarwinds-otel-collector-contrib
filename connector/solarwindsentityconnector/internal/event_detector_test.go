@@ -94,7 +94,6 @@ func TestDetectLog_EntityAndRelationshipEvents(t *testing.T) {
 	// Create EventDetector
 	eventDetector := NewEventDetector(
 		map[string]config.Entity{entity.Type: entity},
-		"src.", "dst.",
 		eventsGroup,
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		logger,
@@ -150,7 +149,6 @@ func TestDetectLog_NoEvents(t *testing.T) {
 
 	eventDetector := NewEventDetector(
 		map[string]config.Entity{entity.Type: entity},
-		"", "",
 		eventsGroup,
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		logger,
@@ -224,7 +222,6 @@ func TestDetectMetric_EntityAndRelationshipEvents(t *testing.T) {
 	// Create EventDetector
 	eventDetector := NewEventDetector(
 		map[string]config.Entity{entity.Type: entity},
-		"src.", "dst.",
 		config.EventsGroup[ottllog.TransformContext]{},
 		eventsGroup,
 		logger,
@@ -281,7 +278,6 @@ func TestDetectMetric_NoEvents(t *testing.T) {
 
 	eventDetector := NewEventDetector(
 		map[string]config.Entity{entity.Type: entity},
-		"", "",
 		config.EventsGroup[ottllog.TransformContext]{},
 		eventsGroup,
 		logger,
@@ -391,8 +387,6 @@ func TestCreateEntity(t *testing.T) {
 	// Create the event builder with a new logs instance
 	eventDetector := NewEventDetector(
 		map[string]config.Entity{entity.Type: entity},
-		"",
-		"",
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		nil)
@@ -439,8 +433,6 @@ func TestCreateEntityWithNoAttributes(t *testing.T) {
 
 	eventDetector := NewEventDetector(
 		map[string]config.Entity{entity.Type: entity},
-		"",
-		"",
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		nil)
@@ -481,8 +473,6 @@ func TestCreateRelationshipEvent(t *testing.T) {
 			srcEntity.Type:  srcEntity,
 			destEntity.Type: destEntity,
 		},
-		"",
-		"",
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		nil)
@@ -537,8 +527,6 @@ func TestCreateRelationshipEventWithNoAttributes(t *testing.T) {
 			srcEntity.Type:  srcEntity,
 			destEntity.Type: destEntity,
 		},
-		"",
-		"",
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		nil)
@@ -571,8 +559,6 @@ func TestCreateRelationshipEventWithoutResourceAttributes(t *testing.T) {
 			"KubernetesCluster": srcEntity,
 			"KubernetesNode":    destEntity,
 		},
-		"",
-		"",
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		nil)
@@ -610,8 +596,6 @@ func TestCreateSameTypeRelationshipEvent(t *testing.T) {
 		map[string]config.Entity{
 			"KubernetesCluster": entity,
 		},
-		"src.",
-		"dst.",
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		nil)
@@ -662,8 +646,6 @@ func TestCreateSameTypeRelationshipEventWithNoAttributesSameType(t *testing.T) {
 		map[string]config.Entity{
 			"KubernetesCluster": entity,
 		},
-		"src.",
-		"dst.",
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		nil)
@@ -690,8 +672,6 @@ func TestCreateSameTypeRelationshipEventWithoutResourceAttributes(t *testing.T) 
 		map[string]config.Entity{
 			"KubernetesCluster": entity,
 		},
-		"src.",
-		"dst.",
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		nil)
@@ -715,8 +695,6 @@ func TestCollectEventsWithEntitiesWhenAttributesArePresent(t *testing.T) {
 	// act
 	eventBuilder := NewEventDetector(
 		map[string]config.Entity{testEntity.Type: testEntity},
-		"",
-		"",
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		nil)
@@ -758,8 +736,6 @@ func TestDoesNotCollectEventsWithEntitiesWhenIDAttributeIsMissing(t *testing.T) 
 	// act
 	eventBuilder := NewEventDetector(
 		map[string]config.Entity{testEntity.Type: testEntity},
-		"",
-		"",
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		logger)
@@ -784,8 +760,6 @@ func TestCollectEventsWithEntitiesWhenAttributeIsMissing(t *testing.T) {
 	// act
 	eventBuilder := NewEventDetector(
 		map[string]config.Entity{testEntity.Type: testEntity},
-		"",
-		"",
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		nil)
@@ -833,8 +807,6 @@ func TestCollectEventsWithRelationshipsWhenAttributesArePresent(t *testing.T) {
 			srcEntity.Type:  srcEntity,
 			destEntity.Type: destEntity,
 		},
-		"",
-		"",
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		logger)
@@ -887,8 +859,6 @@ func TestAppendSameTypeRelationshipUpdateEventWhenAttributesArePresent(t *testin
 	// act
 	eventBuilder := NewEventDetector(
 		map[string]config.Entity{entity.Type: entity},
-		"src.",
-		"dst.",
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		logger)
@@ -939,8 +909,6 @@ func TestDoesNotcollectEventsWhenIDAttributeIsMissing(t *testing.T) {
 			srcEntity.Type:  srcEntity,
 			destEntity.Type: destEntity,
 		},
-		"",
-		"",
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		logger)
@@ -970,8 +938,6 @@ func TestDoesNotAppendSameTypeRelationshipUpdateEventWhenIDAttributeIsMissing(t 
 		map[string]config.Entity{
 			"KubernetesCluster": entity,
 		},
-		"src.",
-		"dst.",
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		logger)
@@ -1005,8 +971,6 @@ func TestCollectEventsWithRelationshipAttribute(t *testing.T) {
 			"KubernetesCluster":   srcEntity,
 			"KubernetesNamespace": destEntity,
 		},
-		"",
-		"",
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		logger)
@@ -1051,8 +1015,6 @@ func TestAppendSameTypeRelationshipUpdateEventWithRelationshipAttribute(t *testi
 	// act
 	eventBuilder := NewEventDetector(
 		map[string]config.Entity{entity.Type: entity},
-		"src.",
-		"dst.",
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		logger)

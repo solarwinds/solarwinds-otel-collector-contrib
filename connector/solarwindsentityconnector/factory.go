@@ -53,8 +53,6 @@ func createConnector(settings connector.Settings, config component.Config, logs 
 		logger: settings.Logger,
 		eventDetector: internal.NewEventDetector(
 			cfg.Schema.NewEntities(),
-			cfg.SourcePrefix,
-			cfg.DestinationPrefix,
 			events.LogEvents,
 			events.MetricEvents,
 			settings.Logger,

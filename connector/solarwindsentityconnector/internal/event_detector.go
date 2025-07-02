@@ -27,14 +27,11 @@ type EventDetector struct {
 	entityIdentifier EntityIdentifier
 	logEvents        config.EventsGroup[ottllog.TransformContext]
 	metricEvents     config.EventsGroup[ottlmetric.TransformContext]
-	sourcePrefix     string
-	destPrefix       string
 	logger           *zap.Logger
 }
 
 func NewEventDetector(
 	entities map[string]config.Entity,
-	sourcePrefix, destPrefix string,
 	logEvents config.EventsGroup[ottllog.TransformContext],
 	metricEvents config.EventsGroup[ottlmetric.TransformContext],
 	logger *zap.Logger,
@@ -45,8 +42,6 @@ func NewEventDetector(
 		entityIdentifier: ei,
 		logEvents:        logEvents,
 		metricEvents:     metricEvents,
-		sourcePrefix:     sourcePrefix,
-		destPrefix:       destPrefix,
 		logger:           logger,
 	}
 }
