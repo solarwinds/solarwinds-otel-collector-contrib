@@ -1,6 +1,12 @@
 # Changelog
 
 ## vNext
+
+## v0.127.4
+- `solarwindsprocessor` Introduced as replacement for `solarwinds` exporter.
+- `solarwindsextension` Configuration extended by gRPC setup re-usable in `otlp` exporter. Some of current properties (`data_center`, `token` and `endpoint_url_override`) have been made deprecated and will be removed by July 30.
+- `solarwindsexporter` Made deprecated and will be removed by July 30.
+- `solarwindsentityconnector` Added benchmark tests to check the connector’s performance.
 - `solarwindsentityconnector` Added support for delete events. Entities and relationships can be now deleted based on OTTL conditions.
 - `solarwindsentityconnector` Relationships now expire (configurable), and a delete event is sent after the expiration.
 - `swoworkloadtypeprocessor` Extended the processor to allow searching for owners of Pods.

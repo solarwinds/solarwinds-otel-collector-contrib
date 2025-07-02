@@ -1,0 +1,13 @@
+default:
+all_set:
+  resource_attributes:
+    sw.otelcol.collector.entity_creation:
+      enabled: true
+    sw.otelcol.collector.name:
+      enabled: true
+none_set:
+  resource_attributes:
+    sw.otelcol.collector.entity_creation:
+      enabled: false
+    sw.otelcol.collector.name:
+      enabled: false
