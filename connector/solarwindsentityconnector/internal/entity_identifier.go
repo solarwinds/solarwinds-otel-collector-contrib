@@ -7,12 +7,12 @@ import (
 	"go.opentelemetry.io/collector/pdata/pcommon"
 )
 
-type EntityIdentifier struct {
-	entities map[string]config.Entity
+type AttributeMapper struct {
+	entityConfigs map[string]config.Entity
 }
 
-func (e *EntityIdentifier) getEntities(entityType string, attrs Attributes) (entities []Entity, err error) {
-	entity, ok := e.entities[entityType]
+func (e *AttributeMapper) getEntities(entityType string, attrs Attributes) (entities []Entity, err error) {
+	entity, ok := e.entityConfigs[entityType]
 	if !ok {
 		return nil, fmt.Errorf("entity type %s not found", entityType)
 	}
@@ -46,19 +46,19 @@ func (e *EntityIdentifier) getEntities(entityType string, attrs Attributes) (ent
 	}
 
 	if len(entities) == 0 {
-		return nil, fmt.Errorf("no entities found for entity type %s with attributes %v", entityType, attrs)
+		return nil, fmt.Errorf("no entityConfigs found for entity type %s with attributes %v", entityType, attrs)
 	}
 
 	return entities, nil
 }
 
-func (e *EntityIdentifier) getRelationship(relationship *config.RelationshipEvent, attrs Attributes) (*Relationship, error) {
-	source, ok := e.entities[relationship.Source]
+func (e *AttributeMapper) getRelationship(relationship *config.RelationshipEvent, attrs Attributes) (*Relationship, error) {
+	source, ok := e.entityConfigs[relationship.Source]
 	if !ok {
 		return nil, fmt.Errorf("unexpected source entity type")
 	}
 
-	dest, ok := e.entities[relationship.Destination]
+	dest, ok := e.entityConfigs[relationship.Destination]
 	if !ok {
 		return nil, fmt.Errorf("unexpected destination entity type")
 	}

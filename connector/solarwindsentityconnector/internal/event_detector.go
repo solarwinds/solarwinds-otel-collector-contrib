@@ -24,7 +24,7 @@ import (
 
 type EventDetector struct {
 	entities         map[string]config.Entity
-	entityIdentifier EntityIdentifier
+	entityIdentifier AttributeMapper
 	logEvents        config.EventsGroup[ottllog.TransformContext]
 	metricEvents     config.EventsGroup[ottlmetric.TransformContext]
 	logger           *zap.Logger
@@ -36,7 +36,7 @@ func NewEventDetector(
 	metricEvents config.EventsGroup[ottlmetric.TransformContext],
 	logger *zap.Logger,
 ) *EventDetector {
-	ei := EntityIdentifier{entities: entities}
+	ei := AttributeMapper{entityConfigs: entities}
 	return &EventDetector{
 		entities:         entities,
 		entityIdentifier: ei,
@@ -99,7 +99,7 @@ func (e *EventDetector) collectEvents(attrs Attributes, ee []*config.EntityEvent
 	return events, nil
 }
 
-// ProcessEvents evaluates the conditions for entities and relationships events.
+// ProcessEvents evaluates the conditions for entityConfigs and relationships events.
 // If the conditions are met, it appends the corresponding entity or relationship update event to the event builder.
 // Multiple condition items are evaluated using OR logic.
 func processEvents[C any](
