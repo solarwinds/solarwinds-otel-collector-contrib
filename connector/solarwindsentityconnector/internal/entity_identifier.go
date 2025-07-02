@@ -69,13 +69,13 @@ func (e *EntityIdentifier) getRelationship(relationship *config.RelationshipEven
 		}
 	}
 
-	sourceAttributes, err := getRequiredAttributes(source.IDs, attrs.Source, attrs.Common)
+	sourceIds, err := getRequiredAttributes(source.IDs, attrs.Source, attrs.Common)
 	if err != nil {
 		return nil, errors.Join(fmt.Errorf("failed to create source entity %s", source.Type), err)
 
 	}
 
-	destAttributes, err := getRequiredAttributes(dest.IDs, attrs.Destination, attrs.Common)
+	destIds, err := getRequiredAttributes(dest.IDs, attrs.Destination, attrs.Common)
 	if err != nil {
 		return nil, errors.Join(fmt.Errorf("failed to create destination entity %s", dest.Type), err)
 	}
@@ -84,11 +84,11 @@ func (e *EntityIdentifier) getRelationship(relationship *config.RelationshipEven
 		Type: relationship.Type,
 		Source: RelationshipEntity{
 			Type: source.Type,
-			IDs:  sourceAttributes,
+			IDs:  sourceIds,
 		},
 		Destination: RelationshipEntity{
 			Type: dest.Type,
-			IDs:  destAttributes,
+			IDs:  destIds,
 		},
 		Attributes: getOptionalAttributes(relationship.Attributes, attrs.Common),
 	}
@@ -162,10 +162,10 @@ func getOptionalAttributes(configuredAttrs []string, actualAttrs ...map[string]p
 	optional := pcommon.NewMap()
 	allAttrs := mergeMaps(actualAttrs...)
 
-	for _, requiredAttr := range configuredAttrs {
-		value, exists := allAttrs[requiredAttr]
+	for _, optionalAttr := range configuredAttrs {
+		value, exists := allAttrs[optionalAttr]
 		if exists {
-			putAttribute(&optional, requiredAttr, value)
+			putAttribute(&optional, optionalAttr, value)
 		}
 	}
 	return optional
