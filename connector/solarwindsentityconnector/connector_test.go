@@ -17,12 +17,11 @@ package solarwindsentityconnector
 import (
 	"context"
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
-
-	"gopkg.in/yaml.v3"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest/plogtest"
@@ -78,14 +77,22 @@ func TestConnector(t *testing.T) {
 			folder: "advanced-conditions",
 		},
 		{
+			// Checks that when delete action is set, the delete log event for relationship is sent,
+			// and update log events are sent for the entities because they are configured as proper events.
+			name:   "when same type relationship has not satisfied the condition, no log relationship event is sent",
+			folder: "multiple-resources-delete-action",
+		},
+		{
+			// Checks whether entity is inferred from entity update log as well as from relationship update log.
+			// Entity event should produce one entity log event. Relationship event should produce two entities and one relationship log event.
+			name:   "when more resources are sent, entity is inferred from entity update log and relationship update log",
+			folder: "multiple-resources",
+		},
+		{
 			// Tests that when two entities share an attribute key and value for some required attribute,
 			// the events for entities and their relationship are still detected and sent.
 			name:   "when relationship for same type and having common id attributes is inferred log event is sent",
 			folder: "common-attr",
-		},
-		{
-			name:   "when action is set as delete, delete log event is sent",
-			folder: "delete-action",
 		},
 		{
 			// Checks that when additional attributes are set on the relationship, they are sent with the relationship.
@@ -100,8 +107,14 @@ func TestConnector(t *testing.T) {
 			folder: "no-conditions",
 		},
 		{
-			// Checks that if one of the attributes for the relationship is not set, the relationship is not sent, but is for entities.
-			name:   "when relationship for same type is not inferred no log is sent",
+			// If no entity event is configured only relationship log is inferred from attributes satisfying both
+			// source and destination entities.
+			name:   "when relationship for same type is inferred, but no entity event is configured, only relationship log event is sent",
+			folder: "no-entity-event-configured",
+		},
+		{
+			// Checks that if one of the attributes for the relationship is not set, the relationship is not sent, but entities are created.
+			name:   "when relationship for same type is not inferred, but attributes are sufficient for entity creation, log event is sent",
 			folder: "no-match",
 		},
 	}
@@ -225,8 +238,8 @@ func TestConnector(t *testing.T) {
 
 			expected, err := golden.ReadLogs(expectedFile)
 			assert.NoError(t, err)
-			assert.Equal(t, expected.LogRecordCount(), allLogs[0].LogRecordCount())
 			assert.NoError(t, plogtest.CompareLogs(expected, allLogs[0], plogtest.IgnoreObservedTimestamp()))
+			assert.Equal(t, expected.LogRecordCount(), allLogs[0].LogRecordCount())
 		})
 	}
 
@@ -253,77 +266,77 @@ func TestConnector(t *testing.T) {
 // Sending relationship update first to populate cache, then
 // sending delete action, should send delete log event immediately.
 // Then waiting if anything expires, which it should not, since the relationship is deleted.
-func TestRelationship_DeletedRelationshipDoesNotExpire(t *testing.T) {
-	t.Skip("Only for manual run")
-	testFolder := filepath.Join("testdata", "metricsToLogs", "relationship/different-types-relationship/delete-action-cached")
-	cfg, err := loadConfigFromFile(t, filepath.Join(testFolder, "config.yaml"))
-	require.NoError(t, err)
-	factory := NewFactory()
-	sink := &consumertest.LogsSink{}
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	conn, err := factory.CreateMetricsToLogs(ctx,
-		connectortest.NewNopSettings(metadata.Type), cfg, sink)
-	require.NoError(t, err)
-	require.NotNil(t, conn)
-
-	require.NoError(t, conn.Start(ctx, componenttest.NewNopHost()))
-	defer func() {
-		assert.NoError(t, conn.Shutdown(ctx))
-	}()
-
-	// 1st incoming log, relationship update
-	inputFile := filepath.Join(testFolder, "input1.yaml")
-	testMetrics, err := golden.ReadMetrics(inputFile)
-	assert.NoError(t, err)
-	assert.NoError(t, conn.ConsumeMetrics(ctx, testMetrics))
-
-	allLogs := sink.AllLogs()
-	expectedFile := filepath.Join(testFolder, "expected-output1.yaml")
-
-	expected, err := golden.ReadLogs(expectedFile)
-	assert.NoError(t, err)
-	assert.Equal(t, expected.LogRecordCount(), allLogs[0].LogRecordCount())
-	assert.NoError(t, plogtest.CompareLogs(expected, allLogs[0], plogtest.IgnoreObservedTimestamp()))
-	fmt.Printf("Relationship creation event sent\n")
-	// 2nd incoming log, relationship delete
-	inputFile2 := filepath.Join(testFolder, "input2.yaml")
-	sink.Reset()
-	testMetrics2, err := golden.ReadMetrics(inputFile2)
-	assert.NoError(t, err)
-	assert.NoError(t, conn.ConsumeMetrics(ctx, testMetrics2))
-	allLogs2 := sink.AllLogs()
-
-	expectedFile2 := filepath.Join(testFolder, "expected-output2.yaml")
-	expected2, err := golden.ReadLogs(expectedFile2)
-	assert.NoError(t, err)
-	assert.Equal(t, expected.LogRecordCount(), allLogs2[0].LogRecordCount())
-	assert.NoError(t, plogtest.CompareLogs(expected2, allLogs2[0], plogtest.IgnoreObservedTimestamp()))
-	fmt.Printf("Relationship delete event sent\n")
-
-	// Reset the sink and wait to verify that no more events appear
-	// This tests that deleted relationships cannot expire, obviously.
-	sink.Reset()
-	secondTimeoutTicker := time.NewTicker(1 * time.Second)
-	defer secondTimeoutTicker.Stop()
-	secondTimeout := time.After(10 * time.Second)
-
-	// Wait for 10 seconds and check that no additional logs are produced
-	for {
-		select {
-		case <-secondTimeout:
-			// This is good - timeout happened and we didn't receive any logs
-			assert.Equal(t, 0, sink.LogRecordCount(), "No additional logs should be produced (possibly by expiration) after deletion")
-			return
-		case <-secondTimeoutTicker.C:
-			// If you comment out the relationship delete section above, this will fail.
-			if sink.LogRecordCount() > 0 {
-				require.Fail(t, "unexpected logs received after relationship deletion")
-			}
-			fmt.Printf("Waiting to verify no additional logs are produced...\n")
-		}
-	}
-}
+//func TestRelationship_DeletedRelationshipDoesNotExpire(t *testing.T) {
+//	t.Skip("Only for manual run")
+//	testFolder := filepath.Join("testdata", "metricsToLogs", "relationship/different-types-relationship/multiple-resources-multiple-resources-delete-action-cached")
+//	cfg, err := loadConfigFromFile(t, filepath.Join(testFolder, "config.yaml"))
+//	require.NoError(t, err)
+//	factory := NewFactory()
+//	sink := &consumertest.LogsSink{}
+//	ctx, cancel := context.WithCancel(context.Background())
+//	defer cancel()
+//	conn, err := factory.CreateMetricsToLogs(ctx,
+//		connectortest.NewNopSettings(metadata.Type), cfg, sink)
+//	require.NoError(t, err)
+//	require.NotNil(t, conn)
+//
+//	require.NoError(t, conn.Start(ctx, componenttest.NewNopHost()))
+//	defer func() {
+//		assert.NoError(t, conn.Shutdown(ctx))
+//	}()
+//
+//	// 1st incoming log, relationship update
+//	inputFile := filepath.Join(testFolder, "input1.yaml")
+//	testMetrics, err := golden.ReadMetrics(inputFile)
+//	assert.NoError(t, err)
+//	assert.NoError(t, conn.ConsumeMetrics(ctx, testMetrics))
+//
+//	allLogs := sink.AllLogs()
+//	expectedFile := filepath.Join(testFolder, "expected-output1.yaml")
+//
+//	expected, err := golden.ReadLogs(expectedFile)
+//	assert.NoError(t, err)
+//	assert.Equal(t, expected.LogRecordCount(), allLogs[0].LogRecordCount())
+//	assert.NoError(t, plogtest.CompareLogs(expected, allLogs[0], plogtest.IgnoreObservedTimestamp()))
+//	fmt.Printf("Relationship creation event sent\n")
+//	// 2nd incoming log, relationship delete
+//	inputFile2 := filepath.Join(testFolder, "input2.yaml")
+//	sink.Reset()
+//	testMetrics2, err := golden.ReadMetrics(inputFile2)
+//	assert.NoError(t, err)
+//	assert.NoError(t, conn.ConsumeMetrics(ctx, testMetrics2))
+//	allLogs2 := sink.AllLogs()
+//
+//	expectedFile2 := filepath.Join(testFolder, "expected-output2.yaml")
+//	expected2, err := golden.ReadLogs(expectedFile2)
+//	assert.NoError(t, err)
+//	assert.Equal(t, expected.LogRecordCount(), allLogs2[0].LogRecordCount())
+//	assert.NoError(t, plogtest.CompareLogs(expected2, allLogs2[0], plogtest.IgnoreObservedTimestamp()))
+//	fmt.Printf("Relationship delete event sent\n")
+//
+//	// Reset the sink and wait to verify that no more events appear
+//	// This tests that deleted relationships cannot expire, obviously.
+//	sink.Reset()
+//	secondTimeoutTicker := time.NewTicker(1 * time.Second)
+//	defer secondTimeoutTicker.Stop()
+//	secondTimeout := time.After(10 * time.Second)
+//
+//	// Wait for 10 seconds and check that no additional logs are produced
+//	for {
+//		select {
+//		case <-secondTimeout:
+//			// This is good - timeout happened and we didn't receive any logs
+//			assert.Equal(t, 0, sink.LogRecordCount(), "No additional logs should be produced (possibly by expiration) after deletion")
+//			return
+//		case <-secondTimeoutTicker.C:
+//			// If you comment out the relationship delete section above, this will fail.
+//			if sink.LogRecordCount() > 0 {
+//				require.Fail(t, "unexpected logs received after relationship deletion")
+//			}
+//			fmt.Printf("Waiting to verify no additional logs are produced...\n")
+//		}
+//	}
+//}
 
 func loadConfigFromFile(t *testing.T, path string) (*Config, error) {
 	t.Helper()
