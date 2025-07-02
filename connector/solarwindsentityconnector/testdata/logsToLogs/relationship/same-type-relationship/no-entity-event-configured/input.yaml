@@ -1,0 +1,12 @@
+resourceLogs:
+  - resource:
+      attributes: [ { "key": "src.id", "value":{"stringValue": "source-entity-id"}},
+                    { "key": "src.name", "value":{"stringValue": "source-entity-name"}},
+                    { "key": "dst.id", "value":{"stringValue": "dst-entity-id"}},
+                    { "key": "dst.name", "value":{"stringValue": "dst-entity-name"}}]
+    scope_logs:
+    - log_records:
+      - body: { "stringValue": "test-log-body" }
+        attributes: [ { "key": "env", "value":{"stringValue": "test"}} ]
+        time_unix_nano: 1234567892
+

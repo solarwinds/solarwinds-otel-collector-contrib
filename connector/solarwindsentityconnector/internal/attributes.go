@@ -19,14 +19,18 @@ func IdentifyAttributes(resourceAttrs pcommon.Map, srcPrefix, destPrefix string)
 	}
 	for k, v := range resourceAttrs.All() {
 		switch {
-		case strings.HasPrefix(k, srcPrefix):
-			attrs.Source[k] = v
-		case strings.HasPrefix(k, destPrefix):
-			attrs.Destination[k] = v
+		case srcPrefix != "" && strings.HasPrefix(k, srcPrefix):
+			attrs.Source[getWithoutPrefix(srcPrefix, k)] = v
+		case destPrefix != "" && strings.HasPrefix(k, destPrefix):
+			attrs.Destination[getWithoutPrefix(destPrefix, k)] = v
 		default:
 			attrs.Common[k] = v
 		}
 	}
 
 	return attrs
+}
+
+func getWithoutPrefix(prefix, key string) string {
+	return strings.TrimPrefix(key, prefix)
 }

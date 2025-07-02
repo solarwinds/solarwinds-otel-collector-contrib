@@ -63,6 +63,12 @@ func (e *EntityIdentifier) getRelationship(relationship *config.RelationshipEven
 		return nil, fmt.Errorf("unexpected destination entity type")
 	}
 
+	if dest.Type == source.Type {
+		if len(attrs.Source) == 0 && len(attrs.Destination) == 0 {
+			return nil, fmt.Errorf("source and destination attributes are empty for same type relationship %s", relationship.Type)
+		}
+	}
+
 	sourceAttributes, err := getRequiredAttributes(source.IDs, attrs.Source, attrs.Common)
 	if err != nil {
 		return nil, errors.Join(fmt.Errorf("failed to create source entity %s", source.Type), err)

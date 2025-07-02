@@ -1,0 +1,21 @@
+source_prefix: "src."
+destination_prefix: "dst."
+schema:
+  entities:
+    - type: "Kubernetes Node"
+      ids: ["k8s.node.id"]
+      attributes: []
+  events:
+    relationships:
+      - type: "TestRelationshipType"
+        source: "Kubernetes Node"
+        destination: "Kubernetes Node"
+        attributes: []
+        conditions: ['instrumentation_scope.name == "NodeScope" and resource.attributes["service.name"] == "NodeService" and log.body == "test-log-body"']
+        context: "log"
+        action: "update"
+    entities:
+      - type: "Kubernetes Node"
+        conditions: ['instrumentation_scope.name == "NodeScope" and resource.attributes["service.name"] == "NodeService" and log.body == "test-log-body"']
+        context: "log"
+        action: "update"

@@ -19,7 +19,6 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottlmetric"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
-	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.uber.org/zap"
 )
 
@@ -52,24 +51,21 @@ func NewEventDetector(
 	}
 }
 
-func (e *EventDetector) DetectLog(ctx context.Context, resourceAttrs pcommon.Map, transformCtx ottllog.TransformContext) ([]Event, error) {
+func (e *EventDetector) DetectLog(ctx context.Context, resourceAttrs Attributes, transformCtx ottllog.TransformContext) ([]Event, error) {
 	ee, re, err := processEvents(ctx, e.logEvents, transformCtx)
 	if err != nil {
 		return nil, err
 	}
-	attrs := IdentifyAttributes(resourceAttrs, "src", "dst")
-
-	return e.collectEvents(attrs, ee, re)
+	return e.collectEvents(resourceAttrs, ee, re)
 }
 
-func (e *EventDetector) DetectMetric(ctx context.Context, resourceAttrs pcommon.Map, transformCtx ottlmetric.TransformContext) ([]Event, error) {
+func (e *EventDetector) DetectMetric(ctx context.Context, resourceAttrs Attributes, transformCtx ottlmetric.TransformContext) ([]Event, error) {
 	ee, re, err := processEvents(ctx, e.metricEvents, transformCtx)
 	if err != nil {
 		return nil, err
 	}
-	attrs := IdentifyAttributes(resourceAttrs, "src", "dst")
 
-	return e.collectEvents(attrs, ee, re)
+	return e.collectEvents(resourceAttrs, ee, re)
 
 }
 

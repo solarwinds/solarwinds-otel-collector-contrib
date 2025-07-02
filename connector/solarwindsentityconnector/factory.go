@@ -59,6 +59,8 @@ func createConnector(settings connector.Settings, config component.Config, logs 
 			events.MetricEvents,
 			settings.Logger,
 		),
+		sourcePrefix:     cfg.SourcePrefix,
+		destPrefix:       cfg.DestinationPrefix,
 		expirationPolicy: cfg.Expiration,
 		logsConsumer:     logs,
 	}
