@@ -64,6 +64,11 @@ func TestConnector(t *testing.T) {
 			name:   "when entity is not inferred no log is sent",
 			folder: "no-match",
 		},
+		{
+			// Checks that attributes with combination of prefixes are correctly processed.
+			name:   "when entities have prefixes, log events are sent",
+			folder: "with-prefix",
+		},
 	}
 
 	sameTypeRelationshipTests := []struct {
