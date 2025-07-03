@@ -16,6 +16,7 @@ package benchmark
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"testing"
 
@@ -75,7 +76,8 @@ func BenchmarkMetrics(b *testing.B) {
 			}()
 
 			metrics := generateTestMetrics(b, cfg, tc.totalMetrics, tc.invalidRatio, tc.multiple)
-
+			fmt.Printf("Generated %d metrics\n", len(metrics))
+			
 			b.ReportAllocs()
 			for b.Loop() {
 
@@ -147,7 +149,8 @@ func BenchmarkLogs(b *testing.B) {
 			}()
 
 			logs := generateTestLogs(b, cfg, tc.totalLogs, tc.invalidRatio, tc.multiple)
-
+			fmt.Printf("Generated %d logs\n", len(logs))
+			
 			b.ReportAllocs()
 			for b.Loop() {
 
