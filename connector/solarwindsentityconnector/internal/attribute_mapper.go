@@ -28,7 +28,7 @@ func (e *AttributeMapper) getEntities(entityType string, attrs Attributes) (enti
 	}
 
 	if isSubset(entity.IDs, attrs.Source) {
-		newEntity, err := createEntity(entity, attrs.Source, attrs.Common)
+		newEntity, err := createEntity(entity, attrs.Common, attrs.Source)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create entity for type %s: %w", entityType, err)
 		}
@@ -36,7 +36,7 @@ func (e *AttributeMapper) getEntities(entityType string, attrs Attributes) (enti
 	}
 
 	if isSubset(entity.IDs, attrs.Destination) {
-		newEntity, err := createEntity(entity, attrs.Destination, attrs.Common)
+		newEntity, err := createEntity(entity, attrs.Common, attrs.Destination)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create entity for type %s: %w", entityType, err)
 		}
@@ -75,13 +75,13 @@ func (e *AttributeMapper) getRelationship(relationship *config.RelationshipEvent
 		}
 	}
 
-	sourceIds, err := getRequiredAttributes(source.IDs, attrs.Source, attrs.Common)
+	sourceIds, err := getRequiredAttributes(source.IDs, attrs.Common, attrs.Source)
 	if err != nil {
 		return nil, errors.Join(fmt.Errorf("failed to create source entity %s", source.Type), err)
 
 	}
 
-	destIds, err := getRequiredAttributes(dest.IDs, attrs.Destination, attrs.Common)
+	destIds, err := getRequiredAttributes(dest.IDs, attrs.Common, attrs.Destination)
 	if err != nil {
 		return nil, errors.Join(fmt.Errorf("failed to create destination entity %s", dest.Type), err)
 	}
