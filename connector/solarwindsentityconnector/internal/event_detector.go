@@ -23,26 +23,23 @@ import (
 )
 
 type EventDetector struct {
-	entities         map[string]config.Entity
-	entityIdentifier AttributeMapper
-	logEvents        config.EventsGroup[ottllog.TransformContext]
-	metricEvents     config.EventsGroup[ottlmetric.TransformContext]
-	logger           *zap.Logger
+	attributeMapper AttributeMapper
+	logEvents       config.EventsGroup[ottllog.TransformContext]
+	metricEvents    config.EventsGroup[ottlmetric.TransformContext]
+	logger          *zap.Logger
 }
 
 func NewEventDetector(
-	entities map[string]config.Entity,
+	attributeMapper AttributeMapper,
 	logEvents config.EventsGroup[ottllog.TransformContext],
 	metricEvents config.EventsGroup[ottlmetric.TransformContext],
 	logger *zap.Logger,
 ) *EventDetector {
-	ei := AttributeMapper{entityConfigs: entities}
 	return &EventDetector{
-		entities:         entities,
-		entityIdentifier: ei,
-		logEvents:        logEvents,
-		metricEvents:     metricEvents,
-		logger:           logger,
+		attributeMapper: attributeMapper,
+		logEvents:       logEvents,
+		metricEvents:    metricEvents,
+		logger:          logger,
 	}
 }
 
@@ -67,7 +64,7 @@ func (e *EventDetector) DetectMetric(ctx context.Context, resourceAttrs Attribut
 func (e *EventDetector) collectEvents(attrs Attributes, ee []*config.EntityEvent, re []*config.RelationshipEvent) ([]Event, error) {
 	events := make([]Event, 0, len(ee)+len(re))
 	for _, entityEvent := range ee {
-		newEvents, err := e.entityIdentifier.getEntities(entityEvent.Type, attrs)
+		newEvents, err := e.attributeMapper.getEntities(entityEvent.Type, attrs)
 		if err != nil {
 			e.logger.Debug("failed to create entity update event", zap.Error(err))
 			continue
@@ -81,7 +78,7 @@ func (e *EventDetector) collectEvents(attrs Attributes, ee []*config.EntityEvent
 	}
 
 	for _, relationshipEvent := range re {
-		newRel, err := e.entityIdentifier.getRelationship(relationshipEvent, attrs)
+		newRel, err := e.attributeMapper.getRelationship(relationshipEvent, attrs)
 		if err != nil {
 			e.logger.Debug("failed to create relationship update event", zap.Error(err))
 			continue

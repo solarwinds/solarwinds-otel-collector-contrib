@@ -11,6 +11,12 @@ type AttributeMapper struct {
 	entityConfigs map[string]config.Entity
 }
 
+func NewAttributeMapper(entityConfigs map[string]config.Entity) AttributeMapper {
+	return AttributeMapper{
+		entityConfigs: entityConfigs,
+	}
+}
+
 func (e *AttributeMapper) getEntities(entityType string, attrs Attributes) (entities []Entity, err error) {
 	entity, ok := e.entityConfigs[entityType]
 	if !ok {

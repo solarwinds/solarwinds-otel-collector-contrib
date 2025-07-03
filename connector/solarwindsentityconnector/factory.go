@@ -48,11 +48,12 @@ func createConnector(settings connector.Settings, config component.Config, logs 
 		return nil, fmt.Errorf("expected config of type *Config, got %T", config)
 	}
 	events := cfg.Schema.NewEvents(settings.TelemetrySettings)
+	attributeMapper := internal.NewAttributeMapper(cfg.Schema.NewEntities())
 
 	se := &solarwindsentity{
 		logger: settings.Logger,
 		eventDetector: internal.NewEventDetector(
-			cfg.Schema.NewEntities(),
+			attributeMapper,
 			events.LogEvents,
 			events.MetricEvents,
 			settings.Logger,

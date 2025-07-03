@@ -91,9 +91,11 @@ func TestDetectLog_EntityAndRelationshipEvents(t *testing.T) {
 	scope := scopeLogs.Scope()
 	tc := ottllog.NewTransformContext(logRecord, scope, resource, scopeLogs, rLogs)
 
+	attributeMapper := NewAttributeMapper(map[string]config.Entity{entity.Type: entity})
+
 	// Create EventDetector
 	eventDetector := NewEventDetector(
-		map[string]config.Entity{entity.Type: entity},
+		attributeMapper,
 		eventsGroup,
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		logger,
@@ -147,8 +149,10 @@ func TestDetectLog_NoEvents(t *testing.T) {
 	scope := scopeLogs.Scope()
 	tc := ottllog.NewTransformContext(logRecord, scope, resource, scopeLogs, rLogs)
 
+	attributeMapper := NewAttributeMapper(map[string]config.Entity{entity.Type: entity})
+
 	eventDetector := NewEventDetector(
-		map[string]config.Entity{entity.Type: entity},
+		attributeMapper,
 		eventsGroup,
 		config.EventsGroup[ottlmetric.TransformContext]{},
 		logger,
@@ -219,9 +223,11 @@ func TestDetectMetric_EntityAndRelationshipEvents(t *testing.T) {
 	metric := metricSlice.AppendEmpty()
 	tc := ottlmetric.NewTransformContext(metric, metricSlice, scope, resource, scopeMetrics, rMetrics)
 
+	attributeMapper := NewAttributeMapper(map[string]config.Entity{entity.Type: entity})
+
 	// Create EventDetector
 	eventDetector := NewEventDetector(
-		map[string]config.Entity{entity.Type: entity},
+		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
 		eventsGroup,
 		logger,
@@ -276,8 +282,10 @@ func TestDetectMetric_NoEvents(t *testing.T) {
 	metric := metricSlice.AppendEmpty()
 	tc := ottlmetric.NewTransformContext(metric, metricSlice, scope, resource, scopeMetrics, rMetrics)
 
+	attributeMapper := NewAttributeMapper(map[string]config.Entity{entity.Type: entity})
+
 	eventDetector := NewEventDetector(
-		map[string]config.Entity{entity.Type: entity},
+		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
 		eventsGroup,
 		logger,
@@ -384,14 +392,17 @@ func TestCreateEntity(t *testing.T) {
 		Attributes: []string{"attr1"},
 	}
 
+	attributeMapper := NewAttributeMapper(map[string]config.Entity{entity.Type: entity})
+
 	// Create the event builder with a new logs instance
 	eventDetector := NewEventDetector(
-		map[string]config.Entity{entity.Type: entity},
+		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
-		nil)
+		nil,
+	)
 
-	entityEvent, err := eventDetector.entityIdentifier.getEntities("KubernetesCluster", attributes)
+	entityEvent, err := eventDetector.attributeMapper.getEntities("KubernetesCluster", attributes)
 	assert.Nil(t, err)
 	logs := plog.NewLogs()
 	logRecords := CreateEventLog(&logs)
@@ -431,13 +442,16 @@ func TestCreateEntityWithNoAttributes(t *testing.T) {
 		IDs:  []string{},
 	}
 
+	attributeMapper := NewAttributeMapper(map[string]config.Entity{entity.Type: entity})
+
 	eventDetector := NewEventDetector(
-		map[string]config.Entity{entity.Type: entity},
+		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
-		nil)
+		nil,
+	)
 
-	_, err := eventDetector.entityIdentifier.getEntities("KubernetesCluster", attributes)
+	_, err := eventDetector.attributeMapper.getEntities("KubernetesCluster", attributes)
 	assert.NotNil(t, err)
 }
 
@@ -468,16 +482,19 @@ func TestCreateRelationshipEvent(t *testing.T) {
 		Destination: destEntity.Type,
 	}
 
+	attributeMapper := NewAttributeMapper(map[string]config.Entity{
+		srcEntity.Type:  srcEntity,
+		destEntity.Type: destEntity,
+	})
+
 	eventDetector := NewEventDetector(
-		map[string]config.Entity{
-			srcEntity.Type:  srcEntity,
-			destEntity.Type: destEntity,
-		},
+		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
-		nil)
+		nil,
+	)
 
-	relationshipEvent, err := eventDetector.entityIdentifier.getRelationship(&relationship, attributes)
+	relationshipEvent, err := eventDetector.attributeMapper.getRelationship(&relationship, attributes)
 	assert.Nil(t, err)
 	logs := plog.NewLogs()
 	logRecords := CreateEventLog(&logs)
@@ -522,16 +539,19 @@ func TestCreateRelationshipEventWithNoAttributes(t *testing.T) {
 		Destination: destEntity.Type,
 	}
 
+	attributeMapper := NewAttributeMapper(map[string]config.Entity{
+		srcEntity.Type:  srcEntity,
+		destEntity.Type: destEntity,
+	})
+
 	eventDetector := NewEventDetector(
-		map[string]config.Entity{
-			srcEntity.Type:  srcEntity,
-			destEntity.Type: destEntity,
-		},
+		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
-		nil)
+		nil,
+	)
 
-	_, err := eventDetector.entityIdentifier.getRelationship(&relationship, attributes)
+	_, err := eventDetector.attributeMapper.getRelationship(&relationship, attributes)
 	assert.NotNil(t, err)
 }
 
@@ -554,16 +574,19 @@ func TestCreateRelationshipEventWithoutResourceAttributes(t *testing.T) {
 		Destination: "KubernetesNode",
 	}
 
+	attributeMapper := NewAttributeMapper(map[string]config.Entity{
+		"KubernetesCluster": srcEntity,
+		"KubernetesNode":    destEntity,
+	})
+
 	eventDetector := NewEventDetector(
-		map[string]config.Entity{
-			"KubernetesCluster": srcEntity,
-			"KubernetesNode":    destEntity,
-		},
+		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
-		nil)
+		nil,
+	)
 
-	_, err := eventDetector.entityIdentifier.getRelationship(&relationship, attributes)
+	_, err := eventDetector.attributeMapper.getRelationship(&relationship, attributes)
 	assert.NotNil(t, err)
 }
 
@@ -592,15 +615,18 @@ func TestCreateSameTypeRelationshipEvent(t *testing.T) {
 		Destination: "KubernetesCluster",
 	}
 
+	attributeMapper := NewAttributeMapper(map[string]config.Entity{
+		"KubernetesCluster": entity,
+	})
+
 	eventDetector := NewEventDetector(
-		map[string]config.Entity{
-			"KubernetesCluster": entity,
-		},
+		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
-		nil)
+		nil,
+	)
 
-	relationshipEvent, err := eventDetector.entityIdentifier.getRelationship(&relationship, attributes)
+	relationshipEvent, err := eventDetector.attributeMapper.getRelationship(&relationship, attributes)
 	assert.Nil(t, err)
 	logs := plog.NewLogs()
 	logRecords := CreateEventLog(&logs)
@@ -642,15 +668,18 @@ func TestCreateSameTypeRelationshipEventWithNoAttributesSameType(t *testing.T) {
 		Destination: "KubernetesCluster",
 	}
 
+	attributeMapper := NewAttributeMapper(map[string]config.Entity{
+		"KubernetesCluster": entity,
+	})
+
 	eventDetector := NewEventDetector(
-		map[string]config.Entity{
-			"KubernetesCluster": entity,
-		},
+		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
-		nil)
+		nil,
+	)
 
-	_, err := eventDetector.entityIdentifier.getRelationship(&relationship, attributes)
+	_, err := eventDetector.attributeMapper.getRelationship(&relationship, attributes)
 	assert.NotNil(t, err)
 }
 
@@ -668,15 +697,18 @@ func TestCreateSameTypeRelationshipEventWithoutResourceAttributes(t *testing.T) 
 		Destination: "KubernetesCluster",
 	}
 
+	attributeMapper := NewAttributeMapper(map[string]config.Entity{
+		"KubernetesCluster": entity,
+	})
+
 	eventDetector := NewEventDetector(
-		map[string]config.Entity{
-			"KubernetesCluster": entity,
-		},
+		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
-		nil)
+		nil,
+	)
 
-	_, err := eventDetector.entityIdentifier.getRelationship(&relationship, attributes)
+	_, err := eventDetector.attributeMapper.getRelationship(&relationship, attributes)
 	assert.NotNil(t, err)
 }
 
@@ -693,11 +725,15 @@ func TestCollectEventsWithEntitiesWhenAttributesArePresent(t *testing.T) {
 	}
 
 	// act
+	attributeMapper := NewAttributeMapper(map[string]config.Entity{testEntity.Type: testEntity})
+
 	eventBuilder := NewEventDetector(
-		map[string]config.Entity{testEntity.Type: testEntity},
+		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
-		nil)
+		nil,
+	)
+
 	events, err := eventBuilder.collectEvents(attributes, []*config.EntityEvent{{Type: testEntity.Type}}, nil)
 	require.NoError(t, err)
 	require.Len(t, events, 1)
@@ -734,11 +770,14 @@ func TestDoesNotCollectEventsWithEntitiesWhenIDAttributeIsMissing(t *testing.T) 
 	logger := zap.NewNop()
 
 	// act
+	attributeMapper := NewAttributeMapper(map[string]config.Entity{testEntity.Type: testEntity})
+
 	eventBuilder := NewEventDetector(
-		map[string]config.Entity{testEntity.Type: testEntity},
+		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
-		logger)
+		logger,
+	)
 
 	events, err := eventBuilder.collectEvents(attributes, []*config.EntityEvent{{Type: testEntity.Type}}, nil)
 	require.NoError(t, err)
@@ -758,11 +797,15 @@ func TestCollectEventsWithEntitiesWhenAttributeIsMissing(t *testing.T) {
 	}
 
 	// act
+	attributeMapper := NewAttributeMapper(map[string]config.Entity{testEntity.Type: testEntity})
+
 	eventBuilder := NewEventDetector(
-		map[string]config.Entity{testEntity.Type: testEntity},
+		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
-		nil)
+		nil,
+	)
+
 	events, err := eventBuilder.collectEvents(attributes, []*config.EntityEvent{{Type: testEntity.Type}}, nil)
 	require.NoError(t, err)
 	require.Len(t, events, 1)
@@ -802,18 +845,23 @@ func TestCollectEventsWithRelationshipsWhenAttributesArePresent(t *testing.T) {
 	logger := zap.NewNop()
 
 	// act
+	attributeMapper := NewAttributeMapper(map[string]config.Entity{
+		srcEntity.Type:  srcEntity,
+		destEntity.Type: destEntity,
+	})
+
 	eventBuilder := NewEventDetector(
-		map[string]config.Entity{
-			srcEntity.Type:  srcEntity,
-			destEntity.Type: destEntity,
-		},
+		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
-		logger)
+		logger,
+	)
+
 	events, err := eventBuilder.collectEvents(
 		attributes,
 		nil,
-		[]*config.RelationshipEvent{&testRelationship})
+		[]*config.RelationshipEvent{&testRelationship},
+	)
 	require.NoError(t, err)
 	require.Len(t, events, 1)
 	logs := plog.NewLogs()
@@ -857,16 +905,20 @@ func TestAppendSameTypeRelationshipUpdateEventWhenAttributesArePresent(t *testin
 	logger := zap.NewNop()
 
 	// act
+	attributeMapper := NewAttributeMapper(map[string]config.Entity{entity.Type: entity})
+
 	eventBuilder := NewEventDetector(
-		map[string]config.Entity{entity.Type: entity},
+		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
-		logger)
+		logger,
+	)
 
 	events, err := eventBuilder.collectEvents(
 		attributes,
 		nil,
-		[]*config.RelationshipEvent{&testRelationship})
+		[]*config.RelationshipEvent{&testRelationship},
+	)
 	require.NoError(t, err)
 	require.Len(t, events, 1)
 	logs := plog.NewLogs()
@@ -904,19 +956,23 @@ func TestDoesNotcollectEventsWhenIDAttributeIsMissing(t *testing.T) {
 	}
 	logger := zap.NewNop()
 	// act
+	attributeMapper := NewAttributeMapper(map[string]config.Entity{
+		srcEntity.Type:  srcEntity,
+		destEntity.Type: destEntity,
+	})
+
 	eventBuilder := NewEventDetector(
-		map[string]config.Entity{
-			srcEntity.Type:  srcEntity,
-			destEntity.Type: destEntity,
-		},
+		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
-		logger)
+		logger,
+	)
 
 	events, err := eventBuilder.collectEvents(
 		attributes,
 		nil,
-		[]*config.RelationshipEvent{{Type: testRelationship.Type}})
+		[]*config.RelationshipEvent{{Type: testRelationship.Type}},
+	)
 	require.NoError(t, err)
 
 	// assert
@@ -934,17 +990,21 @@ func TestDoesNotAppendSameTypeRelationshipUpdateEventWhenIDAttributeIsMissing(t 
 	}
 	logger := zap.NewNop()
 	// act
+	attributeMapper := NewAttributeMapper(map[string]config.Entity{
+		"KubernetesCluster": entity,
+	})
+
 	eventBuilder := NewEventDetector(
-		map[string]config.Entity{
-			"KubernetesCluster": entity,
-		},
+		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
-		logger)
+		logger,
+	)
 	events, err := eventBuilder.collectEvents(
 		attributes,
 		nil,
-		[]*config.RelationshipEvent{{Type: testRelationship.Type}})
+		[]*config.RelationshipEvent{{Type: testRelationship.Type}},
+	)
 	require.NoError(t, err)
 
 	// assert
@@ -966,18 +1026,22 @@ func TestCollectEventsWithRelationshipAttribute(t *testing.T) {
 	logger := zap.NewNop()
 
 	// act
+	attributeMapper := NewAttributeMapper(map[string]config.Entity{
+		"KubernetesCluster":   srcEntity,
+		"KubernetesNamespace": destEntity,
+	})
+
 	eventBuilder := NewEventDetector(
-		map[string]config.Entity{
-			"KubernetesCluster":   srcEntity,
-			"KubernetesNamespace": destEntity,
-		},
+		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
-		logger)
+		logger,
+	)
 	events, err := eventBuilder.collectEvents(
 		attributes,
 		nil,
-		[]*config.RelationshipEvent{&testRelationship})
+		[]*config.RelationshipEvent{&testRelationship},
+	)
 	require.NoError(t, err)
 	require.Len(t, events, 1)
 	logs := plog.NewLogs()
@@ -1013,15 +1077,19 @@ func TestAppendSameTypeRelationshipUpdateEventWithRelationshipAttribute(t *testi
 	logger := zap.NewNop()
 
 	// act
+	attributeMapper := NewAttributeMapper(map[string]config.Entity{entity.Type: entity})
+
 	eventBuilder := NewEventDetector(
-		map[string]config.Entity{entity.Type: entity},
+		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
 		config.EventsGroup[ottlmetric.TransformContext]{},
-		logger)
+		logger,
+	)
 	events, err := eventBuilder.collectEvents(
 		attributes,
 		nil,
-		[]*config.RelationshipEvent{&testRelationship})
+		[]*config.RelationshipEvent{&testRelationship},
+	)
 	require.NoError(t, err)
 	require.Len(t, events, 1)
 	logs := plog.NewLogs()
