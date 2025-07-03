@@ -170,3 +170,89 @@ func TestGetEntities_DestinationAndCommonAttributesOutputTwoEntities(t *testing.
 	commonValue, _ := entities[1].IDs.Get("id")
 	assert.Equal(t, "commonValue", commonValue.Str())
 }
+
+func TestGetRelationship_SourceAndDestinationAttributesOutputRelationship(t *testing.T) {
+	entityConfigs := map[string]config.Entity{
+		"sourceType": {Type: "sourceType", IDs: []string{"id"}},
+		"destType":   {Type: "destType", IDs: []string{"id"}},
+	}
+	attributeMapper := NewAttributeMapper(entityConfigs)
+	relationship := &config.RelationshipEvent{
+		Type:        "testRelationship",
+		Source:      "sourceType",
+		Destination: "destType",
+	}
+	attrs := Attributes{
+		Source:      map[string]pcommon.Value{"id": pcommon.NewValueStr("sourceValue")},
+		Destination: map[string]pcommon.Value{"id": pcommon.NewValueStr("destValue")},
+	}
+
+	rel, err := attributeMapper.getRelationship(relationship, attrs)
+	assert.NoError(t, err)
+	assert.Equal(t, "testRelationship", rel.Type)
+
+	// Verify source entity
+	assert.Equal(t, "sourceType", rel.Source.Type)
+	sourceValue, _ := rel.Source.IDs.Get("id")
+	assert.Equal(t, "sourceValue", sourceValue.Str())
+
+	// Verify destination entity
+	assert.Equal(t, "destType", rel.Destination.Type)
+	destValue, _ := rel.Destination.IDs.Get("id")
+	assert.Equal(t, "destValue", destValue.Str())
+}
+
+func TestGetRelationship_AttributesSubsetUsedForRelationship(t *testing.T) {
+	entityConfigs := map[string]config.Entity{
+		"sourceType": {Type: "sourceType", IDs: []string{"id"}},
+		"destType":   {Type: "destType", IDs: []string{"id"}},
+	}
+	attributeMapper := NewAttributeMapper(entityConfigs)
+	relationship := &config.RelationshipEvent{
+		Type:        "testRelationship",
+		Source:      "sourceType",
+		Destination: "destType",
+		Attributes:  []string{"attr1", "attr2"},
+	}
+	attrs := Attributes{
+		Source:      map[string]pcommon.Value{"id": pcommon.NewValueStr("sourceValue")},
+		Destination: map[string]pcommon.Value{"id": pcommon.NewValueStr("destValue")},
+		Common: map[string]pcommon.Value{
+			"attr1":     pcommon.NewValueStr("value1"),
+			"attr2":     pcommon.NewValueStr("value2"),
+			"extraAttr": pcommon.NewValueStr("extraValue"), // Not part of relationship attributes
+		},
+	}
+
+	rel, err := attributeMapper.getRelationship(relationship, attrs)
+	assert.NoError(t, err)
+	assert.Equal(t, "testRelationship", rel.Type)
+
+	// Verify relationship attributes
+	assert.Equal(t, 2, rel.Attributes.Len())
+	attr1Value, _ := rel.Attributes.Get("attr1")
+	assert.Equal(t, "value1", attr1Value.Str())
+	attr2Value, _ := rel.Attributes.Get("attr2")
+	assert.Equal(t, "value2", attr2Value.Str())
+}
+
+func TestGetRelationship_NoAttributesForSourceAndDestination(t *testing.T) {
+	entityConfigs := map[string]config.Entity{
+		"sourceType": {Type: "sourceType", IDs: []string{"id"}},
+		"destType":   {Type: "destType", IDs: []string{"id"}},
+	}
+	attributeMapper := NewAttributeMapper(entityConfigs)
+	relationship := &config.RelationshipEvent{
+		Type:        "testRelationship",
+		Source:      "sourceType",
+		Destination: "destType",
+	}
+	attrs := Attributes{
+		Common: map[string]pcommon.Value{"otherAttr": pcommon.NewValueStr("value")},
+	}
+
+	rel, err := attributeMapper.getRelationship(relationship, attrs)
+	assert.Nil(t, rel)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to create source entity")
+}
