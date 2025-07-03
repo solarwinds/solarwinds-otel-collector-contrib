@@ -15,87 +15,10 @@
 package internal
 
 import (
-	"fmt"
 	"go.opentelemetry.io/collector/pdata/plog"
 
 	"go.opentelemetry.io/collector/pdata/pcommon"
 )
-
-// setIdAttributes sets the entity id attributes in the log record as needed by SWO.
-// Attributes are used to infer the entity in the system.
-//
-// Returns error if any of the attributes are missing in the resourceAttrs.
-// If any ID attribute is missing, the entity would not be inferred.
-func setIdAttributes(attrs pcommon.Map, entityIds []string, resourceAttrs pcommon.Map, name string) error {
-	if len(entityIds) == 0 {
-		return fmt.Errorf("entity ID attributes are empty")
-	}
-
-	logIds := attrs.PutEmptyMap(name)
-	for _, id := range entityIds {
-
-		value, exists := findAttribute(id, resourceAttrs)
-		if !exists {
-			return fmt.Errorf("missing entity ID attribute: %s", id)
-		}
-
-		putAttribute(&logIds, id, value)
-	}
-	return nil
-}
-
-// setIdAttributesForRelationships sets the entity id attributes in the log record as needed by SWO for relationships.
-// prefix - mandatory for same type relationships, but optional for relationships between different entity types.
-// Returns bool indicating if prefixed attributes were found (if called with empty prefix, you might need to ignore it), and an error.
-func setIdAttributesForRelationships(attrs pcommon.Map, entityIds []string, resourceAttrs pcommon.Map, name, prefix string) (bool, error) {
-	if len(entityIds) == 0 {
-		return false, fmt.Errorf("entity ID attributes are empty")
-	}
-
-	hasPrefix := false
-	logIds := attrs.PutEmptyMap(name)
-	for _, id := range entityIds {
-
-		value, exists := findAttribute(prefix+id, resourceAttrs)
-		if exists {
-			putAttribute(&logIds, id, value)
-			hasPrefix = true
-			continue
-		}
-
-		value, exists = findAttribute(id, resourceAttrs)
-		if exists {
-			putAttribute(&logIds, id, value)
-			continue
-		}
-
-		return false, fmt.Errorf("missing entity ID attribute: %s", id)
-	}
-	return hasPrefix, nil
-}
-
-// setEntityAttributes sets the entity attributes in the log record as needed by SWO.
-// Attributes are used to update the entity.
-func setAttributes(attrs pcommon.Map, entityAttrs []string, resourceAttrs pcommon.Map, name string) {
-	if len(entityAttrs) == 0 {
-		return
-	}
-
-	logIds := attrs.PutEmptyMap(name)
-	for _, attr := range entityAttrs {
-		value, exists := findAttribute(attr, resourceAttrs)
-		if !exists {
-			continue
-		}
-		putAttribute(&logIds, attr, value)
-	}
-}
-
-// findAttribute checks if the attribute identified as key exists in the source pcommon.Map.
-func findAttribute(key string, src pcommon.Map) (pcommon.Value, bool) {
-	attrVal, ok := src.Get(key)
-	return attrVal, ok
-}
 
 // putAttribute copies the value of attribute identified as key, to destination pcommon.Map.
 func putAttribute(dest *pcommon.Map, key string, attrValue pcommon.Value) {

@@ -16,6 +16,7 @@ package benchmark
 
 import (
 	"testing"
+	"fmt"
 	"time"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
@@ -41,6 +42,8 @@ func generateTestMetrics(b *testing.B, cfg *solarwindsentityconnector.Config, co
 
 	if validCount > 0 {
 		finalMetrics = append(finalMetrics, buildValidMetrics(b, validCount, cfg, multiple)...)
+		fmt.Printf("Generated %d valid metrics\n", len(finalMetrics))
+
 	}
 
 	if invalidCount > 0 {
@@ -207,6 +210,7 @@ func generateTestLogs(b *testing.B, cfg *solarwindsentityconnector.Config, count
 
 	if validCount > 0 {
 		finalLogs = append(finalLogs, buildValidLogs(b, validCount, cfg, multiple)...)
+		fmt.Printf("Generated %d valid logs\n", len(finalLogs))
 	}
 
 	if invalidCount > 0 {
