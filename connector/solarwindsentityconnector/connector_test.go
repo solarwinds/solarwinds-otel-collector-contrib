@@ -64,7 +64,13 @@ func TestConnector(t *testing.T) {
 			name:   "when entity is not inferred no log is sent",
 			folder: "no-match",
 		},
+		{
+			// Checks that attributes with combination of prefixes are correctly processed.
+			name:   "when entities have prefixes, log events are sent",
+			folder: "with-prefix",
+		},
 	}
+
 	sameTypeRelationshipTests := []struct {
 		name   string
 		folder string
@@ -82,7 +88,8 @@ func TestConnector(t *testing.T) {
 			folder: "common-attr",
 		},
 		{
-			name:   "when action is set as delete, delete log event is sent",
+			// Checks that when relationship condition is satisfied, relationship log event is sent, and the entities also.
+			name:   "when log for same type relationship has satisfied the condition, log relationship event is sent",
 			folder: "delete-action",
 		},
 		{
@@ -91,11 +98,28 @@ func TestConnector(t *testing.T) {
 			folder: "extra-attr",
 		},
 		{
+			// Checks that entity logs are create from entity update resource as well as from relationship update resource.
+			name:   "when log for same type relationship has entity update resource, entity log event is sent",
+			folder: "multiple-resources",
+		},
+		{
+			// Checks that when delete action is set, the delete log event for relationship is sent,
+			// and update log events are sent for the entities because they are configured as proper events.
+			name:   "when same type relationship has not satisfied the condition, no log relationship event is sent",
+			folder: "multiple-resources-delete-action",
+		},
+		{
 			// Checks that same type relationship for AWS EC2 is sent, together with the two AWS EC2 entities.
 			// Uses simple ["true"] conditions.
 			// Uses prefixes as all same type relationship tests.
 			name:   "when relationship for same type is inferred log event is sent",
 			folder: "no-conditions",
+		},
+		{
+			// Checks that when relationship is inferred, but entity event is not configured,
+			// the relationship log event is still sent, but no entity log events are sent.
+			name:   "when relationship for same type is inferred but no entity event is configured, relationship log event is sent",
+			folder: "no-entity-event-configured",
 		},
 		{
 			// Checks that if one of the attributes for the relationship is not set, the relationship is not sent, but is for entities.
@@ -117,10 +141,6 @@ func TestConnector(t *testing.T) {
 			// Relationship condition is not satisfied, so no relationship log event is sent, but entities are.
 			name:   "when log for different type relationship has not satisfied the condition, no log relationship event is sent",
 			folder: "condition-not-met",
-		},
-		{
-			name:   "when action is set as delete, delete log event is sent",
-			folder: "delete-action",
 		},
 		{
 			// Relationship should be sent with the extra attributes, and also 2 entity log events.
@@ -253,7 +273,7 @@ func TestConnector(t *testing.T) {
 // Then waiting if anything expires, which it should not, since the relationship is deleted.
 func TestRelationship_DeletedRelationshipDoesNotExpire(t *testing.T) {
 	t.Skip("Only for manual run")
-	testFolder := filepath.Join("testdata", "integration", "metricsToLogs", "relationship/different-types-relationship/delete-action-cached")
+	testFolder := filepath.Join("testdata", "integration", "metricsToLogs", "relationship/different-types-relationship/multiple-resources-multiple-resources-delete-action-cached")
 	cfg, err := LoadConfigFromFile(t, filepath.Join(testFolder, "config.yaml"))
 	require.NoError(t, err)
 	factory := NewFactory()
