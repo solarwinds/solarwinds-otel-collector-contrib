@@ -16,6 +16,7 @@ package benchmark
 
 import (
 	"testing"
+	"fmt"
 	"time"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
