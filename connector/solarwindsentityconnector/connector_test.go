@@ -66,7 +66,7 @@ func TestConnector(t *testing.T) {
 		},
 		{
 			// Checks that attributes with combination of prefixes are correctly processed.
-			name:   "when entities have prefixes, log events are sent",
+			name:   "when received attributes are prefixed entity IDs, log events are sent for identified entities",
 			folder: "with-prefix",
 		},
 	}
@@ -141,6 +141,10 @@ func TestConnector(t *testing.T) {
 			// Relationship condition is not satisfied, so no relationship log event is sent, but entities are.
 			name:   "when log for different type relationship has not satisfied the condition, no log relationship event is sent",
 			folder: "condition-not-met",
+		},
+		{
+			name:   "when action is set as delete, delete log event is sent",
+			folder: "delete-action",
 		},
 		{
 			// Relationship should be sent with the extra attributes, and also 2 entity log events.
