@@ -273,7 +273,7 @@ func TestConnector(t *testing.T) {
 // Then waiting if anything expires, which it should not, since the relationship is deleted.
 func TestRelationship_DeletedRelationshipDoesNotExpire(t *testing.T) {
 	t.Skip("Only for manual run")
-	testFolder := filepath.Join("testdata", "integration", "metricsToLogs", "relationship/different-types-relationship/multiple-resources-multiple-resources-delete-action-cached")
+	testFolder := filepath.Join("testdata", "integration", "metricsToLogs", "relationship/different-types-relationship/delete-action-cached")
 	cfg, err := LoadConfigFromFile(t, filepath.Join(testFolder, "config.yaml"))
 	require.NoError(t, err)
 	factory := NewFactory()
