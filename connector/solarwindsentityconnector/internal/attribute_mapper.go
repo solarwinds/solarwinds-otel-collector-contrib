@@ -131,31 +131,31 @@ func createEntity(entity config.Entity, attrs ...map[string]pcommon.Value) (Enti
 	}, nil
 }
 
-func getRequiredAttributes(configuredAttrs []string, actualAttrs ...map[string]pcommon.Value) (pcommon.Map, error) {
-	if len(configuredAttrs) == 0 {
+func getRequiredAttributes(requiredKeys []string, actualAttributes ...map[string]pcommon.Value) (pcommon.Map, error) {
+	if len(requiredKeys) == 0 {
 		return pcommon.NewMap(), fmt.Errorf("required attributes not configured")
 	}
 	required := pcommon.NewMap()
-	allAttrs := mergeMaps(actualAttrs...)
+	mergedAttributes := mergeMaps(actualAttributes...)
 
-	for _, requiredAttr := range configuredAttrs {
-		value, exists := allAttrs[requiredAttr]
+	for _, requiredKey := range requiredKeys {
+		value, exists := mergedAttributes[requiredKey]
 		if !exists {
-			return pcommon.NewMap(), fmt.Errorf("required attribute %s not found in actual attributes", requiredAttr)
+			return pcommon.NewMap(), fmt.Errorf("required attribute %s not found in actual attributes", requiredKey)
 		}
-		putAttribute(&required, requiredAttr, value)
+		putAttribute(&required, requiredKey, value)
 	}
 	return required, nil
 }
 
-func getOptionalAttributes(configuredAttrs []string, actualAttrs ...map[string]pcommon.Value) pcommon.Map {
+func getOptionalAttributes(optionalKeys []string, actualAttributes ...map[string]pcommon.Value) pcommon.Map {
 	optional := pcommon.NewMap()
-	allAttrs := mergeMaps(actualAttrs...)
+	mergedAttributes := mergeMaps(actualAttributes...)
 
-	for _, optionalAttr := range configuredAttrs {
-		value, exists := allAttrs[optionalAttr]
+	for _, optionalKey := range optionalKeys {
+		value, exists := mergedAttributes[optionalKey]
 		if exists {
-			putAttribute(&optional, optionalAttr, value)
+			putAttribute(&optional, optionalKey, value)
 		}
 	}
 	return optional
