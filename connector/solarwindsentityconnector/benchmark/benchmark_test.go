@@ -91,8 +91,7 @@ func BenchmarkMetrics(b *testing.B) {
 					expectedLogsCount = int(1 - int(tc.invalidRatio))
 				}
 
-				assert.Equal(b, getLogsCount, expectedLogsCount, "Expected to receive %d logs, but got %d logs",
-					expectedLogsCount, getLogsCount)
+				assert.Equal(b, expectedLogsCount, getLogsCount)
 				sink.Reset()
 
 				b.StartTimer()
@@ -163,8 +162,7 @@ func BenchmarkLogs(b *testing.B) {
 					expectedLogsCount = int(1 - int(tc.invalidRatio))
 				}
 
-				assert.Equal(b, getLogsCount, expectedLogsCount, "Expected to receive %d logs, but got %d logs",
-					expectedLogsCount, getLogsCount)
+				assert.Equal(b, expectedLogsCount, getLogsCount)
 				sink.Reset()
 
 				b.StartTimer()
