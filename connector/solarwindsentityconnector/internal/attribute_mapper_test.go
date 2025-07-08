@@ -22,27 +22,13 @@ import (
 	"go.opentelemetry.io/collector/pdata/pcommon"
 )
 
-func TestGetEntities_SourceEntityNotFound(t *testing.T) {
-	attributeMapper := NewAttributeMapper(map[string]config.Entity{})
-	attrs := Attributes{
-		Source: map[string]pcommon.Value{"id": pcommon.NewValueStr("value")},
-		Common: map[string]pcommon.Value{"commonAttr": pcommon.NewValueStr("commonValue")},
-	}
-
-	entities, err := attributeMapper.getEntities("nonexistentEntityType", attrs)
-	assert.Nil(t, entities)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "entity type nonexistentEntityType not found")
-}
-
 func TestGetEntities_DestinationEntityNotFound(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
-		"sourceEntityType": {Type: "sourceEntityType", IDs: []string{"id"}},
+		"testEntityType": {Type: "testEntityType", IDs: []string{"id"}},
 	}
 	attributeMapper := NewAttributeMapper(entityConfigs)
 	attrs := Attributes{
-		Destination: map[string]pcommon.Value{"id": pcommon.NewValueStr("value")},
-		Common:      map[string]pcommon.Value{"commonAttr": pcommon.NewValueStr("commonValue")},
+		Common: map[string]pcommon.Value{"commonAttr": pcommon.NewValueStr("commonValue")},
 	}
 
 	entities, err := attributeMapper.getEntities("nonexistentEntityType", attrs)
