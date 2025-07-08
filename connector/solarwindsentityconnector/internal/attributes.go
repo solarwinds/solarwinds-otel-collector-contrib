@@ -19,10 +19,12 @@ import (
 	"strings"
 )
 
+type AttributesMap map[string]pcommon.Value
+
 type Attributes struct {
-	Source      map[string]pcommon.Value
-	Destination map[string]pcommon.Value
-	Common      map[string]pcommon.Value
+	Source      AttributesMap
+	Destination AttributesMap
+	Common      AttributesMap
 }
 
 func IdentifyAttributes(resourceAttrs pcommon.Map, srcPrefix, destPrefix string) Attributes {
@@ -43,6 +45,27 @@ func IdentifyAttributes(resourceAttrs pcommon.Map, srcPrefix, destPrefix string)
 	}
 
 	return attrs
+}
+
+func (attrsMap AttributesMap) IsSubset(superset []string) bool {
+	if len(attrsMap) == 0 {
+		return false
+	}
+
+	for key, _ := range attrsMap {
+		found := false
+		for _, entityId := range superset {
+			if entityId == key {
+				found = true
+				break
+			}
+		}
+		if found == false {
+			return false
+		}
+	}
+
+	return true
 }
 
 func getWithoutPrefix(prefix, key string) string {
