@@ -47,7 +47,7 @@ func IdentifyAttributes(resourceAttrs pcommon.Map, srcPrefix, destPrefix string)
 	return attrs
 }
 
-func (attrsMap AttributesMap) IsSubset(superset []string) bool {
+func (attrsMap AttributesMap) IsSubsetOf(superset []string) bool {
 	if len(attrsMap) == 0 {
 		return false
 	}
@@ -65,6 +65,15 @@ func (attrsMap AttributesMap) IsSubset(superset []string) bool {
 		}
 	}
 
+	return true
+}
+
+func (attrsMap AttributesMap) ContainsAll(keys []string) bool {
+	for _, key := range keys {
+		if _, exists := attrsMap[key]; !exists {
+			return false
+		}
+	}
 	return true
 }
 

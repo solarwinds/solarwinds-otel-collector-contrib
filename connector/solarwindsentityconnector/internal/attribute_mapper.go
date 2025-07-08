@@ -41,7 +41,7 @@ func (e *AttributeMapper) getEntities(entityType string, attrs Attributes) (enti
 		return nil, fmt.Errorf("entity type %s has no IDs configured", entityType)
 	}
 
-	if attrs.Source.IsSubset(entity.IDs) {
+	if attrs.Source.IsSubsetOf(entity.IDs) {
 		newEntity, err := createEntity(entity, attrs.Common, attrs.Source)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create entity for type %s: %w", entityType, err)
@@ -49,7 +49,7 @@ func (e *AttributeMapper) getEntities(entityType string, attrs Attributes) (enti
 		entities = append(entities, newEntity)
 	}
 
-	if attrs.Destination.IsSubset(entity.IDs) {
+	if attrs.Destination.IsSubsetOf(entity.IDs) {
 		newEntity, err := createEntity(entity, attrs.Common, attrs.Destination)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create entity for type %s: %w", entityType, err)
@@ -57,7 +57,7 @@ func (e *AttributeMapper) getEntities(entityType string, attrs Attributes) (enti
 		entities = append(entities, newEntity)
 	}
 
-	if isSuperSet(entity.IDs, attrs.Common) {
+	if attrs.Common.ContainsAll(entity.IDs) {
 		newEntity, err := createEntity(entity, attrs.Common)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create entity for type %s: %w", entityType, err)
@@ -129,15 +129,6 @@ func createEntity(entity config.Entity, attrs ...map[string]pcommon.Value) (Enti
 		Attributes: ea,
 		Type:       entity.Type,
 	}, nil
-}
-
-func isSuperSet(subset []string, superset map[string]pcommon.Value) bool {
-	for _, attribute := range subset {
-		if _, exists := superset[attribute]; !exists {
-			return false
-		}
-	}
-	return true
 }
 
 func getRequiredAttributes(configuredAttrs []string, actualAttrs ...map[string]pcommon.Value) (pcommon.Map, error) {
