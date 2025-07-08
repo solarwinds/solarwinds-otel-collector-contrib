@@ -65,7 +65,8 @@ func TestConnector(t *testing.T) {
 			folder: "no-match",
 		},
 		{
-			// Checks that attributes with combination of prefixes are correctly processed.
+			// Checks that when prefixes are set in config, and metrics arrive with prefixed attributes,
+			// entity events are inferred from them.
 			name:   "when received attributes are prefixed entity IDs, log events are sent for identified entities",
 			folder: "with-prefix",
 		},
