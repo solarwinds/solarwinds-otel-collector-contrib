@@ -47,15 +47,15 @@ func IdentifyAttributes(resourceAttrs pcommon.Map, srcPrefix, destPrefix string)
 	return attrs
 }
 
-func (attrsMap AttributesMap) IsSubsetOf(superset []string) bool {
+func (attrsMap AttributesMap) IsSubsetOf(keys []string) bool {
 	if len(attrsMap) == 0 {
 		return false
 	}
 
-	for key, _ := range attrsMap {
+	for attribute, _ := range attrsMap {
 		found := false
-		for _, entityId := range superset {
-			if entityId == key {
+		for _, key := range keys {
+			if key == attribute {
 				found = true
 				break
 			}
