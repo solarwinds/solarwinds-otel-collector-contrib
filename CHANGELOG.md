@@ -2,6 +2,9 @@
 
 ## vNext
 
+## v0.127.5
+- `solarwindsentityconnector` Benchmark fix
+
 ## v0.127.4
 - `solarwindsprocessor` Introduced as replacement for `solarwinds` exporter.
 - `solarwindsextension` Configuration extended by gRPC setup re-usable in `otlp` exporter. Some of current properties (`data_center`, `token` and `endpoint_url_override`) have been made deprecated and will be removed by July 30.
