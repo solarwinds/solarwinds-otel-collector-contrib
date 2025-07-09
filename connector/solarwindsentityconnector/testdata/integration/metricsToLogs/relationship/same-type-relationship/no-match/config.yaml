@@ -3,7 +3,7 @@ destination_prefix: "dst."
 schema:
   entities:
     - type: "AWS EC2"
-      ids: ["aws.ec2.id", "aws.ec2.name"]
+      id: ["aws.ec2.id", "aws.ec2.name"]
       attributes: ["attr2"]
   events:
     relationships:

@@ -3,10 +3,10 @@ destination_prefix: "dst."
 schema:
   entities:
     - type: "Snowflake"
-      ids: ["snowflake.id"]
+      id: ["snowflake.id"]
       attributes: ["attr1"]
     - type: "Kubernetes Pod"
-      ids: ["k8s.pod.id", "k8s.pod.name"]
+      id: ["k8s.pod.id", "k8s.pod.name"]
       attributes: ["k8s.pod.port"]
   events:
     relationships:

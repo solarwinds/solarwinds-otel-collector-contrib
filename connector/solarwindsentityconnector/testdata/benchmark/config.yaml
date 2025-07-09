@@ -8,10 +8,10 @@ destination_prefix: "dst."
 schema:
   entities:
     - type: "kubernetes.cluster"
-      ids: ["k8s.cluster.id", "k8s.cluster.name"]
+      id: ["k8s.cluster.id", "k8s.cluster.name"]
       attributes: ["k8s.cluster.port"]
     - type: "kubernetes.node"
-      ids: ["k8s.node.id", "k8s.node.name"]
+      id: ["k8s.node.id", "k8s.node.name"]
       attributes: ["k8s.node.ip"]
   events:
     entities:
