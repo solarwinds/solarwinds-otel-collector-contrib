@@ -3,10 +3,10 @@ destination_prefix: "destination."
 schema:
   entities:
     - type: "KubernetesCluster"
-      ids: ["k8s.cluster.id", "k8s.cluster.name"]
+      id: ["k8s.cluster.id", "k8s.cluster.name"]
       attributes: ["k8s.cluster.port"]
     - type: "Snowflake"
-      ids: [ "snowflake.id", "snowflake.name" ]
+      id: [ "snowflake.id", "snowflake.name" ]
       attributes: [ "snowflake.random.attribute" ]
   events:
     entities:

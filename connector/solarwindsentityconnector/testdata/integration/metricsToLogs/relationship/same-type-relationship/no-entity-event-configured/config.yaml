@@ -3,7 +3,7 @@ destination_prefix: "dst."
 schema:
   entities:
     - type: "TestEntityType"
-      ids: ["id", "name"]
+      id: ["id", "name"]
       attributes: ["random.attribute"]
   events:
     relationships:

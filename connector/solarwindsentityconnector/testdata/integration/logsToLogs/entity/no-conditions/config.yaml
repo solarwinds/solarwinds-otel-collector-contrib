@@ -1,7 +1,7 @@
 schema:
   entities:
     - type: "Snowflake"
-      ids: ["snowflake.id"]
+      id: ["snowflake.id"]
       attributes: ["attr1"]
   events:
     entities:

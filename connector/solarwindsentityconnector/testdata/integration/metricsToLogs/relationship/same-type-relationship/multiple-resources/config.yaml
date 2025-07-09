@@ -3,7 +3,7 @@ destination_prefix: "dst."
 schema:
   entities:
     - type: "Kubernetes Node"
-      ids: ["k8s.node.id"]
+      id: ["k8s.node.id"]
       attributes: []
   events:
     relationships:

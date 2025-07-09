@@ -1,7 +1,7 @@
 schema:
   entities:
     - type: "Kubernetes Cluster"
-      ids: ["k8s.cluster.id", "k8s.cluster.name"]
+      id: ["k8s.cluster.id", "k8s.cluster.name"]
       attributes: ["k8s.cluster.port"]
   events:
     entities:

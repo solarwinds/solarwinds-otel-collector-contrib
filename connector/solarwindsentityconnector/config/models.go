@@ -16,7 +16,7 @@ package config
 
 type Entity struct {
 	Type       string   `mapstructure:"entity"`
-	IDs        []string `mapstructure:"id"`
+	IDs        []string `mapstructure:"id" yaml:"id"`
 	Attributes []string `mapstructure:"attributes"`
 }
 
