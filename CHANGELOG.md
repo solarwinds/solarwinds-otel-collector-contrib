@@ -2,6 +2,10 @@
 
 ## vNext
 
+## v0.127.5
+- `solarwindsentityconnector` Benchmark fix
+- Fix GHSA-fv92-fjc5-jj9h: mapstructure May Leak Sensitive Information in Logs When Processing Malformed Data
+
 ## v0.127.4
 - `solarwindsprocessor` Introduced as replacement for `solarwinds` exporter.
 - `solarwindsextension` Configuration extended by gRPC setup re-usable in `otlp` exporter. Some of current properties (`data_center`, `token` and `endpoint_url_override`) have been made deprecated and will be removed by July 30.
