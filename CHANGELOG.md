@@ -4,6 +4,7 @@
 
 ## v0.127.5
 - `solarwindsentityconnector` Benchmark fix
+- Fix GHSA-fv92-fjc5-jj9h: mapstructure May Leak Sensitive Information in Logs When Processing Malformed Data
 
 ## v0.127.4
 - `solarwindsprocessor` Introduced as replacement for `solarwinds` exporter.
