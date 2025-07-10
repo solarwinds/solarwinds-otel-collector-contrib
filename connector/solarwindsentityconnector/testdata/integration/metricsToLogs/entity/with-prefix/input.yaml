@@ -1,0 +1,25 @@
+resourceMetrics:
+  - resource:
+      attributes: [ { "key": "source.k8s.cluster.id", "value":{"stringValue": "test-cluster-id"}},
+                    { "key": "source.k8s.cluster.name", "value":{"stringValue": "test-cluster-name"}},
+                    { "key": "k8s.cluster.port", "value":{"stringValue": "test-cluster-port"}} ]
+    scopeMetrics:
+      - metrics:
+          - name: "entity.metric"
+            gauge:
+              dataPoints:
+                - timeUnixNano: 1748421891668732000
+                  asDouble: 1.0
+                  attributes: []
+  - resource:
+      attributes: [ { "key": "destination.snowflake.id", "value":{"stringValue": "snowflake-id"}},
+                    { "key": "destination.snowflake.name", "value":{"stringValue": "snowflake-name"}},
+                    { "key": "snowflake.random.attribute", "value":{"stringValue": "snowflake-123"}} ]
+    scopeMetrics:
+      - metrics:
+          - name: "entity.metric"
+            gauge:
+              dataPoints:
+                - timeUnixNano: 1748421891668732000
+                  asDouble: 1.0
+                  attributes: []

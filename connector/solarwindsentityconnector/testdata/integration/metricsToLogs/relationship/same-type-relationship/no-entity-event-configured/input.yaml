@@ -1,0 +1,15 @@
+resourceMetrics:
+  - resource:
+      attributes: [ { "key": "src.id", "value":{"stringValue": "source-entity-id"}},
+                    { "key": "src.name", "value":{"stringValue": "source-entity-name"}},
+                    { "key": "dst.id", "value":{"stringValue": "dst-entity-id"}},
+                    { "key": "dst.name", "value":{"stringValue": "dst-entity-name"}}]
+    scopeMetrics:
+      - scope:
+          name: "TestScope"
+          version: "1.0"
+          attributes: []
+        metrics:
+          - name: "test-metric"
+            description: "test metric description"
+            unit: "bytes"
