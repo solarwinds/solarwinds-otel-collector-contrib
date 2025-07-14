@@ -1,0 +1,21 @@
+{
+    "addressType": "IPv4",
+    "apiVersion": "discovery.k8s.io/v1",
+    "kind": "EndpointSlice",
+    "metadata": {
+        "creationTimestamp": "2025-01-01T11:00:00Z",
+        "generateName": "test-name-",
+        "generation": 1,
+        "name": "test-name-00001",
+        "namespace": "test-namespace",
+        "resourceVersion": "1",
+        "uid": "00000000-0000-0000-0000-000000000005"
+    },
+    "ports": [
+        {
+            "name": "test-port-1",
+            "port": 111,
+            "protocol": "TCP"
+        }
+    ]
+}

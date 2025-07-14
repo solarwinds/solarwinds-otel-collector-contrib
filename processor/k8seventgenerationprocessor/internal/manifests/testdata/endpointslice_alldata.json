@@ -1,0 +1,80 @@
+{
+    "addressType": "IPv4",
+    "apiVersion": "discovery.k8s.io/v1",
+    "endpoints": [
+        {
+            "addresses": [
+                "192.168.1.1"
+            ],
+            "conditions": {
+                "ready": true,
+                "serving": true,
+                "terminating": false
+            },
+            "nodeName": "test-node",
+            "targetRef": {
+                "kind": "Pod",
+                "name": "test-name-0000000000-00001",
+                "namespace": "test-namespace",
+                "uid": "00000000-0000-0000-0000-000000000002"
+            }
+        },
+        {
+            "addresses": [
+                "192.168.1.2"
+            ],
+            "conditions": {
+                "ready": true,
+                "serving": true,
+                "terminating": false
+            },
+            "nodeName": "test-node",
+            "targetRef": {
+                "kind": "Pod",
+                "name": "test-name-0000000000-00002",
+                "namespace": "test-namespace",
+                "uid": "00000000-0000-0000-0000-000000000003"
+            }
+        }
+    ],
+    "kind": "EndpointSlice",
+    "metadata": {
+        "annotations": {
+            "endpoints.kubernetes.io/last-change-trigger-time": "2025-01-01T12:00:00Z"
+        },
+        "creationTimestamp": "2025-01-01T11:00:00Z",
+        "generateName": "test-name-",
+        "generation": 1,
+        "labels": {
+            "k8s-app": "kube-dns",
+            "kubernetes.io/name": "test-app",
+            "kubernetes.io/service-name": "test-name"
+        },
+        "name": "test-name-00001",
+        "namespace": "test-namespace",
+        "ownerReferences": [
+            {
+                "apiVersion": "v1",
+                "blockOwnerDeletion": true,
+                "controller": true,
+                "kind": "Service",
+                "name": "test-name",
+                "uid": "00000000-0000-0000-0000-000000000004"
+            }
+        ],
+        "resourceVersion": "1",
+        "uid": "00000000-0000-0000-0000-000000000005"
+    },
+    "ports": [
+        {
+            "name": "test-port-1",
+            "port": 111,
+            "protocol": "TCP"
+        },
+        {
+            "name": "test-port-2",
+            "port": 111,
+            "protocol": "UDP"
+        }
+    ]
+}
