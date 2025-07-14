@@ -62,16 +62,20 @@ func (e *EventDetector) DetectMetric(ctx context.Context, resourceAttrs Attribut
 
 }
 
-func (e *EventDetector) collectEvents(attrs Attributes, entityEvents []*config.EntityEvent, relationshipEvents []*config.RelationshipEvent) ([]Event, error) {
-	detectedRelationshipEvents, detectedRelationshipEntities := e.getRelationships(attrs, relationshipEvents)
-	detectedValidRelationshipEntities := e.validateEntityEvents(entityEvents, detectedRelationshipEntities)
-	detectedEntityEvents := e.getEntities(attrs, entityEvents, detectedValidRelationshipEntities)
+func (e *EventDetector) collectEvents(
+	attrs Attributes,
+	configuredEvents []*config.EntityEvent,
+	configuredRelationships []*config.RelationshipEvent,
+) ([]Event, error) {
+	relationshipEvents, relationshipEntityEvents := e.getRelationships(attrs, configuredRelationships)
+	validRelationshipEntities := e.validateEntityEvents(configuredEvents, relationshipEntityEvents)
+	entityEvents := e.getEntities(attrs, configuredEvents, validRelationshipEntities)
 
-	allEvents := append(detectedEntityEvents)
-	for _, entity := range detectedValidRelationshipEntities {
+	allEvents := append(entityEvents)
+	for _, entity := range validRelationshipEntities {
 		allEvents = append(allEvents, entity)
 	}
-	allEvents = append(allEvents, detectedRelationshipEvents...)
+	allEvents = append(allEvents, relationshipEvents...)
 	return allEvents, nil
 }
 
@@ -109,10 +113,10 @@ func (e *EventDetector) getEntities(attrs Attributes, entityEvents []*config.Ent
 	return detectedEntityEvents
 }
 
-func (e *EventDetector) getRelationships(attrs Attributes, relationshipEvents []*config.RelationshipEvent) ([]Event, map[string]Entity) {
-	detectedRelationshipEvents := make([]Event, 0, len(relationshipEvents))
-	detectedRelationshipEntities := make(map[string]Entity)
-	for _, relationshipEvent := range relationshipEvents {
+func (e *EventDetector) getRelationships(attrs Attributes, configuredRelationships []*config.RelationshipEvent) ([]Event, map[string]Entity) {
+	relationshipEvents := make([]Event, 0, len(configuredRelationships))
+	relationshipEntityEvents := make(map[string]Entity)
+	for _, relationshipEvent := range configuredRelationships {
 		sourceEntity, destEntity, err := e.attributeMapper.getRelationshipEntities(relationshipEvent.Source, relationshipEvent.Destination, attrs)
 		if err != nil {
 			e.logger.Debug("failed to create relationship entities", zap.Error(err))
@@ -120,19 +124,24 @@ func (e *EventDetector) getRelationships(attrs Attributes, relationshipEvents []
 		}
 
 		srcHash, err := buildEntityHash(*sourceEntity)
-		detectedRelationshipEntities[srcHash] = *sourceEntity
+		relationshipEntityEvents[srcHash] = *sourceEntity
 
 		dstHash, err := buildEntityHash(*destEntity)
-		detectedRelationshipEntities[dstHash] = *destEntity
+		relationshipEntityEvents[dstHash] = *destEntity
+
+		if err != nil {
+			e.logger.Debug("failed to build entity hash when creating relationship event", zap.Error(err))
+			continue
+		}
 
 		relationship, err := createRelationship(relationshipEvent, sourceEntity, destEntity, attrs)
 		if err != nil {
 			e.logger.Debug("failed to create relationship event", zap.Error(err))
 			continue
 		}
-		detectedRelationshipEvents = append(detectedRelationshipEvents, relationship)
+		relationshipEvents = append(relationshipEvents, relationship)
 	}
-	return detectedRelationshipEvents, detectedRelationshipEntities
+	return relationshipEvents, relationshipEntityEvents
 }
 
 // ProcessEvents evaluates the conditions for entityConfigs and relationships events.
