@@ -176,6 +176,12 @@ func TestConnector(t *testing.T) {
 			name:   "different type relationship works without prefixes",
 			folder: "without-prefixes",
 		},
+		{
+			// When two  different entities have the same id attributes, the relationship should be inferred
+			// along with the two entities updates from incoming prefixed telemetry.
+			name:   "different type relationship with the same set of ids",
+			folder: "same-ids",
+		},
 	}
 
 	// Define path prefixes for different test categories
