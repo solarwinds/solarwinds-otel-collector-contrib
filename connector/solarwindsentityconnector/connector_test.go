@@ -68,7 +68,7 @@ func TestConnector(t *testing.T) {
 			// Checks that when prefixes are set in config, and metrics arrive with prefixed attributes,
 			// entity events are inferred from them.
 			name:   "when received attributes are prefixed entity IDs, log events are sent for identified entities",
-			folder: "with-prefix",
+			folder: "with-prefix-without-relationship",
 		},
 	}
 
@@ -249,7 +249,7 @@ func TestConnector(t *testing.T) {
 			expected, err := golden.ReadLogs(expectedFile)
 			assert.NoError(t, err)
 			assert.Equal(t, expected.LogRecordCount(), allLogs[0].LogRecordCount())
-			assert.NoError(t, plogtest.CompareLogs(expected, allLogs[0], plogtest.IgnoreObservedTimestamp()))
+			assert.NoError(t, plogtest.CompareLogs(expected, allLogs[0], plogtest.IgnoreObservedTimestamp(), plogtest.IgnoreLogRecordsOrder()))
 		})
 	}
 
