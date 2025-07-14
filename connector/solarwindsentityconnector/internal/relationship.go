@@ -44,7 +44,7 @@ var _ Event = (*Relationship)(nil)
 //   - Relationship type
 //   - timestamp
 //   - event type set to update action
-func (r *Relationship) Update(logRecords *plog.LogRecordSlice) {
+func (r Relationship) Update(logRecords *plog.LogRecordSlice) {
 	logRecord := logRecords.AppendEmpty()
 	logRecord.SetObservedTimestamp(pcommon.NewTimestampFromTime(time.Now()))
 	attrs := logRecord.Attributes()
@@ -75,7 +75,7 @@ func (r *Relationship) Update(logRecords *plog.LogRecordSlice) {
 //   - Relationship type
 //   - timestamp
 //   - event type set to delete action
-func (r *Relationship) Delete(logRecords *plog.LogRecordSlice) {
+func (r Relationship) Delete(logRecords *plog.LogRecordSlice) {
 	logRecord := logRecords.AppendEmpty()
 	logRecord.SetObservedTimestamp(pcommon.NewTimestampFromTime(time.Now()))
 	attrs := logRecord.Attributes()

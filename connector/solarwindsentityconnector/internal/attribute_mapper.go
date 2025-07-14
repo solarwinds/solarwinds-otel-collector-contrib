@@ -31,6 +31,49 @@ func NewAttributeMapper(entityConfigs map[string]config.Entity) AttributeMapper 
 	}
 }
 
+func (e *AttributeMapper) getEntity(entityType string, attrs Attributes) (*Entity, error) {
+	entity, ok := e.entityConfigs[entityType]
+	if !ok {
+		return nil, fmt.Errorf("entity type %s not found", entityType)
+	}
+
+	newEntity, err := createEntity(entity, attrs.Common)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create entity for type %s: %w", entityType, err)
+	}
+
+	return &newEntity, nil
+}
+
+func (e *AttributeMapper) getRelationshipEntities(sourceEntityType, destEntityType string, attrs Attributes) (*Entity, *Entity, error) {
+	if sourceEntityType == destEntityType {
+		if len(attrs.Source) == 0 && len(attrs.Destination) == 0 {
+			return nil, nil, fmt.Errorf("source and destination attributes are empty for same type relationship")
+		}
+	}
+
+	sourceEntityConfiguration, ok := e.entityConfigs[sourceEntityType]
+	if !ok {
+		return nil, nil, fmt.Errorf("source entity type %s not found", sourceEntityType)
+	}
+
+	sourceEntity, err := createEntity(sourceEntityConfiguration, attrs.Common, attrs.Source)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create entity for type %s: %w", entityType, err)
+	}
+
+	destinationEntityConfiguration, ok := e.entityConfigs[destEntityType]
+	if !ok {
+		return nil, nil, fmt.Errorf("destination entity type %s not found", destEntityType)
+	}
+	destinationEntity, err := createEntity(destinationEntityConfiguration, attrs.Common, attrs.Destination)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create entity for type %s: %w", destEntityType, err)
+	}
+
+	return &sourceEntity, &destinationEntity, nil
+}
+
 func (e *AttributeMapper) getEntities(entityType string, attrs Attributes) (entities []Entity, err error) {
 	entity, ok := e.entityConfigs[entityType]
 	if !ok {
