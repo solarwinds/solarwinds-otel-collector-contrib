@@ -15,15 +15,12 @@
 package internal
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottlmetric"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"go.uber.org/zap"
-	"hash/fnv"
 )
 
 type EventDetector struct {
@@ -80,7 +77,6 @@ func (e *EventDetector) collectEvents(attrs Attributes, entityEvents []*config.E
 
 func (e *EventDetector) validateEntityEvents(validEvents []*config.EntityEvent, actualEvents map[string]Entity) map[string]Entity {
 	events := make(map[string]Entity)
-	eventsArray := make([]Event, 0, len(actualEvents))
 	for entityHash, actualEvent := range actualEvents {
 		for _, event := range validEvents {
 			if event.Type == actualEvent.Type {
@@ -88,7 +84,6 @@ func (e *EventDetector) validateEntityEvents(validEvents []*config.EntityEvent, 
 				// because conditions were met.
 				actualEvent.Action = event.Action
 				events[entityHash] = actualEvent
-				eventsArray = append(eventsArray, actualEvent)
 			}
 		}
 	}
@@ -104,7 +99,7 @@ func (e *EventDetector) getEntities(attrs Attributes, entityEvents []*config.Ent
 			continue
 		}
 
-		eventHash, err := buildEntityKey(*event)
+		eventHash, err := buildEntityHash(*event)
 		_, alreadyExists := relationshipEntities[eventHash]
 		if !alreadyExists {
 			event.Action = entityEvent.Action
@@ -124,10 +119,10 @@ func (e *EventDetector) getRelationships(attrs Attributes, relationshipEvents []
 			continue
 		}
 
-		srcHash, err := buildEntityKey(*sourceEntity)
+		srcHash, err := buildEntityHash(*sourceEntity)
 		detectedRelationshipEntities[srcHash] = *sourceEntity
 
-		dstHash, err := buildEntityKey(*destEntity)
+		dstHash, err := buildEntityHash(*destEntity)
 		detectedRelationshipEntities[dstHash] = *destEntity
 
 		relationship, err := createRelationship(relationshipEvent, sourceEntity, destEntity, attrs)
@@ -201,24 +196,14 @@ func createRelationship(relationship *config.RelationshipEvent, source, dest *En
 
 // BuildEntityKey constructs a unique key for the entity referenced in the relationship.
 // The key is composition of entity type and its ID attributes.
-func buildEntityKey(entity Entity) (string, error) {
-	var buf bytes.Buffer
-	enc := json.NewEncoder(&buf)
-	err := enc.Encode(struct {
+func buildEntityHash(entity Entity) (string, error) {
+	// Marshal directly to bytes instead of using a buffer and encoder
+	data := struct {
 		Type string
 		IDs  map[string]any
 	}{
-		entity.Type,
-		entity.IDs.AsRaw(),
-	})
-	if err != nil {
-		return "", fmt.Errorf("failed to encode entity: %w", err)
+		Type: entity.Type,
+		IDs:  entity.IDs.AsRaw(),
 	}
-
-	h := fnv.New64a()
-	_, err = h.Write(buf.Bytes())
-	if err != nil {
-		return "", fmt.Errorf("failed to write entity bytes to hash: %w", err)
-	}
-	return fmt.Sprintf("%x", h.Sum64()), nil
+	return HashObject(data)
 }

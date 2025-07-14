@@ -15,11 +15,8 @@
 package storage
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal"
-	"hash/fnv"
 )
 
 // KeyBuilder provides methods for generating consistent keys for entities and relationships
@@ -43,25 +40,14 @@ func NewKeyBuilder() KeyBuilder {
 // BuildEntityKey constructs a unique key for the entity referenced in the relationship.
 // The key is composition of entity type and its ID attributes.
 func (b *defaultKeyBuilder) BuildEntityKey(entity internal.RelationshipEntity) (string, error) {
-	var buf bytes.Buffer
-	enc := json.NewEncoder(&buf)
-	err := enc.Encode(struct {
+	data := struct {
 		Type string
 		IDs  map[string]any
 	}{
-		entity.Type,
-		entity.IDs.AsRaw(),
-	})
-	if err != nil {
-		return "", fmt.Errorf("failed to encode entity: %w", err)
+		Type: entity.Type,
+		IDs:  entity.IDs.AsRaw(),
 	}
-
-	h := fnv.New64a()
-	_, err = h.Write(buf.Bytes())
-	if err != nil {
-		return "", fmt.Errorf("failed to write entity bytes to hash: %w", err)
-	}
-	return fmt.Sprintf("%x", h.Sum64()), nil
+	return internal.HashObject(data)
 }
 
 // BuildRelationshipKey constructs a key using the relationship type and the hashed keys
