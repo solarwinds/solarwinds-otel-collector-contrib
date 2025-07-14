@@ -22,7 +22,7 @@ import (
 	"go.opentelemetry.io/collector/pdata/pcommon"
 )
 
-func TestGetEntities_DestinationEntityNotFound(t *testing.T) {
+func TestGetEntities_EntityNotFound(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
 		"testEntityType": {Type: "testEntityType", IDs: []string{"id"}},
 	}
@@ -31,108 +31,109 @@ func TestGetEntities_DestinationEntityNotFound(t *testing.T) {
 		Common: map[string]pcommon.Value{"commonAttr": pcommon.NewValueStr("commonValue")},
 	}
 
-	entities, err := attributeMapper.getEntities("nonexistentEntityType", attrs)
-	assert.Nil(t, entities)
+	entity, err := attributeMapper.getEntity("nonexistentEntityType", attrs)
+	assert.Nil(t, entity)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "entity type nonexistentEntityType not found")
 }
 
-func TestGetEntities_SourceAttributesSubsetOfEntityIDs(t *testing.T) {
+func TestGetEntities_CommonContainsRequiredKeysEntityIsCreated(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
-		"sourceEntityType": {Type: "sourceEntityType", IDs: []string{"id"}},
+		"testEntityType": {Type: "testEntityType", IDs: []string{"id"}},
 	}
 	attributeMapper := NewAttributeMapper(entityConfigs)
 	attrs := Attributes{
-		Source: map[string]pcommon.Value{"id": pcommon.NewValueStr("value")},
-		Common: map[string]pcommon.Value{"commonAttr": pcommon.NewValueStr("commonValue")},
+		Common: map[string]pcommon.Value{
+			"id":        pcommon.NewValueStr("id-value"),
+			"extraAttr": pcommon.NewValueStr("extraValue")},
 	}
 
-	entities, err := attributeMapper.getEntities("sourceEntityType", attrs)
+	entity, err := attributeMapper.getEntity("testEntityType", attrs)
 	assert.NoError(t, err)
-	assert.Equal(t, 1, len(entities))
-	assert.Equal(t, "sourceEntityType", entities[0].Type)
-	value, _ := entities[0].IDs.Get("id")
-	assert.Equal(t, "value", value.Str())
+	assert.Equal(t, "testEntityType", entity.Type)
+	value, _ := entity.IDs.Get("id")
+	assert.Equal(t, "id-value", value.Str())
 }
 
-func TestGetEntities_DestinationAttributesSubsetOfEntityIDs(t *testing.T) {
-	entityConfigs := map[string]config.Entity{
-		"destEntityType": {Type: "destEntityType", IDs: []string{"id"}},
-	}
-	attributeMapper := NewAttributeMapper(entityConfigs)
-	attrs := Attributes{
-		Destination: map[string]pcommon.Value{"id": pcommon.NewValueStr("value")},
-		Common:      map[string]pcommon.Value{"commonAttr": pcommon.NewValueStr("commonValue")},
-	}
-
-	entities, err := attributeMapper.getEntities("destEntityType", attrs)
-	assert.NoError(t, err)
-	assert.Equal(t, 1, len(entities))
-	assert.Equal(t, "destEntityType", entities[0].Type)
-	value, _ := entities[0].IDs.Get("id")
-	assert.Equal(t, "value", value.Str())
-}
-
-func TestGetEntities_AttributesInCommonAreSuperset(t *testing.T) {
-	entityConfigs := map[string]config.Entity{
-		"commonEntityType": {Type: "commonEntityType", IDs: []string{"id"}},
-	}
-	attributeMapper := NewAttributeMapper(entityConfigs)
-	attrs := Attributes{
-		Common: map[string]pcommon.Value{"id": pcommon.NewValueStr("value"), "extraAttr": pcommon.NewValueStr("extraValue")},
-	}
-
-	entities, err := attributeMapper.getEntities("commonEntityType", attrs)
-	assert.NoError(t, err)
-	assert.Equal(t, 1, len(entities))
-	assert.Equal(t, "commonEntityType", entities[0].Type)
-	value, _ := entities[0].IDs.Get("id")
-	assert.Equal(t, "value", value.Str())
-}
-
-func TestGetEntities_NoEntityCreated(t *testing.T) {
+func TestGetEntities_NoEntityCreatedWhenCommonIdIsMissing(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
 		"entityType": {Type: "entityType", IDs: []string{"id"}},
 	}
 	attributeMapper := NewAttributeMapper(entityConfigs)
 	attrs := Attributes{
-		Source:      map[string]pcommon.Value{"otherId": pcommon.NewValueStr("value")},
-		Destination: map[string]pcommon.Value{"otherId": pcommon.NewValueStr("value")},
-		Common:      map[string]pcommon.Value{"otherId": pcommon.NewValueStr("value")},
+		Source:      map[string]pcommon.Value{"id": pcommon.NewValueStr("not-used")},
+		Destination: map[string]pcommon.Value{"id": pcommon.NewValueStr("not-used")},
+		Common:      map[string]pcommon.Value{"otherId": pcommon.NewValueStr("is-not-the-required-id")},
 	}
 
-	entities, err := attributeMapper.getEntities("entityType", attrs)
-	assert.Nil(t, entities)
+	entity, err := attributeMapper.getEntity("entityType", attrs)
+	assert.Nil(t, entity)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "no entityConfigs found for entity type entityType")
+	assert.Contains(t, err.Error(), "failed to create entity for type")
 }
 
-func TestGetEntities_SourceAndCommonAttributesOutputTwoEntities(t *testing.T) {
+func TestGetRelationshipEntities_SourceEntityDoesNotExist(t *testing.T) {
+	entityConfigs := map[string]config.Entity{
+		"destType": {Type: "destType", IDs: []string{"id"}},
+	}
+	attributeMapper := NewAttributeMapper(entityConfigs)
+	attrs := Attributes{
+		Destination: map[string]pcommon.Value{
+			"id": pcommon.NewValueStr("destValue"),
+		},
+	}
+
+	src, dest, err := attributeMapper.getRelationshipEntities("nonExistentType", "destType", attrs)
+	assert.Nil(t, src)
+	assert.Nil(t, dest)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "source entity type nonExistentType not found")
+}
+
+func TestGetRelationshipEntities_DestinationEntityDoesNotExist(t *testing.T) {
+	entityConfigs := map[string]config.Entity{
+		"sourceType": {Type: "sourceType", IDs: []string{"id"}},
+	}
+	attributeMapper := NewAttributeMapper(entityConfigs)
+	attrs := Attributes{
+		Source: map[string]pcommon.Value{
+			"id": pcommon.NewValueStr("sourceValue"),
+		},
+	}
+
+	src, dest, err := attributeMapper.getRelationshipEntities("sourceType", "nonExistentType", attrs)
+	assert.Nil(t, src)
+	assert.Nil(t, dest)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "destination entity type nonExistentType not found")
+}
+
+func TestGetRelationshipEntities_SourceAndCommonAttributesOutputRelationshipEntities(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
 		"entityType": {Type: "entityType", IDs: []string{"id"}},
 	}
+
 	attributeMapper := NewAttributeMapper(entityConfigs)
 	attrs := Attributes{
 		Source: map[string]pcommon.Value{"id": pcommon.NewValueStr("sourceValue")},
 		Common: map[string]pcommon.Value{"id": pcommon.NewValueStr("commonValue")},
 	}
 
-	entities, err := attributeMapper.getEntities("entityType", attrs)
+	src, dest, err := attributeMapper.getRelationshipEntities("entityType", "entityType", attrs)
 	assert.NoError(t, err)
-	assert.Equal(t, 2, len(entities))
 
 	// Verify first entity from Source attributes
-	assert.Equal(t, "entityType", entities[0].Type)
-	sourceValue, _ := entities[0].IDs.Get("id")
+	assert.Equal(t, "entityType", src.Type)
+	sourceValue, _ := src.IDs.Get("id")
 	assert.Equal(t, "sourceValue", sourceValue.Str())
 
 	// Verify second entity from Common attributes
-	assert.Equal(t, "entityType", entities[1].Type)
-	commonValue, _ := entities[1].IDs.Get("id")
+	assert.Equal(t, "entityType", src.Type)
+	commonValue, _ := dest.IDs.Get("id")
 	assert.Equal(t, "commonValue", commonValue.Str())
 }
 
-func TestGetEntities_DestinationAndCommonAttributesOutputTwoEntities(t *testing.T) {
+func TestGetRelationshipEntities_DestinationAndCommonAttributesOutputRelationshipEntities(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
 		"entityType": {Type: "entityType", IDs: []string{"id"}},
 	}
@@ -142,103 +143,89 @@ func TestGetEntities_DestinationAndCommonAttributesOutputTwoEntities(t *testing.
 		Common:      map[string]pcommon.Value{"id": pcommon.NewValueStr("commonValue")},
 	}
 
-	entities, err := attributeMapper.getEntities("entityType", attrs)
+	src, dest, err := attributeMapper.getRelationshipEntities("entityType", "entityType", attrs)
 	assert.NoError(t, err)
-	assert.Equal(t, 2, len(entities))
-
-	// Verify first entity from Destination attributes
-	assert.Equal(t, "entityType", entities[0].Type)
-	destinationValue, _ := entities[0].IDs.Get("id")
-	assert.Equal(t, "destinationValue", destinationValue.Str())
 
 	// Verify second entity from Common attributes
-	assert.Equal(t, "entityType", entities[1].Type)
-	commonValue, _ := entities[1].IDs.Get("id")
+	assert.Equal(t, "entityType", src.Type)
+	commonValue, _ := src.IDs.Get("id")
 	assert.Equal(t, "commonValue", commonValue.Str())
+
+	// Verify first entity from Destination attributes
+	assert.Equal(t, "entityType", dest.Type)
+	destinationValue, _ := dest.IDs.Get("id")
+	assert.Equal(t, "destinationValue", destinationValue.Str())
 }
 
-func TestGetRelationship_SourceAndDestinationAttributesOutputRelationship(t *testing.T) {
+func TestGetRelationshipEntities_SourceAndDestinationAttributesOutputRelationship(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
 		"sourceType": {Type: "sourceType", IDs: []string{"id"}},
 		"destType":   {Type: "destType", IDs: []string{"id"}},
 	}
 	attributeMapper := NewAttributeMapper(entityConfigs)
-	relationship := &config.RelationshipEvent{
-		Type:        "testRelationship",
-		Source:      "sourceType",
-		Destination: "destType",
-	}
 	attrs := Attributes{
 		Source:      map[string]pcommon.Value{"id": pcommon.NewValueStr("sourceValue")},
 		Destination: map[string]pcommon.Value{"id": pcommon.NewValueStr("destValue")},
 	}
 
-	rel, err := attributeMapper.getRelationship(relationship, attrs)
+	src, dest, err := attributeMapper.getRelationshipEntities("sourceType", "destType", attrs)
 	assert.NoError(t, err)
-	assert.Equal(t, "testRelationship", rel.Type)
 
 	// Verify source entity
-	assert.Equal(t, "sourceType", rel.Source.Type)
-	sourceValue, _ := rel.Source.IDs.Get("id")
+	assert.Equal(t, "sourceType", src.Type)
+	sourceValue, _ := src.IDs.Get("id")
 	assert.Equal(t, "sourceValue", sourceValue.Str())
 
 	// Verify destination entity
-	assert.Equal(t, "destType", rel.Destination.Type)
-	destValue, _ := rel.Destination.IDs.Get("id")
+	assert.Equal(t, "destType", dest.Type)
+	destValue, _ := dest.IDs.Get("id")
 	assert.Equal(t, "destValue", destValue.Str())
 }
 
-func TestGetRelationship_AttributesSubsetUsedForRelationship(t *testing.T) {
+func TestGetRelationshipEntities_AttributesSubsetUsedForRelationship(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
 		"sourceType": {Type: "sourceType", IDs: []string{"id"}},
 		"destType":   {Type: "destType", IDs: []string{"id"}},
 	}
 	attributeMapper := NewAttributeMapper(entityConfigs)
-	relationship := &config.RelationshipEvent{
-		Type:        "testRelationship",
-		Source:      "sourceType",
-		Destination: "destType",
-		Attributes:  []string{"attr1", "attr2"},
-	}
 	attrs := Attributes{
 		Source:      map[string]pcommon.Value{"id": pcommon.NewValueStr("sourceValue")},
 		Destination: map[string]pcommon.Value{"id": pcommon.NewValueStr("destValue")},
 		Common: map[string]pcommon.Value{
-			"attr1":     pcommon.NewValueStr("value1"),
-			"attr2":     pcommon.NewValueStr("value2"),
-			"extraAttr": pcommon.NewValueStr("extraValue"), // Not part of relationship attributes
+			"attr1": pcommon.NewValueStr("value1"),
+			"attr2": pcommon.NewValueStr("value2"),
 		},
 	}
 
-	rel, err := attributeMapper.getRelationship(relationship, attrs)
+	src, dest, err := attributeMapper.getRelationshipEntities("sourceType", "destType", attrs)
 	assert.NoError(t, err)
-	assert.Equal(t, "testRelationship", rel.Type)
 
-	// Verify relationship attributes
-	assert.Equal(t, 2, rel.Attributes.Len())
-	attr1Value, _ := rel.Attributes.Get("attr1")
-	assert.Equal(t, "value1", attr1Value.Str())
-	attr2Value, _ := rel.Attributes.Get("attr2")
-	assert.Equal(t, "value2", attr2Value.Str())
+	// Verify source entity
+	assert.Equal(t, "sourceType", src.Type)
+	assert.Equal(t, 1, src.IDs.Len())
+	sourceValue, _ := src.IDs.Get("id")
+	assert.Equal(t, "sourceValue", sourceValue.Str())
+
+	// Verify destination entity
+	assert.Equal(t, "destType", dest.Type)
+	assert.Equal(t, 1, dest.IDs.Len())
+	destValue, _ := dest.IDs.Get("id")
+	assert.Equal(t, "destValue", destValue.Str())
 }
 
-func TestGetRelationship_NoAttributesForSourceAndDestination(t *testing.T) {
+func TestGetRelationshipEntities_NoAttributesForSourceAndDestination(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
 		"sourceType": {Type: "sourceType", IDs: []string{"id"}},
 		"destType":   {Type: "destType", IDs: []string{"id"}},
 	}
 	attributeMapper := NewAttributeMapper(entityConfigs)
-	relationship := &config.RelationshipEvent{
-		Type:        "testRelationship",
-		Source:      "sourceType",
-		Destination: "destType",
-	}
 	attrs := Attributes{
 		Common: map[string]pcommon.Value{"otherAttr": pcommon.NewValueStr("value")},
 	}
 
-	rel, err := attributeMapper.getRelationship(relationship, attrs)
-	assert.Nil(t, rel)
+	src, dest, err := attributeMapper.getRelationshipEntities("sourceType", "destType", attrs)
+	assert.Nil(t, src)
+	assert.Nil(t, dest)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to create source entity")
+	assert.Contains(t, err.Error(), "failed to create entity for type")
 }
