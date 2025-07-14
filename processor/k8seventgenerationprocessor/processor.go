@@ -20,6 +20,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/k8seventgenerationprocessor/internal/manifests"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
@@ -37,13 +38,14 @@ type k8seventgenerationprocessor struct {
 }
 
 type result struct {
-	Manifest  Manifest
+	Manifest  manifests.PodManifest
 	Timestamp pcommon.Timestamp
 }
 
-// processLogs go through all log records and parse information about containers from them.
-// Containers are created based on all log records from all scope and resource logs.
-// Containers related logs are appended as a new ResourceLogs to the plog.Logs structure that is processed at the time.
+// processLogs goes through all log records and parse information about Container entities
+// and relations based on Endpoints and EndpointSlices from them.
+// The entities/relations are created based on all log records from all scope and resource logs.
+// The resulting state logs are appended as a new ResourceLogs to the plog.Logs structure that is processed at the time.
 func (cp *k8seventgenerationprocessor) processLogs(_ context.Context, ld plog.Logs) (plog.Logs, error) {
 	resourceLogs := ld.ResourceLogs()
 	mCh := make(chan result)
@@ -68,7 +70,7 @@ func (cp *k8seventgenerationprocessor) processLogs(_ context.Context, ld plog.Lo
 	wg.Wait()
 
 	if logSlice.Len() > 0 {
-		rl := addContainersResourceLog(ld)
+		rl := addResourceLog(ld)
 		lrs := rl.ScopeLogs().At(0).LogRecords()
 		logSlice.CopyTo(lrs)
 	}
@@ -111,7 +113,7 @@ func (cp *k8seventgenerationprocessor) generateManifests(resCh chan<- result, er
 					continue
 				}
 				body := lr.Body().AsString()
-				var m Manifest
+				var m manifests.PodManifest
 
 				err := json.Unmarshal([]byte(body), &m)
 				if err != nil {

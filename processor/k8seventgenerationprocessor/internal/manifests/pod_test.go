@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package k8seventgenerationprocessor
+package manifests
 
 import (
 	"testing"
@@ -21,12 +21,12 @@ import (
 )
 
 var (
-	manifest = Manifest{
-		Metadata: Metadata{
+	manifest = PodManifest{
+		Metadata: PodMetadata{
 			PodName:   "test-pod",
 			Namespace: "test-namespace",
 		},
-		Status: Status{
+		Status: PodStatus{
 			ContainerStatuses: []statusContainer{
 				{
 					Name:        "test-container",
@@ -64,7 +64,7 @@ var (
 				},
 			},
 		},
-		Spec: Spec{
+		Spec: PodSpec{
 			Containers: []struct {
 				Name string `json:"name"`
 			}{
@@ -93,7 +93,7 @@ var (
 )
 
 func TestGetContainer(t *testing.T) {
-	containers := manifest.getContainers()
+	containers := manifest.GetContainers()
 
 	// container missing in spec should not be returned in the result
 	assert.Len(t, containers, 4, "Expected 4 containers")

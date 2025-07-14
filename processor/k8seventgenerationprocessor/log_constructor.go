@@ -17,6 +17,7 @@ package k8seventgenerationprocessor
 import (
 	"os"
 
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/k8seventgenerationprocessor/internal/manifests"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
 	conventions "go.opentelemetry.io/otel/semconv/v1.6.1"
@@ -44,9 +45,9 @@ const (
 	k8sContainerSidecar  = "sw.k8s.container.sidecar"
 )
 
-// addContainersResourceLog adds a new ResourceLogs to the provided Logs structure
+// addResourceLog adds a new ResourceLogs to the provided Logs structure
 // and sets required attributes on "resource" and "scopeLogs"
-func addContainersResourceLog(ld plog.Logs) plog.ResourceLogs {
+func addResourceLog(ld plog.Logs) plog.ResourceLogs {
 	rl := ld.ResourceLogs().AppendEmpty()
 	rl.Resource().Attributes().PutStr(k8sLogType, "entitystateevent")
 	sl := rl.ScopeLogs().AppendEmpty()
@@ -56,10 +57,10 @@ func addContainersResourceLog(ld plog.Logs) plog.ResourceLogs {
 
 // transformManifestToContainerLogs returns a new plog.LogRecordSlice and appends
 // all LogRecords containing container information from the provided Manifest.
-func transformManifestToContainerLogs(m Manifest, t pcommon.Timestamp) plog.LogRecordSlice {
+func transformManifestToContainerLogs(m manifests.PodManifest, t pcommon.Timestamp) plog.LogRecordSlice {
 	lrs := plog.NewLogRecordSlice()
 
-	containers := m.getContainers()
+	containers := m.GetContainers()
 	for _, c := range containers {
 		lr := lrs.AppendEmpty()
 		lr.SetObservedTimestamp(t)
@@ -70,14 +71,14 @@ func transformManifestToContainerLogs(m Manifest, t pcommon.Timestamp) plog.LogR
 }
 
 // addContainerAttributes sets attributes on the provided map for the given Metadata and Container.
-func addContainerAttributes(attrs pcommon.Map, md Metadata, c Container) {
+func addContainerAttributes(attrs pcommon.Map, md manifests.PodMetadata, c manifests.Container) {
 	// Ingestion attributes
 	attrs.PutStr(otelEntityEventType, entityState)
 	attrs.PutStr(swEntityType, k8sContainerEntityType)
 
 	// Telemetry mappings
 	tm := attrs.PutEmptyMap(otelEntityId)
-	tm.PutStr(string(conventions.K8SPodNameKey), md.PodName)
+	tm.PutStr(string(conventions.K8SPodNameKey), md.Name)
 	tm.PutStr(string(conventions.K8SNamespaceNameKey), md.Namespace)
 	tm.PutStr(string(conventions.K8SContainerNameKey), c.Name)
 	tm.PutStr(swK8sClusterUid, os.Getenv(clusterUidEnv))

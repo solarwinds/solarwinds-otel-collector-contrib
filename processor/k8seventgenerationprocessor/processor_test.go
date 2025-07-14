@@ -19,6 +19,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/k8seventgenerationprocessor/internal/manifests"
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/consumer/consumertest"
@@ -150,7 +151,7 @@ func TestPodLogBody(t *testing.T) {
 	verifyOriginalLog(t, origLog, body)
 
 	newLog := result[0].ResourceLogs().At(1)
-	verifyNewLog(t, newLog, map[string]Container{
+	verifyNewLog(t, newLog, map[string]manifests.Container{
 		"test-container-name": {
 			Name:            "test-container-name",
 			ContainerId:     "test-container-id",
@@ -174,7 +175,7 @@ func verifyOriginalLog(t *testing.T, origLog plog.ResourceLogs, expectedBody str
 	assert.Equal(t, origBody, expectedBody)
 }
 
-func verifyNewLog(t *testing.T, newLog plog.ResourceLogs, expectedContainers map[string]Container) {
+func verifyNewLog(t *testing.T, newLog plog.ResourceLogs, expectedContainers map[string]manifests.Container) {
 	// resource
 	assert.Equal(t, newLog.Resource().Attributes().Len(), 1)
 	assert.Equal(t, "entitystateevent", getStringValue(newLog.Resource().Attributes(), "sw.k8s.log.type"))

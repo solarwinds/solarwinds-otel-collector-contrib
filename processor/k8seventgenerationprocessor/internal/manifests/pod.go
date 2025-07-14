@@ -12,30 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package k8seventgenerationprocessor
+package manifests
 
-type Manifest struct {
-	Metadata Metadata `json:"metadata"`
-	Status   Status   `json:"status"`
-	Spec     Spec     `json:"spec"`
+type PodManifest struct {
+	Metadata PodMetadata `json:"metadata"`
+	Status   PodStatus   `json:"status"`
+	Spec     PodSpec     `json:"spec"`
 }
 
-type Metadata struct {
+type PodMetadata struct {
 	PodName   string `json:"name"`
 	Namespace string `json:"namespace"`
 }
 
-type Status struct {
+type PodStatus struct {
 	ContainerStatuses     []statusContainer
 	InitContainerStatuses []statusContainer
-	Conditions            []Condition
+	Conditions            []PodCondition
 }
 
-type Condition struct {
+type PodCondition struct {
 	Timestamp string `json:"lastTransitionTime"`
 }
 
-type Spec struct {
+type PodSpec struct {
 	Containers []struct {
 		Name string `json:"name"`
 	} `json:"containers"`
@@ -59,9 +59,9 @@ type Container struct {
 	IsSidecarContainer bool
 }
 
-// getContainers returns a map of containers from the manifest. Data of each container
+// GetContainers returns a map of containers from the manifest. Data of each container
 // are merged from "spec" and "status" parts of the manifest.
-func (m *Manifest) getContainers() map[string]Container {
+func (m *PodManifest) GetContainers() map[string]Container {
 	containers := make(map[string]Container, 0)
 	for _, c := range m.Spec.Containers {
 		containers[c.Name] = Container{
@@ -84,7 +84,7 @@ func (m *Manifest) getContainers() map[string]Container {
 }
 
 // fillStates fills the basic and init container states from the "status" part of the manifest.
-func (s *Status) fillStates(containers map[string]Container) {
+func (s *PodStatus) fillStates(containers map[string]Container) {
 	for _, c := range s.ContainerStatuses {
 		c.fillContainer(containers)
 	}
