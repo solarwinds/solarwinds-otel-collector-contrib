@@ -15,11 +15,8 @@
 package storage
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"hash/fnv"
 	"time"
 
 	"github.com/dgraph-io/ristretto/v2"
@@ -243,28 +240,4 @@ func (c *internalStorage) update(relationship *internal.Relationship) error {
 		return fmt.Errorf("failed to update relationship: %s", relationship.Type)
 	}
 	return nil
-}
-
-// buildKey constructs a unique key for the entity referenced in the relationship.
-// The key is composition of entity type and its ID attributes.
-func buildKey(entity internal.RelationshipEntity) (string, error) {
-	var buf bytes.Buffer
-	enc := json.NewEncoder(&buf)
-	err := enc.Encode(struct {
-		Type string
-		IDs  map[string]any
-	}{
-		entity.Type,
-		entity.IDs.AsRaw(),
-	})
-	if err != nil {
-		return "", fmt.Errorf("failed to encode entity: %w", err)
-	}
-
-	h := fnv.New64a()
-	_, err = h.Write(buf.Bytes())
-	if err != nil {
-		return "", fmt.Errorf("failed to write entity bytes to hash: %w", err)
-	}
-	return fmt.Sprintf("%x", h.Sum64()), nil
 }
