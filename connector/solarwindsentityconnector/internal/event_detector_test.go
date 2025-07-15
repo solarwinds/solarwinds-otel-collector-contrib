@@ -757,7 +757,12 @@ func TestCollectEvents_WithRelationship_RelationshipAttributesPresent(t *testing
 	// arrange
 	srcEntity := config.Entity{Type: "KubernetesCluster", IDs: []string{"id1"}}
 	destEntity := config.Entity{Type: "KubernetesNamespace", IDs: []string{"id2"}}
-	testRelationship := config.RelationshipEvent{Source: "KubernetesCluster", Destination: "KubernetesNamespace", Attributes: []string{"relationshipAttr"}, Action: EventUpdateAction}
+	testRelationship := config.RelationshipEvent{
+		Source:      "KubernetesCluster",
+		Destination: "KubernetesNamespace",
+		Attributes:  []string{"relationshipAttr"},
+		Action:      EventUpdateAction,
+	}
 	attributes := Attributes{
 		Common: map[string]pcommon.Value{
 			"id1":              pcommon.NewValueStr("idvalue1"),
