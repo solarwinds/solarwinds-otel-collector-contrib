@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestUpdate(t *testing.T) {
+func TestUpdate_Entity(t *testing.T) {
 	logRecords := plog.NewLogRecordSlice()
 	ids := pcommon.NewMap()
 	ids.PutStr("cluster.uid", "cluster123")
@@ -42,7 +42,7 @@ func TestUpdate(t *testing.T) {
 	assert.Equal(t, "test-cluster", actualClusterName.Str())
 }
 
-func TestDelete(t *testing.T) {
+func TestDelete_Entity(t *testing.T) {
 	logRecords := plog.NewLogRecordSlice()
 	ids := pcommon.NewMap()
 	ids.PutStr("cluster.uid", "cluster123")
