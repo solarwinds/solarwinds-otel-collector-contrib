@@ -16,6 +16,7 @@ package config
 
 import (
 	"errors"
+	"fmt"
 
 	"go.opentelemetry.io/collector/component"
 )
@@ -27,21 +28,27 @@ type Schema struct {
 
 // Validate validates the schema section of the configuration
 func (s *Schema) Validate() error {
+	var allErrs error
+
 	// Schema is mandatory
 	if len(s.Entities) == 0 {
-		return errors.New("schema.entities is mandatory and must contain at least 1 item")
+		allErrs = errors.Join(allErrs, errors.New("schema.entities is mandatory and must contain at least 1 item"))
 	}
 
 	// Validate entities
 	for i, entity := range s.Entities {
 		if err := entity.Validate(i); err != nil {
-			return err
+			allErrs = errors.Join(allErrs, err)
 		}
 	}
 
 	// Events section is mandatory
 	if err := s.Events.Validate(s.Entities); err != nil {
-		return err
+		allErrs = errors.Join(allErrs, err)
+	}
+
+	if allErrs != nil {
+		return fmt.Errorf("schema validation failed: %w", allErrs)
 	}
 
 	return nil
@@ -50,7 +57,7 @@ func (s *Schema) Validate() error {
 func (s *Schema) NewEntities() map[string]Entity {
 	entities := make(map[string]Entity, len(s.Entities))
 	for _, entity := range s.Entities {
-		entities[entity.Type] = entity
+		entities[entity.Entity] = entity
 	}
 
 	return entities

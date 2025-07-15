@@ -15,9 +15,10 @@
 package config
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestParseReturnsWithoutErrors(t *testing.T) {
@@ -38,7 +39,7 @@ func TestParseReturnsWithoutErrors(t *testing.T) {
 		TTLCleanupIntervalSeconds: 10 * time.Second,
 		MaxCapacity:               10,
 	}
-	result, err := expirationPolicy.Parse()
+	result, err := expirationPolicy.Unmarshal()
 	assert.Nil(t, err)
 	assert.Equal(t, result, &expectedExpirationPolicy)
 }
@@ -55,7 +56,7 @@ func TestParseWhenDisabledReturnsError(t *testing.T) {
 		},
 	}
 
-	_, err := expirationPolicy.Parse()
+	_, err := expirationPolicy.Unmarshal()
 	assert.ErrorContains(t, err, "expiration policy is not enabled")
 }
 
@@ -71,7 +72,7 @@ func TestParseWithEmptyIntervalReturnsError(t *testing.T) {
 		},
 	}
 
-	_, err := expirationPolicy.Parse()
+	_, err := expirationPolicy.Unmarshal()
 	assert.ErrorContains(t, err, "expiration interval is not set")
 }
 
@@ -87,7 +88,7 @@ func TestParseWithEmptyCleanupIntervalReturnsError(t *testing.T) {
 		},
 	}
 
-	_, err := expirationPolicy.Parse()
+	_, err := expirationPolicy.Unmarshal()
 	assert.ErrorContains(t, err, "invalid TTL cleanup interval format")
 }
 
@@ -103,7 +104,7 @@ func TestParseWithZeroCleanupIntervalReturnsError(t *testing.T) {
 		},
 	}
 
-	_, err := expirationPolicy.Parse()
+	_, err := expirationPolicy.Unmarshal()
 	assert.ErrorContains(t, err, "ttl cleanup interval must be at least 1 second")
 }
 
@@ -119,6 +120,6 @@ func TestParseMaxCapacityLessThenZeroReturnError(t *testing.T) {
 		},
 	}
 
-	_, err := expirationPolicy.Parse()
+	_, err := expirationPolicy.Unmarshal()
 	assert.ErrorContains(t, err, "max capacity must be greater than zero")
 }

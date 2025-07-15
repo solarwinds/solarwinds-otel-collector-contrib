@@ -15,9 +15,10 @@
 package benchmark
 
 import (
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"testing"
 	"time"
+
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottlmetric"
@@ -89,7 +90,7 @@ func buildConfiguredMetrics(b *testing.B, cfg *config.Config) []pmetric.Metrics 
 		if e.Context != ottlmetric.ContextName {
 			continue
 		}
-		metric := buildEntityMetric(b, cfg, e.Type)
+		metric := buildEntityMetric(b, cfg, e.Entity)
 		configuredMetrics = append(configuredMetrics, metric)
 	}
 
@@ -156,7 +157,7 @@ func buildEntityMetric(b *testing.B, cfg *config.Config, entityType string) pmet
 	attrs := metric.ResourceMetrics().At(0).Resource().Attributes()
 
 	for _, ent := range cfg.Schema.Entities {
-		if ent.Type != entityType {
+		if ent.Entity != entityType {
 			continue
 		}
 		for _, id := range ent.IDs {
@@ -176,13 +177,13 @@ func buildRelationshipMetric(b *testing.B, cfg *config.Config, relType, sourceTy
 	attrs := metric.ResourceMetrics().At(0).Resource().Attributes()
 
 	for _, ent := range cfg.Schema.Entities {
-		if ent.Type == sourceType {
+		if ent.Entity == sourceType {
 			for _, id := range ent.IDs {
 				attrs.PutStr("src."+id, "test-value")
 			}
 		}
 
-		if ent.Type == destType {
+		if ent.Entity == destType {
 			for _, id := range ent.IDs {
 				attrs.PutStr("dst."+id, "test-value")
 			}
@@ -253,7 +254,7 @@ func buildConfiguredLogs(b *testing.B, cfg *config.Config) []plog.Logs {
 		if e.Context != ottllog.ContextName {
 			continue
 		}
-		log := buildEntityLog(b, cfg, e.Type)
+		log := buildEntityLog(b, cfg, e.Entity)
 		configuredLogs = append(configuredLogs, log)
 	}
 
@@ -315,7 +316,7 @@ func buildEntityLog(b *testing.B, cfg *config.Config, entityType string) plog.Lo
 	attrs := log.ResourceLogs().At(0).Resource().Attributes()
 
 	for _, ent := range cfg.Schema.Entities {
-		if ent.Type != entityType {
+		if ent.Entity != entityType {
 			continue
 		}
 		for _, id := range ent.IDs {
@@ -334,13 +335,13 @@ func buildRelationshipLog(b *testing.B, cfg *config.Config, relType, sourceType,
 	attrs := log.ResourceLogs().At(0).Resource().Attributes()
 
 	for _, ent := range cfg.Schema.Entities {
-		if ent.Type == sourceType {
+		if ent.Entity == sourceType {
 			for _, id := range ent.IDs {
 				attrs.PutStr("src."+id, "test-value")
 			}
 		}
 
-		if ent.Type == destType {
+		if ent.Entity == destType {
 			for _, id := range ent.IDs {
 				attrs.PutStr("dst."+id, "test-value")
 			}

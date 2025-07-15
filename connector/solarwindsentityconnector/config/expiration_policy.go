@@ -45,17 +45,18 @@ type ExpirationSettings struct {
 	MaxCapacity               int64
 }
 
-func (e *ExpirationPolicy) Parse() (*ExpirationSettings, error) {
+func (e *ExpirationPolicy) Unmarshal() (*ExpirationSettings, error) {
 	if !e.Enabled {
 		return nil, fmt.Errorf("expiration policy is not enabled")
 	}
 
-	var interval time.Duration
-
 	if e.Interval == "" {
 		return nil, fmt.Errorf("expiration interval is not set")
-	} else {
-		interval, _ = time.ParseDuration(e.Interval)
+	}
+
+	interval, err := e.getInterval()
+	if err != nil {
+		return nil, err
 	}
 
 	maxCapacity, err := e.getMaxCapacity()
@@ -103,19 +104,36 @@ func (e *ExpirationPolicy) getTTLCleanupInterval() (time.Duration, error) {
 	return defaultTTLCleanupInterval, nil
 }
 
-// Validate validates the expiration policy configuration
-func (e *ExpirationPolicy) Validate() error {
-	// If expiration policy is enabled, interval is mandatory
-	if e.Enabled {
-		if e.Interval == "" {
-			return errors.New("expiration_policy.interval is mandatory when expiration_policy.enabled is true")
-		}
+func (e *ExpirationPolicy) getInterval() (time.Duration, error) {
 
-		// Validate that interval is a valid duration
-		if _, err := time.ParseDuration(e.Interval); err != nil {
-			return fmt.Errorf("expiration_policy.interval must be a valid duration (e.g., '5m', '1h'): %w", err)
-		}
+	interval, err := time.ParseDuration(e.Interval)
+	if err != nil {
+		return time.Duration(0), fmt.Errorf("expiration_policy.interval must be a valid duration (e.g., '5m', '1h'): %w", err)
 	}
 
-	return nil
+	return interval, nil
+}
+
+func (e *ExpirationPolicy) Validate() error {
+	if !e.Enabled {
+		return nil
+	}
+
+	var allErrs error
+
+	if e.Interval == "" {
+		allErrs = errors.Join(allErrs, errors.New("expiration_policy.interval is mandatory when expiration_policy.enabled is true"))
+	} else if _, err := e.getInterval(); err != nil {
+		allErrs = errors.Join(allErrs, fmt.Errorf("expiration_policy.interval: %w", err))
+	}
+
+	if _, err := e.getMaxCapacity(); err != nil {
+		allErrs = errors.Join(allErrs, fmt.Errorf("expiration_policy.cache_configuration.max_capacity: %w", err))
+	}
+
+	if _, err := e.getTTLCleanupInterval(); err != nil {
+		allErrs = errors.Join(allErrs, fmt.Errorf("expiration_policy.cache_configuration.ttl_cleanup_interval: %w", err))
+	}
+
+	return allErrs
 }

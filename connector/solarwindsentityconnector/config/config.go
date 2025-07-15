@@ -15,7 +15,7 @@
 package config
 
 import (
-	"fmt"
+	"errors"
 
 	"go.opentelemetry.io/collector/component"
 )
@@ -32,17 +32,9 @@ func NewDefaultConfig() component.Config {
 	return &Config{}
 }
 
-// Validate checks the configuration for its validity according to the schema requirements.
 func (c *Config) Validate() error {
-	// Schema is mandatory
-	if err := c.Schema.Validate(); err != nil {
-		return fmt.Errorf("schema validation failed: %w", err)
-	}
-
-	// Validate expiration policy if configured
-	if err := c.Expiration.Validate(); err != nil {
-		return fmt.Errorf("expiration policy validation failed: %w", err)
-	}
-
-	return nil
+	return errors.Join(
+		c.Schema.Validate(),
+		c.Expiration.Validate(),
+	)
 }

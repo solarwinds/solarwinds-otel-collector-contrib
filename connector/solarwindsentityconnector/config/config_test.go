@@ -34,8 +34,8 @@ func TestConfig_Validate(t *testing.T) {
 				Schema: Schema{
 					Entities: []Entity{
 						{
-							Type: "KubernetesPod",
-							IDs:  []string{"k8s.pod.name", "k8s.namespace.name"},
+							Entity: "KubernetesPod",
+							IDs:    []string{"k8s.pod.name", "k8s.namespace.name"},
 						},
 					},
 					Events: Events{
@@ -43,7 +43,7 @@ func TestConfig_Validate(t *testing.T) {
 							{
 								Action:  "update",
 								Context: "log",
-								Type:    "KubernetesPod",
+								Entity:  "KubernetesPod",
 							},
 						},
 					},
@@ -61,7 +61,7 @@ func TestConfig_Validate(t *testing.T) {
 							{
 								Action:  "update",
 								Context: "log",
-								Type:    "KubernetesPod",
+								Entity:  "KubernetesPod",
 							},
 						},
 					},
@@ -76,8 +76,8 @@ func TestConfig_Validate(t *testing.T) {
 				Schema: Schema{
 					Entities: []Entity{
 						{
-							Type: "",
-							IDs:  []string{"k8s.pod.name"},
+							Entity: "",
+							IDs:    []string{"k8s.pod.name"},
 						},
 					},
 					Events: Events{
@@ -85,7 +85,7 @@ func TestConfig_Validate(t *testing.T) {
 							{
 								Action:  "update",
 								Context: "log",
-								Type:    "KubernetesPod",
+								Entity:  "KubernetesPod",
 							},
 						},
 					},
@@ -100,8 +100,8 @@ func TestConfig_Validate(t *testing.T) {
 				Schema: Schema{
 					Entities: []Entity{
 						{
-							Type: "KubernetesPod",
-							IDs:  []string{},
+							Entity: "KubernetesPod",
+							IDs:    []string{},
 						},
 					},
 					Events: Events{
@@ -109,7 +109,7 @@ func TestConfig_Validate(t *testing.T) {
 							{
 								Action:  "update",
 								Context: "log",
-								Type:    "KubernetesPod",
+								Entity:  "KubernetesPod",
 							},
 						},
 					},
@@ -124,8 +124,8 @@ func TestConfig_Validate(t *testing.T) {
 				Schema: Schema{
 					Entities: []Entity{
 						{
-							Type: "KubernetesPod",
-							IDs:  []string{"k8s.pod.name"},
+							Entity: "KubernetesPod",
+							IDs:    []string{"k8s.pod.name"},
 						},
 					},
 					Events: Events{
@@ -142,8 +142,8 @@ func TestConfig_Validate(t *testing.T) {
 				Schema: Schema{
 					Entities: []Entity{
 						{
-							Type: "KubernetesPod",
-							IDs:  []string{"k8s.pod.name"},
+							Entity: "KubernetesPod",
+							IDs:    []string{"k8s.pod.name"},
 						},
 					},
 					Events: Events{
@@ -151,7 +151,7 @@ func TestConfig_Validate(t *testing.T) {
 							{
 								Action:  "",
 								Context: "log",
-								Type:    "KubernetesPod",
+								Entity:  "KubernetesPod",
 							},
 						},
 					},
@@ -166,8 +166,8 @@ func TestConfig_Validate(t *testing.T) {
 				Schema: Schema{
 					Entities: []Entity{
 						{
-							Type: "KubernetesPod",
-							IDs:  []string{"k8s.pod.name"},
+							Entity: "KubernetesPod",
+							IDs:    []string{"k8s.pod.name"},
 						},
 					},
 					Events: Events{
@@ -175,7 +175,7 @@ func TestConfig_Validate(t *testing.T) {
 							{
 								Action:  "invalid",
 								Context: "log",
-								Type:    "KubernetesPod",
+								Entity:  "KubernetesPod",
 							},
 						},
 					},
@@ -190,8 +190,8 @@ func TestConfig_Validate(t *testing.T) {
 				Schema: Schema{
 					Entities: []Entity{
 						{
-							Type: "KubernetesPod",
-							IDs:  []string{"k8s.pod.name"},
+							Entity: "KubernetesPod",
+							IDs:    []string{"k8s.pod.name"},
 						},
 					},
 					Events: Events{
@@ -199,7 +199,7 @@ func TestConfig_Validate(t *testing.T) {
 							{
 								Action:  "update",
 								Context: "",
-								Type:    "KubernetesPod",
+								Entity:  "KubernetesPod",
 							},
 						},
 					},
@@ -214,8 +214,8 @@ func TestConfig_Validate(t *testing.T) {
 				Schema: Schema{
 					Entities: []Entity{
 						{
-							Type: "KubernetesPod",
-							IDs:  []string{"k8s.pod.name"},
+							Entity: "KubernetesPod",
+							IDs:    []string{"k8s.pod.name"},
 						},
 					},
 					Events: Events{
@@ -223,7 +223,7 @@ func TestConfig_Validate(t *testing.T) {
 							{
 								Action:  "update",
 								Context: "invalid",
-								Type:    "KubernetesPod",
+								Entity:  "KubernetesPod",
 							},
 						},
 					},
@@ -238,8 +238,8 @@ func TestConfig_Validate(t *testing.T) {
 				Schema: Schema{
 					Entities: []Entity{
 						{
-							Type: "KubernetesPod",
-							IDs:  []string{"k8s.pod.name"},
+							Entity: "KubernetesPod",
+							IDs:    []string{"k8s.pod.name"},
 						},
 					},
 					Events: Events{
@@ -247,7 +247,7 @@ func TestConfig_Validate(t *testing.T) {
 							{
 								Action:  "update",
 								Context: "log",
-								Type:    "",
+								Entity:  "",
 							},
 						},
 					},
@@ -262,8 +262,8 @@ func TestConfig_Validate(t *testing.T) {
 				Schema: Schema{
 					Entities: []Entity{
 						{
-							Type: "KubernetesPod",
-							IDs:  []string{"k8s.pod.name"},
+							Entity: "KubernetesPod",
+							IDs:    []string{"k8s.pod.name"},
 						},
 					},
 					Events: Events{
@@ -271,7 +271,7 @@ func TestConfig_Validate(t *testing.T) {
 							{
 								Action:  "update",
 								Context: "log",
-								Type:    "NonExistentType",
+								Entity:  "NonExistentType",
 							},
 						},
 					},
@@ -286,12 +286,12 @@ func TestConfig_Validate(t *testing.T) {
 				Schema: Schema{
 					Entities: []Entity{
 						{
-							Type: "KubernetesPod",
-							IDs:  []string{"k8s.pod.name"},
+							Entity: "KubernetesPod",
+							IDs:    []string{"k8s.pod.name"},
 						},
 						{
-							Type: "KubernetesDeployment",
-							IDs:  []string{"k8s.deployment.name"},
+							Entity: "KubernetesDeployment",
+							IDs:    []string{"k8s.deployment.name"},
 						},
 					},
 					Events: Events{
@@ -299,7 +299,7 @@ func TestConfig_Validate(t *testing.T) {
 							{
 								Action:  "update",
 								Context: "log",
-								Type:    "KubernetesPod",
+								Entity:  "KubernetesPod",
 							},
 						},
 						Relationships: []RelationshipEvent{
@@ -322,8 +322,8 @@ func TestConfig_Validate(t *testing.T) {
 				Schema: Schema{
 					Entities: []Entity{
 						{
-							Type: "KubernetesPod",
-							IDs:  []string{"k8s.pod.name"},
+							Entity: "KubernetesPod",
+							IDs:    []string{"k8s.pod.name"},
 						},
 					},
 					Events: Events{
@@ -331,7 +331,7 @@ func TestConfig_Validate(t *testing.T) {
 							{
 								Action:  "update",
 								Context: "log",
-								Type:    "KubernetesPod",
+								Entity:  "KubernetesPod",
 							},
 						},
 						Relationships: []RelationshipEvent{
@@ -355,8 +355,8 @@ func TestConfig_Validate(t *testing.T) {
 				Schema: Schema{
 					Entities: []Entity{
 						{
-							Type: "KubernetesPod",
-							IDs:  []string{"k8s.pod.name"},
+							Entity: "KubernetesPod",
+							IDs:    []string{"k8s.pod.name"},
 						},
 					},
 					Events: Events{
@@ -364,7 +364,7 @@ func TestConfig_Validate(t *testing.T) {
 							{
 								Action:  "update",
 								Context: "log",
-								Type:    "KubernetesPod",
+								Entity:  "KubernetesPod",
 							},
 						},
 						Relationships: []RelationshipEvent{
@@ -388,8 +388,8 @@ func TestConfig_Validate(t *testing.T) {
 				Schema: Schema{
 					Entities: []Entity{
 						{
-							Type: "KubernetesPod",
-							IDs:  []string{"k8s.pod.name"},
+							Entity: "KubernetesPod",
+							IDs:    []string{"k8s.pod.name"},
 						},
 					},
 					Events: Events{
@@ -397,7 +397,7 @@ func TestConfig_Validate(t *testing.T) {
 							{
 								Action:  "update",
 								Context: "log",
-								Type:    "KubernetesPod",
+								Entity:  "KubernetesPod",
 							},
 						},
 					},
@@ -416,8 +416,8 @@ func TestConfig_Validate(t *testing.T) {
 				Schema: Schema{
 					Entities: []Entity{
 						{
-							Type: "KubernetesPod",
-							IDs:  []string{"k8s.pod.name"},
+							Entity: "KubernetesPod",
+							IDs:    []string{"k8s.pod.name"},
 						},
 					},
 					Events: Events{
@@ -425,7 +425,7 @@ func TestConfig_Validate(t *testing.T) {
 							{
 								Action:  "update",
 								Context: "log",
-								Type:    "KubernetesPod",
+								Entity:  "KubernetesPod",
 							},
 						},
 					},
@@ -444,8 +444,8 @@ func TestConfig_Validate(t *testing.T) {
 				Schema: Schema{
 					Entities: []Entity{
 						{
-							Type: "KubernetesPod",
-							IDs:  []string{"k8s.pod.name"},
+							Entity: "KubernetesPod",
+							IDs:    []string{"k8s.pod.name"},
 						},
 					},
 					Events: Events{
@@ -453,7 +453,7 @@ func TestConfig_Validate(t *testing.T) {
 							{
 								Action:  "update",
 								Context: "log",
-								Type:    "KubernetesPod",
+								Entity:  "KubernetesPod",
 							},
 						},
 					},
@@ -464,6 +464,93 @@ func TestConfig_Validate(t *testing.T) {
 				},
 			},
 			expectError: false,
+		},
+		{
+			name: "multiple_validation_errors",
+			config: &Config{
+				Schema: Schema{
+					Entities: []Entity{
+						{
+							Entity: "",         // Missing entity type
+							IDs:    []string{}, // Missing IDs
+						},
+						{
+							Entity: "KubernetesPod",
+							IDs:    []string{"k8s.pod.name"},
+						},
+					},
+					Events: Events{
+						Entities: []EntityEvent{
+							{
+								Action:  "",                // Missing action
+								Context: "invalid_context", // Invalid context
+								Entity:  "NonExistentType", // Type not in entities
+							},
+						},
+						Relationships: []RelationshipEvent{
+							{
+								Action:      "invalid_action",  // Invalid action
+								Context:     "",                // Missing context
+								Type:        "",                // Missing type
+								Source:      "",                // Missing source
+								Destination: "NonExistentType", // Type not in entities
+							},
+						},
+					},
+				},
+				Expiration: ExpirationPolicy{
+					Enabled:  true,
+					Interval: "invalid_duration", // Invalid duration
+				},
+			},
+			expectError: true,
+			errorMsg:    "schema.entities[0].entity is mandatory", // Should contain multiple errors
+		},
+		{
+			name: "multiple_validation_errors_detailed",
+			config: &Config{
+				Schema: Schema{
+					Entities: []Entity{
+						{
+							Entity: "",         // Missing entity type
+							IDs:    []string{}, // Missing IDs
+						},
+						{
+							Entity: "ValidEntity",
+							IDs:    []string{"k8s.pod.name"},
+						},
+					},
+					Events: Events{
+						Entities: []EntityEvent{
+							{
+								Action:  "invalid_action",  // Invalid action
+								Context: "invalid_context", // Invalid context
+								Entity:  "",                // Missing type
+							},
+							{
+								Action:  "", // Missing action
+								Context: "log",
+								Entity:  "NonExistentType", // Type not in entities
+							},
+						},
+						Relationships: []RelationshipEvent{
+							{
+								Action:      "", // Missing action
+								Context:     "", // Missing context
+								Type:        "", // Missing type
+								Source:      "", // Missing source
+								Destination: "", // Missing destination
+							},
+						},
+					},
+				},
+				Expiration: ExpirationPolicy{
+					Enabled:  true,
+					Interval: "invalid_duration", // Invalid duration
+				},
+			},
+			expectError: true,
+			errorMsg:    "schema validation failed", // Should contain multiple nested errors
 		},
 	}
 

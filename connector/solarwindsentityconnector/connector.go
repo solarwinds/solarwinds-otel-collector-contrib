@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal/storage"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
@@ -51,7 +52,7 @@ func (s *solarwindsentity) Capabilities() consumer.Capabilities {
 
 func (s *solarwindsentity) Start(context.Context, component.Host) error {
 	if s.expirationPolicy.Enabled {
-		expirationCfg, err := s.expirationPolicy.Parse()
+		expirationCfg, err := s.expirationPolicy.Unmarshal()
 		if err != nil {
 			return errors.Join(err, fmt.Errorf("expiration policy is invalid"))
 		}
