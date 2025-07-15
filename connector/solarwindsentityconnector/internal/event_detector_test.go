@@ -378,55 +378,6 @@ func TestProcessEvents_ConditionFalse_EventsNotCreated(t *testing.T) {
 	require.Empty(t, relationships)
 }
 
-func TestCreateEntity(t *testing.T) {
-	attributes := Attributes{
-		Common: map[string]pcommon.Value{
-			"id1":   pcommon.NewValueStr("idvalue1"),
-			"attr1": pcommon.NewValueStr("attrvalue1"),
-		},
-	}
-
-	entity := config.Entity{
-		Type:       "KubernetesCluster",
-		IDs:        []string{"id1"},
-		Attributes: []string{"attr1"},
-	}
-
-	attributeMapper := NewAttributeMapper(map[string]config.Entity{entity.Type: entity})
-
-	// Create the event builder with a new logs instance
-	eventDetector := NewEventDetector(
-		attributeMapper,
-		config.EventsGroup[ottllog.TransformContext]{},
-		config.EventsGroup[ottlmetric.TransformContext]{},
-		nil,
-	)
-
-	event, err := eventDetector.attributeMapper.getEntity("KubernetesCluster", attributes)
-	assert.Nil(t, err)
-	logs := plog.NewLogs()
-	logRecords := CreateEventLog(&logs)
-	event.Update(logRecords)
-	logRecord := logRecords.At(0)
-	assert.Equal(t, 4, logRecord.Attributes().Len())
-
-	actualEntityEventType, _ := logRecord.Attributes().Get(entityEventType)
-	assert.Equal(t, entityUpdateEventType, actualEntityEventType.Str())
-
-	actualEntityType, _ := logRecord.Attributes().Get(entityType)
-	assert.Equal(t, "KubernetesCluster", actualEntityType.Str())
-
-	actualEntityIDs, _ := logRecord.Attributes().Get(entityIds)
-	assert.Equal(t, 1, actualEntityIDs.Map().Len())
-	actualEntityId, _ := actualEntityIDs.Map().Get("id1")
-	assert.Equal(t, "idvalue1", actualEntityId.Str())
-
-	actualEntityAttributes, _ := logRecord.Attributes().Get(entityAttributes)
-	assert.Equal(t, 1, actualEntityAttributes.Map().Len())
-	actualEntityAttr, _ := actualEntityAttributes.Map().Get("attr1")
-	assert.Equal(t, "attrvalue1", actualEntityAttr.Str())
-}
-
 func TestCreateRelationshipEvent(t *testing.T) {
 	attributes := Attributes{
 		Common: map[string]pcommon.Value{
@@ -622,27 +573,18 @@ func TestCollectEventsWithEntitiesWhenAttributeIsMissing(t *testing.T) {
 		nil,
 	)
 
-	events, err := eventBuilder.collectEvents(attributes, []*config.EntityEvent{{Type: testEntity.Type}}, nil)
+	events, err := eventBuilder.collectEvents(attributes, []*config.EntityEvent{{Type: testEntity.Type, Action: EventUpdateAction}}, nil)
 	require.NoError(t, err)
 	require.Len(t, events, 1)
-	logs := plog.NewLogs()
-	logRecords := CreateEventLog(&logs)
-	events[0].Update(logRecords)
+	entityEvent, ok := events[0].(Entity)
+	require.True(t, ok)
 
-	// assert
-	assert.Equal(t, 1, logs.LogRecordCount())
-	actualLogRecord := logRecords.At(0)
-	assertEntityType(t, actualLogRecord.Attributes(), testEntity.Type)
-	assertEventType(t, actualLogRecord.Attributes(), entityUpdateEventType)
-	assertOtelEventAsLogIsPresent(t, logs)
-
-	ids := getMap(actualLogRecord.Attributes(), entityIds)
-	assert.Equal(t, 1, ids.Len())
-	assertAttributeIsPresent(t, ids, "id1", "idvalue1")
-
-	attrs := getMap(actualLogRecord.Attributes(), entityAttributes)
-	assert.Equal(t, 1, attrs.Len())
-	assertAttributeIsPresent(t, attrs, "attr1", "attrvalue1")
+	assert.Equal(t, testEntity.Type, entityEvent.Type)
+	assert.Equal(t, "update", entityEvent.Action)
+	assert.Equal(t, 1, entityEvent.IDs.Len())
+	assertAttributeIsPresent(t, entityEvent.IDs, "id1", "idvalue1")
+	assert.Equal(t, 1, entityEvent.Attributes.Len())
+	assertAttributeIsPresent(t, entityEvent.Attributes, "attr1", "attrvalue1")
 }
 
 func TestCollectEventsWithRelationshipsWhenAttributesArePresent(t *testing.T) {
@@ -680,27 +622,18 @@ func TestCollectEventsWithRelationshipsWhenAttributesArePresent(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.Len(t, events, 1)
-	logs := plog.NewLogs()
-	logRecords := CreateEventLog(&logs)
-	events[0].Update(logRecords)
+	relationship, ok := events[0].(*Relationship)
+	require.True(t, ok)
 
-	// assert
-	assert.Equal(t, 1, logs.LogRecordCount())
-	actualLogRecord := logRecords.At(0)
-	assertEventType(t, actualLogRecord.Attributes(), relationshipUpdateEventType)
-	assertOtelEventAsLogIsPresent(t, logs)
+	assert.Equal(t, "update", relationship.Action)
+	assert.Equal(t, srcEntity.Type, relationship.Source.Type)
+	assert.Equal(t, destEntity.Type, relationship.Destination.Type)
 
-	srcIds := getMap(actualLogRecord.Attributes(), relationshipSrcEntityIds)
-	assert.Equal(t, 1, srcIds.Len())
-	assertAttributeIsPresent(t, srcIds, "id1", "idvalue1")
-	assertAttributeIsPresent(t, srcIds, "attr1", "attrvalue1")
-	assertRelationshipEntityType(t, actualLogRecord.Attributes(), srcEntity.Type, srcEntityType)
+	assert.Equal(t, 1, relationship.Source.IDs.Len())
+	assertAttributeIsPresent(t, relationship.Source.IDs, "id1", "idvalue1")
 
-	destIds := getMap(actualLogRecord.Attributes(), relationshipDestEntityIds)
-	assert.Equal(t, 1, destIds.Len())
-	assertAttributeIsPresent(t, destIds, "id2", "idvalue2")
-	assertAttributeIsPresent(t, destIds, "attr2", "attrvalue2")
-	assertRelationshipEntityType(t, actualLogRecord.Attributes(), destEntity.Type, destEntityType)
+	assert.Equal(t, 1, relationship.Destination.IDs.Len())
+	assertAttributeIsPresent(t, relationship.Destination.IDs, "id2", "idvalue2")
 }
 
 func TestAppendSameTypeRelationshipUpdateEventWhenAttributesArePresent(t *testing.T) {
@@ -737,27 +670,22 @@ func TestAppendSameTypeRelationshipUpdateEventWhenAttributesArePresent(t *testin
 	)
 	require.NoError(t, err)
 	require.Len(t, events, 1)
-	logs := plog.NewLogs()
-	logRecords := CreateEventLog(&logs)
-	events[0].Update(logRecords)
+
+	relationship, ok := events[0].(*Relationship)
+	require.True(t, ok)
 
 	// assert
-	assert.Equal(t, 1, logs.LogRecordCount())
-	actualLogRecord := logRecords.At(0)
-	assertEventType(t, actualLogRecord.Attributes(), relationshipUpdateEventType)
-	assertOtelEventAsLogIsPresent(t, logs)
+	assert.Equal(t, "update", relationship.Action)
+	assert.Equal(t, entity.Type, relationship.Source.Type)
+	assert.Equal(t, entity.Type, relationship.Destination.Type)
 
-	srcIds := getMap(actualLogRecord.Attributes(), relationshipSrcEntityIds)
-	assert.Equal(t, 1, srcIds.Len())
-	assertAttributeIsPresent(t, srcIds, "id", "idvalue1")
-	assertAttributeIsPresent(t, srcIds, "attr", "attrvalue")
-	assertRelationshipEntityType(t, actualLogRecord.Attributes(), entity.Type, srcEntityType)
+	// Assert source entity
+	assert.Equal(t, 1, relationship.Source.IDs.Len())
+	assertAttributeIsPresent(t, relationship.Source.IDs, "id", "idvalue1")
 
-	destIds := getMap(actualLogRecord.Attributes(), relationshipDestEntityIds)
-	assert.Equal(t, 1, destIds.Len())
-	assertAttributeIsPresent(t, destIds, "id", "idvalue2")
-	assertAttributeIsPresent(t, destIds, "attr", "attrvalue")
-	assertRelationshipEntityType(t, actualLogRecord.Attributes(), entity.Type, destEntityType)
+	// Assert destination entity
+	assert.Equal(t, 1, relationship.Destination.IDs.Len())
+	assertAttributeIsPresent(t, relationship.Destination.IDs, "id", "idvalue2")
 }
 
 func TestCollectEvents_WhenIDAttributeIsMissing(t *testing.T) {
@@ -860,24 +788,27 @@ func TestCollectEventsWithRelationshipAttribute(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.Len(t, events, 1)
-	logs := plog.NewLogs()
-	logRecords := CreateEventLog(&logs)
-	events[0].Update(logRecords)
+	r1, ok := events[0].(*Relationship)
+	require.True(t, ok)
+	assert.Equal(t, "KubernetesCluster", r1.Source.Type)
+	assert.Equal(t, "KubernetesNamespace", r1.Destination.Type)
+	assert.Equal(t, "update", r1.Action)
 
-	// assert
-	assert.Equal(t, 1, logs.LogRecordCount())
-	actualLogRecord := logRecords.At(0)
-	assertOtelEventAsLogIsPresent(t, logs)
-
-	attrs := getMap(actualLogRecord.Attributes(), relationshipAttributes)
-	assert.Equal(t, 1, attrs.Len())
-	assertAttributeIsPresent(t, attrs, "relationshipAttr", "relationshipValue")
+	// assert relationship attributes
+	assert.Equal(t, 1, r1.Attributes.Len())
+	assertAttributeIsPresent(t, r1.Attributes, "relationshipAttr", "relationshipValue")
 }
 
 func TestAppendSameTypeRelationshipUpdateEventWithRelationshipAttribute(t *testing.T) {
 	// arrange
 	entity := config.Entity{Type: "KubernetesCluster", IDs: []string{"id"}}
-	testRelationship := config.RelationshipEvent{Source: "KubernetesCluster", Destination: "KubernetesCluster", Attributes: []string{"relationshipAttr"}, Action: EventUpdateAction}
+	testRelationship := config.RelationshipEvent{
+		Source:      "KubernetesCluster",
+		Destination: "KubernetesCluster",
+		Attributes:  []string{"relationshipAttr"},
+		Action:      EventUpdateAction,
+		Type:        "Has",
+	}
 
 	attributes := Attributes{
 		Source: map[string]pcommon.Value{
@@ -908,39 +839,14 @@ func TestAppendSameTypeRelationshipUpdateEventWithRelationshipAttribute(t *testi
 	)
 	require.NoError(t, err)
 	require.Len(t, events, 1)
-	logs := plog.NewLogs()
-	logRecords := CreateEventLog(&logs)
-	events[0].Update(logRecords)
-
-	// assert
-	assert.Equal(t, 1, logs.LogRecordCount())
-	actualLogRecord := logRecords.At(0)
-	assertOtelEventAsLogIsPresent(t, logs)
-
-	attrs := getMap(actualLogRecord.Attributes(), relationshipAttributes)
-	assert.Equal(t, 1, attrs.Len())
-	assertAttributeIsPresent(t, attrs, "relationshipAttr", "relationshipValue")
-}
-
-func assertRelationshipEntityType(t *testing.T, attrs pcommon.Map, expected string, accessor string) {
-	if val, ok := attrs.Get(accessor); ok {
-		assert.Equal(t, true, ok)
-		assert.Equal(t, expected, val.Str())
-	}
-}
-
-func assertEventType(t *testing.T, attrs pcommon.Map, expected string) {
-	if val, ok := attrs.Get(entityEventType); ok {
-		assert.Equal(t, true, ok)
-		assert.Equal(t, expected, val.Str())
-	}
-}
-
-func assertEntityType(t *testing.T, attrs pcommon.Map, expected string) {
-	if val, ok := attrs.Get(entityType); ok {
-		assert.Equal(t, true, ok)
-		assert.Equal(t, expected, val.Str())
-	}
+	r1, ok := events[0].(*Relationship)
+	require.True(t, ok)
+	assert.Equal(t, "KubernetesCluster", r1.Source.Type)
+	assertAttributeIsPresent(t, r1.Source.IDs, "id", "idvalue1")
+	assert.Equal(t, "KubernetesCluster", r1.Destination.Type)
+	assertAttributeIsPresent(t, r1.Destination.IDs, "id", "idvalue2")
+	assert.Equal(t, "update", r1.Action)
+	assert.Equal(t, "Has", r1.Type)
 }
 
 func assertAttributeIsPresent(t *testing.T, attrs pcommon.Map, key string, expected string) {
@@ -948,17 +854,4 @@ func assertAttributeIsPresent(t *testing.T, attrs pcommon.Map, key string, expec
 		assert.Equal(t, true, ok)
 		assert.Equal(t, expected, val.Str())
 	}
-}
-
-func assertOtelEventAsLogIsPresent(t *testing.T, logs plog.Logs) {
-	isEntityEvent, ok := logs.ResourceLogs().At(0).ScopeLogs().At(0).Scope().Attributes().Get(entityEventAsLog)
-	assert.Equal(t, true, ok)
-	assert.Equal(t, true, isEntityEvent.Bool())
-}
-
-func getMap(attrs pcommon.Map, key string) pcommon.Map {
-	if val, ok := attrs.Get(key); ok {
-		return val.Map()
-	}
-	return pcommon.Map{}
 }
