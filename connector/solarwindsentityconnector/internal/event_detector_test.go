@@ -378,7 +378,7 @@ func TestProcessEvents_ConditionFalse_EventsNotCreated(t *testing.T) {
 	require.Empty(t, relationships)
 }
 
-func TestCreateRelationshipEvent(t *testing.T) {
+func TestGetRelationships_WithDifferentTypes(t *testing.T) {
 	attributes := Attributes{
 		Common: map[string]pcommon.Value{
 			"id1":   pcommon.NewValueStr("idvalue1"),
@@ -430,7 +430,7 @@ func TestCreateRelationshipEvent(t *testing.T) {
 	assert.Equal(t, 2, len(entities))
 }
 
-func TestCreateSameTypeRelationshipEvent(t *testing.T) {
+func TestGetRelationships_WithSameType(t *testing.T) {
 	attributes := Attributes{
 		Source: map[string]pcommon.Value{
 			"id": pcommon.NewValueStr("idvalue1"),
@@ -478,7 +478,7 @@ func TestCreateSameTypeRelationshipEvent(t *testing.T) {
 	assert.Equal(t, 2, len(entities))
 }
 
-func TestCollectEvents_WithEntitiesWhenAttributesArePresent(t *testing.T) {
+func TestCollectEvents_WithEntity_AttributesPresent(t *testing.T) {
 	// arrange
 	testEntity := config.Entity{
 		Type:       "testEntityType",
@@ -526,7 +526,7 @@ func TestCollectEvents_WithEntitiesWhenAttributesArePresent(t *testing.T) {
 	assertAttributeIsPresent(t, e1.Attributes, "attr2", "attrvalue2")
 }
 
-func TestDoesNotCollectEventsWithEntitiesWhenIDAttributeIsMissing(t *testing.T) {
+func TestCollectEvents_WithEntity_IDAttributesMissing(t *testing.T) {
 	// arrange
 	testEntity := config.Entity{Type: "testEntityType", IDs: []string{"id1", "id2"}, Attributes: []string{}}
 	attributes := Attributes{
@@ -553,7 +553,7 @@ func TestDoesNotCollectEventsWithEntitiesWhenIDAttributeIsMissing(t *testing.T) 
 	require.Len(t, events, 0)
 }
 
-func TestCollectEventsWithEntitiesWhenAttributeIsMissing(t *testing.T) {
+func TestCollectEvents_WithEntity_SomeAttributesMissing(t *testing.T) {
 	// arrange
 	testEntity := config.Entity{Type: "testEntityType", IDs: []string{"id1"}, Attributes: []string{"attr1", "attr2"}}
 	attributes := Attributes{
@@ -587,7 +587,7 @@ func TestCollectEventsWithEntitiesWhenAttributeIsMissing(t *testing.T) {
 	assertAttributeIsPresent(t, entityEvent.Attributes, "attr1", "attrvalue1")
 }
 
-func TestCollectEventsWithRelationshipsWhenAttributesArePresent(t *testing.T) {
+func TestCollectEvents_WithRelationship_AttributesPresent(t *testing.T) {
 	// arrange
 	srcEntity := config.Entity{Type: "KubernetesCluster", IDs: []string{"id1"}, Attributes: []string{"attr1"}}
 	destEntity := config.Entity{Type: "KubernetesNamespace", IDs: []string{"id2"}, Attributes: []string{"attr2"}}
@@ -636,7 +636,7 @@ func TestCollectEventsWithRelationshipsWhenAttributesArePresent(t *testing.T) {
 	assertAttributeIsPresent(t, relationship.Destination.IDs, "id2", "idvalue2")
 }
 
-func TestAppendSameTypeRelationshipUpdateEventWhenAttributesArePresent(t *testing.T) {
+func TestCollectEvents_WithRelationship_SameType_AttributesPresent(t *testing.T) {
 	// arrange
 	entity := config.Entity{Type: "KubernetesCluster", IDs: []string{"id"}, Attributes: []string{"attr"}}
 	testRelationship := config.RelationshipEvent{Source: "KubernetesCluster", Destination: "KubernetesCluster", Action: EventUpdateAction}
@@ -679,16 +679,14 @@ func TestAppendSameTypeRelationshipUpdateEventWhenAttributesArePresent(t *testin
 	assert.Equal(t, entity.Type, relationship.Source.Type)
 	assert.Equal(t, entity.Type, relationship.Destination.Type)
 
-	// Assert source entity
 	assert.Equal(t, 1, relationship.Source.IDs.Len())
 	assertAttributeIsPresent(t, relationship.Source.IDs, "id", "idvalue1")
 
-	// Assert destination entity
 	assert.Equal(t, 1, relationship.Destination.IDs.Len())
 	assertAttributeIsPresent(t, relationship.Destination.IDs, "id", "idvalue2")
 }
 
-func TestCollectEvents_WhenIDAttributeIsMissing(t *testing.T) {
+func TestCollectEvents_WithRelationship_IDAttributesMissing(t *testing.T) {
 	// arrange
 	srcEntity := config.Entity{Type: "KubernetesCluster", IDs: []string{"id1"}, Attributes: []string{}}
 	destEntity := config.Entity{Type: "KubernetesNamespace", IDs: []string{"id2"}, Attributes: []string{}}
@@ -723,7 +721,7 @@ func TestCollectEvents_WhenIDAttributeIsMissing(t *testing.T) {
 	require.Len(t, events, 0)
 }
 
-func TestCollectEvents_DoesNotAppendSameTypeRelationshipUpdateEventWhenIDAttributeIsMissing(t *testing.T) {
+func TestCollectEvents_WithRelationship_SameType_IDAttributesMissing(t *testing.T) {
 	// arrange
 	entity := config.Entity{Type: "KubernetesCluster", IDs: []string{"id"}, Attributes: []string{}}
 	testRelationship := config.RelationshipEvent{Source: "KubernetesCluster", Destination: "KubernetesCluster"}
@@ -755,7 +753,7 @@ func TestCollectEvents_DoesNotAppendSameTypeRelationshipUpdateEventWhenIDAttribu
 	require.Len(t, events, 0)
 }
 
-func TestCollectEventsWithRelationshipAttribute(t *testing.T) {
+func TestCollectEvents_WithRelationship_RelationshipAttributesPresent(t *testing.T) {
 	// arrange
 	srcEntity := config.Entity{Type: "KubernetesCluster", IDs: []string{"id1"}}
 	destEntity := config.Entity{Type: "KubernetesNamespace", IDs: []string{"id2"}}
@@ -799,7 +797,7 @@ func TestCollectEventsWithRelationshipAttribute(t *testing.T) {
 	assertAttributeIsPresent(t, r1.Attributes, "relationshipAttr", "relationshipValue")
 }
 
-func TestAppendSameTypeRelationshipUpdateEventWithRelationshipAttribute(t *testing.T) {
+func TestCollectEvents_WithRelationship_SameType_RelationshipAttributesPresent(t *testing.T) {
 	// arrange
 	entity := config.Entity{Type: "KubernetesCluster", IDs: []string{"id"}}
 	testRelationship := config.RelationshipEvent{
