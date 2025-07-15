@@ -26,23 +26,19 @@ type Schema struct {
 	Events   Events   `mapstructure:"events"`
 }
 
-// Validate validates the schema section of the configuration
 func (s *Schema) Validate() error {
 	var allErrs error
 
-	// Schema is mandatory
 	if len(s.Entities) == 0 {
 		allErrs = errors.Join(allErrs, errors.New("schema.entities is mandatory and must contain at least 1 item"))
 	}
 
-	// Validate entities
 	for i, entity := range s.Entities {
 		if err := entity.Validate(i); err != nil {
 			allErrs = errors.Join(allErrs, err)
 		}
 	}
 
-	// Events section is mandatory
 	if err := s.Events.Validate(s.Entities); err != nil {
 		allErrs = errors.Join(allErrs, err)
 	}
@@ -64,6 +60,5 @@ func (s *Schema) NewEntities() map[string]Entity {
 }
 
 func (s *Schema) NewEvents(settings component.TelemetrySettings) ParsedEvents {
-	NewEvents := CreateParsedEvents(*s, settings)
-	return NewEvents
+	return CreateParsedEvents(*s, settings)
 }
