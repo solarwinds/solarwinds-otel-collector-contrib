@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestUpdate_AllAttributesArePresent(t *testing.T) {
+func TestUpdate(t *testing.T) {
 	logRecords := plog.NewLogRecordSlice()
 	ids := pcommon.NewMap()
 	ids.PutStr("cluster.uid", "cluster123")
@@ -27,6 +27,41 @@ func TestUpdate_AllAttributesArePresent(t *testing.T) {
 
 	actualEntityEventType, _ := logRecord.Attributes().Get(entityEventType)
 	assert.Equal(t, entityUpdateEventType, actualEntityEventType.Str())
+
+	actualRelationshipType, _ := logRecord.Attributes().Get(entityType)
+	assert.Equal(t, "KubernetesCluster", actualRelationshipType.Str())
+
+	actualIds, _ := logRecord.Attributes().Get(entityIds)
+	assert.Equal(t, 1, actualIds.Map().Len())
+	actualClusterUID, _ := actualIds.Map().Get("cluster.uid")
+	assert.Equal(t, "cluster123", actualClusterUID.Str())
+
+	actualAttributes, _ := logRecord.Attributes().Get(entityAttributes)
+	assert.Equal(t, 1, actualAttributes.Map().Len())
+	actualClusterName, _ := actualAttributes.Map().Get("cluster.name")
+	assert.Equal(t, "test-cluster", actualClusterName.Str())
+}
+
+func TestDelete(t *testing.T) {
+	logRecords := plog.NewLogRecordSlice()
+	ids := pcommon.NewMap()
+	ids.PutStr("cluster.uid", "cluster123")
+	attrs := pcommon.NewMap()
+	attrs.PutStr("cluster.name", "test-cluster")
+	entity := Entity{
+		Action:     "delete",
+		Type:       "KubernetesCluster",
+		IDs:        ids,
+		Attributes: attrs,
+	}
+
+	entity.Delete(&logRecords)
+
+	logRecord := logRecords.At(0)
+	assert.Equal(t, 5, logRecord.Attributes().Len())
+
+	actualEntityEventType, _ := logRecord.Attributes().Get(entityEventType)
+	assert.Equal(t, entityDeleteEventType, actualEntityEventType.Str())
 
 	actualRelationshipType, _ := logRecord.Attributes().Get(entityType)
 	assert.Equal(t, "KubernetesCluster", actualRelationshipType.Str())
