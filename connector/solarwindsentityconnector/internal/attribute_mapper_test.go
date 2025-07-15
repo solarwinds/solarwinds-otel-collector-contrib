@@ -35,7 +35,7 @@ func TestGetEntity_WithoutConfiguredIds(t *testing.T) {
 	assert.Error(t, err, "failed to get ID attributes for entity testEntityType: required attributes not configured")
 }
 
-func TestGetEntities_EntityNotFound(t *testing.T) {
+func TestGetEntity_EntityNotFound(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
 		"testEntityType": {Type: "testEntityType", IDs: []string{"id"}},
 	}
@@ -50,7 +50,7 @@ func TestGetEntities_EntityNotFound(t *testing.T) {
 	assert.Contains(t, err.Error(), "entity type nonexistentEntityType not found")
 }
 
-func TestGetEntities_CommonContainsRequiredKeysEntityIsCreated(t *testing.T) {
+func TestGetEntity_CommonContainsRequiredKeysEntityIsCreated(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
 		"testEntityType": {Type: "testEntityType", IDs: []string{"id"}},
 	}
@@ -68,7 +68,7 @@ func TestGetEntities_CommonContainsRequiredKeysEntityIsCreated(t *testing.T) {
 	assert.Equal(t, "id-value", value.Str())
 }
 
-func TestGetEntities_NoEntityCreatedWhenCommonIdIsMissing(t *testing.T) {
+func TestGetEntity_NoEntityCreatedWhenCommonIdIsMissing(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
 		"entityType": {Type: "entityType", IDs: []string{"id"}},
 	}
@@ -85,7 +85,7 @@ func TestGetEntities_NoEntityCreatedWhenCommonIdIsMissing(t *testing.T) {
 	assert.Contains(t, err.Error(), "failed to create entity for type")
 }
 
-func TestGetRelationshipEntities_SourceEntityDoesNotExist(t *testing.T) {
+func TestGetRelationshipEntities_SourceEntityNotFound(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
 		"destType": {Type: "destType", IDs: []string{"id"}},
 	}
@@ -103,7 +103,7 @@ func TestGetRelationshipEntities_SourceEntityDoesNotExist(t *testing.T) {
 	assert.Contains(t, err.Error(), "source entity type nonExistentType not found")
 }
 
-func TestGetRelationshipEntities_DestinationEntityDoesNotExist(t *testing.T) {
+func TestGetRelationshipEntities_DestinationEntityNotFound(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
 		"sourceType": {Type: "sourceType", IDs: []string{"id"}},
 	}
@@ -121,7 +121,7 @@ func TestGetRelationshipEntities_DestinationEntityDoesNotExist(t *testing.T) {
 	assert.Contains(t, err.Error(), "destination entity type nonExistentType not found")
 }
 
-func TestGetRelationshipEntities_SourceAndCommonAttributesOutputRelationshipEntities(t *testing.T) {
+func TestGetRelationshipEntities_SourceAndCommonAttributesOutputEntities(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
 		"entityType": {Type: "entityType", IDs: []string{"id"}},
 	}
@@ -146,7 +146,7 @@ func TestGetRelationshipEntities_SourceAndCommonAttributesOutputRelationshipEnti
 	assert.Equal(t, "commonValue", commonValue.Str())
 }
 
-func TestGetRelationshipEntities_DestinationAndCommonAttributesOutputRelationshipEntities(t *testing.T) {
+func TestGetRelationshipEntities_DestinationAndCommonAttributesOutputEntities(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
 		"entityType": {Type: "entityType", IDs: []string{"id"}},
 	}
@@ -170,7 +170,7 @@ func TestGetRelationshipEntities_DestinationAndCommonAttributesOutputRelationshi
 	assert.Equal(t, "destinationValue", destinationValue.Str())
 }
 
-func TestGetRelationshipEntities_SourceAndDestinationAttributesOutputRelationship(t *testing.T) {
+func TestGetRelationshipEntities_SourceAndDestinationAttributesOutputEntities(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
 		"sourceType": {Type: "sourceType", IDs: []string{"id"}},
 		"destType":   {Type: "destType", IDs: []string{"id"}},
@@ -195,7 +195,7 @@ func TestGetRelationshipEntities_SourceAndDestinationAttributesOutputRelationshi
 	assert.Equal(t, "destValue", destValue.Str())
 }
 
-func TestGetRelationshipEntities_AttributesSubsetUsedForRelationship(t *testing.T) {
+func TestGetRelationshipEntities_AttributesSubsetUsedForEntities(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
 		"sourceType": {Type: "sourceType", IDs: []string{"id"}},
 		"destType":   {Type: "destType", IDs: []string{"id"}},
@@ -273,7 +273,7 @@ func TestGetRelationshipEntities_WithoutDestIds(t *testing.T) {
 	assert.Contains(t, err.Error(), "failed to create destination entity for type")
 }
 
-func TestGetRelationshipEntities_SameTypeRelationshipWithoutPrefixes(t *testing.T) {
+func TestGetRelationshipEntities_SameTypeWithoutPrefixes(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
 		"entityType": {Type: "entityType", IDs: []string{"id"}},
 	}
@@ -287,7 +287,7 @@ func TestGetRelationshipEntities_SameTypeRelationshipWithoutPrefixes(t *testing.
 	assert.Contains(t, err.Error(), "source and destination attributes are empty for same type relationship")
 }
 
-func TestGetRelationshipEntities_SameTypeRelationshipWithSourcePrefix(t *testing.T) {
+func TestGetRelationshipEntities_SameTypeWithSourcePrefix(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
 		"entityType": {Type: "entityType", IDs: []string{"id"}},
 	}
@@ -308,7 +308,7 @@ func TestGetRelationshipEntities_SameTypeRelationshipWithSourcePrefix(t *testing
 	assert.Equal(t, "commonValue", destId.Str())
 }
 
-func TestGetRelationshipEntities_SameTypeRelationshipWithDestinationPrefix(t *testing.T) {
+func TestGetRelationshipEntities_SameTypeWithDestinationPrefix(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
 		"entityType": {Type: "entityType", IDs: []string{"id"}},
 	}
