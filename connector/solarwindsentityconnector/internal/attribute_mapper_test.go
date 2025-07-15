@@ -22,6 +22,19 @@ import (
 	"go.opentelemetry.io/collector/pdata/pcommon"
 )
 
+func TestGetEntity_WithoutConfiguredIds(t *testing.T) {
+	entityConfigs := map[string]config.Entity{
+		"testEntityType": {Type: "testEntityType", IDs: []string{}},
+	}
+	attributeMapper := NewAttributeMapper(entityConfigs)
+	attrs := Attributes{
+		Common: map[string]pcommon.Value{"commonAttr": pcommon.NewValueStr("commonValue")},
+	}
+
+	_, err := attributeMapper.getEntity("testEntityType", attrs)
+	assert.Error(t, err, "failed to get ID attributes for entity testEntityType: required attributes not configured")
+}
+
 func TestGetEntities_EntityNotFound(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
 		"testEntityType": {Type: "testEntityType", IDs: []string{"id"}},
@@ -227,5 +240,92 @@ func TestGetRelationshipEntities_NoAttributesForSourceAndDestination(t *testing.
 	assert.Nil(t, src)
 	assert.Nil(t, dest)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to create entity for type")
+	assert.Contains(t, err.Error(), "failed to create source entity for type")
+}
+
+func TestGetRelationshipEntities_WithoutSourceIds(t *testing.T) {
+	entityConfigs := map[string]config.Entity{
+		"sourceType": {Type: "sourceType", IDs: []string{}},
+		"destType":   {Type: "destType", IDs: []string{"id"}},
+	}
+	attributeMapper := NewAttributeMapper(entityConfigs)
+	attrs := Attributes{
+		Common: map[string]pcommon.Value{"otherAttr": pcommon.NewValueStr("value")},
+	}
+
+	_, _, err := attributeMapper.getRelationshipEntities("sourceType", "destType", attrs)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "failed to create source entity for type")
+}
+
+func TestGetRelationshipEntities_WithoutDestIds(t *testing.T) {
+	entityConfigs := map[string]config.Entity{
+		"sourceType": {Type: "sourceType", IDs: []string{"id"}},
+		"destType":   {Type: "destType", IDs: []string{}},
+	}
+	attributeMapper := NewAttributeMapper(entityConfigs)
+	attrs := Attributes{
+		Source: map[string]pcommon.Value{"id": pcommon.NewValueStr("value")},
+	}
+
+	_, _, err := attributeMapper.getRelationshipEntities("sourceType", "destType", attrs)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "failed to create destination entity for type")
+}
+
+func TestGetRelationshipEntities_SameTypeRelationshipWithoutPrefixes(t *testing.T) {
+	entityConfigs := map[string]config.Entity{
+		"entityType": {Type: "entityType", IDs: []string{"id"}},
+	}
+	attributeMapper := NewAttributeMapper(entityConfigs)
+	attrs := Attributes{
+		Common: map[string]pcommon.Value{"id": pcommon.NewValueStr("random")},
+	}
+
+	_, _, err := attributeMapper.getRelationshipEntities("entityType", "entityType", attrs)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "source and destination attributes are empty for same type relationship")
+}
+
+func TestGetRelationshipEntities_SameTypeRelationshipWithSourcePrefix(t *testing.T) {
+	entityConfigs := map[string]config.Entity{
+		"entityType": {Type: "entityType", IDs: []string{"id"}},
+	}
+	attributeMapper := NewAttributeMapper(entityConfigs)
+	attrs := Attributes{
+		Source: map[string]pcommon.Value{"id": pcommon.NewValueStr("sourceValue")},
+		Common: map[string]pcommon.Value{"id": pcommon.NewValueStr("commonValue")},
+	}
+
+	src, dest, err := attributeMapper.getRelationshipEntities("entityType", "entityType", attrs)
+	assert.Nil(t, err)
+	assert.Equal(t, "entityType", src.Type)
+	srcId, _ := src.IDs.Get("id")
+	assert.Equal(t, "sourceValue", srcId.Str())
+
+	assert.Equal(t, "entityType", dest.Type)
+	destId, _ := dest.IDs.Get("id")
+	assert.Equal(t, "commonValue", destId.Str())
+}
+
+func TestGetRelationshipEntities_SameTypeRelationshipWithDestinationPrefix(t *testing.T) {
+	entityConfigs := map[string]config.Entity{
+		"entityType": {Type: "entityType", IDs: []string{"id"}},
+	}
+	attributeMapper := NewAttributeMapper(entityConfigs)
+	attrs := Attributes{
+		Destination: map[string]pcommon.Value{"id": pcommon.NewValueStr("destValue")},
+		Common:      map[string]pcommon.Value{"id": pcommon.NewValueStr("commonValue")},
+	}
+
+	src, dest, err := attributeMapper.getRelationshipEntities("entityType", "entityType", attrs)
+	assert.Nil(t, err)
+
+	assert.Equal(t, "entityType", src.Type)
+	srcId, _ := src.IDs.Get("id")
+	assert.Equal(t, "commonValue", srcId.Str())
+
+	assert.Equal(t, "entityType", dest.Type)
+	destId, _ := dest.IDs.Get("id")
+	assert.Equal(t, "destValue", destId.Str())
 }

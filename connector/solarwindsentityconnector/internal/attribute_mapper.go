@@ -58,7 +58,7 @@ func (e *AttributeMapper) getRelationshipEntities(sourceEntityType, destEntityTy
 
 	sourceEntity, err := createEntity(sourceEntityConfiguration, attrs.Common, attrs.Source)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create entity for type %s: %w", sourceEntityType, err)
+		return nil, nil, fmt.Errorf("failed to create source entity for type %s: %w", sourceEntityType, err)
 	}
 
 	destinationEntityConfiguration, ok := e.entityConfigs[destEntityType]
@@ -67,7 +67,7 @@ func (e *AttributeMapper) getRelationshipEntities(sourceEntityType, destEntityTy
 	}
 	destinationEntity, err := createEntity(destinationEntityConfiguration, attrs.Common, attrs.Destination)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create entity for type %s: %w", destEntityType, err)
+		return nil, nil, fmt.Errorf("failed to create destination entity for type %s: %w", destEntityType, err)
 	}
 
 	return &sourceEntity, &destinationEntity, nil
