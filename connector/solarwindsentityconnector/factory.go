@@ -52,6 +52,10 @@ func createConnector(settings connector.Settings, cfg component.Config, logs con
 	if err := baseConfig.Validate(); err != nil {
 		return nil, fmt.Errorf("config validation failed: %w", err)
 	}
+	expirationSettings, err := baseConfig.Expiration.Unmarshal()
+	if err != nil {
+		return nil, err
+	}
 
 	events := baseConfig.Schema.NewEvents(settings.TelemetrySettings)
 
@@ -65,7 +69,7 @@ func createConnector(settings connector.Settings, cfg component.Config, logs con
 			events.MetricEvents,
 			settings.Logger,
 		),
-		expirationPolicy: baseConfig.Expiration,
+		expirationPolicy: expirationSettings,
 		logsConsumer:     logs,
 	}
 	return se, nil
