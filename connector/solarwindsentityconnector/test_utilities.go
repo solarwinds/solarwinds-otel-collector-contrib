@@ -16,13 +16,14 @@ package solarwindsentityconnector
 
 import (
 	"fmt"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"os"
 	"testing"
 
 	"gopkg.in/yaml.v3"
 )
 
-func LoadConfigFromFile(tb testing.TB, path string) (*Config, error) {
+func LoadConfigFromFile(tb testing.TB, path string) (*config.Config, error) {
 	tb.Helper()
 
 	yamlFile, err := os.ReadFile(path)
@@ -30,7 +31,7 @@ func LoadConfigFromFile(tb testing.TB, path string) (*Config, error) {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}
 
-	var cfg Config
+	var cfg config.Config
 	if err := yaml.Unmarshal(yamlFile, &cfg); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}

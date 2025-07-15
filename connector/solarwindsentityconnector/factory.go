@@ -17,6 +17,8 @@ package solarwindsentityconnector
 import (
 	"context"
 	"fmt"
+
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal/metadata"
@@ -28,7 +30,7 @@ import (
 func NewFactory() connector.Factory {
 	return connector.NewFactory(
 		metadata.Type,
-		NewDefaultConfig,
+		config.NewDefaultConfig,
 		connector.WithMetricsToLogs(createMetricsToLogsConnector, metadata.MetricsToLogsStability),
 		connector.WithLogsToLogs(createLogsToLogsConnector, metadata.LogsToLogsStability),
 	)
@@ -42,24 +44,28 @@ func createMetricsToLogsConnector(ctx context.Context, settings connector.Settin
 	return createConnector(settings, config, logs)
 }
 
-func createConnector(settings connector.Settings, config component.Config, logs consumer.Logs) (*solarwindsentity, error) {
-	cfg, ok := config.(*Config)
+func createConnector(settings connector.Settings, cfg component.Config, logs consumer.Logs) (*solarwindsentity, error) {
+	baseConfig, ok := cfg.(*config.Config)
 	if !ok {
-		return nil, fmt.Errorf("expected config of type *Config, got %T", config)
+		return nil, fmt.Errorf("expected config of type *config.Config, got %T", cfg)
 	}
-	events := cfg.Schema.NewEvents(settings.TelemetrySettings)
+	if err := baseConfig.Validate(); err != nil {
+		return nil, fmt.Errorf("config validation failed: %w", err)
+	}
+
+	events := baseConfig.Schema.NewEvents(settings.TelemetrySettings)
 
 	se := &solarwindsentity{
 		logger: settings.Logger,
 		eventDetector: internal.NewEventDetector(
-			cfg.Schema.NewEntities(),
-			cfg.SourcePrefix,
-			cfg.DestinationPrefix,
+			baseConfig.Schema.NewEntities(),
+			baseConfig.SourcePrefix,
+			baseConfig.DestinationPrefix,
 			events.LogEvents,
 			events.MetricEvents,
 			settings.Logger,
 		),
-		expirationPolicy: cfg.Expiration,
+		expirationPolicy: baseConfig.Expiration,
 		logsConsumer:     logs,
 	}
 	return se, nil

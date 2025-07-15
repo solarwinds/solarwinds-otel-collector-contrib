@@ -102,3 +102,20 @@ func (e *ExpirationPolicy) getTTLCleanupInterval() (time.Duration, error) {
 
 	return defaultTTLCleanupInterval, nil
 }
+
+// Validate validates the expiration policy configuration
+func (e *ExpirationPolicy) Validate() error {
+	// If expiration policy is enabled, interval is mandatory
+	if e.Enabled {
+		if e.Interval == "" {
+			return errors.New("expiration_policy.interval is mandatory when expiration_policy.enabled is true")
+		}
+
+		// Validate that interval is a valid duration
+		if _, err := time.ParseDuration(e.Interval); err != nil {
+			return fmt.Errorf("expiration_policy.interval must be a valid duration (e.g., '5m', '1h'): %w", err)
+		}
+	}
+
+	return nil
+}

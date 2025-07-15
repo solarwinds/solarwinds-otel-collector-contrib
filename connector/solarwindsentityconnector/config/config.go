@@ -12,16 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package solarwindsentityconnector
+package config
 
 import (
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
+	"fmt"
+
 	"go.opentelemetry.io/collector/component"
 )
 
 type Config struct {
-	Schema     config.Schema           `mapstructure:"schema"`
-	Expiration config.ExpirationPolicy `mapstructure:"expiration_policy" yaml:"expiration_policy"`
+	Schema     Schema           `mapstructure:"schema"`
+	Expiration ExpirationPolicy `mapstructure:"expiration_policy" yaml:"expiration_policy"`
 
 	SourcePrefix      string `mapstructure:"source_prefix" yaml:"source_prefix"`
 	DestinationPrefix string `mapstructure:"destination_prefix" yaml:"destination_prefix"`
@@ -29,4 +30,19 @@ type Config struct {
 
 func NewDefaultConfig() component.Config {
 	return &Config{}
+}
+
+// Validate checks the configuration for its validity according to the schema requirements.
+func (c *Config) Validate() error {
+	// Schema is mandatory
+	if err := c.Schema.Validate(); err != nil {
+		return fmt.Errorf("schema validation failed: %w", err)
+	}
+
+	// Validate expiration policy if configured
+	if err := c.Expiration.Validate(); err != nil {
+		return fmt.Errorf("expiration policy validation failed: %w", err)
+	}
+
+	return nil
 }
