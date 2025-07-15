@@ -104,7 +104,7 @@ func TestDetectLog_EntityAndRelationshipEvents(t *testing.T) {
 	events, err := eventDetector.DetectLog(ctx, attributes, tc)
 	require.NoError(t, err)
 	require.NotNil(t, events)
-	require.Len(t, events, 2)
+	require.Len(t, events, 3)
 }
 
 func TestDetectLog_NoEvents(t *testing.T) {
@@ -236,7 +236,7 @@ func TestDetectMetric_EntityAndRelationshipEvents(t *testing.T) {
 	events, err := eventDetector.DetectMetric(ctx, attributes, tc)
 	require.NoError(t, err)
 	require.NotNil(t, events)
-	require.Len(t, events, 2)
+	require.Len(t, events, 3)
 }
 
 func TestDetectMetric_NoEvents(t *testing.T) {
@@ -402,14 +402,11 @@ func TestCreateEntity(t *testing.T) {
 		nil,
 	)
 
-	entityEvent, err := eventDetector.attributeMapper.getEntities("KubernetesCluster", attributes)
+	event, err := eventDetector.attributeMapper.getEntity("KubernetesCluster", attributes)
 	assert.Nil(t, err)
 	logs := plog.NewLogs()
 	logRecords := CreateEventLog(&logs)
-	for _, event := range entityEvent {
-		// Update the log records with the entity event
-		event.Update(logRecords)
-	}
+	event.Update(logRecords)
 	logRecord := logRecords.At(0)
 	assert.Equal(t, 4, logRecord.Attributes().Len())
 
@@ -428,31 +425,6 @@ func TestCreateEntity(t *testing.T) {
 	assert.Equal(t, 1, actualEntityAttributes.Map().Len())
 	actualEntityAttr, _ := actualEntityAttributes.Map().Get("attr1")
 	assert.Equal(t, "attrvalue1", actualEntityAttr.Str())
-}
-
-func TestCreateEntityWithNoAttributes(t *testing.T) {
-	attributes := Attributes{
-		Common: map[string]pcommon.Value{
-			"id1": pcommon.NewValueStr("idvalue1"),
-		},
-	}
-
-	entity := config.Entity{
-		Type: "KubernetesCluster",
-		IDs:  []string{},
-	}
-
-	attributeMapper := NewAttributeMapper(map[string]config.Entity{entity.Type: entity})
-
-	eventDetector := NewEventDetector(
-		attributeMapper,
-		config.EventsGroup[ottllog.TransformContext]{},
-		config.EventsGroup[ottlmetric.TransformContext]{},
-		nil,
-	)
-
-	_, err := eventDetector.attributeMapper.getEntities("KubernetesCluster", attributes)
-	assert.NotNil(t, err)
 }
 
 func TestCreateRelationshipEvent(t *testing.T) {
@@ -476,10 +448,12 @@ func TestCreateRelationshipEvent(t *testing.T) {
 		Attributes: []string{"attr2"},
 	}
 
-	relationship := config.RelationshipEvent{
+	relationships := []*config.RelationshipEvent{{
 		Type:        "MemberOf",
+		Action:      "update",
 		Source:      srcEntity.Type,
 		Destination: destEntity.Type,
+	},
 	}
 
 	attributeMapper := NewAttributeMapper(map[string]config.Entity{
@@ -494,100 +468,15 @@ func TestCreateRelationshipEvent(t *testing.T) {
 		nil,
 	)
 
-	relationshipEvent, err := eventDetector.attributeMapper.getRelationship(&relationship, attributes)
-	assert.Nil(t, err)
-	logs := plog.NewLogs()
-	logRecords := CreateEventLog(&logs)
-	relationshipEvent.Update(logRecords)
-	logRecord := logRecords.At(0)
-	assert.Equal(t, 6, logRecord.Attributes().Len())
+	relationshipEvents, entities := eventDetector.getRelationships(attributes, relationships)
+	assert.Equal(t, 1, len(relationshipEvents))
+	r1, ok := relationshipEvents[0].(*Relationship)
+	assert.True(t, ok)
+	assert.Equal(t, "MemberOf", r1.Type)
 
-	actualEntityEventType, _ := logRecord.Attributes().Get(entityEventType)
-	assert.Equal(t, relationshipUpdateEventType, actualEntityEventType.Str())
-
-	actualRelationshipType, _ := logRecord.Attributes().Get(relationshipType)
-	assert.Equal(t, "MemberOf", actualRelationshipType.Str())
-
-	actualSrcEntityType, _ := logRecord.Attributes().Get(srcEntityType)
-	assert.Equal(t, "KubernetesCluster", actualSrcEntityType.Str())
-
-	actualDestEntityType, _ := logRecord.Attributes().Get(destEntityType)
-	assert.Equal(t, "KubernetesNode", actualDestEntityType.Str())
-}
-
-func TestCreateRelationshipEventWithNoAttributes(t *testing.T) {
-	attributes := Attributes{
-		Common: map[string]pcommon.Value{
-			"id1": pcommon.NewValueStr("idvalue1"),
-			"id2": pcommon.NewValueStr("idvalue2"),
-		},
-	}
-
-	srcEntity := config.Entity{
-		Type: "KubernetesCluster",
-		IDs:  []string{},
-	}
-
-	destEntity := config.Entity{
-		Type: "KubernetesNode",
-		IDs:  []string{},
-	}
-
-	relationship := config.RelationshipEvent{
-		Type:        "MemberOf",
-		Source:      srcEntity.Type,
-		Destination: destEntity.Type,
-	}
-
-	attributeMapper := NewAttributeMapper(map[string]config.Entity{
-		srcEntity.Type:  srcEntity,
-		destEntity.Type: destEntity,
-	})
-
-	eventDetector := NewEventDetector(
-		attributeMapper,
-		config.EventsGroup[ottllog.TransformContext]{},
-		config.EventsGroup[ottlmetric.TransformContext]{},
-		nil,
-	)
-
-	_, err := eventDetector.attributeMapper.getRelationship(&relationship, attributes)
-	assert.NotNil(t, err)
-}
-
-func TestCreateRelationshipEventWithoutResourceAttributes(t *testing.T) {
-	attributes := Attributes{}
-
-	srcEntity := config.Entity{
-		Type: "KubernetesCluster",
-		IDs:  []string{"id1"},
-	}
-
-	destEntity := config.Entity{
-		Type: "KubernetesNode",
-		IDs:  []string{"id2"},
-	}
-
-	relationship := config.RelationshipEvent{
-		Type:        "MemberOf",
-		Source:      "KubernetesCluster",
-		Destination: "KubernetesNode",
-	}
-
-	attributeMapper := NewAttributeMapper(map[string]config.Entity{
-		"KubernetesCluster": srcEntity,
-		"KubernetesNode":    destEntity,
-	})
-
-	eventDetector := NewEventDetector(
-		attributeMapper,
-		config.EventsGroup[ottllog.TransformContext]{},
-		config.EventsGroup[ottlmetric.TransformContext]{},
-		nil,
-	)
-
-	_, err := eventDetector.attributeMapper.getRelationship(&relationship, attributes)
-	assert.NotNil(t, err)
+	assert.Equal(t, srcEntity.Type, r1.Source.Type)
+	assert.Equal(t, destEntity.Type, r1.Destination.Type)
+	assert.Equal(t, 2, len(entities))
 }
 
 func TestCreateSameTypeRelationshipEvent(t *testing.T) {
@@ -609,11 +498,12 @@ func TestCreateSameTypeRelationshipEvent(t *testing.T) {
 		Attributes: []string{"attr1"},
 	}
 
-	relationship := config.RelationshipEvent{
-		Type:        "VirtualizationTopologyConnection",
+	relationships := []*config.RelationshipEvent{{
+		Action:      "update",
+		Type:        "Has",
 		Source:      "KubernetesCluster",
 		Destination: "KubernetesCluster",
-	}
+	}}
 
 	attributeMapper := NewAttributeMapper(map[string]config.Entity{
 		"KubernetesCluster": entity,
@@ -626,95 +516,24 @@ func TestCreateSameTypeRelationshipEvent(t *testing.T) {
 		nil,
 	)
 
-	relationshipEvent, err := eventDetector.attributeMapper.getRelationship(&relationship, attributes)
-	assert.Nil(t, err)
-	logs := plog.NewLogs()
-	logRecords := CreateEventLog(&logs)
-	relationshipEvent.Update(logRecords)
-	logRecord := logRecords.At(0)
-	assert.Equal(t, 6, logRecord.Attributes().Len())
+	relationshipEvents, entities := eventDetector.getRelationships(attributes, relationships)
+	assert.Equal(t, 1, len(relationshipEvents))
+	r1, ok := relationshipEvents[0].(*Relationship)
+	assert.True(t, ok)
+	assert.Equal(t, "Has", r1.Type)
 
-	actualEntityEventType, _ := logRecord.Attributes().Get(entityEventType)
-	assert.Equal(t, relationshipUpdateEventType, actualEntityEventType.Str())
-
-	actualRelationshipType, _ := logRecord.Attributes().Get(relationshipType)
-	assert.Equal(t, "VirtualizationTopologyConnection", actualRelationshipType.Str())
-
-	actualSrcEntityType, _ := logRecord.Attributes().Get(srcEntityType)
-	assert.Equal(t, "KubernetesCluster", actualSrcEntityType.Str())
-
-	actualDestEntityType, _ := logRecord.Attributes().Get(destEntityType)
-	assert.Equal(t, "KubernetesCluster", actualDestEntityType.Str())
+	assert.Equal(t, entity.Type, r1.Source.Type)
+	assert.Equal(t, entity.Type, r1.Destination.Type)
+	assert.Equal(t, 2, len(entities))
 }
 
-func TestCreateSameTypeRelationshipEventWithNoAttributesSameType(t *testing.T) {
-	attributes := Attributes{
-		Source: map[string]pcommon.Value{
-			"id": pcommon.NewValueStr("idvalue1"),
-		},
-		Destination: map[string]pcommon.Value{
-			"id": pcommon.NewValueStr("idvalue2"),
-		},
-	}
-
-	entity := config.Entity{
-		Type: "KubernetesCluster",
-		IDs:  []string{},
-	}
-
-	relationship := config.RelationshipEvent{
-		Type:        "VirtualizationTopologyConnection",
-		Source:      "KubernetesCluster",
-		Destination: "KubernetesCluster",
-	}
-
-	attributeMapper := NewAttributeMapper(map[string]config.Entity{
-		"KubernetesCluster": entity,
-	})
-
-	eventDetector := NewEventDetector(
-		attributeMapper,
-		config.EventsGroup[ottllog.TransformContext]{},
-		config.EventsGroup[ottlmetric.TransformContext]{},
-		nil,
-	)
-
-	_, err := eventDetector.attributeMapper.getRelationship(&relationship, attributes)
-	assert.NotNil(t, err)
-}
-
-func TestCreateSameTypeRelationshipEventWithoutResourceAttributes(t *testing.T) {
-	attributes := Attributes{}
-
-	entity := config.Entity{
-		Type: "KubernetesCluster",
-		IDs:  []string{"id"},
-	}
-
-	relationship := config.RelationshipEvent{
-		Type:        "VirtualizationTopologyConnection",
-		Source:      "KubernetesCluster",
-		Destination: "KubernetesCluster",
-	}
-
-	attributeMapper := NewAttributeMapper(map[string]config.Entity{
-		"KubernetesCluster": entity,
-	})
-
-	eventDetector := NewEventDetector(
-		attributeMapper,
-		config.EventsGroup[ottllog.TransformContext]{},
-		config.EventsGroup[ottlmetric.TransformContext]{},
-		nil,
-	)
-
-	_, err := eventDetector.attributeMapper.getRelationship(&relationship, attributes)
-	assert.NotNil(t, err)
-}
-
-func TestCollectEventsWithEntitiesWhenAttributesArePresent(t *testing.T) {
+func TestCollectEvents_WithEntitiesWhenAttributesArePresent(t *testing.T) {
 	// arrange
-	testEntity := config.Entity{Type: "testEntityType", IDs: []string{"id1", "id2"}, Attributes: []string{"attr1", "attr2"}}
+	testEntity := config.Entity{
+		Type:       "testEntityType",
+		IDs:        []string{"id1", "id2"},
+		Attributes: []string{"attr1", "attr2"},
+	}
 	attributes := Attributes{
 		Common: map[string]pcommon.Value{
 			"id1":   pcommon.NewValueStr("idvalue1"),
@@ -734,29 +553,26 @@ func TestCollectEventsWithEntitiesWhenAttributesArePresent(t *testing.T) {
 		nil,
 	)
 
-	events, err := eventBuilder.collectEvents(attributes, []*config.EntityEvent{{Type: testEntity.Type}}, nil)
+	events, err := eventBuilder.collectEvents(attributes, []*config.EntityEvent{
+		{
+			Type:   testEntity.Type,
+			Action: EventUpdateAction},
+	},
+		nil)
 	require.NoError(t, err)
 	require.Len(t, events, 1)
-	logs := plog.NewLogs()
-	logRecords := CreateEventLog(&logs)
-	events[0].Update(logRecords)
+	e1, ok := events[0].(Entity)
+	require.True(t, ok)
+	assert.Equal(t, "testEntityType", e1.Type)
+	assert.Equal(t, "update", e1.Action)
 
-	// assert
-	assert.Equal(t, 1, logs.LogRecordCount())
-	actualLogRecord := logRecords.At(0)
-	assertEntityType(t, actualLogRecord.Attributes(), testEntity.Type)
-	assertEventType(t, actualLogRecord.Attributes(), entityUpdateEventType)
+	assert.Equal(t, 2, e1.IDs.Len())
+	assertAttributeIsPresent(t, e1.IDs, "id1", "idvalue1")
+	assertAttributeIsPresent(t, e1.IDs, "id2", "idvalue2")
 
-	ids := getMap(actualLogRecord.Attributes(), entityIds)
-	assert.Equal(t, 2, ids.Len())
-	assertAttributeIsPresent(t, ids, "id1", "idvalue1")
-	assertAttributeIsPresent(t, ids, "id2", "idvalue2")
-
-	attrs := getMap(actualLogRecord.Attributes(), entityAttributes)
-	assert.Equal(t, 2, attrs.Len())
-	assertAttributeIsPresent(t, attrs, "attr1", "attrvalue1")
-	assertAttributeIsPresent(t, attrs, "attr2", "attrvalue2")
-	assertOtelEventAsLogIsPresent(t, logs)
+	assert.Equal(t, 2, e1.Attributes.Len())
+	assertAttributeIsPresent(t, e1.Attributes, "attr1", "attrvalue1")
+	assertAttributeIsPresent(t, e1.Attributes, "attr2", "attrvalue2")
 }
 
 func TestDoesNotCollectEventsWithEntitiesWhenIDAttributeIsMissing(t *testing.T) {
@@ -944,7 +760,7 @@ func TestAppendSameTypeRelationshipUpdateEventWhenAttributesArePresent(t *testin
 	assertRelationshipEntityType(t, actualLogRecord.Attributes(), entity.Type, destEntityType)
 }
 
-func TestDoesNotcollectEventsWhenIDAttributeIsMissing(t *testing.T) {
+func TestCollectEvents_WhenIDAttributeIsMissing(t *testing.T) {
 	// arrange
 	srcEntity := config.Entity{Type: "KubernetesCluster", IDs: []string{"id1"}, Attributes: []string{}}
 	destEntity := config.Entity{Type: "KubernetesNamespace", IDs: []string{"id2"}, Attributes: []string{}}
@@ -979,7 +795,7 @@ func TestDoesNotcollectEventsWhenIDAttributeIsMissing(t *testing.T) {
 	require.Len(t, events, 0)
 }
 
-func TestDoesNotAppendSameTypeRelationshipUpdateEventWhenIDAttributeIsMissing(t *testing.T) {
+func TestCollectEvents_DoesNotAppendSameTypeRelationshipUpdateEventWhenIDAttributeIsMissing(t *testing.T) {
 	// arrange
 	entity := config.Entity{Type: "KubernetesCluster", IDs: []string{"id"}, Attributes: []string{}}
 	testRelationship := config.RelationshipEvent{Source: "KubernetesCluster", Destination: "KubernetesCluster"}
