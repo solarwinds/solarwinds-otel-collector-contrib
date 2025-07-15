@@ -51,11 +51,11 @@ func (s *solarwindsentity) Capabilities() consumer.Capabilities {
 }
 
 func (s *solarwindsentity) Start(context.Context, component.Host) error {
-	if s.expirationPolicy.Enabled {
-		expirationCfg, err := s.expirationPolicy.Unmarshal()
-		if err != nil {
-			return errors.Join(err, fmt.Errorf("expiration policy is invalid"))
-		}
+	expirationCfg, err := s.expirationPolicy.Unmarshal()
+	if err != nil {
+		return errors.Join(err, fmt.Errorf("expiration policy is invalid"))
+	}
+	if expirationCfg.Enabled {
 
 		ec := internal.NewEventConsumer(s.logsConsumer)
 		sm, err := storage.NewStorageManager(expirationCfg, s.logger, ec)

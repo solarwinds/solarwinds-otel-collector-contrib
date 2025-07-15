@@ -23,6 +23,7 @@ import (
 const (
 	defaultTTLCleanupInterval = 5 * time.Second
 	defaultMaxCapacity        = int64(1_000_000) // 1 million items in the cache
+	defaultInterval           = 5 * time.Minute
 )
 
 type ExpirationPolicy struct {
@@ -47,7 +48,7 @@ type ExpirationSettings struct {
 
 func (e *ExpirationPolicy) Unmarshal() (*ExpirationSettings, error) {
 	if !e.Enabled {
-		return nil, fmt.Errorf("expiration policy is not enabled")
+		return &ExpirationSettings{Enabled: false}, nil
 	}
 
 	if e.Interval == "" {
@@ -77,34 +78,37 @@ func (e *ExpirationPolicy) Unmarshal() (*ExpirationSettings, error) {
 }
 
 func (e *ExpirationPolicy) getMaxCapacity() (int64, error) {
-	if e.CacheConfiguration != nil && e.CacheConfiguration.MaxCapacity != nil {
-		if *e.CacheConfiguration.MaxCapacity <= 0 {
-			return 0, errors.New("max capacity must be greater than zero")
-		}
-
-		return *e.CacheConfiguration.MaxCapacity, nil
+	if e.CacheConfiguration == nil || e.CacheConfiguration.MaxCapacity == nil {
+		return defaultMaxCapacity, nil
 	}
 
-	return defaultMaxCapacity, nil
+	if *e.CacheConfiguration.MaxCapacity <= 0 {
+		return 0, errors.New("max capacity must be greater than zero")
+	}
+
+	return *e.CacheConfiguration.MaxCapacity, nil
 }
 
 func (e *ExpirationPolicy) getTTLCleanupInterval() (time.Duration, error) {
-	if e.CacheConfiguration != nil && e.CacheConfiguration.TTLCleanupInterval != nil {
-		parsedCleanupInterval, err := time.ParseDuration(*e.CacheConfiguration.TTLCleanupInterval)
-		if err != nil {
-			return time.Duration(0), errors.New("invalid TTL cleanup interval format")
-		}
-		if parsedCleanupInterval < time.Second {
-			return time.Duration(0), errors.New("ttl cleanup interval must be at least 1 second")
-		}
-
-		return parsedCleanupInterval, nil
+	if e.CacheConfiguration == nil || e.CacheConfiguration.TTLCleanupInterval == nil {
+		return defaultTTLCleanupInterval, nil
 	}
 
-	return defaultTTLCleanupInterval, nil
+	parsedCleanupInterval, err := time.ParseDuration(*e.CacheConfiguration.TTLCleanupInterval)
+	if err != nil {
+		return time.Duration(0), errors.New("invalid TTL cleanup interval format")
+	}
+	if parsedCleanupInterval < time.Second {
+		return time.Duration(0), errors.New("ttl cleanup interval must be at least 1 second")
+	}
+
+	return parsedCleanupInterval, nil
 }
 
 func (e *ExpirationPolicy) getInterval() (time.Duration, error) {
+	if e.Interval == "" {
+		return defaultInterval, nil
+	}
 
 	interval, err := time.ParseDuration(e.Interval)
 	if err != nil {
@@ -121,9 +125,7 @@ func (e *ExpirationPolicy) Validate() error {
 
 	var allErrs error
 
-	if e.Interval == "" {
-		allErrs = errors.Join(allErrs, errors.New("expiration_policy.interval is mandatory when expiration_policy.enabled is true"))
-	} else if _, err := e.getInterval(); err != nil {
+	if _, err := e.getInterval(); err != nil {
 		allErrs = errors.Join(allErrs, fmt.Errorf("expiration_policy.interval: %w", err))
 	}
 

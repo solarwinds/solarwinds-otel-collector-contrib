@@ -29,7 +29,7 @@ type Config struct {
 }
 
 func NewDefaultConfig() component.Config {
-	return &Config{}
+	return &Config{Expiration: ExpirationPolicy{Enabled: true}}
 }
 
 func (c *Config) Validate() error {
