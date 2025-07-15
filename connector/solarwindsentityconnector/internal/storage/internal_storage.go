@@ -73,7 +73,7 @@ type internalStorage struct {
 	entityTtl                 time.Duration
 	ttlCleanUpIntervalSeconds time.Duration
 	logger                    *zap.Logger
-	cacheKeyBuilder           KeyBuilder
+	cacheKeyBuilder           internal.KeyBuilder
 
 	// TODO: Introduce mutex to protect concurrent access to the cache when parallelization is used
 	// in the upper layers (NH-112603).
@@ -129,7 +129,7 @@ func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em c
 		// The TTL + clean-up interval should be the longest interval after which the relationship would be evicted.
 		entityTtl:       (cfg.Interval + cfg.TTLCleanupIntervalSeconds) * entityTTLFactor,
 		logger:          logger,
-		cacheKeyBuilder: NewKeyBuilder(),
+		cacheKeyBuilder: internal.NewKeyBuilder(),
 	}, nil
 }
 

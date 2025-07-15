@@ -27,6 +27,7 @@ type EventDetector struct {
 	attributeMapper AttributeMapper
 	logEvents       config.EventsGroup[ottllog.TransformContext]
 	metricEvents    config.EventsGroup[ottlmetric.TransformContext]
+	keyBuilder      KeyBuilder
 	logger          *zap.Logger
 }
 
@@ -40,6 +41,7 @@ func NewEventDetector(
 		attributeMapper: attributeMapper,
 		logEvents:       logEvents,
 		metricEvents:    metricEvents,
+		keyBuilder:      NewKeyBuilder(),
 		logger:          logger,
 	}
 }
@@ -103,7 +105,7 @@ func (e *EventDetector) validateEntityEvents(
 ) []Event {
 	events := make([]Event, 0)
 	for _, actualEvent := range relationshipEntities {
-		sourceEntity, err := validateRelationshipEntity(actualEvent.Source, configuredEntityEvents, alreadyExistingEntities)
+		sourceEntity, err := e.validateRelationshipEntity(actualEvent.Source, configuredEntityEvents, alreadyExistingEntities)
 		if err != nil {
 			e.logger.Debug("failed to validate source entity for relationship event", zap.Error(err))
 			continue
@@ -112,7 +114,7 @@ func (e *EventDetector) validateEntityEvents(
 			events = append(events, *sourceEntity)
 		}
 
-		destEntity, err := validateRelationshipEntity(actualEvent.Destination, configuredEntityEvents, alreadyExistingEntities)
+		destEntity, err := e.validateRelationshipEntity(actualEvent.Destination, configuredEntityEvents, alreadyExistingEntities)
 		if err != nil {
 			e.logger.Debug("failed to validate destination entity for relationship event", zap.Error(err))
 			continue
@@ -124,12 +126,12 @@ func (e *EventDetector) validateEntityEvents(
 	return events
 }
 
-func validateRelationshipEntity(
+func (e *EventDetector) validateRelationshipEntity(
 	entity Entity,
 	configuredEntityEvents []*config.EntityEvent,
 	alreadyExistingEntities map[string]Entity,
 ) (*Entity, error) {
-	entityHash, err := buildEntityHash(entity)
+	entityHash, err := e.keyBuilder.BuildEntityKey(entity)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build entity hash for relationship event")
 	}
@@ -165,7 +167,7 @@ func (e *EventDetector) getEntities(attrs Attributes, entityEvents []*config.Ent
 
 		// Build hash for later comparison between entities created
 		// from relationship and entity events.
-		eventHash, err := buildEntityHash(*event)
+		eventHash, err := e.keyBuilder.BuildEntityKey(*event)
 		if err != nil {
 			e.logger.Debug("failed to build entity hash", zap.Error(err))
 			continue
@@ -250,18 +252,4 @@ func createRelationship(relationship *config.RelationshipEvent, source, dest *En
 	r.Attributes = getOptionalAttributes(relationship.Attributes, attrs.Common)
 
 	return r, nil
-}
-
-// BuildEntityKey constructs a unique key for the entity referenced in the relationship.
-// The key is composition of entity type and its ID attributes.
-func buildEntityHash(entity Entity) (string, error) {
-	// Marshal directly to bytes instead of using a buffer and encoder
-	data := struct {
-		Type string
-		IDs  map[string]any
-	}{
-		Type: entity.Type,
-		IDs:  entity.IDs.AsRaw(),
-	}
-	return HashObject(data)
 }

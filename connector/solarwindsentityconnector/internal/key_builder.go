@@ -12,17 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package storage
+package internal
 
 import (
+	"encoding/json"
 	"fmt"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal"
+	"hash/fnv"
 )
 
 // KeyBuilder provides methods for generating consistent keys for entities and relationships
 type KeyBuilder interface {
 	// BuildEntityKey constructs a unique key for an entity
-	BuildEntityKey(entity internal.Entity) (string, error)
+	BuildEntityKey(entity Entity) (string, error)
 
 	// BuildRelationshipKey constructs a unique key for a relationship using the relationship type
 	// and the hashed keys of the source and destination entities
@@ -39,7 +40,7 @@ func NewKeyBuilder() KeyBuilder {
 
 // BuildEntityKey constructs a unique key for the entity referenced in the relationship.
 // The key is composition of entity type and its ID attributes.
-func (b *defaultKeyBuilder) BuildEntityKey(entity internal.Entity) (string, error) {
+func (b *defaultKeyBuilder) BuildEntityKey(entity Entity) (string, error) {
 	data := struct {
 		Type string
 		IDs  map[string]any
@@ -47,7 +48,7 @@ func (b *defaultKeyBuilder) BuildEntityKey(entity internal.Entity) (string, erro
 		Type: entity.Type,
 		IDs:  entity.IDs.AsRaw(),
 	}
-	return internal.HashObject(data)
+	return hashObject(data)
 }
 
 // BuildRelationshipKey constructs a key using the relationship type and the hashed keys
@@ -63,4 +64,19 @@ func (b *defaultKeyBuilder) BuildRelationshipKey(relationshipType string, source
 		return "", fmt.Errorf("destHash cannot be empty")
 	}
 	return fmt.Sprintf("%s:%s:%s", relationshipType, sourceHash, destHash), nil
+}
+
+func hashObject(data interface{}) (string, error) {
+	bytes, err := json.Marshal(data)
+	if err != nil {
+		return "", fmt.Errorf("failed to encode: %w", err)
+	}
+
+	// Create hash from the marshaled bytes
+	h := fnv.New64a()
+	_, err = h.Write(bytes)
+	if err != nil {
+		return "", fmt.Errorf("failed to write bytes to hash: %w", err)
+	}
+	return fmt.Sprintf("%x", h.Sum64()), nil
 }
