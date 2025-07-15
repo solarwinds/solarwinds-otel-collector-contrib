@@ -59,7 +59,6 @@ func (e *EventDetector) DetectMetric(ctx context.Context, resourceAttrs Attribut
 	}
 
 	return e.collectEvents(resourceAttrs, ee, re)
-
 }
 
 // collectEvents processes the attributes and configured events to create a list of detected events.
@@ -72,14 +71,25 @@ func (e *EventDetector) collectEvents(
 	configuredRelationships []*config.RelationshipEvent,
 ) ([]Event, error) {
 	entityEvents := e.getEntities(attrs, configuredEvents)
-	relationshipEvents, relationshipEntityEvents := e.getRelationships(attrs, configuredRelationships)
-	validRelationshipEntities := e.validateEntityEvents(configuredEvents, entityEvents, relationshipEntityEvents)
+	relationshipEvents := e.getRelationships(attrs, configuredRelationships)
+	validRelationshipEntities := e.validateEntityEvents(configuredEvents, entityEvents, relationshipEvents)
 
-	allEvents := append(relationshipEvents)
+	allEvents := make([]Event, 0, len(relationshipEvents)+len(entityEvents)+len(validRelationshipEntities))
+
+	// append all entity events detected from entity events
 	for _, entity := range entityEvents {
 		allEvents = append(allEvents, entity)
 	}
+
+	// append all relationship events
+	for _, relationshipEvent := range relationshipEvents {
+		allEvents = append(allEvents, relationshipEvent)
+	}
+
+	// append all valid relationship entities that were not duplicates of entity events
+	// and are inferred from relationship events
 	allEvents = append(allEvents, validRelationshipEntities...)
+
 	return allEvents, nil
 }
 
@@ -88,28 +98,59 @@ func (e *EventDetector) collectEvents(
 // It returns a slice of events that are compared to configured entity events to ensure that only valid events are returned.
 func (e *EventDetector) validateEntityEvents(
 	configuredEntityEvents []*config.EntityEvent,
-	alreadyExistingEntities,
-	relationshipEntities map[string]Entity,
+	alreadyExistingEntities map[string]Entity,
+	relationshipEntities []*Relationship,
 ) []Event {
 	events := make([]Event, 0)
-	for entityHash, actualEvent := range relationshipEntities {
-		if _, exists := alreadyExistingEntities[entityHash]; exists {
-			// If the entity already exists (created from entity event, not from relationship event), we can skip it.
+	for _, actualEvent := range relationshipEntities {
+		sourceEntity, err := validateRelationshipEntity(actualEvent.Source, configuredEntityEvents, alreadyExistingEntities)
+		if err != nil {
+			e.logger.Debug("failed to validate source entity for relationship event", zap.Error(err))
 			continue
 		}
+		if sourceEntity != nil {
+			events = append(events, *sourceEntity)
+		}
 
-		// If entity was created from relationship, we need to check whether it can be sent in the resulting log.
-		// We do not want to send entity event if it was not configured in the entity events.
-		for _, event := range configuredEntityEvents {
-			// If the event type matches, we know that we can infer the entity
-			// because conditions were met.
-			if event.Type == actualEvent.Type {
-				actualEvent.Action = event.Action
-				events = append(events, actualEvent)
-			}
+		destEntity, err := validateRelationshipEntity(actualEvent.Destination, configuredEntityEvents, alreadyExistingEntities)
+		if err != nil {
+			e.logger.Debug("failed to validate destination entity for relationship event", zap.Error(err))
+			continue
+		}
+		if destEntity != nil {
+			events = append(events, *destEntity)
 		}
 	}
 	return events
+}
+
+func validateRelationshipEntity(
+	entity Entity,
+	configuredEntityEvents []*config.EntityEvent,
+	alreadyExistingEntities map[string]Entity,
+) (*Entity, error) {
+	entityHash, err := buildEntityHash(entity)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build entity hash for relationship event")
+	}
+
+	if _, exists := alreadyExistingEntities[entityHash]; exists {
+		// If the entity already exists (created from entity event, not from relationship event), we can skip it.
+		return nil, nil
+	}
+
+	// If entity was created from relationship, we need to check whether it can be sent in the resulting log.
+	// We do not want to send entity event if it was not configured in the entity events.
+	for _, event := range configuredEntityEvents {
+		// If the event type matches, we know that we can infer the entity
+		// because conditions were met.
+		if event.Type == entity.Type {
+			entity.Action = event.Action
+			return &entity, nil
+		}
+	}
+
+	return nil, nil
 }
 
 // getEntities creates entity update events based on the configured entity events.
@@ -139,25 +180,12 @@ func (e *EventDetector) getEntities(attrs Attributes, entityEvents []*config.Ent
 // It also builds a map of entities tied to that relationship - source and destination.
 // The map is used to compare entities created from relationship events with entities created from entity events,
 // so duplicated can be filtered out in case of unprefixed attributes.
-func (e *EventDetector) getRelationships(attrs Attributes, configuredRelationships []*config.RelationshipEvent) ([]Event, map[string]Entity) {
-	relationshipEvents := make([]Event, 0, len(configuredRelationships))
-	relationshipEntityEvents := make(map[string]Entity)
+func (e *EventDetector) getRelationships(attrs Attributes, configuredRelationships []*config.RelationshipEvent) []*Relationship {
+	relationshipEvents := make([]*Relationship, 0, len(configuredRelationships))
 	for _, relationshipEvent := range configuredRelationships {
 		sourceEntity, destEntity, err := e.attributeMapper.getRelationshipEntities(relationshipEvent.Source, relationshipEvent.Destination, attrs)
 		if err != nil {
 			e.logger.Debug("failed to create relationship entities", zap.Error(err))
-			continue
-		}
-
-		// Prepare entity hashes for later comparison with entities created from entity events.
-		srcHash, err := buildEntityHash(*sourceEntity)
-		relationshipEntityEvents[srcHash] = *sourceEntity
-
-		dstHash, err := buildEntityHash(*destEntity)
-		relationshipEntityEvents[dstHash] = *destEntity
-
-		if err != nil {
-			e.logger.Debug("failed to build entity hash when creating relationship event", zap.Error(err))
 			continue
 		}
 
@@ -166,9 +194,9 @@ func (e *EventDetector) getRelationships(attrs Attributes, configuredRelationshi
 			e.logger.Debug("failed to create relationship event", zap.Error(err))
 			continue
 		}
-		relationshipEvents = append(relationshipEvents, relationship)
+		relationshipEvents = append(relationshipEvents, &relationship)
 	}
-	return relationshipEvents, relationshipEntityEvents
+	return relationshipEvents
 }
 
 // ProcessEvents evaluates the conditions for entityConfigs and relationships events.
@@ -207,27 +235,21 @@ func processEvents[C any](
 	return entityEvents, relationshipEvents, nil
 }
 
-func createRelationship(relationship *config.RelationshipEvent, source, dest *Entity, attrs Attributes) (*Relationship, error) {
+func createRelationship(relationship *config.RelationshipEvent, source, dest *Entity, attrs Attributes) (Relationship, error) {
 	action, err := GetActionString(relationship.Action)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get action type for relationship event")
+		return Relationship{}, fmt.Errorf("failed to get action type for relationship event")
 	}
 	r := Relationship{
-		Type: relationship.Type,
-		Source: RelationshipEntity{
-			Type: source.Type,
-			IDs:  source.IDs,
-		},
-		Destination: RelationshipEntity{
-			Type: dest.Type,
-			IDs:  dest.IDs,
-		},
-		Action: action,
+		Type:        relationship.Type,
+		Source:      *source,
+		Destination: *dest,
+		Action:      action,
 	}
 
 	r.Attributes = getOptionalAttributes(relationship.Attributes, attrs.Common)
 
-	return &r, nil
+	return r, nil
 }
 
 // BuildEntityKey constructs a unique key for the entity referenced in the relationship.

@@ -22,11 +22,11 @@ func TestUpdate_Relationship(t *testing.T) {
 	relationship := Relationship{
 		Action: "update",
 		Type:   "Has",
-		Source: RelationshipEntity{
+		Source: Entity{
 			Type: "KubernetesCluster",
 			IDs:  srcIds,
 		},
-		Destination: RelationshipEntity{
+		Destination: Entity{
 			Type: "KubernetesNamespace",
 			IDs:  destIds,
 		},
@@ -78,11 +78,11 @@ func TestDelete_Relationship(t *testing.T) {
 	relationship := Relationship{
 		Action: "delete",
 		Type:   "Has",
-		Source: RelationshipEntity{
+		Source: Entity{
 			Type: "KubernetesCluster",
 			IDs:  srcIds,
 		},
-		Destination: RelationshipEntity{
+		Destination: Entity{
 			Type: "KubernetesNamespace",
 			IDs:  destIds,
 		},

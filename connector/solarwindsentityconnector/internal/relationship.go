@@ -20,16 +20,11 @@ import (
 	"time"
 )
 
-type RelationshipEntity struct {
-	Type string
-	IDs  pcommon.Map
-}
-
 type Relationship struct {
 	Action      string
 	Type        string
-	Source      RelationshipEntity
-	Destination RelationshipEntity
+	Source      Entity
+	Destination Entity
 	Attributes  pcommon.Map
 }
 

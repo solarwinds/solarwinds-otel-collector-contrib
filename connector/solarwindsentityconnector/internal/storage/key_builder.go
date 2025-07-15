@@ -22,7 +22,7 @@ import (
 // KeyBuilder provides methods for generating consistent keys for entities and relationships
 type KeyBuilder interface {
 	// BuildEntityKey constructs a unique key for an entity
-	BuildEntityKey(entity internal.RelationshipEntity) (string, error)
+	BuildEntityKey(entity internal.Entity) (string, error)
 
 	// BuildRelationshipKey constructs a unique key for a relationship using the relationship type
 	// and the hashed keys of the source and destination entities
@@ -39,7 +39,7 @@ func NewKeyBuilder() KeyBuilder {
 
 // BuildEntityKey constructs a unique key for the entity referenced in the relationship.
 // The key is composition of entity type and its ID attributes.
-func (b *defaultKeyBuilder) BuildEntityKey(entity internal.RelationshipEntity) (string, error) {
+func (b *defaultKeyBuilder) BuildEntityKey(entity internal.Entity) (string, error) {
 	data := struct {
 		Type string
 		IDs  map[string]any

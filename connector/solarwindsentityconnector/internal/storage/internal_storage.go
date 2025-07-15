@@ -17,6 +17,7 @@ package storage
 import (
 	"errors"
 	"fmt"
+	"go.opentelemetry.io/collector/pdata/pcommon"
 	"time"
 
 	"github.com/dgraph-io/ristretto/v2"
@@ -24,6 +25,11 @@ import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal"
 	"go.uber.org/zap"
 )
+
+type storedEntity struct {
+	Type string
+	IDs  pcommon.Map
+}
 
 const (
 	// ristretto cache provides cost management, but we need to set the same cost for all items.
@@ -61,7 +67,7 @@ type storedRelationship struct {
 }
 
 type internalStorage struct {
-	entities                  *ristretto.Cache[string, internal.RelationshipEntity]
+	entities                  *ristretto.Cache[string, storedEntity]
 	relationships             *ristretto.Cache[string, storedRelationship]
 	relationshipTtl           time.Duration
 	entityTtl                 time.Duration
@@ -90,7 +96,7 @@ func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em c
 		return nil, fmt.Errorf("ttlCleanupSeconds has to be at least 1 second, got %d", ttlCleanupSeconds)
 	}
 
-	entityCache, err := ristretto.NewCache(&ristretto.Config[string, internal.RelationshipEntity]{
+	entityCache, err := ristretto.NewCache(&ristretto.Config[string, storedEntity]{
 		NumCounters:            numCounters,
 		MaxCost:                maxCost * entityCapacityFactor,
 		TtlTickerDurationInSec: ttlCleanupSeconds * entityTTLCleanupFactor,
@@ -131,7 +137,7 @@ func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em c
 // It retrieves the source and destination entities from the entity cache and sends a relationship event.
 func onRelationshipEvict(
 	item *ristretto.Item[storedRelationship],
-	entityCache *ristretto.Cache[string, internal.RelationshipEntity],
+	entityCache *ristretto.Cache[string, storedEntity],
 	logger *zap.Logger,
 	em chan<- internal.Event) {
 
@@ -150,11 +156,11 @@ func onRelationshipEvict(
 
 	em <- &internal.Relationship{
 		Type: item.Value.relationshipType,
-		Source: internal.RelationshipEntity{
+		Source: internal.Entity{
 			Type: source.Type,
 			IDs:  source.IDs,
 		},
-		Destination: internal.RelationshipEntity{
+		Destination: internal.Entity{
 			Type: dest.Type,
 			IDs:  dest.IDs,
 		},
@@ -214,12 +220,22 @@ func (c *internalStorage) update(relationship *internal.Relationship) error {
 		return errors.Join(err, fmt.Errorf("failed to hash key for destination entity: %s", relationship.Destination.Type))
 	}
 
-	sourceUpdated := c.entities.SetWithTTL(sourceHash, relationship.Source, itemCost, c.entityTtl)
+	sourceUpdated := c.entities.SetWithTTL(
+		sourceHash,
+		storedEntity{
+			Type: relationship.Source.Type,
+			IDs:  relationship.Source.IDs,
+		},
+		itemCost, c.entityTtl)
+
 	if !sourceUpdated {
 		return fmt.Errorf("failed to update source entity: %s", relationship.Source.Type)
 	}
 
-	destUpdated := c.entities.SetWithTTL(destHash, relationship.Destination, itemCost, c.entityTtl)
+	destUpdated := c.entities.SetWithTTL(destHash, storedEntity{
+		Type: relationship.Destination.Type,
+		IDs:  relationship.Destination.IDs,
+	}, itemCost, c.entityTtl)
 	if !destUpdated {
 		return fmt.Errorf("failed to update destination entity: %s", relationship.Destination.Type)
 	}

@@ -25,7 +25,7 @@ import (
 // TestBuildKey_DifferentTypesWithSameAttributes_HaveDifferentHashes tests that entities with the same
 // attributes but different types produce different hash keys
 func TestBuildKey_DifferentTypesWithSameAttributes_HaveDifferentHashes(t *testing.T) {
-	entity1 := internal.RelationshipEntity{
+	entity1 := internal.Entity{
 		Type: "service",
 		IDs: func() pcommon.Map {
 			m := pcommon.NewMap()
@@ -34,7 +34,7 @@ func TestBuildKey_DifferentTypesWithSameAttributes_HaveDifferentHashes(t *testin
 		}(),
 	}
 
-	entity2 := internal.RelationshipEntity{
+	entity2 := internal.Entity{
 		Type: "deployment",
 		IDs: func() pcommon.Map {
 			m := pcommon.NewMap()
@@ -53,12 +53,12 @@ func TestBuildKey_DifferentTypesWithSameAttributes_HaveDifferentHashes(t *testin
 }
 
 func TestBuildKey_EmptyIds_HaveSameHashes(t *testing.T) {
-	entityWithIds := internal.RelationshipEntity{
+	entityWithIds := internal.Entity{
 		Type: "service",
 		IDs:  pcommon.NewMap(),
 	}
 
-	entityWithEmptyIds := internal.RelationshipEntity{
+	entityWithEmptyIds := internal.Entity{
 		Type: "service",
 		IDs:  pcommon.NewMap(),
 	}
@@ -76,7 +76,7 @@ func TestBuildKey_EmptyIds_HaveSameHashes(t *testing.T) {
 // TestBuildKey_SameIdsButOfDifferentTypes_ResultInDifferentHashes tests that the same ID values
 // but of different data types result in different hash keys
 func TestBuildKey_SameIdsButOfDifferentTypes_ResultInDifferentHashes(t *testing.T) {
-	entityWithStringId := internal.RelationshipEntity{
+	entityWithStringId := internal.Entity{
 		Type: "resource",
 		IDs: func() pcommon.Map {
 			m := pcommon.NewMap()
@@ -85,7 +85,7 @@ func TestBuildKey_SameIdsButOfDifferentTypes_ResultInDifferentHashes(t *testing.
 		}(),
 	}
 
-	entityWithIntId := internal.RelationshipEntity{
+	entityWithIntId := internal.Entity{
 		Type: "resource",
 		IDs: func() pcommon.Map {
 			m := pcommon.NewMap()
@@ -105,7 +105,7 @@ func TestBuildKey_SameIdsButOfDifferentTypes_ResultInDifferentHashes(t *testing.
 }
 
 func TestBuildKey_SameTypesWithDifferentlyOrderedIds_HaveSameKeys(t *testing.T) {
-	entity := internal.RelationshipEntity{
+	entity := internal.Entity{
 		Type: "service",
 		IDs: func() pcommon.Map {
 			m := pcommon.NewMap()
@@ -115,7 +115,7 @@ func TestBuildKey_SameTypesWithDifferentlyOrderedIds_HaveSameKeys(t *testing.T) 
 		}(),
 	}
 
-	entityDifferentOrder := internal.RelationshipEntity{
+	entityDifferentOrder := internal.Entity{
 		Type: "service",
 		IDs: func() pcommon.Map {
 			m := pcommon.NewMap()
@@ -137,7 +137,7 @@ func TestBuildKey_SameTypesWithDifferentlyOrderedIds_HaveSameKeys(t *testing.T) 
 
 // TestBuildKey_Consistency ensures that the same entity always generates the same key
 func TestBuildKey_Consistency(t *testing.T) {
-	entity := internal.RelationshipEntity{
+	entity := internal.Entity{
 		Type: "service",
 		IDs: func() pcommon.Map {
 			m := pcommon.NewMap()
