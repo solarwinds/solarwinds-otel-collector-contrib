@@ -15,35 +15,35 @@
 package config
 
 type Entity struct {
-	Type       string   `mapstructure:"entity"`
+	Type       string   `mapstructure:"type" yaml:"type"`
 	IDs        []string `mapstructure:"id" yaml:"id"`
-	Attributes []string `mapstructure:"attributes"`
+	Attributes []string `mapstructure:"attributes" yaml:"attributes"`
 }
 
 type Events struct {
-	Relationships []RelationshipEvent `mapstructure:"relationships"`
-	Entities      []EntityEvent       `mapstructure:"entities"`
+	Relationships []RelationshipEvent `mapstructure:"relationships" yaml:"relationships"`
+	Entities      []EntityEvent       `mapstructure:"entities" yaml:"entities"`
 }
 
 type Relationship struct {
-	Type        string `mapstructure:"type"`
-	Source      string `mapstructure:"source_entity"`
-	Destination string `mapstructure:"destination_entity"`
+	Type        string `mapstructure:"type" yaml:"type"`
+	Source      string `mapstructure:"source_entity" yaml:"source_entity"`
+	Destination string `mapstructure:"destination_entity" yaml:"destination_entity"`
 }
 
 type RelationshipEvent struct {
-	Type        string   `mapstructure:"type"`
-	Source      string   `mapstructure:"source_entity"`
-	Destination string   `mapstructure:"destination_entity"`
-	Attributes  []string `mapstructure:"attributes"`
-	Conditions  []string `mapstructure:"conditions"`
-	Context     string   `mapstructure:"context"`
-	Action      string   `mapstructure:"action"`
+	Type        string   `mapstructure:"type" yaml:"type"`
+	Source      string   `mapstructure:"source_entity" yaml:"source_entity"`
+	Destination string   `mapstructure:"destination_entity" yaml:"destination_entity"`
+	Attributes  []string `mapstructure:"attributes" yaml:"attributes"`
+	Conditions  []string `mapstructure:"conditions" yaml:"conditions"`
+	Context     string   `mapstructure:"context" yaml:"context"`
+	Action      string   `mapstructure:"action" yaml:"action"`
 }
 
 type EntityEvent struct {
-	Context    string   `mapstructure:"context"`
-	Conditions []string `mapstructure:"conditions"`
-	Type       string   `mapstructure:"type"`
-	Action     string   `mapstructure:"action"`
+	Context    string   `mapstructure:"context" yaml:"context"`
+	Conditions []string `mapstructure:"conditions" yaml:"conditions"`
+	Type       string   `mapstructure:"type" yaml:"type"`
+	Action     string   `mapstructure:"action" yaml:"action"`
 }
