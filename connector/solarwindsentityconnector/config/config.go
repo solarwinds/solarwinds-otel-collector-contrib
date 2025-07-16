@@ -16,6 +16,7 @@ package config
 
 import (
 	"errors"
+	"go.uber.org/zap"
 
 	"go.opentelemetry.io/collector/component"
 )
@@ -32,9 +33,9 @@ func NewDefaultConfig() component.Config {
 	return &Config{Expiration: ExpirationPolicy{Enabled: true}}
 }
 
-func (c *Config) Validate() error {
+func (c *Config) Validate(logger *zap.Logger) error {
 	return errors.Join(
-		c.Schema.Validate(),
+		c.Schema.Validate(logger),
 		c.Expiration.Validate(),
 	)
 }

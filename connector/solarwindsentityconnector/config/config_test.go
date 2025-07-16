@@ -15,6 +15,7 @@
 package config
 
 import (
+	"go.uber.org/zap"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -556,7 +557,7 @@ func TestConfig_Validate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.config.Validate()
+			err := tt.config.Validate(zap.NewNop())
 
 			if tt.expectError {
 				require.Error(t, err)

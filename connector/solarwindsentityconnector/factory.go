@@ -45,11 +45,12 @@ func createMetricsToLogsConnector(ctx context.Context, settings connector.Settin
 }
 
 func createConnector(settings connector.Settings, cfg component.Config, logs consumer.Logs) (*solarwindsentity, error) {
+	logger := settings.Logger
 	baseConfig, ok := cfg.(*config.Config)
 	if !ok {
 		return nil, fmt.Errorf("expected config of type *config.Config, got %T", cfg)
 	}
-	if err := baseConfig.Validate(); err != nil {
+	if err := baseConfig.Validate(logger); err != nil {
 		return nil, fmt.Errorf("config validation failed: %w", err)
 	}
 	expirationSettings, err := baseConfig.Expiration.Unmarshal()
@@ -60,14 +61,14 @@ func createConnector(settings connector.Settings, cfg component.Config, logs con
 	events := baseConfig.Schema.NewEvents(settings.TelemetrySettings)
 
 	se := &solarwindsentity{
-		logger: settings.Logger,
+		logger: logger,
 		eventDetector: internal.NewEventDetector(
 			baseConfig.Schema.NewEntities(),
 			baseConfig.SourcePrefix,
 			baseConfig.DestinationPrefix,
 			events.LogEvents,
 			events.MetricEvents,
-			settings.Logger,
+			logger,
 		),
 		expirationPolicy: expirationSettings,
 		logsConsumer:     logs,

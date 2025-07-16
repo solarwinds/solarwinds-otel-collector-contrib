@@ -17,6 +17,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"go.uber.org/zap"
 
 	"go.opentelemetry.io/collector/component"
 )
@@ -26,11 +27,11 @@ type Schema struct {
 	Events   Events   `mapstructure:"events"`
 }
 
-func (s *Schema) Validate() error {
+func (s *Schema) Validate(logger *zap.Logger) error {
 	var allErrs error
 
 	if len(s.Entities) == 0 {
-		allErrs = errors.Join(allErrs, errors.New("schema.entities is mandatory and must contain at least 1 item"))
+		logger.Warn("No entities defined in schema")
 	}
 
 	for i, entity := range s.Entities {
@@ -39,7 +40,7 @@ func (s *Schema) Validate() error {
 		}
 	}
 
-	if err := s.Events.Validate(s.Entities); err != nil {
+	if err := s.Events.Validate(s.Entities, logger); err != nil {
 		allErrs = errors.Join(allErrs, err)
 	}
 
