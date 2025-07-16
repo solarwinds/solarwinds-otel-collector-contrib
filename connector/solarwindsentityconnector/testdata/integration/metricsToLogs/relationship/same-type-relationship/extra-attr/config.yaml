@@ -8,8 +8,8 @@ schema:
   events:
     relationships:
       - type: "TestRelationshipType"
-        source: "Kubernetes Pod"
-        destination: "Kubernetes Pod"
+        source_entity: "Kubernetes Pod"
+        destination_entity: "Kubernetes Pod"
         attributes: ["k8s.pod.port"]
         conditions: ["true"]
         context: "metric"

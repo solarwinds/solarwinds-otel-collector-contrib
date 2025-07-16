@@ -11,15 +11,15 @@ schema:
   events:
     relationships:
       - type: "MemberOf"
-        source: "Snowflake"
-        destination: "AWS EC2"
+        source_entity: "Snowflake"
+        destination_entity: "AWS EC2"
         attributes: []
         conditions: ["true"]
         context: "log"
         action: "update"
       - type: "MemberOf"
-        source: "Snowflake"
-        destination: "Kubernetes Pod"
+        source_entity: "Snowflake"
+        destination_entity: "Kubernetes Pod"
         attributes: ["k8s.pod.port"]
         conditions: ["true"]
         context: "log"

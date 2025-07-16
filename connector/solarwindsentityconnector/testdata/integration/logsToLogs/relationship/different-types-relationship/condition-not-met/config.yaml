@@ -9,8 +9,8 @@ schema:
   events:
     relationships:
       - type: "MemberOf"
-        source: "Kubernetes Cluster"
-        destination: "Kubernetes Pod"
+        source_entity: "Kubernetes Cluster"
+        destination_entity: "Kubernetes Pod"
         attributes: ["k8s.cluster.port"]
         conditions: ['resource.attributes["k8s.cluster.name"] == "non-matching-cluster-name"']
         context: "log"

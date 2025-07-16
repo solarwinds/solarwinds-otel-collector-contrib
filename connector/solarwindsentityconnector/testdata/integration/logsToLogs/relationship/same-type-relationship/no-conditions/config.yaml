@@ -8,8 +8,8 @@ schema:
   events:
     relationships:
       - type: "TestRelationshipType"
-        source: "AWS EC2"
-        destination: "AWS EC2"
+        source_entity: "AWS EC2"
+        destination_entity: "AWS EC2"
         attributes: []
         context: "log"
         action: "update"

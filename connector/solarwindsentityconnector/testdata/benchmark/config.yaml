@@ -35,28 +35,28 @@ schema:
       - context: "log"
         conditions: ["true"]
         type: "test"
-        source: "kubernetes.cluster"
-        destination: "kubernetes.node"
+        source_entity: "kubernetes.cluster"
+        destination_entity: "kubernetes.node"
         action: "update"
         attributes:
       - context: "metric"
         conditions: ["true"]
         type: "test"
-        source: "kubernetes.cluster"
-        destination: "kubernetes.node"
+        source_entity: "kubernetes.cluster"
+        destination_entity: "kubernetes.node"
         action: "update"
         attributes:
       - context: "log"
         conditions: ["true"]
         type: "test"
-        source: "kubernetes.node"
-        destination: "kubernetes.node"
+        source_entity: "kubernetes.node"
+        destination_entity: "kubernetes.node"
         action: "update"
         attributes:
       - context: "metric"
         conditions: ["true"]
         type: "test"
-        source: "kubernetes.node"
-        destination: "kubernetes.node"
+        source_entity: "kubernetes.node"
+        destination_entity: "kubernetes.node"
         action: "update"
         attributes:

@@ -18,8 +18,8 @@ schema:
         action: "update"
     relationships:
       - type: "MemberOf"
-        source: "Snowflake"
-        destination: "AWS EC2"
+        source_entity: "Snowflake"
+        destination_entity: "AWS EC2"
         attributes: []
         conditions: ["true"]
         context: "log"

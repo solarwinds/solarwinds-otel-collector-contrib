@@ -9,8 +9,8 @@ schema:
   events:
     relationships:
       - type: "MemberOf"
-        source: "Kubernetes Cluster"
-        destination: "Kubernetes Pod"
+        source_entity: "Kubernetes Cluster"
+        destination_entity: "Kubernetes Pod"
         attributes: ["k8s.cluster.port"]
         conditions: ['metric.name == "k8s.tcp.bytes" or metric.name == "k8s.tcp.connections" and metric.unit == "bytes"']
         context: "metric"

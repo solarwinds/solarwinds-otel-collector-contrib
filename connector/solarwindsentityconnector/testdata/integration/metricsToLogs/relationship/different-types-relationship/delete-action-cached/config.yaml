@@ -14,15 +14,15 @@ schema:
   events:
     relationships:
       - type: "MemberOf"
-        source: "Kubernetes Cluster"
-        destination: "Kubernetes Pod"
+        source_entity: "Kubernetes Cluster"
+        destination_entity: "Kubernetes Pod"
         attributes: ["k8s.cluster.port"]
         conditions: ['resource.attributes["update"] == "true"']
         context: "metric"
         action: "update"
       - type: "MemberOf"
-        source: "Kubernetes Cluster"
-        destination: "Kubernetes Pod"
+        source_entity: "Kubernetes Cluster"
+        destination_entity: "Kubernetes Pod"
         attributes: ["k8s.cluster.port"]
         conditions: ['resource.attributes["delete"] == "true"']
         context: "metric"
