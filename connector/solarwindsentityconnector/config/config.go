@@ -30,7 +30,16 @@ type Config struct {
 }
 
 func NewDefaultConfig() component.Config {
-	return &Config{Expiration: ExpirationPolicy{Enabled: true}}
+	return &Config{
+		Expiration: ExpirationPolicy{
+			Enabled:  true,
+			Interval: defaultInterval.String(),
+			CacheConfiguration: &CacheConfiguration{
+				TTLCleanupInterval: defaultTTLCleanupInterval.String(),
+				MaxCapacity:        defaultMaxCapacity,
+			},
+		},
+	}
 }
 
 func (c *Config) Validate(logger *zap.Logger) error {
