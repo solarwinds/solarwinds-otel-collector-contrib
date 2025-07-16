@@ -15,7 +15,6 @@
 package internal
 
 import (
-	"errors"
 	"fmt"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -31,89 +30,47 @@ func NewAttributeMapper(entityConfigs map[string]config.Entity) AttributeMapper 
 	}
 }
 
-func (e *AttributeMapper) getEntities(entityType string, attrs Attributes) (entities []Entity, err error) {
+func (e *AttributeMapper) getEntity(entityType string, attrs Attributes) (*Entity, error) {
 	entity, ok := e.entityConfigs[entityType]
 	if !ok {
 		return nil, fmt.Errorf("entity type %s not found", entityType)
 	}
 
-	if len(entity.IDs) == 0 {
-		return nil, fmt.Errorf("entity type %s has no IDs configured", entityType)
+	newEntity, err := createEntity(entity, attrs.Common)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create entity for type %s: %w", entityType, err)
 	}
 
-	if attrs.Source.IsSubsetOf(entity.IDs) {
-		newEntity, err := createEntity(entity, attrs.Common, attrs.Source)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create entity for type %s: %w", entityType, err)
-		}
-		entities = append(entities, newEntity)
-	}
-
-	if attrs.Destination.IsSubsetOf(entity.IDs) {
-		newEntity, err := createEntity(entity, attrs.Common, attrs.Destination)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create entity for type %s: %w", entityType, err)
-		}
-		entities = append(entities, newEntity)
-	}
-
-	if attrs.Common.ContainsAll(entity.IDs) {
-		newEntity, err := createEntity(entity, attrs.Common)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create entity for type %s: %w", entityType, err)
-		}
-		entities = append(entities, newEntity)
-	}
-
-	if len(entities) == 0 {
-		return nil, fmt.Errorf("no entityConfigs found for entity type %s with attributes %v", entityType, attrs)
-	}
-
-	return entities, nil
+	return &newEntity, nil
 }
 
-func (e *AttributeMapper) getRelationship(relationship *config.RelationshipEvent, attrs Attributes) (*Relationship, error) {
-	source, ok := e.entityConfigs[relationship.Source]
-	if !ok {
-		return nil, fmt.Errorf("unexpected source entity type")
-	}
-
-	dest, ok := e.entityConfigs[relationship.Destination]
-	if !ok {
-		return nil, fmt.Errorf("unexpected destination entity type")
-	}
-
-	if dest.Type == source.Type {
+func (e *AttributeMapper) getRelationshipEntities(sourceEntityType, destEntityType string, attrs Attributes) (*Entity, *Entity, error) {
+	if sourceEntityType == destEntityType {
 		if len(attrs.Source) == 0 && len(attrs.Destination) == 0 {
-			return nil, fmt.Errorf("source and destination attributes are empty for same type relationship %s", relationship.Type)
+			return nil, nil, fmt.Errorf("source and destination attributes are empty for same type relationship")
 		}
 	}
 
-	sourceIds, err := getRequiredAttributes(source.IDs, attrs.Common, attrs.Source)
+	sourceEntityConfiguration, ok := e.entityConfigs[sourceEntityType]
+	if !ok {
+		return nil, nil, fmt.Errorf("source entity type %s not found", sourceEntityType)
+	}
+
+	sourceEntity, err := createEntity(sourceEntityConfiguration, attrs.Common, attrs.Source)
 	if err != nil {
-		return nil, errors.Join(fmt.Errorf("failed to create source entity %s", source.Type), err)
-
+		return nil, nil, fmt.Errorf("failed to create source entity for type %s: %w", sourceEntityType, err)
 	}
 
-	destIds, err := getRequiredAttributes(dest.IDs, attrs.Common, attrs.Destination)
+	destinationEntityConfiguration, ok := e.entityConfigs[destEntityType]
+	if !ok {
+		return nil, nil, fmt.Errorf("destination entity type %s not found", destEntityType)
+	}
+	destinationEntity, err := createEntity(destinationEntityConfiguration, attrs.Common, attrs.Destination)
 	if err != nil {
-		return nil, errors.Join(fmt.Errorf("failed to create destination entity %s", dest.Type), err)
+		return nil, nil, fmt.Errorf("failed to create destination entity for type %s: %w", destEntityType, err)
 	}
 
-	r := Relationship{
-		Type: relationship.Type,
-		Source: RelationshipEntity{
-			Type: source.Type,
-			IDs:  sourceIds,
-		},
-		Destination: RelationshipEntity{
-			Type: dest.Type,
-			IDs:  destIds,
-		},
-		Attributes: getOptionalAttributes(relationship.Attributes, attrs.Common),
-	}
-
-	return &r, nil
+	return &sourceEntity, &destinationEntity, nil
 }
 
 func createEntity(entity config.Entity, attrs ...map[string]pcommon.Value) (Entity, error) {

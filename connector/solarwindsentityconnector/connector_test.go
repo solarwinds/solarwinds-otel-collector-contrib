@@ -68,7 +68,7 @@ func TestConnector(t *testing.T) {
 			// Checks that when prefixes are set in config, and metrics arrive with prefixed attributes,
 			// entity events are inferred from them.
 			name:   "when received attributes are prefixed entity IDs, log events are sent for identified entities",
-			folder: "with-prefix",
+			folder: "with-prefix-without-relationship",
 		},
 	}
 
@@ -159,6 +159,11 @@ func TestConnector(t *testing.T) {
 			folder: "missing-attr",
 		},
 		{
+			// Checks that from mixed attributes (prefixed/unprefixed) the relationships and entities are inferred correctly.
+			name:   "connector is able to process multiple relationships and entities in the same resource",
+			folder: "multiple-relationships-in-resource",
+		},
+		{
 			// Checks that when there is an extra attribute, that has nothing to do with entities or relationship,
 			// relationship and entities are still sent.
 			name:   "when log for different type relationship has redundant attributes, log event is sent",
@@ -175,6 +180,12 @@ func TestConnector(t *testing.T) {
 			// Since there are no prefixes, the attributes match the entities and their relationship, so 3 events are sent.
 			name:   "different type relationship works without prefixes",
 			folder: "without-prefixes",
+		},
+		{
+			// When two  different entities have the same id attributes, the relationship should be inferred
+			// along with the two entities updates from incoming prefixed telemetry.
+			name:   "different type relationship with the same set of ids",
+			folder: "same-ids",
 		},
 	}
 
@@ -249,7 +260,7 @@ func TestConnector(t *testing.T) {
 			expected, err := golden.ReadLogs(expectedFile)
 			assert.NoError(t, err)
 			assert.Equal(t, expected.LogRecordCount(), allLogs[0].LogRecordCount())
-			assert.NoError(t, plogtest.CompareLogs(expected, allLogs[0], plogtest.IgnoreObservedTimestamp()))
+			assert.NoError(t, plogtest.CompareLogs(expected, allLogs[0], plogtest.IgnoreObservedTimestamp(), plogtest.IgnoreLogRecordsOrder()))
 		})
 	}
 
