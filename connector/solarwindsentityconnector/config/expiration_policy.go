@@ -88,7 +88,7 @@ func (e *ExpirationPolicy) getInterval() (time.Duration, error) {
 
 func (e *ExpirationPolicy) getMaxCapacity() (int64, error) {
 	if e.CacheConfiguration.MaxCapacity <= 0 {
-		return 0, errors.New("max capacity must be greater than zero")
+		return 0, errors.New("expiration_policy.cache_configuration.max_capacity must be greater than zero")
 	}
 
 	return e.CacheConfiguration.MaxCapacity, nil
@@ -97,10 +97,10 @@ func (e *ExpirationPolicy) getMaxCapacity() (int64, error) {
 func (e *ExpirationPolicy) getTTLCleanupInterval() (time.Duration, error) {
 	parsedCleanupInterval, err := time.ParseDuration(e.CacheConfiguration.TTLCleanupInterval)
 	if err != nil {
-		return time.Duration(0), errors.New("invalid TTL cleanup interval format")
+		return time.Duration(0), errors.New("expiration_policy.cache_configuration.ttl_cleanup_interval: invalid format")
 	}
 	if parsedCleanupInterval < time.Second {
-		return time.Duration(0), errors.New("ttl cleanup interval must be at least 1 second")
+		return time.Duration(0), errors.New("expiration_policy.cache_configuration.ttl_cleanup_interval must be at least 1 second")
 	}
 
 	return parsedCleanupInterval, nil
@@ -114,15 +114,15 @@ func (e *ExpirationPolicy) Validate() error {
 	var allErrs error
 
 	if _, err := e.getInterval(); err != nil {
-		allErrs = errors.Join(allErrs, fmt.Errorf("expiration_policy.interval: %w", err))
+		allErrs = errors.Join(allErrs, err)
 	}
 
 	if _, err := e.getMaxCapacity(); err != nil {
-		allErrs = errors.Join(allErrs, fmt.Errorf("expiration_policy.cache_configuration.max_capacity: %w", err))
+		allErrs = errors.Join(allErrs, err)
 	}
 
 	if _, err := e.getTTLCleanupInterval(); err != nil {
-		allErrs = errors.Join(allErrs, fmt.Errorf("expiration_policy.cache_configuration.ttl_cleanup_interval: %w", err))
+		allErrs = errors.Join(allErrs, err)
 	}
 
 	return allErrs
