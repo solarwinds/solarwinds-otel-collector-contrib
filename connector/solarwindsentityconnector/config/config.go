@@ -34,7 +34,7 @@ func NewDefaultConfig() component.Config {
 		Expiration: ExpirationPolicy{
 			Enabled:  true,
 			Interval: defaultInterval.String(),
-			CacheConfiguration: &CacheConfiguration{
+			CacheConfiguration: CacheConfiguration{
 				TTLCleanupInterval: defaultTTLCleanupInterval.String(),
 				MaxCapacity:        defaultMaxCapacity,
 			},
