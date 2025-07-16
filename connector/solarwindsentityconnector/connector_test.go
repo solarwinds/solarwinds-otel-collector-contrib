@@ -159,6 +159,11 @@ func TestConnector(t *testing.T) {
 			folder: "missing-attr",
 		},
 		{
+			// Checks that from mixed attributes (prefixed/unprefixed) the relationships and entities are inferred correctly.
+			name:   "connector is able to process multiple relationships and entities in the same resource",
+			folder: "multiple-relationships-in-resource",
+		},
+		{
 			// Checks that when there is an extra attribute, that has nothing to do with entities or relationship,
 			// relationship and entities are still sent.
 			name:   "when log for different type relationship has redundant attributes, log event is sent",
