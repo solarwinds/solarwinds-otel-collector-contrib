@@ -3,12 +3,12 @@ destination_prefix: "dst."
 schema:
   entities:
     - type: "TestEntityType"
-      ids: ["id", "name"]
+      id: ["id", "name"]
       attributes: ["random.attribute"]
   events:
     relationships:
       - type: "TestRelationshipType"
-        source: "TestEntityType"
-        destination: "TestEntityType"
+        source_entity: "TestEntityType"
+        destination_entity: "TestEntityType"
         context: "metric"
         action: "update"

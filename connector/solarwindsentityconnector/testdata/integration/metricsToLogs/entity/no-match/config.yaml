@@ -1,10 +1,10 @@
 schema:
   entities:
     - type: "Snowflake"
-      ids: ["snowflake.id"]
+      id: ["snowflake.id"]
       attributes: ["attr1"]
     - type: "AWS EC2"
-      ids: ["aws.ec2.id", "aws.ec2.name"]
+      id: ["aws.ec2.id", "aws.ec2.name"]
       attributes: ["attr2"]
   events:
     entities:
