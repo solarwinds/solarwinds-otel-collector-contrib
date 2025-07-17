@@ -1,0 +1,10 @@
+schema:
+  entities:
+    - type: "Kubernetes Cluster"
+      ids: ["k8s.cluster.id", "k8s.cluster.name"]
+  events:
+    entities:
+      - type: "Kubernetes Cluster"
+        conditions: ['metric.name == "k8s.tcp.bytes" or metric.name == "k8s.tcp.connections" and metric.unit == "bytes"']
+        context: "metric"
+        action: "update"

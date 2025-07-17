@@ -21,12 +21,29 @@ type Entity struct {
 }
 
 type Events struct {
-	Relationships []Relationship `mapstructure:"relationships"`
+	Relationships []RelationshipEvent `mapstructure:"relationships"`
+	Entities      []EntityEvent       `mapstructure:"entities"`
 }
 
 type Relationship struct {
+	Type        string `mapstructure:"type"`
+	Source      string `mapstructure:"source_entity"`
+	Destination string `mapstructure:"destination_entity"`
+}
+
+type RelationshipEvent struct {
 	Type        string   `mapstructure:"type"`
 	Source      string   `mapstructure:"source_entity"`
 	Destination string   `mapstructure:"destination_entity"`
 	Attributes  []string `mapstructure:"attributes"`
+	Conditions  []string `mapstructure:"conditions"`
+	Context     string   `mapstructure:"context"`
+	Action      string   `mapstructure:"action"`
+}
+
+type EntityEvent struct {
+	Context    string   `mapstructure:"context"`
+	Conditions []string `mapstructure:"conditions"`
+	Type       string   `mapstructure:"type"`
+	Action     string   `mapstructure:"action"`
 }

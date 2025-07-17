@@ -16,6 +16,8 @@ package solarwindsentityconnector
 
 import (
 	"context"
+	"fmt"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal/metadata"
 	"go.opentelemetry.io/collector/component"
@@ -32,28 +34,33 @@ func NewFactory() connector.Factory {
 	)
 }
 
-func createMetricsToLogsConnector(ctx context.Context, settings connector.Settings, config component.Config, logs consumer.Logs) (connector.Metrics, error) {
-	cfg := config.(*Config)
-	// TODO: think of better way to create the struct, when condition handling is introduced
-	return &solarwindsentity{
-		logger:            settings.Logger,
-		sourcePrefix:      cfg.SourcePrefix,
-		destinationPrefix: cfg.DestinationPrefix,
-		entities:          cfg.Schema.NewEntities(),
-		relationships:     cfg.Schema.NewRelationships(),
-		logsConsumer:      logs,
-	}, nil
+func createLogsToLogsConnector(ctx context.Context, settings connector.Settings, config component.Config, logs consumer.Logs) (connector.Logs, error) {
+	return createConnector(settings, config, logs)
 }
 
-func createLogsToLogsConnector(ctx context.Context, settings connector.Settings, config component.Config, logs consumer.Logs) (connector.Logs, error) {
-	cfg := config.(*Config)
-	// TODO: think of better way to create the struct, when condition handling is introduced
-	return &solarwindsentity{
-		logger:            settings.Logger,
-		sourcePrefix:      cfg.SourcePrefix,
-		destinationPrefix: cfg.DestinationPrefix,
-		entities:          cfg.Schema.NewEntities(),
-		relationships:     cfg.Schema.NewRelationships(),
-		logsConsumer:      logs,
-	}, nil
+func createMetricsToLogsConnector(ctx context.Context, settings connector.Settings, config component.Config, logs consumer.Logs) (connector.Metrics, error) {
+	return createConnector(settings, config, logs)
+}
+
+func createConnector(settings connector.Settings, config component.Config, logs consumer.Logs) (*solarwindsentity, error) {
+	cfg, ok := config.(*Config)
+	if !ok {
+		return nil, fmt.Errorf("expected config of type *Config, got %T", config)
+	}
+	events := cfg.Schema.NewEvents(settings.TelemetrySettings)
+
+	se := &solarwindsentity{
+		logger: settings.Logger,
+		eventDetector: internal.NewEventDetector(
+			cfg.Schema.NewEntities(),
+			cfg.SourcePrefix,
+			cfg.DestinationPrefix,
+			events.LogEvents,
+			events.MetricEvents,
+			settings.Logger,
+		),
+		expirationPolicy: cfg.Expiration,
+		logsConsumer:     logs,
+	}
+	return se, nil
 }

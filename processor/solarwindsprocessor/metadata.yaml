@@ -1,0 +1,26 @@
+type: solarwinds
+
+github_project: solarwinds/solarwinds-otel-collector-contrib
+
+status:
+  class: processor
+  stability:
+    development: [ metrics, logs, traces ]
+
+resource_attributes:
+  sw.otelcol.collector.name:
+    enabled: true
+    description: "SolarWinds OTEL Collector name. Value is taken from `solarwinds` extension."
+    type: string
+  sw.otelcol.collector.entity_creation:
+    enabled: false
+    description: "Defines if collector entity should be created from signal. Value is taken from `solarwinds` extension."
+    type: string
+
+tests:
+  config:
+    # This additional setup needs to be available to pass component tests.
+    extension: solarwindsextension
+  # Skipped because the exporter requires solarwindsextension to run.
+  skip_lifecycle: true
+

@@ -16,6 +16,7 @@ package internal
 
 import (
 	"fmt"
+	"go.opentelemetry.io/collector/pdata/plog"
 
 	"go.opentelemetry.io/collector/pdata/pcommon"
 )
@@ -43,9 +44,10 @@ func setIdAttributes(attrs pcommon.Map, entityIds []string, resourceAttrs pcommo
 	return nil
 }
 
-// setIdAttributesWithPrefix sets the entity id attributes in the log record as needed by SWO for same type relationships.
-// Verifies that prefix is present in the resource attributes at least once within entity IDs.
-func setIdAttributesWithPrefix(attrs pcommon.Map, entityIds []string, resourceAttrs pcommon.Map, name, prefix string) (bool, error) {
+// setIdAttributesForRelationships sets the entity id attributes in the log record as needed by SWO for relationships.
+// prefix - mandatory for same type relationships, but optional for relationships between different entity types.
+// Returns bool indicating if prefixed attributes were found (if called with empty prefix, you might need to ignore it), and an error.
+func setIdAttributesForRelationships(attrs pcommon.Map, entityIds []string, resourceAttrs pcommon.Map, name, prefix string) (bool, error) {
 	if len(entityIds) == 0 {
 		return false, fmt.Errorf("entity ID attributes are empty")
 	}
@@ -110,4 +112,15 @@ func putAttribute(dest *pcommon.Map, key string, attrValue pcommon.Value) {
 	default:
 		dest.PutStr(key, attrValue.Str())
 	}
+}
+
+// CreateEventLog prepares a clean LogRecordSlice, where log records representing events should be appended.
+// Creates a resource log in input plog.Logs with single scope log decorated with attributes necessary for proper SWO ingestion.
+func CreateEventLog(logs *plog.Logs) *plog.LogRecordSlice {
+	resourceLog := logs.ResourceLogs().AppendEmpty()
+	scopeLog := resourceLog.ScopeLogs().AppendEmpty()
+	scopeLog.Scope().Attributes().PutBool(entityEventAsLog, true)
+	lrs := scopeLog.LogRecords()
+
+	return &lrs
 }

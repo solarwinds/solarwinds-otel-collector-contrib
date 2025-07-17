@@ -17,7 +17,6 @@ package internal
 import (
 	"testing"
 
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
@@ -39,7 +38,7 @@ func TestSetIdAttributesSameTypeEmpty(t *testing.T) {
 	resourceAttrs.PutStr("dst.id", "idvalue2")
 
 	destination := plog.NewLogRecord()
-	hasPrefix, err := setIdAttributesWithPrefix(destination.Attributes(), []string{}, resourceAttrs, entityIds, "src.")
+	hasPrefix, err := setIdAttributesForRelationships(destination.Attributes(), []string{}, resourceAttrs, entityIds, "src.")
 	assert.NotNil(t, err)
 	assert.False(t, hasPrefix)
 }
@@ -63,7 +62,7 @@ func TestSetIdAttributesSameTypetIdNoMatch(t *testing.T) {
 	resourceAttrs.PutStr("dst.id", "idvalue2")
 
 	destination := plog.NewLogRecord()
-	hasPrefix, err := setIdAttributesWithPrefix(destination.Attributes(), []string{"id2"}, resourceAttrs, entityIds, "src.")
+	hasPrefix, err := setIdAttributesForRelationships(destination.Attributes(), []string{"id2"}, resourceAttrs, entityIds, "src.")
 	assert.False(t, hasPrefix)
 	assert.NotNil(t, err)
 	ids, exists := destination.Attributes().Get(entityIds)
@@ -77,7 +76,7 @@ func TestSetIdAttributesSameTypePrefixNoMatch(t *testing.T) {
 	resourceAttrs.PutStr("dst.id", "idvalue2")
 
 	destination := plog.NewLogRecord()
-	hasPrefix, err := setIdAttributesWithPrefix(destination.Attributes(), []string{"id"}, resourceAttrs, entityIds, "prefix.")
+	hasPrefix, err := setIdAttributesForRelationships(destination.Attributes(), []string{"id"}, resourceAttrs, entityIds, "prefix.")
 	assert.False(t, hasPrefix)
 	assert.NotNil(t, err)
 	ids, exists := destination.Attributes().Get(entityIds)
@@ -107,7 +106,7 @@ func TestSetIdAttributesSameTypeMultiple(t *testing.T) {
 	resourceAttrs.PutStr("dst.id", "idvalue2")
 
 	destination := plog.NewLogRecord()
-	hasPrefix, err := setIdAttributesWithPrefix(destination.Attributes(), []string{"id"}, resourceAttrs, entityIds, "src.")
+	hasPrefix, err := setIdAttributesForRelationships(destination.Attributes(), []string{"id"}, resourceAttrs, entityIds, "src.")
 	assert.True(t, hasPrefix)
 	assert.Nil(t, err)
 	ids, exists := destination.Attributes().Get(entityIds)
@@ -189,283 +188,4 @@ func TestPutBytesAttribute(t *testing.T) {
 	inDest, exists := destination.Get("bytes")
 	assert.True(t, exists, "Attribute should exist in destination")
 	assert.Equal(t, "12", string(inDest.Bytes().AsRaw()), "Attribute value should match")
-}
-
-func TestCreateEntityEvent(t *testing.T) {
-	resourceAttrs := pcommon.NewMap()
-	resourceAttrs.PutStr("id1", "idvalue1")
-	resourceAttrs.PutStr("attr1", "attrvalue1")
-
-	entity := config.Entity{
-		Type:       "KubernetesCluster",
-		IDs:        []string{"id1"},
-		Attributes: []string{"attr1"},
-	}
-
-	// Create the event builder with a new logs instance
-	logs := plog.NewLogs()
-	eventBuilder := NewEventBuilder(nil, nil, "", "", &logs, nil)
-
-	logRecord, err := eventBuilder.createEntityEvent(resourceAttrs, entity)
-	assert.Nil(t, err)
-	assert.Equal(t, 3, logRecord.Attributes().Len())
-
-	actualEntityType, _ := logRecord.Attributes().Get(entityType)
-	assert.Equal(t, "KubernetesCluster", actualEntityType.Str())
-
-	actualEntityIDs, _ := logRecord.Attributes().Get(entityIds)
-	assert.Equal(t, 1, actualEntityIDs.Map().Len())
-	actualEntityId, _ := actualEntityIDs.Map().Get("id1")
-	assert.Equal(t, "idvalue1", actualEntityId.Str())
-
-	actualEntityAttributes, _ := logRecord.Attributes().Get(entityAttributes)
-	assert.Equal(t, 1, actualEntityAttributes.Map().Len())
-	actualEntityAttr, _ := actualEntityAttributes.Map().Get("attr1")
-	assert.Equal(t, "attrvalue1", actualEntityAttr.Str())
-}
-
-func TestCreateEntityEventWithNoAttributes(t *testing.T) {
-	resourceAttrs := pcommon.NewMap()
-	resourceAttrs.PutStr("id1", "idvalue1")
-
-	entity := config.Entity{
-		Type: "KubernetesCluster",
-		IDs:  []string{},
-	}
-
-	logs := plog.NewLogs()
-	eventBuilder := NewEventBuilder(nil, nil, "", "", &logs, nil)
-	_, err := eventBuilder.createEntityEvent(resourceAttrs, entity)
-	assert.NotNil(t, err)
-}
-
-func TestCreateRelationshipEvent(t *testing.T) {
-	resourceAttrs := pcommon.NewMap()
-	resourceAttrs.PutStr("id1", "idvalue1")
-	resourceAttrs.PutStr("id2", "idvalue2")
-	resourceAttrs.PutStr("attr1", "attrvalue1")
-
-	srcEntity := config.Entity{
-		Type:       "KubernetesCluster",
-		IDs:        []string{"id1"},
-		Attributes: []string{"attr1"},
-	}
-
-	destEntity := config.Entity{
-		Type:       "KubernetesNode",
-		IDs:        []string{"id2"},
-		Attributes: []string{"attr2"},
-	}
-
-	relationship := config.Relationship{
-		Type:        "MemberOf",
-		Source:      "KubernetesCluster",
-		Destination: "KubernetesNode",
-	}
-
-	logs := plog.NewLogs()
-	eventBuilder := NewEventBuilder(
-		map[string]config.Entity{
-			"KubernetesCluster": srcEntity,
-			"KubernetesNode":    destEntity,
-		},
-		nil,
-		"",
-		"",
-		&logs,
-		nil,
-	)
-
-	logRecord, err := eventBuilder.createRelationshipEvent(relationship, resourceAttrs)
-	assert.Nil(t, err)
-	assert.Equal(t, 5, logRecord.Attributes().Len())
-
-	actualRelationshipType, _ := logRecord.Attributes().Get(relationshipType)
-	assert.Equal(t, "MemberOf", actualRelationshipType.Str())
-
-	actualSrcEntityType, _ := logRecord.Attributes().Get(srcEntityType)
-	assert.Equal(t, "KubernetesCluster", actualSrcEntityType.Str())
-
-	actualDestEntityType, _ := logRecord.Attributes().Get(destEntityType)
-	assert.Equal(t, "KubernetesNode", actualDestEntityType.Str())
-}
-
-func TestCreateRelationshipEventWithNoAttributes(t *testing.T) {
-	resourceAttrs := pcommon.NewMap()
-	resourceAttrs.PutStr("id1", "idvalue1")
-	resourceAttrs.PutStr("id2", "idvalue2")
-
-	srcEntity := config.Entity{
-		Type: "KubernetesCluster",
-		IDs:  []string{},
-	}
-
-	destEntity := config.Entity{
-		Type: "KubernetesNode",
-		IDs:  []string{},
-	}
-
-	relationship := config.Relationship{
-		Type:        "MemberOf",
-		Source:      "KubernetesCluster",
-		Destination: "KubernetesNode",
-	}
-
-	logs := plog.NewLogs()
-	eventBuilder := NewEventBuilder(
-		map[string]config.Entity{
-			"KubernetesCluster": srcEntity,
-			"KubernetesNode":    destEntity,
-		},
-		nil,
-		"",
-		"",
-		&logs,
-		nil,
-	)
-
-	_, err := eventBuilder.createRelationshipEvent(relationship, resourceAttrs)
-	assert.NotNil(t, err)
-}
-
-func TestCreateRelationshipEventWithoutResourceAttributes(t *testing.T) {
-	resourceAttrs := pcommon.NewMap()
-
-	srcEntity := config.Entity{
-		Type: "KubernetesCluster",
-		IDs:  []string{"id1"},
-	}
-
-	destEntity := config.Entity{
-		Type: "KubernetesNode",
-		IDs:  []string{"id2"},
-	}
-
-	relationship := config.Relationship{
-		Type:        "MemberOf",
-		Source:      "KubernetesCluster",
-		Destination: "KubernetesNode",
-	}
-
-	logs := plog.NewLogs()
-	eventBuilder := NewEventBuilder(
-		map[string]config.Entity{
-			"KubernetesCluster": srcEntity,
-			"KubernetesNode":    destEntity,
-		},
-		nil,
-		"",
-		"",
-		&logs,
-		nil,
-	)
-
-	_, err := eventBuilder.createRelationshipEvent(relationship, resourceAttrs)
-	assert.NotNil(t, err)
-}
-
-func TestCreateSameTypeRelationshipEvent(t *testing.T) {
-	resourceAttrs := pcommon.NewMap()
-	resourceAttrs.PutStr("src.id", "idvalue1")
-	resourceAttrs.PutStr("dst.id", "idvalue2")
-	resourceAttrs.PutStr("attr1", "attrvalue1")
-
-	entity := config.Entity{
-		Type:       "KubernetesCluster",
-		IDs:        []string{"id"},
-		Attributes: []string{"attr1"},
-	}
-
-	relationship := config.Relationship{
-		Type:        "VirtualizationTopologyConnection",
-		Source:      "KubernetesCluster",
-		Destination: "KubernetesCluster",
-	}
-
-	logs := plog.NewLogs()
-	eventBuilder := NewEventBuilder(
-		map[string]config.Entity{
-			"KubernetesCluster": entity,
-		},
-		nil,
-		"src.",
-		"dst.",
-		&logs,
-		nil,
-	)
-
-	logRecord, err := eventBuilder.createRelationshipEvent(relationship, resourceAttrs)
-	assert.Nil(t, err)
-	assert.Equal(t, 5, logRecord.Attributes().Len())
-
-	actualRelationshipType, _ := logRecord.Attributes().Get(relationshipType)
-	assert.Equal(t, "VirtualizationTopologyConnection", actualRelationshipType.Str())
-
-	actualSrcEntityType, _ := logRecord.Attributes().Get(srcEntityType)
-	assert.Equal(t, "KubernetesCluster", actualSrcEntityType.Str())
-
-	actualDestEntityType, _ := logRecord.Attributes().Get(destEntityType)
-	assert.Equal(t, "KubernetesCluster", actualDestEntityType.Str())
-}
-
-func TestCreateSameTypeRelationshipEventWithNoAttributesSameType(t *testing.T) {
-	resourceAttrs := pcommon.NewMap()
-	resourceAttrs.PutStr("src.id", "idvalue1")
-	resourceAttrs.PutStr("dst.id", "idvalue2")
-
-	entity := config.Entity{
-		Type: "KubernetesCluster",
-		IDs:  []string{},
-	}
-
-	relationship := config.Relationship{
-		Type:        "VirtualizationTopologyConnection",
-		Source:      "KubernetesCluster",
-		Destination: "KubernetesCluster",
-	}
-
-	logs := plog.NewLogs()
-	eventBuilder := NewEventBuilder(
-		map[string]config.Entity{
-			"KubernetesCluster": entity,
-		},
-		nil,
-		"src.",
-		"dst.",
-		&logs,
-		nil,
-	)
-
-	_, err := eventBuilder.createRelationshipEvent(relationship, resourceAttrs)
-	assert.NotNil(t, err)
-}
-
-func TestCreateSameTypeRelationshipEventWithoutResourceAttributes(t *testing.T) {
-	resourceAttrs := pcommon.NewMap()
-
-	entity := config.Entity{
-		Type: "KubernetesCluster",
-		IDs:  []string{"id"},
-	}
-
-	relationship := config.Relationship{
-		Type:        "VirtualizationTopologyConnection",
-		Source:      "KubernetesCluster",
-		Destination: "KubernetesCluster",
-	}
-
-	logs := plog.NewLogs()
-	eventBuilder := NewEventBuilder(
-		map[string]config.Entity{
-			"KubernetesCluster": entity,
-		},
-		nil,
-		"src.",
-		"dst.",
-		&logs,
-		nil,
-	)
-
-	_, err := eventBuilder.createRelationshipEvent(relationship, resourceAttrs)
-	assert.NotNil(t, err)
 }

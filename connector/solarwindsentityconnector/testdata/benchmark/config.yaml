@@ -1,0 +1,63 @@
+expiration_policy:
+  enabled: true
+  interval: 10s
+  cache_configuration:
+    ttl_cleanup_interval: 20s
+    max_capacity: 2
+source_prefix: "src."
+destination_prefix: "dst."
+schema:
+  entities:
+    - type: "kubernetes.cluster"
+      ids: ["k8s.cluster.id", "k8s.cluster.name"]
+      attributes: ["k8s.cluster.port"]
+    - type: "kubernetes.node"
+      ids: ["k8s.node.id", "k8s.node.name"]
+      attributes: ["k8s.node.ip"]
+  events:
+    entities:
+      - type: "kubernetes.cluster"
+        conditions: ["true"]
+        context: "log"
+        action: "update"
+      - type: "kubernetes.node"
+        conditions: ["true"]
+        context: "log"
+        action: "update"
+      - type: "kubernetes.cluster"
+        conditions: ["true"]
+        action: "update"
+        context: "metric"
+      - type: "kubernetes.node"
+        conditions: ["true"]
+        context: "metric"
+        action: "update"
+    relationships:
+      - context: "log"
+        conditions: ["true"]
+        type: "test"
+        source: "kubernetes.cluster"
+        destination: "kubernetes.node"
+        action: "update"
+        attributes: []
+      - context: "metric"
+        conditions: ["true"]
+        type: "test"
+        source: "kubernetes.cluster"
+        destination: "kubernetes.node"
+        action: "update"
+        attributes: []
+      - context: "log"
+        conditions: ["true"]
+        type: "test"
+        source: "kubernetes.node"
+        destination: "kubernetes.node"
+        action: "update"
+        attributes: []
+      - context: "metric"
+        conditions: ["true"]
+        type: "test"
+        source: "kubernetes.node"
+        destination: "kubernetes.node"
+        action: "update"
+        attributes: []

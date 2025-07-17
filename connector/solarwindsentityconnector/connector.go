@@ -16,30 +16,30 @@ package solarwindsentityconnector
 
 import (
 	"context"
-	"sort"
+	"errors"
+	"fmt"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal/storage"
 
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottlmetric"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal"
-	"go.uber.org/zap"
-
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/connector"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/pdata/pmetric"
+	"go.uber.org/zap"
 )
 
 type solarwindsentity struct {
 	logger *zap.Logger
 
-	logsConsumer      consumer.Logs
-	entities          map[string]config.Entity
-	relationships     []config.Relationship
-	sourcePrefix      string
-	destinationPrefix string
+	logsConsumer  consumer.Logs
+	eventDetector *internal.EventDetector
 
-	component.StartFunc
-	component.ShutdownFunc
+	expirationPolicy config.ExpirationPolicy
+	storageManager   *storage.Manager
 }
 
 var _ connector.Metrics = (*solarwindsentity)(nil)
@@ -49,35 +49,77 @@ func (s *solarwindsentity) Capabilities() consumer.Capabilities {
 	return consumer.Capabilities{MutatesData: false}
 }
 
-// Will be removed when condition logic is added.
-// getReverseSortKeys returns the entity types in reverse sorted order.
-func getReverseSortKeys(m map[string]config.Entity) []string {
-	entityTypes := make([]string, 0, len(m))
-	for k := range m {
-		entityTypes = append(entityTypes, k)
+func (s *solarwindsentity) Start(context.Context, component.Host) error {
+	if s.expirationPolicy.Enabled {
+		expirationCfg, err := s.expirationPolicy.Parse()
+		if err != nil {
+			return errors.Join(err, fmt.Errorf("expiration policy is invalid"))
+		}
+
+		ec := internal.NewEventConsumer(s.logsConsumer)
+		sm, err := storage.NewStorageManager(expirationCfg, s.logger, ec)
+		if err != nil {
+			s.logger.Error("failed to create storage manager", zap.Error(err))
+			return err
+		}
+
+		s.storageManager = sm
+		err = s.storageManager.Start()
+
+		if err != nil {
+			s.logger.Error("failed to start storage manager", zap.Error(err))
+			return err
+		}
+		s.logger.Info("expiration policy is enabled and started, expiration logs will be generated")
+	} else {
+		s.logger.Info("expiration policy is disabled, no expiration logs will be generated")
 	}
-	sort.Sort(sort.Reverse(sort.StringSlice(entityTypes)))
-	return entityTypes
+
+	return nil
+}
+
+func (s *solarwindsentity) Shutdown(context.Context) error {
+	if s.storageManager != nil {
+		err := s.storageManager.Shutdown()
+		if err != nil {
+			s.logger.Error("failed to shutdown storage manager", zap.Error(err))
+			return err
+		}
+		s.logger.Info("storage manager shutdown successfully")
+	}
+
+	s.logger.Info("solarwindsentity connector shutdown successfully")
+	return nil
 }
 
 func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.Metrics) error {
 	eventLogs := plog.NewLogs()
-	eventBuilder := internal.NewEventBuilder(s.entities, s.relationships, s.sourcePrefix, s.destinationPrefix, &eventLogs, s.logger)
+	logRecords := internal.CreateEventLog(&eventLogs)
 
 	for i := 0; i < metrics.ResourceMetrics().Len(); i++ {
 		resourceMetric := metrics.ResourceMetrics().At(i)
 		resourceAttrs := resourceMetric.Resource().Attributes()
+		for j := 0; j < resourceMetric.ScopeMetrics().Len(); j++ {
+			scopeMetric := resourceMetric.ScopeMetrics().At(j)
 
-		// This will be replaced with actual logic when conditions are introduced
-		entityTypes := getReverseSortKeys(s.entities) // Will be removed when condition logic is added. Prevents random entity type order
-		for _, k := range entityTypes {
-			entity := s.entities[k]
-			eventBuilder.AppendEntityUpdateEvent(entity, resourceAttrs)
-		}
+			for k := 0; k < scopeMetric.Metrics().Len(); k++ {
+				metric := scopeMetric.Metrics().At(k)
 
-		// This will be replaced with actual logic when conditions are introduced
-		for _, relationship := range s.relationships {
-			eventBuilder.AppendRelationshipUpdateEvent(relationship, resourceAttrs)
+				tc := ottlmetric.NewTransformContext(metric, scopeMetric.Metrics(), scopeMetric.Scope(), resourceMetric.Resource(), scopeMetric, resourceMetric)
+				events, err := s.eventDetector.DetectMetric(ctx, resourceAttrs, tc)
+
+				if err != nil {
+					s.logger.Error("Failed to process metric condition", zap.Error(err))
+					return err
+				}
+				for _, event := range events {
+					err := s.handleEvent(event, logRecords)
+					if err != nil {
+						s.logger.Error("failed to handle event", zap.Error(err))
+						return err
+					}
+				}
+			}
 		}
 	}
 
@@ -90,22 +132,34 @@ func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.M
 
 func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) error {
 	eventLogs := plog.NewLogs()
-	eventBuilder := internal.NewEventBuilder(s.entities, s.relationships, s.sourcePrefix, s.destinationPrefix, &eventLogs, s.logger)
+	logRecords := internal.CreateEventLog(&eventLogs)
 
 	for i := 0; i < logs.ResourceLogs().Len(); i++ {
 		resourceLog := logs.ResourceLogs().At(i)
 		resourceAttrs := resourceLog.Resource().Attributes()
 
-		// This will be replaced with actual logic when conditions are introduced
-		entityTypes := getReverseSortKeys(s.entities) // Will be removed when condition logic is added. Prevents random entity type order
-		for _, k := range entityTypes {
-			entity := s.entities[k]
-			eventBuilder.AppendEntityUpdateEvent(entity, resourceAttrs)
-		}
+		for j := 0; j < resourceLog.ScopeLogs().Len(); j++ {
+			scopeLog := resourceLog.ScopeLogs().At(j)
 
-		// This will be replaced with actual logic when conditions are introduced
-		for _, relationship := range s.relationships {
-			eventBuilder.AppendRelationshipUpdateEvent(relationship, resourceAttrs)
+			for k := 0; k < scopeLog.LogRecords().Len(); k++ {
+				logRecord := scopeLog.LogRecords().At(k)
+
+				tc := ottllog.NewTransformContext(logRecord, scopeLog.Scope(), resourceLog.Resource(), scopeLog, resourceLog)
+				events, err := s.eventDetector.DetectLog(ctx, resourceAttrs, tc)
+
+				if err != nil {
+					s.logger.Error("Failed to process logs condition", zap.Error(err))
+					return err
+				}
+
+				for _, event := range events {
+					err := s.handleEvent(event, logRecords)
+					if err != nil {
+						s.logger.Error("failed to handle event", zap.Error(err))
+						return err
+					}
+				}
+			}
 		}
 	}
 
@@ -114,4 +168,32 @@ func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) erro
 	}
 
 	return s.logsConsumer.ConsumeLogs(ctx, eventLogs)
+}
+
+func (s *solarwindsentity) handleEvent(event internal.Event, eventLogs *plog.LogRecordSlice) error {
+	action, err := internal.GetActionType(event)
+	if err != nil {
+		return err
+	}
+	switch action {
+	case internal.EventUpdateAction:
+		event.Update(eventLogs)
+		if s.storageManager != nil {
+			err := s.storageManager.Update(event)
+			if err != nil {
+				s.logger.Error("Failed to update storage with event", zap.Error(err))
+				return err
+			}
+		}
+	case internal.EventDeleteAction:
+		event.Delete(eventLogs)
+		if s.storageManager != nil {
+			err := s.storageManager.Delete(event)
+			if err != nil {
+				s.logger.Error("Failed to delete event from storage", zap.Error(err))
+				return err
+			}
+		}
+	}
+	return nil
 }

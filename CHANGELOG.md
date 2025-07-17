@@ -1,6 +1,37 @@
 # Changelog
 
 ## vNext
+- `solarwindsentityconnector` Fix extra output log issue by adding missing yaml tags for cache configuration parsing
+
+## v0.127.5
+- `solarwindsentityconnector` Benchmark fix
+- Fix GHSA-fv92-fjc5-jj9h: mapstructure May Leak Sensitive Information in Logs When Processing Malformed Data
+
+## v0.127.4
+- `solarwindsprocessor` Introduced as replacement for `solarwinds` exporter.
+- `solarwindsextension` Configuration extended by gRPC setup re-usable in `otlp` exporter. Some of current properties (`data_center`, `token` and `endpoint_url_override`) have been made deprecated and will be removed by July 30.
+- `solarwindsexporter` Made deprecated and will be removed by July 30.
+- `solarwindsentityconnector` Added benchmark tests to check the connector’s performance.
+- `solarwindsentityconnector` Added support for delete events. Entities and relationships can be now deleted based on OTTL conditions.
+- `solarwindsentityconnector` Relationships now expire (configurable), and a delete event is sent after the expiration.
+- `swoworkloadtypeprocessor` Extended the processor to allow searching for owners of Pods.
+
+## v0.127.3
+- `swok8sobjectsreceiver` Change logging of 410 events to debug level
+
+## v0.127.2
+- `solarwindsentityconnector` Added optional prefixes support for entity relationships between entities of different types.
+
+## v0.127.1
+- Various improvements to `swoworkloadtypeprocessor`:
+  - Prevents overwriting workload type attribute if it's already set
+  - Supports multiple contexts for attributes (resource, datapoint, metric, scope)
+  - Supports searching for workload type by DNS and IP address
+- `solarwindsentityconnector` supports OTTL conditions for conditional creation/update of entities and relationships 
+- Utilizes reusable build components from [solarwinds-otel-collector-core](https://github.com/solarwinds/solarwinds-otel-collector-core)
+
+## v0.127.0
+- Consumes OpenTelemetry Collector dependencies v0.127.0.
 
 ## v0.123.7
 - Aligning version with [solarwinds-otel-collector-releases](https://github.com/solarwinds/solarwinds-otel-collector-releases) repository.
