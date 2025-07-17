@@ -128,7 +128,7 @@ func (e *EntityEvent) Validate() error {
 	}
 
 	if e.Entity == "" {
-		errs = errors.Join(errs, fmt.Errorf("type is mandatory"))
+		errs = errors.Join(errs, fmt.Errorf("entity is mandatory"))
 	}
 
 	return errs
