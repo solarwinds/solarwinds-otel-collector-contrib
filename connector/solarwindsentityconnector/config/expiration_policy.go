@@ -17,6 +17,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"go.opentelemetry.io/collector/confmap/xconfmap"
 	"time"
 )
 
@@ -33,6 +34,8 @@ type ExpirationPolicy struct {
 	CacheConfiguration CacheConfiguration `mapstructure:"cache_configuration"`
 }
 
+var _ xconfmap.Validator = &Schema{}
+
 type CacheConfiguration struct {
 	MaxCapacity int64 `mapstructure:"max_capacity"`
 	// In the format accepted by time.ParseDuration, e.g. "5s", "1m", etc. Granularity is 1 second and it's also a minimal value.
@@ -44,6 +47,28 @@ type ExpirationSettings struct {
 	Interval                  time.Duration
 	TTLCleanupIntervalSeconds time.Duration
 	MaxCapacity               int64
+}
+
+func (e *ExpirationPolicy) Validate() error {
+	if !e.Enabled {
+		return nil
+	}
+
+	var allErrs error
+
+	if _, err := e.getInterval(); err != nil {
+		allErrs = errors.Join(allErrs, err)
+	}
+
+	if _, err := e.getMaxCapacity(); err != nil {
+		allErrs = errors.Join(allErrs, err)
+	}
+
+	if _, err := e.getTTLCleanupInterval(); err != nil {
+		allErrs = errors.Join(allErrs, err)
+	}
+
+	return allErrs
 }
 
 func (e *ExpirationPolicy) Unmarshal() (*ExpirationSettings, error) {
@@ -104,26 +129,4 @@ func (e *ExpirationPolicy) getTTLCleanupInterval() (time.Duration, error) {
 	}
 
 	return parsedCleanupInterval, nil
-}
-
-func (e *ExpirationPolicy) Validate() error {
-	if !e.Enabled {
-		return nil
-	}
-
-	var allErrs error
-
-	if _, err := e.getInterval(); err != nil {
-		allErrs = errors.Join(allErrs, err)
-	}
-
-	if _, err := e.getMaxCapacity(); err != nil {
-		allErrs = errors.Join(allErrs, err)
-	}
-
-	if _, err := e.getTTLCleanupInterval(); err != nil {
-		allErrs = errors.Join(allErrs, err)
-	}
-
-	return allErrs
 }

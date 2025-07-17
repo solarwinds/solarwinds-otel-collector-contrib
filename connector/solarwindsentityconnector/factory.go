@@ -17,6 +17,7 @@ package solarwindsentityconnector
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal"
@@ -50,24 +51,27 @@ func createConnector(settings connector.Settings, cfg component.Config, logs con
 	if !ok {
 		return nil, fmt.Errorf("expected config of type *config.Config, got %T", cfg)
 	}
-	if err := baseConfig.Validate(logger); err != nil {
-		return nil, fmt.Errorf("config validation failed: %w", err)
+	if warnings := baseConfig.EvaluateWarnings(); len(warnings) > 0 {
+		logger.Warn(strings.Join(warnings, "\n"))
 	}
 	expirationSettings, err := baseConfig.Expiration.Unmarshal()
 	if err != nil {
 		return nil, err
 	}
 
-	events := baseConfig.Schema.NewEvents(settings.TelemetrySettings)
+	schema, err := baseConfig.Schema.Unmarshal(settings.TelemetrySettings)
+	if err != nil {
+		return nil, err
+	}
 
 	se := &solarwindsentity{
 		logger: logger,
 		eventDetector: internal.NewEventDetector(
-			baseConfig.Schema.NewEntities(),
+			schema.Entities,
 			baseConfig.SourcePrefix,
 			baseConfig.DestinationPrefix,
-			events.LogEvents,
-			events.MetricEvents,
+			schema.Events.LogEvents,
+			schema.Events.MetricEvents,
 			logger,
 		),
 		expirationPolicy: expirationSettings,

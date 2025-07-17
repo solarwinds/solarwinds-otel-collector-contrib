@@ -15,6 +15,7 @@
 package config
 
 import (
+	"fmt"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottlmetric"
@@ -42,13 +43,16 @@ type ParsedEntityEvent[C any] struct {
 	ConditionSeq ottl.ConditionSequence[C]
 }
 
-// CreateParsedEvents initializes and returns a ParsedEvents structure containing parsed entity and relationship events.
+// createParsedEvents initializes and returns a ParsedEvents structure containing parsed entity and relationship events.
 // It exist to patse ottl conditions for entity and relationship events at the time of creation, allowing for efficient evaluation later.
-func CreateParsedEvents(s Schema, settings component.TelemetrySettings) ParsedEvents {
-	metricParser, metErr := ottlmetric.NewParser(nil, settings)
-	logParser, logErr := ottllog.NewParser(nil, settings)
-	if metErr != nil || logErr != nil {
-		panic("failed to create parser for events")
+func createParsedEvents(s Schema, settings component.TelemetrySettings) (ParsedEvents, error) {
+	metricParser, err := ottlmetric.NewParser(nil, settings)
+	if err != nil {
+		return ParsedEvents{}, fmt.Errorf("failed to create parser for metric events %w", err)
+	}
+	logParser, err := ottllog.NewParser(nil, settings)
+	if err != nil {
+		return ParsedEvents{}, fmt.Errorf("failed to create parser for log events %w", err)
 	}
 
 	metricGroup := EventsGroup[ottlmetric.TransformContext]{
@@ -90,7 +94,7 @@ func CreateParsedEvents(s Schema, settings component.TelemetrySettings) ParsedEv
 	return ParsedEvents{
 		MetricEvents: metricGroup,
 		LogEvents:    logGroup,
-	}
+	}, nil
 }
 
 func addEntityEvent[C any](group *EventsGroup[C], event EntityEvent, settings component.TelemetrySettings) {

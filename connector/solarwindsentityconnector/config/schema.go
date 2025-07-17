@@ -17,9 +17,8 @@ package config
 import (
 	"errors"
 	"fmt"
-	"go.uber.org/zap"
-
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/confmap/xconfmap"
 )
 
 type Schema struct {
@@ -27,12 +26,10 @@ type Schema struct {
 	Events   Events   `mapstructure:"events"`
 }
 
-func (s *Schema) Validate(logger *zap.Logger) error {
-	var allErrs error
+var _ xconfmap.Validator = &Schema{}
 
-	if len(s.Entities) == 0 {
-		logger.Warn("No entities defined in schema")
-	}
+func (s *Schema) Validate() error {
+	var allErrs error
 
 	for i, entity := range s.Entities {
 		if err := entity.Validate(i); err != nil {
@@ -40,7 +37,7 @@ func (s *Schema) Validate(logger *zap.Logger) error {
 		}
 	}
 
-	if err := s.Events.Validate(s.Entities, logger); err != nil {
+	if err := s.Events.Validate(s.Entities); err != nil {
 		allErrs = errors.Join(allErrs, err)
 	}
 
@@ -51,15 +48,28 @@ func (s *Schema) Validate(logger *zap.Logger) error {
 	return nil
 }
 
-func (s *Schema) NewEntities() map[string]Entity {
+type ParsedSchema struct {
+	Entities map[string]Entity
+	Events   ParsedEvents
+}
+
+func (s *Schema) Unmarshal(settings component.TelemetrySettings) (*ParsedSchema, error) {
+	events, err := createParsedEvents(*s, settings)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create events: %w", err)
+	}
+
+	return &ParsedSchema{
+		Entities: s.newEntities(),
+		Events:   events,
+	}, nil
+}
+
+func (s *Schema) newEntities() map[string]Entity {
 	entities := make(map[string]Entity, len(s.Entities))
 	for _, entity := range s.Entities {
 		entities[entity.Entity] = entity
 	}
 
 	return entities
-}
-
-func (s *Schema) NewEvents(settings component.TelemetrySettings) ParsedEvents {
-	return CreateParsedEvents(*s, settings)
 }

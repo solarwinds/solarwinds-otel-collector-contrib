@@ -17,8 +17,6 @@ package config
 import (
 	"errors"
 	"fmt"
-	"go.uber.org/zap"
-
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottlmetric"
 )
@@ -48,12 +46,8 @@ type Events struct {
 	Entities      []EntityEvent       `mapstructure:"entities"`
 }
 
-func (e *Events) Validate(entities []Entity, logger *zap.Logger) error {
+func (e *Events) Validate(entities []Entity) error {
 	var allErrs error
-
-	if len(e.Entities) == 0 && len(e.Relationships) == 0 {
-		logger.Warn("No events defined in schema, at least one entity or relationship event is required")
-	}
 
 	entityTypes := make(map[string]bool)
 	for _, entity := range entities {

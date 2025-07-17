@@ -15,9 +15,6 @@
 package config
 
 import (
-	"errors"
-	"go.uber.org/zap"
-
 	"go.opentelemetry.io/collector/component"
 )
 
@@ -42,9 +39,13 @@ func NewDefaultConfig() component.Config {
 	}
 }
 
-func (c *Config) Validate(logger *zap.Logger) error {
-	return errors.Join(
-		c.Schema.Validate(logger),
-		c.Expiration.Validate(),
-	)
+func (c *Config) EvaluateWarnings() []string {
+	var warnings = make([]string, 0)
+	if len(c.Schema.Entities) == 0 {
+		warnings = append(warnings, "No entities defined in schema")
+	}
+	if len(c.Schema.Events.Entities) == 0 && len(c.Schema.Events.Relationships) == 0 {
+		warnings = append(warnings, "No events defined in schema, at least one entity or relationship event is required")
+	}
+	return warnings
 }
