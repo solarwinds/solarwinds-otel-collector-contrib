@@ -1,6 +1,7 @@
 # Changelog
 
 ## vNext
+- `solarwindsentityconnector` Added support for prefixes on entities when created from relationships.
 
 ## v0.127.5
 - `solarwindsentityconnector` Benchmark fix
