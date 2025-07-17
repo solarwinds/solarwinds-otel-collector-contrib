@@ -419,7 +419,7 @@ func TestGetRelationships_WithDifferentTypes(t *testing.T) {
 		nil,
 	)
 
-	relationshipEvents := eventDetector.getRelationships(attributes, relationships)
+	relationshipEvents := eventDetector.getRelationshipEvents(attributes, relationships)
 	assert.Equal(t, 1, len(relationshipEvents))
 	r1 := relationshipEvents[0]
 	assert.Equal(t, "MemberOf", r1.Type)
@@ -465,7 +465,7 @@ func TestGetRelationships_WithSameType(t *testing.T) {
 		nil,
 	)
 
-	relationshipEvents := eventDetector.getRelationships(attributes, relationships)
+	relationshipEvents := eventDetector.getRelationshipEvents(attributes, relationships)
 	assert.Equal(t, 1, len(relationshipEvents))
 	r1 := relationshipEvents[0]
 	assert.Equal(t, "Has", r1.Type)

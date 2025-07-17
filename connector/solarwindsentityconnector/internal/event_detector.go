@@ -72,8 +72,8 @@ func (e *EventDetector) collectEvents(
 	configuredEvents []*config.EntityEvent,
 	configuredRelationships []*config.RelationshipEvent,
 ) ([]Event, error) {
-	entityEvents := e.getEntities(attrs, configuredEvents)
-	relationshipEvents := e.getRelationships(attrs, configuredRelationships)
+	entityEvents := e.getEntityEvents(attrs, configuredEvents)
+	relationshipEvents := e.getRelationshipEvents(attrs, configuredRelationships)
 	validRelationshipEntities := e.validateEntityEvents(configuredEvents, entityEvents, relationshipEvents)
 
 	allEvents := make([]Event, 0, len(relationshipEvents)+len(entityEvents)+len(validRelationshipEntities))
@@ -155,8 +155,8 @@ func (e *EventDetector) validateRelationshipEntity(
 	return nil, nil
 }
 
-// getEntities creates entity update events based on the configured entity events.
-func (e *EventDetector) getEntities(attrs Attributes, entityEvents []*config.EntityEvent) map[string]Entity {
+// getEntityEvents creates entity update events based on the configured entity events.
+func (e *EventDetector) getEntityEvents(attrs Attributes, entityEvents []*config.EntityEvent) map[string]Entity {
 	detectedEntityEvents := make(map[string]Entity)
 	for _, entityEvent := range entityEvents {
 		event, err := e.attributeMapper.getEntity(entityEvent.Type, attrs)
@@ -178,11 +178,11 @@ func (e *EventDetector) getEntities(attrs Attributes, entityEvents []*config.Ent
 	return detectedEntityEvents
 }
 
-// getRelationships creates relationship events based on the configured relationships.
+// getRelationshipEvents creates relationship events based on the configured relationships.
 // It also builds a map of entities tied to that relationship - source and destination.
 // The map is used to compare entities created from relationship events with entities created from entity events,
 // so duplicated can be filtered out in case of unprefixed attributes.
-func (e *EventDetector) getRelationships(attrs Attributes, configuredRelationships []*config.RelationshipEvent) []*Relationship {
+func (e *EventDetector) getRelationshipEvents(attrs Attributes, configuredRelationships []*config.RelationshipEvent) []*Relationship {
 	relationshipEvents := make([]*Relationship, 0, len(configuredRelationships))
 	for _, relationshipEvent := range configuredRelationships {
 		sourceEntity, destEntity, err := e.attributeMapper.getRelationshipEntities(relationshipEvent.Source, relationshipEvent.Destination, attrs)
