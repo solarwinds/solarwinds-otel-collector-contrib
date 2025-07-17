@@ -15,7 +15,7 @@ Before proposing or implementing a new OpenTelemetry component, please consider 
 - Review the [current components list](README.md#components) and the [OpenTelemetry Collector Contrib repository](https://github.com/open-telemetry/opentelemetry-collector-contrib) to avoid duplication.
 
 ### Contact Us First
-- For SolarWinds internal contributors: Reach out in the `#swotelcol-platform` Slack channel to discuss your proposal.
+- For SolarWinds internal contributors: Reach out in the [`#platform-agents`](https://swicloud.enterprise.slack.com/archives/C07H13RM5DF) Slack channel to discuss your proposal.
 - For external contributors: Open an issue describing your use case and proposed component before investing significant time in development.
 
 Before any code is written contact us providing the following information:
