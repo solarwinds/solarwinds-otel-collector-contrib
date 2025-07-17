@@ -44,7 +44,7 @@ func TestParseReturnsWithoutErrors(t *testing.T) {
 	assert.Equal(t, result, &expectedExpirationPolicy)
 }
 
-func TestParseWhenDisabledReturnsError(t *testing.T) {
+func TestParseWhenDisabledReturnsValidResult(t *testing.T) {
 	capacity := int64(10)
 	cleanupInterval := "5s"
 	expirationPolicy := ExpirationPolicy{
@@ -56,8 +56,9 @@ func TestParseWhenDisabledReturnsError(t *testing.T) {
 		},
 	}
 
-	_, err := expirationPolicy.Unmarshal()
-	assert.ErrorContains(t, err, "expiration policy is not enabled")
+	result, err := expirationPolicy.Unmarshal()
+	assert.NoError(t, err)
+	assert.False(t, result.Enabled)
 }
 
 func TestParseWithEmptyIntervalReturnsError(t *testing.T) {
