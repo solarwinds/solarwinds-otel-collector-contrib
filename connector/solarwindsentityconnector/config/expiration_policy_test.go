@@ -27,9 +27,9 @@ func TestParseReturnsWithoutErrors(t *testing.T) {
 	expirationPolicy := ExpirationPolicy{
 		Enabled:  true,
 		Interval: "5s",
-		CacheConfiguration: &CacheConfiguration{
-			MaxCapacity:        &capacity,
-			TTLCleanupInterval: &cleanupInterval,
+		CacheConfiguration: CacheConfiguration{
+			MaxCapacity:        capacity,
+			TTLCleanupInterval: cleanupInterval,
 		},
 	}
 
@@ -50,9 +50,9 @@ func TestParseWhenDisabledReturnsError(t *testing.T) {
 	expirationPolicy := ExpirationPolicy{
 		Enabled:  false,
 		Interval: "1m",
-		CacheConfiguration: &CacheConfiguration{
-			MaxCapacity:        &capacity,
-			TTLCleanupInterval: &cleanupInterval,
+		CacheConfiguration: CacheConfiguration{
+			MaxCapacity:        capacity,
+			TTLCleanupInterval: cleanupInterval,
 		},
 	}
 
@@ -66,9 +66,9 @@ func TestParseWithEmptyIntervalReturnsError(t *testing.T) {
 	expirationPolicy := ExpirationPolicy{
 		Enabled:  true,
 		Interval: "",
-		CacheConfiguration: &CacheConfiguration{
-			MaxCapacity:        &capacity,
-			TTLCleanupInterval: &cleanupInterval,
+		CacheConfiguration: CacheConfiguration{
+			MaxCapacity:        capacity,
+			TTLCleanupInterval: cleanupInterval,
 		},
 	}
 
@@ -82,9 +82,9 @@ func TestParseWithEmptyCleanupIntervalReturnsError(t *testing.T) {
 	expirationPolicy := ExpirationPolicy{
 		Enabled:  true,
 		Interval: "5s",
-		CacheConfiguration: &CacheConfiguration{
-			MaxCapacity:        &capacity,
-			TTLCleanupInterval: &cleanupInterval,
+		CacheConfiguration: CacheConfiguration{
+			MaxCapacity:        capacity,
+			TTLCleanupInterval: cleanupInterval,
 		},
 	}
 
@@ -98,9 +98,9 @@ func TestParseWithZeroCleanupIntervalReturnsError(t *testing.T) {
 	expirationPolicy := ExpirationPolicy{
 		Enabled:  true,
 		Interval: "5s",
-		CacheConfiguration: &CacheConfiguration{
-			MaxCapacity:        &capacity,
-			TTLCleanupInterval: &cleanupInterval,
+		CacheConfiguration: CacheConfiguration{
+			MaxCapacity:        capacity,
+			TTLCleanupInterval: cleanupInterval,
 		},
 	}
 
@@ -114,9 +114,9 @@ func TestParseMaxCapacityLessThenZeroReturnError(t *testing.T) {
 	expirationPolicy := ExpirationPolicy{
 		Enabled:  true,
 		Interval: "5s",
-		CacheConfiguration: &CacheConfiguration{
-			MaxCapacity:        &capacity,
-			TTLCleanupInterval: &cleanupInterval,
+		CacheConfiguration: CacheConfiguration{
+			MaxCapacity:        capacity,
+			TTLCleanupInterval: cleanupInterval,
 		},
 	}
 
