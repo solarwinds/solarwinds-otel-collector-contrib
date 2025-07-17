@@ -1,6 +1,7 @@
 # Changelog
 
 ## vNext
+- `solarwindsentityconnector` Fix extra output log issue by adding missing yaml tags for cache configuration parsing
 
 ## v0.127.5
 - `solarwindsentityconnector` Benchmark fix
