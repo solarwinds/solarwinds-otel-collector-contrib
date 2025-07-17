@@ -34,7 +34,7 @@ type ExpirationPolicy struct {
 	CacheConfiguration CacheConfiguration `mapstructure:"cache_configuration" yaml:"cache_configuration"`
 }
 
-// By implementing the xconfmap.Validator interface, we ensure it's validated by the collector automatically
+// By implementing the xconfmap.Validator, we ensure it's validated by the collector automatically
 var _ xconfmap.Validator = (*ExpirationPolicy)(nil)
 
 type CacheConfiguration struct {

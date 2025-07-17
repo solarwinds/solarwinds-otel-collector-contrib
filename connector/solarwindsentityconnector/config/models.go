@@ -28,7 +28,7 @@ type Entity struct {
 	Attributes []string `mapstructure:"attributes"`
 }
 
-// By implementing the xconfmap.Validator interface, we ensure it's validated by the collector automatically
+// By implementing the xconfmap.Validator, we ensure it's validated by the collector automatically
 var _ xconfmap.Validator = (*Entity)(nil)
 
 func (e *Entity) Validate() error {
@@ -66,7 +66,7 @@ type RelationshipEvent struct {
 	Action      string   `mapstructure:"action"`
 }
 
-// By implementing the xconfmap.Validator interface, we ensure it's validated by the collector automatically
+// By implementing the xconfmap.Validator, we ensure it's validated by the collector automatically
 var _ xconfmap.Validator = (*RelationshipEvent)(nil)
 
 func (r *RelationshipEvent) Validate() error {
@@ -107,7 +107,7 @@ type EntityEvent struct {
 	Action     string   `mapstructure:"action"`
 }
 
-// By implementing the xconfmap.Validator interface, we ensure it's validated by the collector automatically
+// By implementing the xconfmap.Validator, we ensure it's validated by the collector automatically
 var _ xconfmap.Validator = (*EntityEvent)(nil)
 
 func (e *EntityEvent) Validate() error {
