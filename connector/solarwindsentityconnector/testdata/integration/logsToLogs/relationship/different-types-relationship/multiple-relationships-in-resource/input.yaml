@@ -1,0 +1,11 @@
+resourceLogs:
+  - resource:
+      attributes: [ { "key": "source.receiver.id", "value":{"stringValue": "snowflake-to-service"}},
+                    { "key": "destination.service.id",  "value":{"stringValue": "service-id"}},
+                    { "key": "source.k8s.pod.id", "value":{"stringValue": "pod-id"}},
+                    { "key": "receiver.id", "value":{"stringValue": "snowflake-to-pod"}}]
+    scope_logs:
+    - log_records:
+      - body: { "stringValue": "test-log-body" }
+        attributes: [ { "key": "env", "value":{"stringValue": "test"}} ]
+        time_unix_nano: 1234567890

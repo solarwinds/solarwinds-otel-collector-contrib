@@ -82,11 +82,11 @@ func TestUpdate(t *testing.T) {
 			name: "successful update with relationship",
 			event: &internal.Relationship{
 				Type: "testRelation",
-				Source: internal.RelationshipEntity{
+				Source: internal.Entity{
 					Type: "sourceEntity",
 					IDs:  createIDMap("id", "source1"),
 				},
-				Destination: internal.RelationshipEntity{
+				Destination: internal.Entity{
 					Type: "destEntity",
 					IDs:  createIDMap("id", "dest1"),
 				},
@@ -98,11 +98,11 @@ func TestUpdate(t *testing.T) {
 			name: "cache update returns error",
 			event: &internal.Relationship{
 				Type: "testRelation",
-				Source: internal.RelationshipEntity{
+				Source: internal.Entity{
 					Type: "sourceEntity",
 					IDs:  createIDMap("id", "source1"),
 				},
-				Destination: internal.RelationshipEntity{
+				Destination: internal.Entity{
 					Type: "destEntity",
 					IDs:  createIDMap("id", "dest1"),
 				},
@@ -227,11 +227,11 @@ func TestReceiveExpired_MultipleBatches(t *testing.T) {
 	for i := 0; i < 3; i++ {
 		manager.expiredCh <- &internal.Relationship{
 			Type: "batch1" + string(rune('0'+i)),
-			Source: internal.RelationshipEntity{
+			Source: internal.Entity{
 				Type: "sourceEntity",
 				IDs:  createIDMap("id", "source"+string(rune('0'+i))),
 			},
-			Destination: internal.RelationshipEntity{
+			Destination: internal.Entity{
 				Type: "destEntity",
 				IDs:  createIDMap("id", "dest"+string(rune('0'+i))),
 			},
@@ -245,11 +245,11 @@ func TestReceiveExpired_MultipleBatches(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		manager.expiredCh <- &internal.Relationship{
 			Type: "batch1" + string(rune('0'+i)),
-			Source: internal.RelationshipEntity{
+			Source: internal.Entity{
 				Type: "sourceEntity",
 				IDs:  createIDMap("id", "source"+string(rune('0'+i))),
 			},
-			Destination: internal.RelationshipEntity{
+			Destination: internal.Entity{
 				Type: "destEntity",
 				IDs:  createIDMap("id", "dest"+string(rune('0'+i))),
 			},
@@ -300,11 +300,11 @@ func TestReceiveExpired_EmptyBatch(t *testing.T) {
 	// Send one event to initialize the batch and timer
 	manager.expiredCh <- &internal.Relationship{
 		Type: "testRelation",
-		Source: internal.RelationshipEntity{
+		Source: internal.Entity{
 			Type: "sourceEntity",
 			IDs:  createIDMap("id", "source1"),
 		},
-		Destination: internal.RelationshipEntity{
+		Destination: internal.Entity{
 			Type: "destEntity",
 			IDs:  createIDMap("id", "dest1"),
 		},
@@ -403,11 +403,11 @@ func TestDelete(t *testing.T) {
 			name: "successful delete with relationship",
 			event: &internal.Relationship{
 				Type: "testRelation",
-				Source: internal.RelationshipEntity{
+				Source: internal.Entity{
 					Type: "sourceEntity",
 					IDs:  createIDMap("id", "source1"),
 				},
-				Destination: internal.RelationshipEntity{
+				Destination: internal.Entity{
 					Type: "destEntity",
 					IDs:  createIDMap("id", "dest1"),
 				},
@@ -419,11 +419,11 @@ func TestDelete(t *testing.T) {
 			name: "cache delete returns error",
 			event: &internal.Relationship{
 				Type: "testRelation",
-				Source: internal.RelationshipEntity{
+				Source: internal.Entity{
 					Type: "sourceEntity",
 					IDs:  createIDMap("id", "source2"),
 				},
-				Destination: internal.RelationshipEntity{
+				Destination: internal.Entity{
 					Type: "destEntity",
 					IDs:  createIDMap("id", "dest2"),
 				},

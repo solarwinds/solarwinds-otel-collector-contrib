@@ -1,0 +1,19 @@
+resourceLogs:
+  - resource:
+      attributes: [ { "key": "source.k8s.cluster.id", "value":{"stringValue": "test-cluster-id"}},
+                    { "key": "source.k8s.cluster.name", "value":{"stringValue": "test-cluster-name"}},
+                    { "key": "k8s.cluster.port", "value":{"stringValue": "test-cluster-port"}} ]
+    scope_logs:
+      - log_records:
+          - body: { "stringValue": "test-log-body" }
+            attributes: []
+            time_unix_nano: 1234567890
+  - resource:
+      attributes: [ { "key": "destination.snowflake.id", "value":{"stringValue": "snowflake-id"}},
+                    { "key": "destination.snowflake.name", "value":{"stringValue": "snowflake-name"}},
+                    { "key": "snowflake.random.attribute", "value":{"stringValue": "snowflake-123"}} ]
+    scope_logs:
+      - log_records:
+          - body: { "stringValue": "test-log-body" }
+            attributes: []
+            time_unix_nano: 1234567890
