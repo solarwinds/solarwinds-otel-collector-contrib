@@ -99,13 +99,13 @@ func (e *EventDetector) collectEvents(
 // of those created from entity events. It filters out entities that already exist in the configured entity events.
 // It returns a slice of events that are compared to configured entity events to ensure that only valid events are returned.
 func (e *EventDetector) validateEntityEvents(
-	configuredEntityEvents []*config.EntityEvent,
+	validEntityEvents []*config.EntityEvent,
 	alreadyExistingEntities map[string]Entity,
 	relationshipEntities []*Relationship,
 ) []Event {
 	events := make([]Event, 0)
 	for _, actualEvent := range relationshipEntities {
-		sourceEntity, err := e.validateRelationshipEntity(actualEvent.Source, configuredEntityEvents, alreadyExistingEntities)
+		sourceEntity, err := e.validateRelationshipEntity(actualEvent.Source, validEntityEvents, alreadyExistingEntities)
 		if err != nil {
 			e.logger.Debug("failed to validate source entity for relationship event", zap.Error(err))
 			continue
@@ -114,7 +114,7 @@ func (e *EventDetector) validateEntityEvents(
 			events = append(events, *sourceEntity)
 		}
 
-		destEntity, err := e.validateRelationshipEntity(actualEvent.Destination, configuredEntityEvents, alreadyExistingEntities)
+		destEntity, err := e.validateRelationshipEntity(actualEvent.Destination, validEntityEvents, alreadyExistingEntities)
 		if err != nil {
 			e.logger.Debug("failed to validate destination entity for relationship event", zap.Error(err))
 			continue
@@ -126,9 +126,14 @@ func (e *EventDetector) validateEntityEvents(
 	return events
 }
 
+// validateRelationshipEntity checks if the entity created from a relationship event is valid.
+// Valid means that the event:
+//  1. is configured in the connector configuration
+//  2. is not already existing in the alreadyExistingEntities map, which contains entities created from entity events
+//  3. conditions for the entity event were met, so we can infer the entity from the relationship event; these events are stored in validEntityEvents
 func (e *EventDetector) validateRelationshipEntity(
 	entity Entity,
-	configuredEntityEvents []*config.EntityEvent,
+	validEntityEvents []*config.EntityEvent,
 	alreadyExistingEntities map[string]Entity,
 ) (*Entity, error) {
 	entityHash, err := e.keyBuilder.BuildEntityKey(entity)
@@ -143,7 +148,9 @@ func (e *EventDetector) validateRelationshipEntity(
 
 	// If entity was created from relationship, we need to check whether it can be sent in the resulting log.
 	// We do not want to send entity event if it was not configured in the entity events.
-	for _, event := range configuredEntityEvents {
+	// validEntityEvents contains all entity events that were configured in the entity events and matched the conditions
+	// for current processed resource.
+	for _, event := range validEntityEvents {
 		// If the event type matches, we know that we can infer the entity
 		// because conditions were met.
 		if event.Type == entity.Type {
