@@ -17,6 +17,7 @@ package solarwindsentityconnector
 import (
 	"context"
 	"fmt"
+	"go.opentelemetry.io/collector/pdata/plog"
 	"os"
 	"path/filepath"
 	"testing"
@@ -162,7 +163,7 @@ func TestConnector(t *testing.T) {
 
 	// Function to run a specific test with appropriate paths
 	runTest := func(t *testing.T, signalTypeFolder string, testName string, folder string, baseFolderPath string) {
-		t.Run(fmt.Sprintf("%s_%s", signalTypeFolder, testName), func(t *testing.T) {
+		t.Run(fmt.Sprintf("%s_%s_%s", signalTypeFolder, baseFolderPath, testName), func(t *testing.T) {
 			var basePath string
 			var conn component.Component
 			var err error
@@ -200,31 +201,37 @@ func TestConnector(t *testing.T) {
 				assert.NoError(t, conn.Shutdown(ctx))
 			}()
 
-			// Consume the appropriate input data
 			inputFile := filepath.Join(basePath, "input.yaml")
+			expectedFile := filepath.Join(basePath, "expected-output.yaml")
+			_, err = os.Stat(expectedFile)
+			isOutputExpected := !os.IsNotExist(err)
+			var expected plog.Logs
+			if isOutputExpected {
+				expected, err = golden.ReadLogs(expectedFile)
+				require.NoError(t, err)
+			}
+
+			// Consume the appropriate input data
 			if signalTypeFolder == "logs_to_logs" {
 				testLogs, err := golden.ReadLogs(inputFile)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.NoError(t, conn.(connector.Logs).ConsumeLogs(ctx, testLogs))
 			} else {
 				testMetrics, err := golden.ReadMetrics(inputFile)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.NoError(t, conn.(connector.Metrics).ConsumeMetrics(ctx, testMetrics))
 			}
 
 			// Validate the output
 			allLogs := sink.AllLogs()
-			expectedFile := filepath.Join(basePath, "expected-output.yaml")
 
-			if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
+			if isOutputExpected {
+				require.Len(t, allLogs, 1)
+				assert.Equal(t, expected.LogRecordCount(), allLogs[0].LogRecordCount())
+				assert.NoError(t, plogtest.CompareLogs(expected, allLogs[0], plogtest.IgnoreObservedTimestamp()))
+			} else {
 				assert.Len(t, allLogs, 0)
-				return
 			}
-
-			expected, err := golden.ReadLogs(expectedFile)
-			assert.NoError(t, err)
-			assert.Equal(t, expected.LogRecordCount(), allLogs[0].LogRecordCount())
-			assert.NoError(t, plogtest.CompareLogs(expected, allLogs[0], plogtest.IgnoreObservedTimestamp()))
 		})
 	}
 
