@@ -6,8 +6,8 @@ require (
 	github.com/go-ole/go-ole v1.3.0
 	github.com/google/go-cmp v0.7.0
 	github.com/shirou/gopsutil/v3 v3.24.5
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil v0.127.4
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.127.4
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil v0.127.5
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.127.5
 	github.com/stretchr/testify v1.10.0
 	github.com/yusufpapurcu/wmi v1.2.4
 	go.opentelemetry.io/collector/component v1.33.0
@@ -40,7 +40,7 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
+	github.com/go-viper/mapstructure/v2 v2.3.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
