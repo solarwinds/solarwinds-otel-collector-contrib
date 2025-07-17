@@ -8,7 +8,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.127.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza v0.127.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/xk8stest v0.127.0
-	github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfig v0.127.4
+	github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfig v0.127.5
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/collector/component v1.33.0
 	go.opentelemetry.io/collector/component/componenttest v0.127.0
@@ -51,7 +51,7 @@ require (
 	github.com/go-openapi/jsonpointer v0.21.1 // indirect
 	github.com/go-openapi/jsonreference v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.1 // indirect
-	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
+	github.com/go-viper/mapstructure/v2 v2.3.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
