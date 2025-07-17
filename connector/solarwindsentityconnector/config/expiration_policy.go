@@ -30,11 +30,12 @@ const (
 type ExpirationPolicy struct {
 	Enabled bool `mapstructure:"enabled" yaml:"enabled"`
 	// TTL of relationships in the format accepted by time.ParseDuration, e.g. "5s", "1m", etc.
-	Interval           string              `mapstructure:"interval" yaml:"interval"`
+	Interval           string             `mapstructure:"interval" yaml:"interval"`
 	CacheConfiguration CacheConfiguration `mapstructure:"cache_configuration" yaml:"cache_configuration"`
 }
 
-var _ xconfmap.Validator = &Schema{}
+// By implementing the xconfmap.Validator interface, we ensure it's validated by the collector automatically
+var _ xconfmap.Validator = (*ExpirationPolicy)(nil)
 
 type CacheConfiguration struct {
 	MaxCapacity int64 `mapstructure:"max_capacity" yaml:"max_capacity"`
@@ -42,33 +43,33 @@ type CacheConfiguration struct {
 	TTLCleanupInterval string `mapstructure:"ttl_cleanup_interval" yaml:"ttl_cleanup_interval"`
 }
 
-type ExpirationSettings struct {
-	Enabled                   bool
-	Interval                  time.Duration
-	TTLCleanupIntervalSeconds time.Duration
-	MaxCapacity               int64
-}
-
 func (e *ExpirationPolicy) Validate() error {
 	if !e.Enabled {
 		return nil
 	}
 
-	var allErrs error
+	var errs error
 
 	if _, err := e.getInterval(); err != nil {
-		allErrs = errors.Join(allErrs, err)
+		errs = errors.Join(errs, err)
 	}
 
 	if _, err := e.getMaxCapacity(); err != nil {
-		allErrs = errors.Join(allErrs, err)
+		errs = errors.Join(errs, err)
 	}
 
 	if _, err := e.getTTLCleanupInterval(); err != nil {
-		allErrs = errors.Join(allErrs, err)
+		errs = errors.Join(errs, err)
 	}
 
-	return allErrs
+	return errs
+}
+
+type ExpirationSettings struct {
+	Enabled                   bool
+	Interval                  time.Duration
+	TTLCleanupIntervalSeconds time.Duration
+	MaxCapacity               int64
 }
 
 func (e *ExpirationPolicy) Unmarshal() (*ExpirationSettings, error) {
@@ -105,7 +106,7 @@ func (e *ExpirationPolicy) Unmarshal() (*ExpirationSettings, error) {
 func (e *ExpirationPolicy) getInterval() (time.Duration, error) {
 	interval, err := time.ParseDuration(e.Interval)
 	if err != nil {
-		return time.Duration(0), fmt.Errorf("expiration_policy.interval must be a valid duration (e.g., '5m', '1h'): %w", err)
+		return time.Duration(0), fmt.Errorf("interval must be a valid duration (e.g., '5m', '1h'): %w", err)
 	}
 
 	return interval, nil
@@ -113,7 +114,7 @@ func (e *ExpirationPolicy) getInterval() (time.Duration, error) {
 
 func (e *ExpirationPolicy) getMaxCapacity() (int64, error) {
 	if e.CacheConfiguration.MaxCapacity <= 0 {
-		return 0, errors.New("expiration_policy.cache_configuration.max_capacity must be greater than zero")
+		return 0, errors.New("cache_configuration::max_capacity must be greater than zero")
 	}
 
 	return e.CacheConfiguration.MaxCapacity, nil
@@ -122,10 +123,10 @@ func (e *ExpirationPolicy) getMaxCapacity() (int64, error) {
 func (e *ExpirationPolicy) getTTLCleanupInterval() (time.Duration, error) {
 	parsedCleanupInterval, err := time.ParseDuration(e.CacheConfiguration.TTLCleanupInterval)
 	if err != nil {
-		return time.Duration(0), errors.New("expiration_policy.cache_configuration.ttl_cleanup_interval: invalid format")
+		return time.Duration(0), errors.New("cache_configuration::ttl_cleanup_interval: invalid format")
 	}
 	if parsedCleanupInterval < time.Second {
-		return time.Duration(0), errors.New("expiration_policy.cache_configuration.ttl_cleanup_interval must be at least 1 second")
+		return time.Duration(0), errors.New("cache_configuration::ttl_cleanup_interval must be at least 1 second")
 	}
 
 	return parsedCleanupInterval, nil

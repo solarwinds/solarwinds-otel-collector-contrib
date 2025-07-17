@@ -26,26 +26,34 @@ type Schema struct {
 	Events   Events   `mapstructure:"events"`
 }
 
-var _ xconfmap.Validator = &Schema{}
+// By implementing the xconfmap.Validator interface, we ensure it's validated by the collector automatically
+var _ xconfmap.Validator = (*Schema)(nil)
 
 func (s *Schema) Validate() error {
-	var allErrs error
+	var errs error
 
-	for i, entity := range s.Entities {
-		if err := entity.Validate(i); err != nil {
-			allErrs = errors.Join(allErrs, err)
+	entityTypes := make(map[string]bool)
+	for _, entity := range s.Entities {
+		entityTypes[entity.Entity] = true
+	}
+
+	for index, e := range s.Events.Entities {
+		if e.Entity != "" && !entityTypes[e.Entity] {
+			errs = errors.Join(errs, fmt.Errorf("events::entities::%d::type '%s' must be defined in schema.entities", index, e.Entity))
 		}
 	}
 
-	if err := s.Events.Validate(s.Entities); err != nil {
-		allErrs = errors.Join(allErrs, err)
+	for index, r := range s.Events.Relationships {
+		if r.Source != "" && !entityTypes[r.Source] {
+			errs = errors.Join(errs, fmt.Errorf("events::relationships::%d::source_entity '%s' must be defined in schema.entities", index, r.Source))
+		}
+
+		if r.Destination != "" && !entityTypes[r.Destination] {
+			errs = errors.Join(errs, fmt.Errorf("events::relationships::%d::destination_entity '%s' must be defined in schema.entities", index, r.Destination))
+		}
 	}
 
-	if allErrs != nil {
-		return fmt.Errorf("schema validation failed: %w", allErrs)
-	}
-
-	return nil
+	return errs
 }
 
 type ParsedSchema struct {

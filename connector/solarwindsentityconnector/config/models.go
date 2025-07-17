@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottlmetric"
+	"go.opentelemetry.io/collector/confmap/xconfmap"
 )
 
 type Entity struct {
@@ -27,46 +28,26 @@ type Entity struct {
 	Attributes []string `mapstructure:"attributes"`
 }
 
-func (e *Entity) Validate(index int) error {
-	var allErrs error
+// By implementing the xconfmap.Validator interface, we ensure it's validated by the collector automatically
+var _ xconfmap.Validator = (*Entity)(nil)
+
+func (e *Entity) Validate() error {
+	var errs error
 
 	if e.Entity == "" {
-		allErrs = errors.Join(allErrs, fmt.Errorf("schema.entities[%d].entity is mandatory", index))
+		errs = errors.Join(errs, fmt.Errorf("entity is mandatory"))
 	}
 
 	if len(e.IDs) == 0 {
-		allErrs = errors.Join(allErrs, fmt.Errorf("schema.entities[%d].id is mandatory and must contain at least 1 item", index))
+		errs = errors.Join(errs, fmt.Errorf("id is mandatory and must contain at least 1 item"))
 	}
 
-	return allErrs
+	return errs
 }
 
 type Events struct {
 	Relationships []RelationshipEvent `mapstructure:"relationships"`
 	Entities      []EntityEvent       `mapstructure:"entities"`
-}
-
-func (e *Events) Validate(entities []Entity) error {
-	var allErrs error
-
-	entityTypes := make(map[string]bool)
-	for _, entity := range entities {
-		entityTypes[entity.Entity] = true
-	}
-
-	for i, entityEvent := range e.Entities {
-		if err := entityEvent.Validate(i, entityTypes); err != nil {
-			allErrs = errors.Join(allErrs, err)
-		}
-	}
-
-	for i, relationshipEvent := range e.Relationships {
-		if err := relationshipEvent.Validate(i, entityTypes); err != nil {
-			allErrs = errors.Join(allErrs, err)
-		}
-	}
-
-	return allErrs
 }
 
 type Relationship struct {
@@ -85,39 +66,38 @@ type RelationshipEvent struct {
 	Action      string   `mapstructure:"action"`
 }
 
-func (r *RelationshipEvent) Validate(index int, entityTypes map[string]bool) error {
-	var allErrs error
+// By implementing the xconfmap.Validator interface, we ensure it's validated by the collector automatically
+var _ xconfmap.Validator = (*RelationshipEvent)(nil)
+
+func (r *RelationshipEvent) Validate() error {
+	var errs error
 
 	if r.Action == "" {
-		allErrs = errors.Join(allErrs, fmt.Errorf("schema.events.relationships[%d].action is mandatory", index))
+		errs = errors.Join(errs, fmt.Errorf("action is mandatory"))
 	} else if r.Action != "update" && r.Action != "delete" {
-		allErrs = errors.Join(allErrs, fmt.Errorf("schema.events.relationships[%d].action must be 'update' or 'delete', got '%s'", index, r.Action))
+		errs = errors.Join(errs, fmt.Errorf("action must be 'update' or 'delete', got '%s'", r.Action))
 	}
 
 	if r.Context == "" {
-		allErrs = errors.Join(allErrs, fmt.Errorf("schema.events.relationships[%d].context is mandatory", index))
+		errs = errors.Join(errs, fmt.Errorf("context is mandatory"))
 	} else if r.Context != ottllog.ContextName && r.Context != ottlmetric.ContextName {
-		allErrs = errors.Join(allErrs, fmt.Errorf("schema.events.relationships[%d].context must be '%s' or '%s', got '%s'",
-			index, ottllog.ContextName, ottlmetric.ContextName, r.Context))
+		errs = errors.Join(errs, fmt.Errorf("context must be '%s' or '%s', got '%s'",
+			ottllog.ContextName, ottlmetric.ContextName, r.Context))
 	}
 
 	if r.Type == "" {
-		allErrs = errors.Join(allErrs, fmt.Errorf("schema.events.relationships[%d].type is mandatory", index))
+		errs = errors.Join(errs, fmt.Errorf("type is mandatory"))
 	}
 
 	if r.Source == "" {
-		allErrs = errors.Join(allErrs, fmt.Errorf("schema.events.relationships[%d].source_entity is mandatory", index))
-	} else if !entityTypes[r.Source] {
-		allErrs = errors.Join(allErrs, fmt.Errorf("schema.events.relationships[%d].source_entity '%s' must be defined in schema.entities", index, r.Source))
+		errs = errors.Join(errs, fmt.Errorf("source_entity is mandatory"))
 	}
 
 	if r.Destination == "" {
-		allErrs = errors.Join(allErrs, fmt.Errorf("schema.events.relationships[%d].destination_entity is mandatory", index))
-	} else if !entityTypes[r.Destination] {
-		allErrs = errors.Join(allErrs, fmt.Errorf("schema.events.relationships[%d].destination_entity '%s' must be defined in schema.entities", index, r.Destination))
+		errs = errors.Join(errs, fmt.Errorf("destination_entity is mandatory"))
 	}
 
-	return allErrs
+	return errs
 }
 
 type EntityEvent struct {
@@ -127,27 +107,29 @@ type EntityEvent struct {
 	Action     string   `mapstructure:"action"`
 }
 
-func (e *EntityEvent) Validate(index int, entityTypes map[string]bool) error {
-	var allErrs error
+// By implementing the xconfmap.Validator interface, we ensure it's validated by the collector automatically
+var _ xconfmap.Validator = (*EntityEvent)(nil)
+
+func (e *EntityEvent) Validate() error {
+	var errs error
 
 	if e.Action == "" {
-		allErrs = errors.Join(allErrs, fmt.Errorf("schema.events.entities[%d].action is mandatory", index))
+		errs = errors.Join(errs, fmt.Errorf("action is mandatory"))
 	} else if e.Action != "update" && e.Action != "delete" {
-		allErrs = errors.Join(allErrs, fmt.Errorf("schema.events.entities[%d].action must be 'update' or 'delete', got '%s'", index, e.Action))
+		errs = errors.Join(errs, fmt.Errorf("action must be 'update' or 'delete', got '%s'",
+			e.Action))
 	}
 
 	if e.Context == "" {
-		allErrs = errors.Join(allErrs, fmt.Errorf("schema.events.entities[%d].context is mandatory", index))
+		errs = errors.Join(errs, fmt.Errorf("context is mandatory"))
 	} else if e.Context != ottllog.ContextName && e.Context != ottlmetric.ContextName {
-		allErrs = errors.Join(allErrs, fmt.Errorf("schema.events.entities[%d].context must be '%s' or '%s', got '%s'",
-			index, ottllog.ContextName, ottlmetric.ContextName, e.Context))
+		errs = errors.Join(errs, fmt.Errorf("context must be '%s' or '%s', got '%s'",
+			ottllog.ContextName, ottlmetric.ContextName, e.Context))
 	}
 
 	if e.Entity == "" {
-		allErrs = errors.Join(allErrs, fmt.Errorf("schema.events.entities[%d].type is mandatory", index))
-	} else if !entityTypes[e.Entity] {
-		allErrs = errors.Join(allErrs, fmt.Errorf("schema.events.entities[%d].type '%s' must be defined in schema.entities", index, e.Entity))
+		errs = errors.Join(errs, fmt.Errorf("type is mandatory"))
 	}
 
-	return allErrs
+	return errs
 }
