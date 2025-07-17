@@ -50,74 +50,19 @@ type Events struct {
 	Entities      []EntityEvent       `mapstructure:"entities"`
 }
 
-type Relationship struct {
-	Type        string `mapstructure:"type"`
-	Source      string `mapstructure:"source_entity"`
-	Destination string `mapstructure:"destination_entity"`
-}
-
-type RelationshipEvent struct {
-	Type        string   `mapstructure:"type"`
-	Source      string   `mapstructure:"source_entity"`
-	Destination string   `mapstructure:"destination_entity"`
-	Attributes  []string `mapstructure:"attributes"`
-	Conditions  []string `mapstructure:"conditions"`
-	Context     string   `mapstructure:"context"`
-	Action      string   `mapstructure:"action"`
-}
-
-// By implementing the xconfmap.Validator, we ensure it's validated by the collector automatically
-var _ xconfmap.Validator = (*RelationshipEvent)(nil)
-
-func (r *RelationshipEvent) Validate() error {
-	var errs error
-
-	if r.Action == "" {
-		errs = errors.Join(errs, fmt.Errorf("action is mandatory"))
-	} else if r.Action != "update" && r.Action != "delete" {
-		errs = errors.Join(errs, fmt.Errorf("action must be 'update' or 'delete', got '%s'", r.Action))
-	}
-
-	if r.Context == "" {
-		errs = errors.Join(errs, fmt.Errorf("context is mandatory"))
-	} else if r.Context != ottllog.ContextName && r.Context != ottlmetric.ContextName {
-		errs = errors.Join(errs, fmt.Errorf("context must be '%s' or '%s', got '%s'",
-			ottllog.ContextName, ottlmetric.ContextName, r.Context))
-	}
-
-	if r.Type == "" {
-		errs = errors.Join(errs, fmt.Errorf("type is mandatory"))
-	}
-
-	if r.Source == "" {
-		errs = errors.Join(errs, fmt.Errorf("source_entity is mandatory"))
-	}
-
-	if r.Destination == "" {
-		errs = errors.Join(errs, fmt.Errorf("destination_entity is mandatory"))
-	}
-
-	return errs
-}
-
-type EntityEvent struct {
+type Event struct {
+	Action     string   `mapstructure:"action"`
 	Context    string   `mapstructure:"context"`
 	Conditions []string `mapstructure:"conditions"`
-	Entity     string   `mapstructure:"entity"`
-	Action     string   `mapstructure:"action"`
 }
 
-// By implementing the xconfmap.Validator, we ensure it's validated by the collector automatically
-var _ xconfmap.Validator = (*EntityEvent)(nil)
-
-func (e *EntityEvent) Validate() error {
+func (e *Event) validateActionAndContext() error {
 	var errs error
 
 	if e.Action == "" {
 		errs = errors.Join(errs, fmt.Errorf("action is mandatory"))
 	} else if e.Action != "update" && e.Action != "delete" {
-		errs = errors.Join(errs, fmt.Errorf("action must be 'update' or 'delete', got '%s'",
-			e.Action))
+		errs = errors.Join(errs, fmt.Errorf("action must be 'update' or 'delete', got '%s'", e.Action))
 	}
 
 	if e.Context == "" {
@@ -126,6 +71,48 @@ func (e *EntityEvent) Validate() error {
 		errs = errors.Join(errs, fmt.Errorf("context must be '%s' or '%s', got '%s'",
 			ottllog.ContextName, ottlmetric.ContextName, e.Context))
 	}
+	return errs
+}
+
+type RelationshipEvent struct {
+	Event
+	Type        string   `mapstructure:"type"`
+	Source      string   `mapstructure:"source_entity"`
+	Destination string   `mapstructure:"destination_entity"`
+	Attributes  []string `mapstructure:"attributes"`
+}
+
+// By implementing the xconfmap.Validator, we ensure it's validated by the collector automatically
+var _ xconfmap.Validator = (*RelationshipEvent)(nil)
+
+func (e *RelationshipEvent) Validate() error {
+	errs := e.validateActionAndContext()
+
+	if e.Type == "" {
+		errs = errors.Join(errs, fmt.Errorf("type is mandatory"))
+	}
+
+	if e.Source == "" {
+		errs = errors.Join(errs, fmt.Errorf("source_entity is mandatory"))
+	}
+
+	if e.Destination == "" {
+		errs = errors.Join(errs, fmt.Errorf("destination_entity is mandatory"))
+	}
+
+	return errs
+}
+
+type EntityEvent struct {
+	Event
+	Entity string `mapstructure:"entity"`
+}
+
+// By implementing the xconfmap.Validator, we ensure it's validated by the collector automatically
+var _ xconfmap.Validator = (*EntityEvent)(nil)
+
+func (e *EntityEvent) Validate() error {
+	errs := e.validateActionAndContext()
 
 	if e.Entity == "" {
 		errs = errors.Join(errs, fmt.Errorf("entity is mandatory"))
