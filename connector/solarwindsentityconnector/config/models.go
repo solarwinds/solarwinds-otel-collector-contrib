@@ -17,9 +17,16 @@ package config
 import (
 	"errors"
 	"fmt"
+
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottlmetric"
 	"go.opentelemetry.io/collector/confmap/xconfmap"
+)
+
+const (
+	// Event action types
+	EventUpdateAction = "update"
+	EventDeleteAction = "delete"
 )
 
 type Entity struct {
@@ -61,8 +68,9 @@ func (e *Event) validateActionAndContext() error {
 
 	if e.Action == "" {
 		errs = errors.Join(errs, fmt.Errorf("action is mandatory"))
-	} else if e.Action != "update" && e.Action != "delete" {
-		errs = errors.Join(errs, fmt.Errorf("action must be 'update' or 'delete', got '%s'", e.Action))
+	} else if e.Action != EventUpdateAction && e.Action != EventDeleteAction {
+		errs = errors.Join(errs, fmt.Errorf("action must be '%s' or '%s', got '%s'",
+			EventUpdateAction, EventDeleteAction, e.Action))
 	}
 
 	if e.Context == "" {

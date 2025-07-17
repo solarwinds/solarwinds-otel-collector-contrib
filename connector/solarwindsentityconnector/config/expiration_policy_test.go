@@ -90,7 +90,7 @@ func TestParseWithEmptyCleanupIntervalReturnsError(t *testing.T) {
 	}
 
 	_, err := expirationPolicy.Unmarshal()
-	assert.ErrorContains(t, err, "invalid TTL cleanup interval format")
+	assert.ErrorContains(t, err, "cache_configuration::ttl_cleanup_interval: invalid format")
 }
 
 func TestParseWithZeroCleanupIntervalReturnsError(t *testing.T) {
@@ -106,7 +106,7 @@ func TestParseWithZeroCleanupIntervalReturnsError(t *testing.T) {
 	}
 
 	_, err := expirationPolicy.Unmarshal()
-	assert.ErrorContains(t, err, "ttl cleanup interval must be at least 1 second")
+	assert.ErrorContains(t, err, "cache_configuration::ttl_cleanup_interval must be at least 1 second")
 }
 
 func TestParseMaxCapacityLessThenZeroReturnError(t *testing.T) {
@@ -122,5 +122,5 @@ func TestParseMaxCapacityLessThenZeroReturnError(t *testing.T) {
 	}
 
 	_, err := expirationPolicy.Unmarshal()
-	assert.ErrorContains(t, err, "max capacity must be greater than zero")
+	assert.ErrorContains(t, err, "cache_configuration::max_capacity must be greater than zero")
 }
