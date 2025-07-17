@@ -2,6 +2,7 @@
 
 ## vNext
 - `solarwindsentityconnector` Added support for prefixes on entities when created from relationships.
+- `solarwindsentityconnector` Fix extra output log issue by adding missing yaml tags for cache configuration parsing.
 
 ## v0.127.5
 - `solarwindsentityconnector` Benchmark fix
