@@ -16,9 +16,8 @@ package firewall
 
 import (
 	"fmt"
+	registry2 "github.com/solarwinds/solarwinds-otel-collector-contrib/tools/registry"
 	"testing"
-
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/registry"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -69,8 +68,8 @@ func Test_Provide_ProvidesErrorfullFirewallContainerOnFailingCommandWithPartialR
 	assert.False(t, open, "channel must be closed at the end")
 }
 
-func getMockRegistryValueFunc(results map[string]uint64) registry.GetKeyUIntValueTypeFunc {
-	return func(_ registry.RootKey, _, keyName string, _ string) (uint64, error) {
+func getMockRegistryValueFunc(results map[string]uint64) registry2.GetKeyUIntValueTypeFunc {
+	return func(_ registry2.RootKey, _, keyName string, _ string) (uint64, error) {
 		result, exists := results[keyName]
 		if !exists {
 			return 0, fmt.Errorf("test failure getting %s", keyName)

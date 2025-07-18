@@ -17,10 +17,10 @@ package firewall
 import (
 	"errors"
 	"fmt"
+	registry2 "github.com/solarwinds/solarwinds-otel-collector-contrib/tools/registry"
 	"sync"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/registry"
 	"go.uber.org/zap"
 )
 
@@ -30,14 +30,14 @@ const (
 )
 
 type provider struct {
-	getRegistryValue registry.GetKeyUIntValueTypeFunc
+	getRegistryValue registry2.GetKeyUIntValueTypeFunc
 }
 
 var _ (providers.Provider[Container]) = (*provider)(nil)
 
 func CreateFirewallProvider() providers.Provider[Container] {
 	return &provider{
-		getRegistryValue: registry.GetKeyUIntValue,
+		getRegistryValue: registry2.GetKeyUIntValue,
 	}
 }
 
@@ -82,7 +82,7 @@ func (fp *provider) getFirewallProfiles() ([]Profile, error) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			value, err := fp.getRegistryValue(registry.LocalMachineKey, firewallProfileKey, pk, enabledValueName)
+			value, err := fp.getRegistryValue(registry2.LocalMachineKey, firewallProfileKey, pk, enabledValueName)
 
 			if err == nil {
 				profilesCh <- Profile{Name: pt, Enabled: int(value)}

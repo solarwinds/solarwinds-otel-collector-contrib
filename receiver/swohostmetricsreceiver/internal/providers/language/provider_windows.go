@@ -16,9 +16,9 @@ package language
 
 import (
 	"fmt"
+	registry2 "github.com/solarwinds/solarwinds-otel-collector-contrib/tools/registry"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/registry"
 	"go.uber.org/zap"
 )
 
@@ -30,7 +30,7 @@ const (
 
 type provider struct {
 	displayNamesMap   map[string]string
-	getRegistryValues registry.GetKeyValuesTypeFunc
+	getRegistryValues registry2.GetKeyValuesTypeFunc
 	lcidProvider      LCIDProvider
 }
 
@@ -39,7 +39,7 @@ var _ providers.Provider[Language] = (*provider)(nil)
 func CreateLanguageProvider() providers.Provider[Language] {
 	return &provider{
 		displayNamesMap:   getDisplayLanguages(),
-		getRegistryValues: registry.GetKeyValues,
+		getRegistryValues: registry2.GetKeyValues,
 		lcidProvider:      NewWindowsLCIDProvider(),
 	}
 }
@@ -63,7 +63,7 @@ func (p *provider) Provide() <-chan Language {
 
 func (p *provider) getLanguageInfo() (*Language, error) {
 	names := []string{localeValueName}
-	values, err := p.getRegistryValues(registry.CurrentUserKey, controlPanelKey, internationalKey, names)
+	values, err := p.getRegistryValues(registry2.CurrentUserKey, controlPanelKey, internationalKey, names)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get current user locale info: %w", err)
 	}

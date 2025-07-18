@@ -81,3 +81,4 @@ require (
 replace github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version => ../../pkg/version
 replace github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil => ../../pkg/testutil
 replace github.com/solarwinds/solarwinds-otel-collector-contrib/tools/wmi => ../../tools/wmi
+replace github.com/solarwinds/solarwinds-otel-collector-contrib/tools/registry => ../../tools/registry
