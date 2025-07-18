@@ -16,15 +16,11 @@ package model
 
 import (
 	"fmt"
-	wmi2 "github.com/solarwinds/solarwinds-otel-collector-contrib/tools/wmi"
 	"sync"
 
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/wmi"
-
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/synchronization"
-
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
-
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/synchronization"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/tools/wmi"
 	"go.uber.org/zap"
 )
 
@@ -38,7 +34,7 @@ type bios struct {
 }
 
 type provider struct {
-	wmi wmi2.Executor
+	wmi wmi.Executor
 }
 
 // Win32_ComputerSystem represents actual Computer System WMI Object
@@ -115,7 +111,7 @@ func (p *provider) loadComputerSystem() chan computerSystem {
 	ch := make(chan computerSystem)
 	go func() {
 		defer close(ch)
-		result, err := wmi2.QuerySingleResult[Win32_ComputerSystem](p.wmi)
+		result, err := wmi.QuerySingleResult[Win32_ComputerSystem](p.wmi)
 		if err == nil {
 			ch <- computerSystem{Model: result.Model, Manufacturer: result.Manufacturer}
 		}
@@ -127,7 +123,7 @@ func (p *provider) loadBios() chan bios {
 	ch := make(chan bios)
 	go func() {
 		defer close(ch)
-		result, err := wmi2.QuerySingleResult[Win32_BIOS](p.wmi)
+		result, err := wmi.QuerySingleResult[Win32_BIOS](p.wmi)
 		if err == nil {
 			ch <- bios{SerialNumber: result.SerialNumber}
 		}

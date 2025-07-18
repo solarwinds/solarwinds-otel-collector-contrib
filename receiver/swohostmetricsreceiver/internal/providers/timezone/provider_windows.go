@@ -16,12 +16,11 @@ package timezone
 
 import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/wmi"
-	wmi2 "github.com/solarwinds/solarwinds-otel-collector-contrib/tools/wmi"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/tools/wmi"
 )
 
 type provider struct {
-	wmi wmi2.Executor
+	wmi wmi.Executor
 }
 
 var _ providers.Provider[TimeZone] = (*provider)(nil)
@@ -45,7 +44,7 @@ func (tp *provider) Provide() <-chan TimeZone {
 	ch := make(chan TimeZone)
 	go func() {
 		defer close(ch)
-		result, err := wmi2.QuerySingleResult[Win32_TimeZone](tp.wmi)
+		result, err := wmi.QuerySingleResult[Win32_TimeZone](tp.wmi)
 		if err == nil {
 			ch <- TimeZone{Bias: int(result.Bias), StandardName: result.StandardName, Caption: result.Caption}
 		}
