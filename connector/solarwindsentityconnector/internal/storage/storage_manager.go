@@ -17,10 +17,11 @@ package storage
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal"
 	"go.uber.org/zap"
-	"time"
 )
 
 type Manager struct {

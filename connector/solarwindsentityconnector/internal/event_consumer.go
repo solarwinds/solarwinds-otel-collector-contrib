@@ -16,6 +16,7 @@ package internal
 
 import (
 	"context"
+
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/pdata/plog"
 )

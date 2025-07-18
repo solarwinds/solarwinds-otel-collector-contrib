@@ -16,14 +16,15 @@ package storage
 
 import (
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.uber.org/zap"
-	"testing"
-	"time"
 )
 
 var ttl = 1000 * time.Millisecond

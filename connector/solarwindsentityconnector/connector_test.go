@@ -17,11 +17,12 @@ package solarwindsentityconnector
 import (
 	"context"
 	"fmt"
-	"go.opentelemetry.io/collector/pdata/plog"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
+
+	"go.opentelemetry.io/collector/pdata/plog"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest/plogtest"

@@ -16,9 +16,10 @@ package solarwindsentityconnector
 
 import (
 	"fmt"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"os"
 	"testing"
+
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 
 	"gopkg.in/yaml.v3"
 )

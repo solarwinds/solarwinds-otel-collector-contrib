@@ -17,8 +17,9 @@ package config
 import (
 	"errors"
 	"fmt"
-	"go.opentelemetry.io/collector/confmap/xconfmap"
 	"time"
+
+	"go.opentelemetry.io/collector/confmap/xconfmap"
 )
 
 const (
