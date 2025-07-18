@@ -83,7 +83,7 @@ func (e *Event) validateActionAndContext() error {
 }
 
 type RelationshipEvent struct {
-	Event
+	Event       `mapstructure:",squash"`
 	Type        string   `mapstructure:"type"`
 	Source      string   `mapstructure:"source_entity"`
 	Destination string   `mapstructure:"destination_entity"`
@@ -112,7 +112,7 @@ func (e *RelationshipEvent) Validate() error {
 }
 
 type EntityEvent struct {
-	Event
+	Event  `mapstructure:",squash"`
 	Entity string `mapstructure:"entity"`
 }
 
