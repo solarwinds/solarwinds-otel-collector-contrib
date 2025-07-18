@@ -16,8 +16,9 @@ package installedupdates
 
 import (
 	"fmt"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/tools/wmi"
 	"testing"
+
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/tools/wmi"
 
 	"github.com/stretchr/testify/require"
 )

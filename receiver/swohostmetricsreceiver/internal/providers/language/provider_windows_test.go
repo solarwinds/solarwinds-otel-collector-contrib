@@ -16,8 +16,9 @@ package language
 
 import (
 	"fmt"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/tools/registry"
 	"testing"
+
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/tools/registry"
 
 	"github.com/stretchr/testify/assert"
 )
