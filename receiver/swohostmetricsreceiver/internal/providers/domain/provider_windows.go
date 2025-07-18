@@ -17,10 +17,11 @@ package domain
 import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/wmi"
+	wmi2 "github.com/solarwinds/solarwinds-otel-collector-contrib/tools/wmi"
 )
 
 type provider struct {
-	wmi wmi.Executor
+	wmi wmi2.Executor
 }
 
 var _ providers.Provider[Domain] = (*provider)(nil)
@@ -40,7 +41,7 @@ func (dp *provider) Provide() <-chan Domain {
 	ch := make(chan Domain)
 	go func() {
 		defer close(ch)
-		result, err := wmi.QuerySingleResult[Win32_ComputerSystem](dp.wmi)
+		result, err := wmi2.QuerySingleResult[Win32_ComputerSystem](dp.wmi)
 		if err == nil {
 			ch <- Domain{
 				Domain:     result.Domain,

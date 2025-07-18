@@ -15,6 +15,7 @@
 package cpu
 
 import (
+	wmi2 "github.com/solarwinds/solarwinds-otel-collector-contrib/tools/wmi"
 	"strings"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/wmi"
@@ -23,7 +24,7 @@ import (
 )
 
 type provider struct {
-	wmi wmi.Executor
+	wmi wmi2.Executor
 }
 
 var _ providers.Provider[Container] = (*provider)(nil)
@@ -39,7 +40,7 @@ func (p *provider) Provide() <-chan Container {
 	ch := make(chan Container)
 	go func() {
 		defer close(ch)
-		results, err := wmi.QueryResult[[]Win32_Processor](p.wmi)
+		results, err := wmi2.QueryResult[[]Win32_Processor](p.wmi)
 		if err != nil {
 			ch <- Container{Error: err}
 			return

@@ -16,6 +16,7 @@ package installedupdates
 
 import (
 	"fmt"
+	wmi2 "github.com/solarwinds/solarwinds-otel-collector-contrib/tools/wmi"
 	"strings"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/wmi"
@@ -23,7 +24,7 @@ import (
 )
 
 type windowsProvider struct {
-	wmi wmi.Executor
+	wmi wmi2.Executor
 }
 
 var _ (Provider) = (*windowsProvider)(nil)
@@ -35,7 +36,7 @@ func NewProvider() Provider {
 }
 
 func createWindowsProvider(
-	wmi wmi.Executor,
+	wmi wmi2.Executor,
 ) Provider {
 	return &windowsProvider{
 		wmi: wmi,
@@ -53,7 +54,7 @@ type Win32_QuickFixEngineering struct {
 }
 
 func (provider *windowsProvider) GetUpdates() ([]InstalledUpdate, error) {
-	result, err := wmi.QueryResult[[]Win32_QuickFixEngineering](provider.wmi)
+	result, err := wmi2.QueryResult[[]Win32_QuickFixEngineering](provider.wmi)
 	if err != nil {
 		message := "Invalid installed updates output."
 		zap.L().Error(message, zap.Error(err))
