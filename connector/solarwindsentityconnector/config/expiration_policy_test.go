@@ -15,9 +15,10 @@
 package config
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestParseReturnsWithoutErrors(t *testing.T) {
@@ -26,9 +27,9 @@ func TestParseReturnsWithoutErrors(t *testing.T) {
 	expirationPolicy := ExpirationPolicy{
 		Enabled:  true,
 		Interval: "5s",
-		CacheConfiguration: &CacheConfiguration{
-			MaxCapacity:        &capacity,
-			TTLCleanupInterval: &cleanupInterval,
+		CacheConfiguration: CacheConfiguration{
+			MaxCapacity:        capacity,
+			TTLCleanupInterval: cleanupInterval,
 		},
 	}
 
@@ -38,25 +39,26 @@ func TestParseReturnsWithoutErrors(t *testing.T) {
 		TTLCleanupIntervalSeconds: 10 * time.Second,
 		MaxCapacity:               10,
 	}
-	result, err := expirationPolicy.Parse()
+	result, err := expirationPolicy.Unmarshal()
 	assert.Nil(t, err)
 	assert.Equal(t, result, &expectedExpirationPolicy)
 }
 
-func TestParseWhenDisabledReturnsError(t *testing.T) {
+func TestParseWhenDisabledReturnsValidResult(t *testing.T) {
 	capacity := int64(10)
 	cleanupInterval := "5s"
 	expirationPolicy := ExpirationPolicy{
 		Enabled:  false,
 		Interval: "1m",
-		CacheConfiguration: &CacheConfiguration{
-			MaxCapacity:        &capacity,
-			TTLCleanupInterval: &cleanupInterval,
+		CacheConfiguration: CacheConfiguration{
+			MaxCapacity:        capacity,
+			TTLCleanupInterval: cleanupInterval,
 		},
 	}
 
-	_, err := expirationPolicy.Parse()
-	assert.ErrorContains(t, err, "expiration policy is not enabled")
+	result, err := expirationPolicy.Unmarshal()
+	assert.NoError(t, err)
+	assert.False(t, result.Enabled)
 }
 
 func TestParseWithEmptyIntervalReturnsError(t *testing.T) {
@@ -65,13 +67,13 @@ func TestParseWithEmptyIntervalReturnsError(t *testing.T) {
 	expirationPolicy := ExpirationPolicy{
 		Enabled:  true,
 		Interval: "",
-		CacheConfiguration: &CacheConfiguration{
-			MaxCapacity:        &capacity,
-			TTLCleanupInterval: &cleanupInterval,
+		CacheConfiguration: CacheConfiguration{
+			MaxCapacity:        capacity,
+			TTLCleanupInterval: cleanupInterval,
 		},
 	}
 
-	_, err := expirationPolicy.Parse()
+	_, err := expirationPolicy.Unmarshal()
 	assert.ErrorContains(t, err, "expiration interval is not set")
 }
 
@@ -81,14 +83,14 @@ func TestParseWithEmptyCleanupIntervalReturnsError(t *testing.T) {
 	expirationPolicy := ExpirationPolicy{
 		Enabled:  true,
 		Interval: "5s",
-		CacheConfiguration: &CacheConfiguration{
-			MaxCapacity:        &capacity,
-			TTLCleanupInterval: &cleanupInterval,
+		CacheConfiguration: CacheConfiguration{
+			MaxCapacity:        capacity,
+			TTLCleanupInterval: cleanupInterval,
 		},
 	}
 
-	_, err := expirationPolicy.Parse()
-	assert.ErrorContains(t, err, "invalid TTL cleanup interval format")
+	_, err := expirationPolicy.Unmarshal()
+	assert.ErrorContains(t, err, "cache_configuration::ttl_cleanup_interval: invalid format")
 }
 
 func TestParseWithZeroCleanupIntervalReturnsError(t *testing.T) {
@@ -97,14 +99,14 @@ func TestParseWithZeroCleanupIntervalReturnsError(t *testing.T) {
 	expirationPolicy := ExpirationPolicy{
 		Enabled:  true,
 		Interval: "5s",
-		CacheConfiguration: &CacheConfiguration{
-			MaxCapacity:        &capacity,
-			TTLCleanupInterval: &cleanupInterval,
+		CacheConfiguration: CacheConfiguration{
+			MaxCapacity:        capacity,
+			TTLCleanupInterval: cleanupInterval,
 		},
 	}
 
-	_, err := expirationPolicy.Parse()
-	assert.ErrorContains(t, err, "ttl cleanup interval must be at least 1 second")
+	_, err := expirationPolicy.Unmarshal()
+	assert.ErrorContains(t, err, "cache_configuration::ttl_cleanup_interval must be at least 1 second")
 }
 
 func TestParseMaxCapacityLessThenZeroReturnError(t *testing.T) {
@@ -113,12 +115,12 @@ func TestParseMaxCapacityLessThenZeroReturnError(t *testing.T) {
 	expirationPolicy := ExpirationPolicy{
 		Enabled:  true,
 		Interval: "5s",
-		CacheConfiguration: &CacheConfiguration{
-			MaxCapacity:        &capacity,
-			TTLCleanupInterval: &cleanupInterval,
+		CacheConfiguration: CacheConfiguration{
+			MaxCapacity:        capacity,
+			TTLCleanupInterval: cleanupInterval,
 		},
 	}
 
-	_, err := expirationPolicy.Parse()
-	assert.ErrorContains(t, err, "max capacity must be greater than zero")
+	_, err := expirationPolicy.Unmarshal()
+	assert.ErrorContains(t, err, "cache_configuration::max_capacity must be greater than zero")
 }

@@ -17,6 +17,7 @@ package internal
 import (
 	"context"
 	"fmt"
+
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottlmetric"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
@@ -94,10 +95,10 @@ func (e *EventDetector) collectEvents(attrs pcommon.Map, ee []*config.EntityEven
 
 func (e *EventDetector) createEntityEvent(resourceAttrs pcommon.Map, event *config.EntityEvent) (Entity, error) {
 	attrs := pcommon.NewMap()
-	entity := e.entities[event.Type]
+	entity := e.entities[event.Entity]
 	err := setIdAttributes(attrs, entity.IDs, resourceAttrs, entityIds)
 	if err != nil {
-		return Entity{}, fmt.Errorf("failed to set ID attributes for entity %s: %w", entity.Type, err)
+		return Entity{}, fmt.Errorf("failed to set ID attributes for entity %s: %w", entity.Entity, err)
 	}
 	idsValue, _ := attrs.Get(entityIds)
 	ids := idsValue.Map()
@@ -119,7 +120,7 @@ func (e *EventDetector) createEntityEvent(resourceAttrs pcommon.Map, event *conf
 
 	return Entity{
 		Action:     action,
-		Type:       entity.Type,
+		Type:       entity.Entity,
 		IDs:        ids,
 		Attributes: entityAttrs,
 	}, nil
@@ -139,7 +140,7 @@ func (e *EventDetector) createRelationshipEvent(resourceAttrs pcommon.Map, relat
 	lr := plog.NewLogRecord()
 	attrs := lr.Attributes()
 
-	if source.Type == dest.Type {
+	if source.Entity == dest.Entity {
 		if err := e.setAttributesForSameTypeRelationships(attrs, source, dest, resourceAttrs); err != nil {
 			return nil, err
 		}

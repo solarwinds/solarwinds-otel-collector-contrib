@@ -16,6 +16,7 @@ package internal
 
 import (
 	"fmt"
+
 	"go.opentelemetry.io/collector/pdata/plog"
 )
 

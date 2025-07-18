@@ -12,21 +12,40 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package solarwindsentityconnector
+package config
 
 import (
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"go.opentelemetry.io/collector/component"
 )
 
 type Config struct {
-	Schema     config.Schema           `mapstructure:"schema"`
-	Expiration config.ExpirationPolicy `mapstructure:"expiration_policy" yaml:"expiration_policy"`
+	Schema     Schema           `mapstructure:"schema"  yaml:"schema"`
+	Expiration ExpirationPolicy `mapstructure:"expiration_policy" yaml:"expiration_policy"`
 
 	SourcePrefix      string `mapstructure:"source_prefix" yaml:"source_prefix"`
 	DestinationPrefix string `mapstructure:"destination_prefix" yaml:"destination_prefix"`
 }
 
 func NewDefaultConfig() component.Config {
-	return &Config{}
+	return &Config{
+		Expiration: ExpirationPolicy{
+			Enabled:  true,
+			Interval: defaultInterval.String(),
+			CacheConfiguration: CacheConfiguration{
+				TTLCleanupInterval: defaultTTLCleanupInterval.String(),
+				MaxCapacity:        defaultMaxCapacity,
+			},
+		},
+	}
+}
+
+func (c *Config) EvaluateWarnings() []string {
+	var warnings = make([]string, 0)
+	if len(c.Schema.Entities) == 0 {
+		warnings = append(warnings, "No entities defined in schema")
+	}
+	if len(c.Schema.Events.Entities) == 0 && len(c.Schema.Events.Relationships) == 0 {
+		warnings = append(warnings, "No events defined in schema, at least one entity or relationship event is required")
+	}
+	return warnings
 }

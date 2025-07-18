@@ -18,24 +18,52 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
+	"go.opentelemetry.io/collector/confmap/xconfmap"
 )
 
 const (
+	defaultInterval           = 5 * time.Minute
 	defaultTTLCleanupInterval = 5 * time.Second
-	defaultMaxCapacity        = int64(1_000_000) // 1 million items in the cache
+	defaultMaxCapacity        = 1_000_000 // 1 million items in the cache
 )
 
 type ExpirationPolicy struct {
 	Enabled bool `mapstructure:"enabled" yaml:"enabled"`
 	// TTL of relationships in the format accepted by time.ParseDuration, e.g. "5s", "1m", etc.
-	Interval           string              `mapstructure:"interval" yaml:"interval"`
-	CacheConfiguration *CacheConfiguration `mapstructure:"cache_configuration" yaml:"cache_configuration"`
+	Interval           string             `mapstructure:"interval" yaml:"interval"`
+	CacheConfiguration CacheConfiguration `mapstructure:"cache_configuration" yaml:"cache_configuration"`
 }
 
+// By implementing the xconfmap.Validator, we ensure it's validated by the collector automatically
+var _ xconfmap.Validator = (*ExpirationPolicy)(nil)
+
 type CacheConfiguration struct {
-	MaxCapacity *int64 `mapstructure:"max_capacity" yaml:"max_capacity"`
+	MaxCapacity int64 `mapstructure:"max_capacity" yaml:"max_capacity"`
 	// In the format accepted by time.ParseDuration, e.g. "5s", "1m", etc. Granularity is 1 second and it's also a minimal value.
-	TTLCleanupInterval *string `mapstructure:"ttl_cleanup_interval" yaml:"ttl_cleanup_interval"`
+	TTLCleanupInterval string `mapstructure:"ttl_cleanup_interval" yaml:"ttl_cleanup_interval"`
+}
+
+func (e *ExpirationPolicy) Validate() error {
+	if !e.Enabled {
+		return nil
+	}
+
+	var errs error
+
+	if _, err := e.getInterval(); err != nil {
+		errs = errors.Join(errs, err)
+	}
+
+	if _, err := e.getMaxCapacity(); err != nil {
+		errs = errors.Join(errs, err)
+	}
+
+	if _, err := e.getTTLCleanupInterval(); err != nil {
+		errs = errors.Join(errs, err)
+	}
+
+	return errs
 }
 
 type ExpirationSettings struct {
@@ -45,17 +73,18 @@ type ExpirationSettings struct {
 	MaxCapacity               int64
 }
 
-func (e *ExpirationPolicy) Parse() (*ExpirationSettings, error) {
+func (e *ExpirationPolicy) Unmarshal() (*ExpirationSettings, error) {
 	if !e.Enabled {
-		return nil, fmt.Errorf("expiration policy is not enabled")
+		return &ExpirationSettings{Enabled: false}, nil
 	}
-
-	var interval time.Duration
 
 	if e.Interval == "" {
 		return nil, fmt.Errorf("expiration interval is not set")
-	} else {
-		interval, _ = time.ParseDuration(e.Interval)
+	}
+
+	interval, err := e.getInterval()
+	if err != nil {
+		return nil, err
 	}
 
 	maxCapacity, err := e.getMaxCapacity()
@@ -75,30 +104,31 @@ func (e *ExpirationPolicy) Parse() (*ExpirationSettings, error) {
 	}, nil
 }
 
-func (e *ExpirationPolicy) getMaxCapacity() (int64, error) {
-	if e.CacheConfiguration != nil && e.CacheConfiguration.MaxCapacity != nil {
-		if *e.CacheConfiguration.MaxCapacity <= 0 {
-			return 0, errors.New("max capacity must be greater than zero")
-		}
-
-		return *e.CacheConfiguration.MaxCapacity, nil
+func (e *ExpirationPolicy) getInterval() (time.Duration, error) {
+	interval, err := time.ParseDuration(e.Interval)
+	if err != nil {
+		return time.Duration(0), fmt.Errorf("interval must be a valid duration (e.g., '5m', '1h'): %w", err)
 	}
 
-	return defaultMaxCapacity, nil
+	return interval, nil
+}
+
+func (e *ExpirationPolicy) getMaxCapacity() (int64, error) {
+	if e.CacheConfiguration.MaxCapacity <= 0 {
+		return 0, errors.New("cache_configuration::max_capacity must be greater than zero")
+	}
+
+	return e.CacheConfiguration.MaxCapacity, nil
 }
 
 func (e *ExpirationPolicy) getTTLCleanupInterval() (time.Duration, error) {
-	if e.CacheConfiguration != nil && e.CacheConfiguration.TTLCleanupInterval != nil {
-		parsedCleanupInterval, err := time.ParseDuration(*e.CacheConfiguration.TTLCleanupInterval)
-		if err != nil {
-			return time.Duration(0), errors.New("invalid TTL cleanup interval format")
-		}
-		if parsedCleanupInterval < time.Second {
-			return time.Duration(0), errors.New("ttl cleanup interval must be at least 1 second")
-		}
-
-		return parsedCleanupInterval, nil
+	parsedCleanupInterval, err := time.ParseDuration(e.CacheConfiguration.TTLCleanupInterval)
+	if err != nil {
+		return time.Duration(0), errors.New("cache_configuration::ttl_cleanup_interval: invalid format")
+	}
+	if parsedCleanupInterval < time.Second {
+		return time.Duration(0), errors.New("cache_configuration::ttl_cleanup_interval must be at least 1 second")
 	}
 
-	return defaultTTLCleanupInterval, nil
+	return parsedCleanupInterval, nil
 }

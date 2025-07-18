@@ -2,20 +2,20 @@ source_prefix: "src."
 destination_prefix: "dst."
 schema:
   entities:
-    - type: "Kubernetes Node"
-      ids: ["k8s.node.id"]
+    - entity: "Kubernetes Node"
+      id: ["k8s.node.id"]
       attributes: []
   events:
     relationships:
       - type: "TestRelationshipType"
-        source: "Kubernetes Node"
-        destination: "Kubernetes Node"
+        source_entity: "Kubernetes Node"
+        destination_entity: "Kubernetes Node"
         attributes: []
         conditions: ['instrumentation_scope.name == "NodeScope" and resource.attributes["service.name"] == "NodeService" and metric.unit == "bytes"']
         context: "metric"
         action: "update"
     entities:
-      - type: "Kubernetes Node"
+      - entity: "Kubernetes Node"
         conditions: ['instrumentation_scope.name == "NodeScope" and resource.attributes["service.name"] == "NodeService" and metric.unit == "bytes"']
         context: "metric"
         action: "update"

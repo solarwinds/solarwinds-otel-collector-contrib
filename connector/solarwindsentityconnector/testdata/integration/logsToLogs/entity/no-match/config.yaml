@@ -1,11 +1,11 @@
 schema:
   entities:
-    - type: "Snowflake"
-      ids: ["snowflake.id"]
+    - entity: "Snowflake"
+      id: ["snowflake.id"]
       attributes: ["attr1"]
   events:
     entities:
-      - type: "Snowflake"
+      - entity: "Snowflake"
         conditions: []
         context: "log"
         action: "update"

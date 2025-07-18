@@ -8,15 +8,15 @@ source_prefix: "src."
 destination_prefix: "dst."
 schema:
   entities:
-    - type: "kubernetes.cluster"
-      ids: ["k8s.cluster.id", "k8s.cluster.name"]
+    - entity: "kubernetes.cluster"
+      id: ["k8s.cluster.id", "k8s.cluster.name"]
       attributes: ["k8s.cluster.port"]
-    - type: "kubernetes.node"
-      ids: ["k8s.node.id", "k8s.node.name"]
+    - entity: "kubernetes.node"
+      id: ["k8s.node.id", "k8s.node.name"]
       attributes: ["k8s.node.ip"]
   events:
     entities:
-      - type: "kubernetes.cluster"
+      - entity: "kubernetes.cluster"
         conditions: ["true"]
         context: "log"
         action: "update"
@@ -36,28 +36,28 @@ schema:
       - context: "log"
         conditions: ["true"]
         type: "test"
-        source: "kubernetes.cluster"
-        destination: "kubernetes.node"
+        source_entity: "kubernetes.cluster"
+        destination_entity: "kubernetes.node"
         action: "update"
         attributes: []
       - context: "metric"
         conditions: ["true"]
         type: "test"
-        source: "kubernetes.cluster"
-        destination: "kubernetes.node"
+        source_entity: "kubernetes.cluster"
+        destination_entity: "kubernetes.node"
         action: "update"
         attributes: []
       - context: "log"
         conditions: ["true"]
         type: "test"
-        source: "kubernetes.node"
-        destination: "kubernetes.node"
+        source_entity: "kubernetes.node"
+        destination_entity: "kubernetes.node"
         action: "update"
         attributes: []
       - context: "metric"
         conditions: ["true"]
         type: "test"
-        source: "kubernetes.node"
-        destination: "kubernetes.node"
+        source_entity: "kubernetes.node"
+        destination_entity: "kubernetes.node"
         action: "update"
         attributes: []

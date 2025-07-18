@@ -15,9 +15,10 @@
 package internal
 
 import (
+	"time"
+
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
-	"time"
 )
 
 type Entity struct {

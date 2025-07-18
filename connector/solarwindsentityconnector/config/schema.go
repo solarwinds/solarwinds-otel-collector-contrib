@@ -15,24 +15,70 @@
 package config
 
 import (
+	"errors"
+	"fmt"
+
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/confmap/xconfmap"
 )
 
 type Schema struct {
-	Entities []Entity `mapstructure:"entities"`
-	Events   Events   `mapstructure:"events"`
+	Entities []Entity `mapstructure:"entities" yaml:"entities"`
+	Events   Events   `mapstructure:"events" yaml:"events"`
 }
 
-func (s *Schema) NewEntities() map[string]Entity {
+// By implementing the xconfmap.Validator, we ensure it's validated by the collector automatically
+var _ xconfmap.Validator = (*Schema)(nil)
+
+func (s *Schema) Validate() error {
+	var errs error
+
+	entityTypes := make(map[string]bool)
+	for _, entity := range s.Entities {
+		entityTypes[entity.Entity] = true
+	}
+
+	for i, e := range s.Events.Entities {
+		if e.Entity != "" && !entityTypes[e.Entity] {
+			errs = errors.Join(errs, fmt.Errorf("events::entities::%d::enity '%s' must be defined in schema::entities", i, e.Entity))
+		}
+	}
+
+	for i, r := range s.Events.Relationships {
+		if r.Source != "" && !entityTypes[r.Source] {
+			errs = errors.Join(errs, fmt.Errorf("events::relationships::%d::source_entity '%s' must be defined in schema::entities", i, r.Source))
+		}
+
+		if r.Destination != "" && !entityTypes[r.Destination] {
+			errs = errors.Join(errs, fmt.Errorf("events::relationships::%d::destination_entity '%s' must be defined in schema::entities", i, r.Destination))
+		}
+	}
+
+	return errs
+}
+
+type ParsedSchema struct {
+	Entities map[string]Entity
+	Events   ParsedEvents
+}
+
+func (s *Schema) Unmarshal(settings component.TelemetrySettings) (*ParsedSchema, error) {
+	events, err := createParsedEvents(*s, settings)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create events: %w", err)
+	}
+
+	return &ParsedSchema{
+		Entities: s.newEntities(),
+		Events:   events,
+	}, nil
+}
+
+func (s *Schema) newEntities() map[string]Entity {
 	entities := make(map[string]Entity, len(s.Entities))
 	for _, entity := range s.Entities {
-		entities[entity.Type] = entity
+		entities[entity.Entity] = entity
 	}
 
 	return entities
-}
-
-func (s *Schema) NewEvents(settings component.TelemetrySettings) ParsedEvents {
-	NewEvents := CreateParsedEvents(*s, settings)
-	return NewEvents
 }

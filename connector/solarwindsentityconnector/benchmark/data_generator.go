@@ -18,9 +18,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
+
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottlmetric"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/pdata/pmetric"
@@ -32,7 +33,7 @@ import (
 // The count parameter specifies the total number of metrics to generate, including both valid and invalid metrics.
 // The invalidRatio parameter defines the proportion of invalid metrics.
 // The multiple parameter determines whether to return a multiple metric instead of single metrics.
-func generateTestMetrics(b *testing.B, cfg *solarwindsentityconnector.Config, count int, invalidRatio float32, multiple bool) []pmetric.Metrics {
+func generateTestMetrics(b *testing.B, cfg *config.Config, count int, invalidRatio float32, multiple bool) []pmetric.Metrics {
 	b.Helper()
 
 	var finalMetrics []pmetric.Metrics
@@ -51,7 +52,7 @@ func generateTestMetrics(b *testing.B, cfg *solarwindsentityconnector.Config, co
 }
 
 // Build valid metrics based on the provided count and configuration.
-func buildValidMetrics(b *testing.B, count int, cfg *solarwindsentityconnector.Config, multiple bool) []pmetric.Metrics {
+func buildValidMetrics(b *testing.B, count int, cfg *config.Config, multiple bool) []pmetric.Metrics {
 	b.Helper()
 
 	var outputMetrics []pmetric.Metrics
@@ -81,7 +82,7 @@ func buildInvalidMetric(b *testing.B, count int) []pmetric.Metrics {
 }
 
 // Build metrics for each entity and relationship from the configuration.
-func buildConfiguredMetrics(b *testing.B, cfg *solarwindsentityconnector.Config) []pmetric.Metrics {
+func buildConfiguredMetrics(b *testing.B, cfg *config.Config) []pmetric.Metrics {
 	b.Helper()
 
 	var configuredMetrics []pmetric.Metrics
@@ -89,7 +90,7 @@ func buildConfiguredMetrics(b *testing.B, cfg *solarwindsentityconnector.Config)
 		if e.Context != ottlmetric.ContextName {
 			continue
 		}
-		metric := buildEntityMetric(b, cfg, e.Type)
+		metric := buildEntityMetric(b, cfg, e.Entity)
 		configuredMetrics = append(configuredMetrics, metric)
 	}
 
@@ -149,14 +150,14 @@ func buildEmptyMetric(b *testing.B) pmetric.Metrics {
 }
 
 // Build metric for a specific entity.
-func buildEntityMetric(b *testing.B, cfg *solarwindsentityconnector.Config, entityType string) pmetric.Metrics {
+func buildEntityMetric(b *testing.B, cfg *config.Config, entityType string) pmetric.Metrics {
 	b.Helper()
 
 	metric := buildEmptyMetric(b)
 	attrs := metric.ResourceMetrics().At(0).Resource().Attributes()
 
 	for _, ent := range cfg.Schema.Entities {
-		if ent.Type != entityType {
+		if ent.Entity != entityType {
 			continue
 		}
 		for _, id := range ent.IDs {
@@ -169,20 +170,20 @@ func buildEntityMetric(b *testing.B, cfg *solarwindsentityconnector.Config, enti
 }
 
 // Build metric for a specific relationship type between source and destination entities.
-func buildRelationshipMetric(b *testing.B, cfg *solarwindsentityconnector.Config, relType, sourceType, destType string) pmetric.Metrics {
+func buildRelationshipMetric(b *testing.B, cfg *config.Config, relType, sourceType, destType string) pmetric.Metrics {
 	b.Helper()
 
 	metric := buildEmptyMetric(b)
 	attrs := metric.ResourceMetrics().At(0).Resource().Attributes()
 
 	for _, ent := range cfg.Schema.Entities {
-		if ent.Type == sourceType {
+		if ent.Entity == sourceType {
 			for _, id := range ent.IDs {
 				attrs.PutStr("src."+id, "test-value")
 			}
 		}
 
-		if ent.Type == destType {
+		if ent.Entity == destType {
 			for _, id := range ent.IDs {
 				attrs.PutStr("dst."+id, "test-value")
 			}
@@ -198,7 +199,7 @@ func buildRelationshipMetric(b *testing.B, cfg *solarwindsentityconnector.Config
 // The count parameter specifies the total number of logs to generate, including both valid and invalid logs.
 // The invalidRatio parameter defines the proportion of invalid logs.
 // The multiple parameter determines whether to return a multiple log instead of single logs.
-func generateTestLogs(b *testing.B, cfg *solarwindsentityconnector.Config, count int, invalidRatio float32, multiple bool) []plog.Logs {
+func generateTestLogs(b *testing.B, cfg *config.Config, count int, invalidRatio float32, multiple bool) []plog.Logs {
 	b.Helper()
 
 	var finalLogs []plog.Logs
@@ -217,7 +218,7 @@ func generateTestLogs(b *testing.B, cfg *solarwindsentityconnector.Config, count
 }
 
 // Build valid logs based on the provided count and configuration.
-func buildValidLogs(b *testing.B, count int, cfg *solarwindsentityconnector.Config, multiple bool) []plog.Logs {
+func buildValidLogs(b *testing.B, count int, cfg *config.Config, multiple bool) []plog.Logs {
 	b.Helper()
 
 	var outputLogs []plog.Logs
@@ -245,7 +246,7 @@ func buildInvalidLog(b *testing.B, count int) []plog.Logs {
 }
 
 // Build logs for each entity and relationship from the configuration.
-func buildConfiguredLogs(b *testing.B, cfg *solarwindsentityconnector.Config) []plog.Logs {
+func buildConfiguredLogs(b *testing.B, cfg *config.Config) []plog.Logs {
 	b.Helper()
 
 	var configuredLogs []plog.Logs
@@ -253,7 +254,7 @@ func buildConfiguredLogs(b *testing.B, cfg *solarwindsentityconnector.Config) []
 		if e.Context != ottllog.ContextName {
 			continue
 		}
-		log := buildEntityLog(b, cfg, e.Type)
+		log := buildEntityLog(b, cfg, e.Entity)
 		configuredLogs = append(configuredLogs, log)
 	}
 
@@ -308,14 +309,14 @@ func buildEmptyLog(b *testing.B) plog.Logs {
 }
 
 // Build log for a specific entity.
-func buildEntityLog(b *testing.B, cfg *solarwindsentityconnector.Config, entityType string) plog.Logs {
+func buildEntityLog(b *testing.B, cfg *config.Config, entityType string) plog.Logs {
 	b.Helper()
 
 	log := buildEmptyLog(b)
 	attrs := log.ResourceLogs().At(0).Resource().Attributes()
 
 	for _, ent := range cfg.Schema.Entities {
-		if ent.Type != entityType {
+		if ent.Entity != entityType {
 			continue
 		}
 		for _, id := range ent.IDs {
@@ -327,20 +328,20 @@ func buildEntityLog(b *testing.B, cfg *solarwindsentityconnector.Config, entityT
 }
 
 // Build log for a specific relationship type between source and destination entities.
-func buildRelationshipLog(b *testing.B, cfg *solarwindsentityconnector.Config, relType, sourceType, destType string) plog.Logs {
+func buildRelationshipLog(b *testing.B, cfg *config.Config, relType, sourceType, destType string) plog.Logs {
 	b.Helper()
 
 	log := buildEmptyLog(b)
 	attrs := log.ResourceLogs().At(0).Resource().Attributes()
 
 	for _, ent := range cfg.Schema.Entities {
-		if ent.Type == sourceType {
+		if ent.Entity == sourceType {
 			for _, id := range ent.IDs {
 				attrs.PutStr("src."+id, "test-value")
 			}
 		}
 
-		if ent.Type == destType {
+		if ent.Entity == destType {
 			for _, id := range ent.IDs {
 				attrs.PutStr("dst."+id, "test-value")
 			}
