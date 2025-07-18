@@ -18,7 +18,7 @@ import (
 	"fmt"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/registry"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/tools/registry"
 	"go.uber.org/zap"
 )
 

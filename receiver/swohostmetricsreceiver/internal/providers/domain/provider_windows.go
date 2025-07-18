@@ -16,7 +16,7 @@ package domain
 
 import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/wmi"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/tools/wmi"
 )
 
 type provider struct {
