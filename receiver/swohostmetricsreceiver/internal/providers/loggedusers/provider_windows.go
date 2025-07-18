@@ -16,17 +16,17 @@ package loggedusers
 
 import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
-	registry2 "github.com/solarwinds/solarwinds-otel-collector-contrib/tools/registry"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/tools/registry"
 )
 
 type provider struct {
-	getRegistryValues registry2.GetKeyValuesTypeFunc
+	getRegistryValues registry.GetKeyValuesTypeFunc
 }
 
 var _ providers.Provider[Data] = (*provider)(nil)
 
 func CreateProvider() providers.Provider[Data] {
-	return &provider{getRegistryValues: registry2.GetKeyValues}
+	return &provider{getRegistryValues: registry.GetKeyValues}
 }
 
 func (dp *provider) Provide() <-chan Data {
@@ -38,7 +38,7 @@ func (dp *provider) Provide() <-chan Data {
 func (dp *provider) provideInternal(ch chan Data) {
 	defer close(ch)
 	values, err := dp.getRegistryValues(
-		registry2.LocalMachineKey,
+		registry.LocalMachineKey,
 		`SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication`,
 		`LogonUI`,
 		[]string{`LastLoggedOnUser`, `LastLoggedOnDisplayName`},

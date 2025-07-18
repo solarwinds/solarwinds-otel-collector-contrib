@@ -16,13 +16,13 @@ package installedsoftware
 
 import (
 	"fmt"
-	registry2 "github.com/solarwinds/solarwinds-otel-collector-contrib/tools/registry"
 
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/tools/registry"
 	"go.uber.org/zap"
 )
 
 type windowsProvider struct {
-	registryReaders []registry2.Reader
+	registryReaders []registry.Reader
 }
 
 var _ (Provider) = (*windowsProvider)(nil)
@@ -34,37 +34,37 @@ func NewInstalledSoftwareProvider() Provider {
 }
 
 func createInstalledSoftwareProvider(
-	registryReaders []registry2.Reader,
+	registryReaders []registry.Reader,
 ) Provider {
 	return &windowsProvider{
 		registryReaders: registryReaders,
 	}
 }
 
-func createRegistryReaders() []registry2.Reader {
+func createRegistryReaders() []registry.Reader {
 	// 64-bit reader
 	uninstallRootPath64bit := `Software\Microsoft\Windows\CurrentVersion\Uninstall`
-	registryReader64bit, err := registry2.NewReader(registry2.LocalMachineKey, uninstallRootPath64bit)
+	registryReader64bit, err := registry.NewReader(registry.LocalMachineKey, uninstallRootPath64bit)
 	if err != nil {
 		zap.L().Sugar().Errorf(
 			"64-bit registry reader for path '%s' can not be created: %w",
 			uninstallRootPath64bit,
 			err,
 		)
-		return make([]registry2.Reader, 0)
+		return make([]registry.Reader, 0)
 	}
 	// 32-bit reader
 	uninstallRootPath32bit := `Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall`
-	registryReader32bit, err := registry2.NewReader(registry2.LocalMachineKey, uninstallRootPath32bit)
+	registryReader32bit, err := registry.NewReader(registry.LocalMachineKey, uninstallRootPath32bit)
 	if err != nil {
 		zap.L().Sugar().Errorf(
 			"32-bit registry reader for path '%s' can not be created: %w",
 			uninstallRootPath32bit,
 			err,
 		)
-		return make([]registry2.Reader, 0)
+		return make([]registry.Reader, 0)
 	}
-	return []registry2.Reader{registryReader64bit, registryReader32bit}
+	return []registry.Reader{registryReader64bit, registryReader32bit}
 }
 
 // GetSoftware implements Provider.
@@ -87,7 +87,7 @@ func (provider *windowsProvider) GetSoftware() ([]InstalledSoftware, error) {
 	return values, nil
 }
 
-func processRegistryReader(registryReader registry2.Reader) ([]InstalledSoftware, error) {
+func processRegistryReader(registryReader registry.Reader) ([]InstalledSoftware, error) {
 	values := []InstalledSoftware{}
 	uninstallKeys, err := registryReader.GetSubKeys()
 	if err != nil {
