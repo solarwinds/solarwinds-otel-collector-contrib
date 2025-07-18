@@ -363,7 +363,9 @@ func TestRelationshipCacheExpiration(t *testing.T) {
 	for sink.LogRecordCount() < 4 { // 2 entities, 1 relationship and 1 delete event
 		select {
 		case <-timeout:
-			require.Fail(t, "timed out waiting for logs to be processed")
+			assert.Fail(t, "timed out waiting for logs to be processed",
+				"Expected 4 log records, got %d", sink.LogRecordCount())
+			return
 		case <-ticker.C:
 			fmt.Printf("Waiting for logs to be processed...\n")
 		}

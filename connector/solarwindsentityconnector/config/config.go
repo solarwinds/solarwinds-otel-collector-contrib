@@ -19,7 +19,7 @@ import (
 )
 
 type Config struct {
-	Schema     Schema           `mapstructure:"schema"`
+	Schema     Schema           `mapstructure:"schema"  yaml:"schema"`
 	Expiration ExpirationPolicy `mapstructure:"expiration_policy" yaml:"expiration_policy"`
 
 	SourcePrefix      string `mapstructure:"source_prefix" yaml:"source_prefix"`
