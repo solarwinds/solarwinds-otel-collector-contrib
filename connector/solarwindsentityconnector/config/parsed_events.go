@@ -48,11 +48,11 @@ type ParsedEntityEvent[C any] struct {
 // createParsedEvents initializes and returns a ParsedEvents structure containing parsed entity and relationship events.
 // It exist to patse ottl conditions for entity and relationship events at the time of creation, allowing for efficient evaluation later.
 func createParsedEvents(s Schema, settings component.TelemetrySettings) (ParsedEvents, error) {
-	metricParser, err := ottlmetric.NewParser(nil, settings)
+	metricParser, err := ottlmetric.NewParser(ottlfuncs.StandardConverters[ottlmetric.TransformContext](), settings)
 	if err != nil {
 		return ParsedEvents{}, fmt.Errorf("failed to create parser for metric events %w", err)
 	}
-	logParser, err := ottllog.NewParser(nil, settings)
+	logParser, err := ottllog.NewParser(ottlfuncs.StandardConverters[ottllog.TransformContext](), settings)
 	if err != nil {
 		return ParsedEvents{}, fmt.Errorf("failed to create parser for log events %w", err)
 	}
