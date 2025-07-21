@@ -24,7 +24,7 @@ import (
 
 func TestGetEntity_WithoutConfiguredIds(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
-		"testEntityType": {Type: "testEntityType", IDs: []string{}},
+		"testEntityType": {Entity: "testEntityType", IDs: []string{}},
 	}
 	attributeMapper := NewAttributeMapper(entityConfigs)
 	attrs := Attributes{
@@ -37,7 +37,7 @@ func TestGetEntity_WithoutConfiguredIds(t *testing.T) {
 
 func TestGetEntity_EntityNotFound(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
-		"testEntityType": {Type: "testEntityType", IDs: []string{"id"}},
+		"testEntityType": {Entity: "testEntityType", IDs: []string{"id"}},
 	}
 	attributeMapper := NewAttributeMapper(entityConfigs)
 	attrs := Attributes{
@@ -52,7 +52,7 @@ func TestGetEntity_EntityNotFound(t *testing.T) {
 
 func TestGetEntity_CommonContainsRequiredKeysEntityIsCreated(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
-		"testEntityType": {Type: "testEntityType", IDs: []string{"id"}},
+		"testEntityType": {Entity: "testEntityType", IDs: []string{"id"}},
 	}
 	attributeMapper := NewAttributeMapper(entityConfigs)
 	attrs := Attributes{
@@ -70,7 +70,7 @@ func TestGetEntity_CommonContainsRequiredKeysEntityIsCreated(t *testing.T) {
 
 func TestGetEntity_NoEntityCreatedWhenCommonIdIsMissing(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
-		"entityType": {Type: "entityType", IDs: []string{"id"}},
+		"entityType": {Entity: "entityType", IDs: []string{"id"}},
 	}
 	attributeMapper := NewAttributeMapper(entityConfigs)
 	attrs := Attributes{
@@ -87,7 +87,7 @@ func TestGetEntity_NoEntityCreatedWhenCommonIdIsMissing(t *testing.T) {
 
 func TestGetRelationshipEntities_SourceEntityNotFound(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
-		"destType": {Type: "destType", IDs: []string{"id"}},
+		"destType": {Entity: "destType", IDs: []string{"id"}},
 	}
 	attributeMapper := NewAttributeMapper(entityConfigs)
 	attrs := Attributes{
@@ -105,7 +105,7 @@ func TestGetRelationshipEntities_SourceEntityNotFound(t *testing.T) {
 
 func TestGetRelationshipEntities_DestinationEntityNotFound(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
-		"sourceType": {Type: "sourceType", IDs: []string{"id"}},
+		"sourceType": {Entity: "sourceType", IDs: []string{"id"}},
 	}
 	attributeMapper := NewAttributeMapper(entityConfigs)
 	attrs := Attributes{
@@ -123,7 +123,7 @@ func TestGetRelationshipEntities_DestinationEntityNotFound(t *testing.T) {
 
 func TestGetRelationshipEntities_SourceAndCommonAttributesOutputEntities(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
-		"entityType": {Type: "entityType", IDs: []string{"id"}},
+		"entityType": {Entity: "entityType", IDs: []string{"id"}},
 	}
 
 	attributeMapper := NewAttributeMapper(entityConfigs)
@@ -148,7 +148,7 @@ func TestGetRelationshipEntities_SourceAndCommonAttributesOutputEntities(t *test
 
 func TestGetRelationshipEntities_DestinationAndCommonAttributesOutputEntities(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
-		"entityType": {Type: "entityType", IDs: []string{"id"}},
+		"entityType": {Entity: "entityType", IDs: []string{"id"}},
 	}
 	attributeMapper := NewAttributeMapper(entityConfigs)
 	attrs := Attributes{
@@ -172,8 +172,8 @@ func TestGetRelationshipEntities_DestinationAndCommonAttributesOutputEntities(t 
 
 func TestGetRelationshipEntities_SourceAndDestinationAttributesOutputEntities(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
-		"sourceType": {Type: "sourceType", IDs: []string{"id"}},
-		"destType":   {Type: "destType", IDs: []string{"id"}},
+		"sourceType": {Entity: "sourceType", IDs: []string{"id"}},
+		"destType":   {Entity: "destType", IDs: []string{"id"}},
 	}
 	attributeMapper := NewAttributeMapper(entityConfigs)
 	attrs := Attributes{
@@ -197,8 +197,8 @@ func TestGetRelationshipEntities_SourceAndDestinationAttributesOutputEntities(t 
 
 func TestGetRelationshipEntities_AttributesSubsetUsedForEntities(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
-		"sourceType": {Type: "sourceType", IDs: []string{"id"}},
-		"destType":   {Type: "destType", IDs: []string{"id"}},
+		"sourceType": {Entity: "sourceType", IDs: []string{"id"}},
+		"destType":   {Entity: "destType", IDs: []string{"id"}},
 	}
 	attributeMapper := NewAttributeMapper(entityConfigs)
 	attrs := Attributes{
@@ -228,8 +228,8 @@ func TestGetRelationshipEntities_AttributesSubsetUsedForEntities(t *testing.T) {
 
 func TestGetRelationshipEntities_NoAttributesForSourceAndDestination(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
-		"sourceType": {Type: "sourceType", IDs: []string{"id"}},
-		"destType":   {Type: "destType", IDs: []string{"id"}},
+		"sourceType": {Entity: "sourceType", IDs: []string{"id"}},
+		"destType":   {Entity: "destType", IDs: []string{"id"}},
 	}
 	attributeMapper := NewAttributeMapper(entityConfigs)
 	attrs := Attributes{
@@ -245,8 +245,8 @@ func TestGetRelationshipEntities_NoAttributesForSourceAndDestination(t *testing.
 
 func TestGetRelationshipEntities_WithoutSourceIds(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
-		"sourceType": {Type: "sourceType", IDs: []string{}},
-		"destType":   {Type: "destType", IDs: []string{"id"}},
+		"sourceType": {Entity: "sourceType", IDs: []string{}},
+		"destType":   {Entity: "destType", IDs: []string{"id"}},
 	}
 	attributeMapper := NewAttributeMapper(entityConfigs)
 	attrs := Attributes{
@@ -260,8 +260,8 @@ func TestGetRelationshipEntities_WithoutSourceIds(t *testing.T) {
 
 func TestGetRelationshipEntities_WithoutDestIds(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
-		"sourceType": {Type: "sourceType", IDs: []string{"id"}},
-		"destType":   {Type: "destType", IDs: []string{}},
+		"sourceType": {Entity: "sourceType", IDs: []string{"id"}},
+		"destType":   {Entity: "destType", IDs: []string{}},
 	}
 	attributeMapper := NewAttributeMapper(entityConfigs)
 	attrs := Attributes{
@@ -275,7 +275,7 @@ func TestGetRelationshipEntities_WithoutDestIds(t *testing.T) {
 
 func TestGetRelationshipEntities_SameTypeWithoutPrefixes(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
-		"entityType": {Type: "entityType", IDs: []string{"id"}},
+		"entityType": {Entity: "entityType", IDs: []string{"id"}},
 	}
 	attributeMapper := NewAttributeMapper(entityConfigs)
 	attrs := Attributes{
@@ -289,7 +289,7 @@ func TestGetRelationshipEntities_SameTypeWithoutPrefixes(t *testing.T) {
 
 func TestGetRelationshipEntities_SameTypeWithSourcePrefix(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
-		"entityType": {Type: "entityType", IDs: []string{"id"}},
+		"entityType": {Entity: "entityType", IDs: []string{"id"}},
 	}
 	attributeMapper := NewAttributeMapper(entityConfigs)
 	attrs := Attributes{
@@ -310,7 +310,7 @@ func TestGetRelationshipEntities_SameTypeWithSourcePrefix(t *testing.T) {
 
 func TestGetRelationshipEntities_SameTypeWithDestinationPrefix(t *testing.T) {
 	entityConfigs := map[string]config.Entity{
-		"entityType": {Type: "entityType", IDs: []string{"id"}},
+		"entityType": {Entity: "entityType", IDs: []string{"id"}},
 	}
 	attributeMapper := NewAttributeMapper(entityConfigs)
 	attrs := Attributes{

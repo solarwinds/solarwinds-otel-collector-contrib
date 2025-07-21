@@ -409,7 +409,7 @@ func TestGetRelationships_WithDifferentTypes(t *testing.T) {
 
 	relationships := []*config.RelationshipEvent{{
 		Type:        "MemberOf",
-		Action:      "update",
+		Event:       config.Event{Action: EventUpdateAction},
 		Source:      srcEntity.Entity,
 		Destination: destEntity.Entity,
 	},
@@ -456,7 +456,7 @@ func TestGetRelationships_WithSameType(t *testing.T) {
 	}
 
 	relationships := []*config.RelationshipEvent{{
-		Action:      "update",
+		Event:       config.Event{Action: EventUpdateAction},
 		Type:        "Has",
 		Source:      "KubernetesCluster",
 		Destination: "KubernetesCluster",
@@ -511,7 +511,8 @@ func TestCollectEvents_WithEntity_AttributesPresent(t *testing.T) {
 	events, err := eventBuilder.collectEvents(attributes, []*config.EntityEvent{
 		{
 			Entity: testEntity.Entity,
-			Action: EventUpdateAction},
+			Event:  config.Event{Action: EventUpdateAction},
+		},
 	},
 		nil)
 	require.NoError(t, err)
@@ -577,7 +578,7 @@ func TestCollectEvents_WithEntity_SomeAttributesMissing(t *testing.T) {
 		nil,
 	)
 
-	events, err := eventBuilder.collectEvents(attributes, []*config.EntityEvent{{Type: testEntity.Entity, Action: EventUpdateAction}}, nil)
+	events, err := eventBuilder.collectEvents(attributes, []*config.EntityEvent{{Entity: testEntity.Entity, Event: config.Event{Action: EventUpdateAction}}}, nil)
 	require.NoError(t, err)
 	require.Len(t, events, 1)
 	entityEvent, ok := events[0].(Entity)
@@ -595,7 +596,7 @@ func TestCollectEvents_WithRelationship_AttributesPresent(t *testing.T) {
 	// arrange
 	srcEntity := config.Entity{Entity: "KubernetesCluster", IDs: []string{"id1"}, Attributes: []string{"attr1"}}
 	destEntity := config.Entity{Entity: "KubernetesNamespace", IDs: []string{"id2"}, Attributes: []string{"attr2"}}
-	testRelationship := config.RelationshipEvent{Source: srcEntity.Entity, Destination: destEntity.Entity, Action: EventUpdateAction}
+	testRelationship := config.RelationshipEvent{Source: srcEntity.Entity, Destination: destEntity.Entity, Event: config.Event{Action: EventUpdateAction}}
 	attributes := Attributes{
 		Common: map[string]pcommon.Value{
 			"id1":   pcommon.NewValueStr("idvalue1"),
@@ -643,7 +644,7 @@ func TestCollectEvents_WithRelationship_AttributesPresent(t *testing.T) {
 func TestCollectEvents_WithRelationship_SameType_AttributesPresent(t *testing.T) {
 	// arrange
 	entity := config.Entity{Entity: "KubernetesCluster", IDs: []string{"id"}, Attributes: []string{"attr"}}
-	testRelationship := config.RelationshipEvent{Source: "KubernetesCluster", Destination: "KubernetesCluster", Action: EventUpdateAction}
+	testRelationship := config.RelationshipEvent{Source: "KubernetesCluster", Destination: "KubernetesCluster", Event: config.Event{Action: EventUpdateAction}}
 	attributes := Attributes{
 		Source: map[string]pcommon.Value{
 			"id": pcommon.NewValueStr("idvalue1"),
@@ -765,7 +766,7 @@ func TestCollectEvents_WithRelationship_RelationshipAttributesPresent(t *testing
 		Source:      "KubernetesCluster",
 		Destination: "KubernetesNamespace",
 		Attributes:  []string{"relationshipAttr"},
-		Action:      EventUpdateAction,
+		Event:       config.Event{Action: EventUpdateAction},
 	}
 	attributes := Attributes{
 		Common: map[string]pcommon.Value{
@@ -813,7 +814,7 @@ func TestCollectEvents_WithRelationship_SameType_RelationshipAttributesPresent(t
 		Source:      "KubernetesCluster",
 		Destination: "KubernetesCluster",
 		Attributes:  []string{"relationshipAttr"},
-		Action:      EventUpdateAction,
+		Event:       config.Event{Action: EventUpdateAction},
 		Type:        "Has",
 	}
 
