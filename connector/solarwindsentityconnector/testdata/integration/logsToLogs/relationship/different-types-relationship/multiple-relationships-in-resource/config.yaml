@@ -3,11 +3,11 @@ destination_prefix: "destination."
 schema:
   entities:
     - type: "Snowflake"
-      ids: ["receiver.id"]
+      id: ["receiver.id"]
     - type: "Service"
-      ids: ["service.id"]
+      id: ["service.id"]
     - type: "KubernetesPod"
-      ids: ["k8s.pod.id"]
+      id: ["k8s.pod.id"]
   events:
     relationships:
       - type: "Has"

@@ -3,10 +3,10 @@ destination_prefix: "dst."
 schema:
   entities:
     - type: "Snowflake"
-      ids: ["receiver.id", "receiver.name"]
+      id: ["receiver.id", "receiver.name"]
       attributes: ["attr1"]
     - type: "DockerDaemon"
-      ids: ["receiver.id", "receiver.name"]
+      id: ["receiver.id", "receiver.name"]
       attributes: ["attr2"]
   events:
     entities:
