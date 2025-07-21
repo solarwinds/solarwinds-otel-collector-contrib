@@ -2,6 +2,7 @@
 
 ## vNext
 - `solarwindsentityconnector` Fix extra output log issue by adding missing yaml tags for cache configuration parsing
+- `swok8sworkloadtypeprocessor` Support addresses ending with dot
 - `k8seventgenerationprocessor` Extend the k8seventgeneration processor to extract data for Service mapping
 
 ## v0.127.5
