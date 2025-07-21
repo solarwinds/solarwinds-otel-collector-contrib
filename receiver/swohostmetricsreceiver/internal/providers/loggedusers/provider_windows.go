@@ -15,8 +15,8 @@
 package loggedusers
 
 import (
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/registry"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/registry"
 )
 
 type provider struct {
