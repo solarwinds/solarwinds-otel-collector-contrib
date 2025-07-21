@@ -9,14 +9,16 @@ Each example includes
 
 #### Table of Contents
 - [Entity ID Attributes](#entity-id-attributes)
-  - [Single Entity Without Prefix](#single-entity-without-prefix)
-  - [Single Entity With Prefix](#single-entity-with-prefix)
-  - [Multiple Entities Without Prefix](#multiple-entities-without-prefix)
-  - [Multiple Entities with Same IDs](#multiple-entities-with-same-ids)
-  - [Multiple Entities with Same IDs Using Conditions](#multiple-entities-with-same-ids-using-conditions)
+  - [Single Entity](#single-entity)
+    - [Without Prefix](#without-prefix)
+    - [With Prefix](#with-prefix)
+  - [Multiple Entities](#multiple-entities)
+    - [Without Prefix](#without-prefix-1)
+    - [Entities With the Same Set of IDs](#entities-with-the-same-set-of-ids)
+    - [Entities With the Same Set of IDs Using Conditions](#entities-with-the-same-set-of-ids-using-conditions)
 - [Relationship ID Attributes](#relationship-id-attributes)
   - [Different-Type Relationship](#different-type-relationship)
-    - [Without Prefix](#without-prefix)
+    - [Without Prefix](#without-prefix-2)
     - [With Prefixes](#with-prefixes)
   - [Same-Type Relationship](#same-type-relationship)
     - [With Partial Prefix](#with-partial-prefix)
@@ -56,8 +58,8 @@ or [OUTPUT.md](OUTPUT.md) to see actual output of the SolarWinds Entity Connecto
 - `conditions: ["true"]` is the same as not defining conditions at all.
 
 ## Entity ID Attributes
-
-### Single Entity Without Prefix
+### Single Entity
+#### Without Prefix
 Entity will be inferred, because conditions are true and all ID attributes are found in the resource attributes.
 
 **Defined events**
@@ -93,7 +95,7 @@ cluster.uid -> "cluster-123"
 ___
 
 
-### Single Entity With Prefix
+#### With Prefix
 Entity will NOT be inferred, because the prefix is processed for relationships and entities participating as source 
 or destination. The entity would be inferred if valid relationship is inferred.
 
@@ -119,8 +121,8 @@ src.cluster.uid -> "cluster-123"
 []
 ```
 ___
-
-### Multiple Entities Without Prefix
+### Multiple Entities
+#### Without Prefix
 Two entities will be inferred, because conditions are true and all ID attributes for both entities are found in 
 the resource attributes. To send entity log updates for any entity, it has to be defined in the `events.entities` 
 section.
@@ -168,7 +170,7 @@ namespace.name -> "namespace-123"
 ```
 ___
 
-### Multiple Entities with Same IDs
+#### Entities With the Same Set of IDs
 :warning: Two entities will be inferred, because conditions are true and all ID attributes for both entities are found, even if
 it is unexpected. To solve this issue, use `conditions` to filter out entities that should not be inferred (see scenario below).
 
@@ -215,7 +217,7 @@ receiver.name -> "snowflake"
 ```
 ___
 
-### Multiple Entities with Same IDs Using Conditions
+#### Entities With the Same Set of IDs Using Conditions
 One entity will be inferred, because conditions are true only for Snowflake entity.
 
 **Defined events**
