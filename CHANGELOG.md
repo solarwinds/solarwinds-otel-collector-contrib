@@ -1,7 +1,7 @@
 # Changelog
 
 ## vNext
-- `solarwindsentityconnector` Added support for prefixes on entities when created from relationships
+- `solarwindsentityconnector` Added support for prefixes on entities when entities are created from relationships
 - `solarwindsentityconnector` Added support for OTTL converters in event condition expressions
 - `solarwindsentityconnector` Fixed extra output log issue by adding missing yaml tags for cache configuration parsing
 - `swok8sworkloadtypeprocessor` Support addresses ending with dot
