@@ -8,12 +8,28 @@ Each example includes
 - the expected output log records (what will be sent to the SolarWinds Observability).
 
 #### Table of Contents
-- [Entity ID Attributes](#entity)
-  - [Entity Without Prefix](#entity-without-prefix)
-  - [Entity With Prefix](#entity-with-prefix)
-  - [Two Entities Without Prefix](#two-entities-without-prefix)
-  - [Two entities with the same set of IDs :warning:](#two-entities-with-the-same-set-of-ids-warning)
-  - [Two entities with the same set of IDs with conditions](#two-entities-with-the-same-set-of-ids-with-conditions)
+- [Entity ID Attributes](#entity-id-attributes)
+  - [Single Entity Without Prefix](#single-entity-without-prefix)
+  - [Single Entity With Prefix](#single-entity-with-prefix)
+  - [Multiple Entities Without Prefix](#multiple-entities-without-prefix)
+  - [Multiple Entities with Same IDs](#multiple-entities-with-same-ids)
+  - [Multiple Entities with Same IDs Using Conditions](#multiple-entities-with-same-ids-using-conditions)
+- [Relationship ID Attributes](#relationship-id-attributes)
+  - [Different-Type Relationship](#different-type-relationship)
+    - [Without Prefix](#without-prefix)
+    - [With Prefixes](#with-prefixes)
+  - [Same-Type Relationship](#same-type-relationship)
+    - [With Partial Prefix](#with-partial-prefix)
+    - [With Prefix](#with-prefix-1)
+  - [Any-Type Relationship](#any-type-relationship)
+    - [Without Inferring of Entities](#without-inferring-of-entities)
+    - [Multiple Relationships](#multiple-relationships)
+- [Entity Attributes](#entity-attributes)
+  - [Entity With Attributes (Unprefixed)](#entity-with-attributes-unprefixed)
+  - [Entity With Prefixed Attributes (No Attributes Output)](#entity-with-prefixed-attributes-no-attributes-output)
+- [Relationship Attributes](#relationship-attributes)
+  - [Relationship With Unprefixed Attributes](#relationship-with-unprefixed-attributes)
+  - [Relationship And Entities With Prefixed Attributes](#relationship-and-entities-with-prefixed-attributes)
 
 Assume following entities definitions with simplified attribute names and source/destination prefix.
 
@@ -33,9 +49,15 @@ schema:
       id: [receiver.id, receiver.name]
 ```
 
+### Notes
+- Resource Attributes are of `map` type so no duplicate entry is expected.
+- `EXAMPLES.md` shows the scenarios simplified, for supported syntax see [README.md](../README.md)
+or [OUTPUT.md](OUTPUT.md) to see actual output of the SolarWinds Entity Connector.
+- `conditions: ["true"]` is the same as not defining conditions at all.
+
 ## Entity ID Attributes
 
-### Entity Without Prefix
+### Single Entity Without Prefix
 Entity will be inferred, because conditions are true and all ID attributes are found in the resource attributes.
 
 **Defined events**
@@ -71,7 +93,7 @@ cluster.uid -> "cluster-123"
 ___
 
 
-### Entity With Prefix
+### Single Entity With Prefix
 Entity will NOT be inferred, because the prefix is processed for relationships and entities participating as source 
 or destination. The entity would be inferred if valid relationship is inferred.
 
@@ -98,7 +120,7 @@ src.cluster.uid -> "cluster-123"
 ```
 ___
 
-### Two Entities Without Prefix
+### Multiple Entities Without Prefix
 Two entities will be inferred, because conditions are true and all ID attributes for both entities are found in 
 the resource attributes. To send entity log updates for any entity, it has to be defined in the `events.entities` 
 section.
@@ -146,9 +168,9 @@ namespace.name -> "namespace-123"
 ```
 ___
 
-### Two entities with the same set of IDs :warning:
-Two entities will be inferred, because conditions are true and all ID attributes for both entities are found, even if
-it is not correct. To solve this issue, use `conditions` to filter out entities that should not be inferred.
+### Multiple Entities with Same IDs
+:warning: Two entities will be inferred, because conditions are true and all ID attributes for both entities are found, even if
+it is unexpected. To solve this issue, use `conditions` to filter out entities that should not be inferred (see scenario below).
 
 **Defined events**
 
@@ -193,7 +215,7 @@ receiver.name -> "snowflake"
 ```
 ___
 
-### Two entities with the same set of IDs with conditions
+### Multiple Entities with Same IDs Using Conditions
 One entity will be inferred, because conditions are true only for Snowflake entity.
 
 **Defined events**
@@ -232,10 +254,9 @@ receiver.name -> "snowflake"
 ```
 ___
 ## Relationship ID Attributes
-### Different-type Relationship Without Prefix, Creating Entities
-Relationship without prefixed attributes can be used to infer relationships between entities:
-- of different types
-- of different entity IDs sets.
+### Diffferent-Type Relationship
+#### Without Prefix
+Relationship without prefixed attributes can be used to infer relationships between entities of different types (where entity IDs are not the same for each entity).
 
 This configuration will output three log records. One for relationship, two for entities, because they were configured in events section.
 
@@ -298,55 +319,11 @@ namespace.name -> "namespace-123"
 ```
 ___
 
-### Different-type Relationship Without Prefix, Without entities
-Example of the same scenarios as above, but without entities defined in the events section.
-
-**Defined events**
-
-```yaml
-events:
-  relationships:
-    - type: Has
-      action: update
-      context: log
-      source_entity: KubernetesCluster
-      destination_entity: KubernetesNamespace
-```
-
-**Input resource attributes**
-
-```
-cluster.uid -> "cluster-123"
-namespace.name -> "namespace-123"
-```
-
-**Output log records**
-```json
-[
-  {
-    "relationship_type": "Has",
-    "source_entity_type": "KubernetesCluster",
-    "source_entity_id": {
-      "cluster.uid": "cluster-123"
-    },
-    "destination_entity_type": "KubernetesNamespace",
-    "destination_entity_id": {
-      "cluster.uid": "cluster-123",
-      "namespace.name": "namespace-123"
-    }
-  }
-]
-```
-___
-
-### Different-type Relationship with Prefixes, creating valid Entities
-Relationship with prefixed attributes can be used to infer relationships between entities:
-- of different types
-  - with or without same set of IDs, (this example shows with same set of IDs = Snowflake -> DockerDaemon)
-- of the same type.
+#### With Prefixes
+Relationship with prefixed attributes can be used to infer relationships between entities of different types with or without same set of IDs, (this example shows with same set of IDs = Snowflake -> DockerDaemon).
 
 Together with inferring entities, from prefixed attributes. However, in this scenario, we present case where
-conditions for DockerDaemon entity are not met, so only Snowflake is not inferred (no conditions means *true*).
+conditions for DockerDaemon entity are not met, so only Snowflake is inferred (no conditions means *true*).
 
 This configuration will output two log records. One for relationship, one for Snowflake entity.
 
@@ -406,8 +383,73 @@ dst.receiver.name -> "docker"
 ```
 ___
 
+### Same-Type Relationship
+Same-type relationship needs at least one prefixed attribute to differ between source and destination entity.
+#### With Partial Prefix
+Relationship with attributes where at least one prefix are supported. All other attributes will be taken from
+the unprefixed and will behave like common attribute for both entities.
 
-### Same-type Relationship with Prefixes, creating Entities
+
+**Defined events**
+
+```yaml
+events:
+  entities:
+    - type: KubernetesNamespace
+      action: update
+      context: log
+  relationships:
+    - type: CommunicatesWith
+      action: update
+      context: log
+      source_entity: KubernetesNamespace
+      destination_entity: KubernetesNamespace
+```
+
+**Input resource attributes**
+
+```
+cluster.uid -> "cluster-123"
+src.namespace.name -> "source namespace"
+namespace.name -> "destination namespace"
+```
+
+**Output log records**
+```json
+[
+  {
+    "entity_type": "KubernetesNamespace",
+    "entity_id": {
+      "cluster.uid": "cluster-123",
+      "namespace.name": "source namespace"
+    }
+  },
+  {
+    "entity_type": "KubernetesNamespace",
+    "entity_id": {
+      "cluster.uid": "cluster-123",
+      "namespace.name": "destination namespace"
+    }
+  },
+  {
+    "relationship_type": "CommunicatesWith",
+    "source_entity_type": "KubernetesNamespace",
+    "source_entity_id": {
+      "cluster.uid": "cluster-123",
+      "namespace.name": "source namespace"
+    },
+    "destination_entity_type": "KubernetesNamespace",
+    "destination_entity_id": {
+      "cluster.uid": "cluster-123",
+      "namespace.name": "destination namespace"
+    }
+  }
+]
+```
+___
+
+
+#### With Prefix
 Relationship with prefixed attributes can be used to infer relationships between entities of the same type.
 
 Together with inferring entities, from prefixed attributes.
@@ -469,8 +511,116 @@ dst.cluster.uid -> "cluster-456"
 ```
 ___
 
+
+
+### Any-Type Relationship
+Scenarios in this section are applicable to both types of relationship (same/different).
+#### Without Inferring of Entities
+This scenario presents case where only relationship is inferred without entities. Entities would be inferred
+if mentioned in `events.entities`.
+
+**Defined events**
+
+```yaml
+events:
+  relationships:
+    - type: Has
+      action: update
+      context: log
+      source_entity: KubernetesCluster
+      destination_entity: KubernetesNamespace
+```
+
+**Input resource attributes**
+
+```
+cluster.uid -> "cluster-123"
+namespace.name -> "namespace-123"
+```
+
+**Output log records**
+```json
+[
+  {
+    "relationship_type": "Has",
+    "source_entity_type": "KubernetesCluster",
+    "source_entity_id": {
+      "cluster.uid": "cluster-123"
+    },
+    "destination_entity_type": "KubernetesNamespace",
+    "destination_entity_id": {
+      "cluster.uid": "cluster-123",
+      "namespace.name": "namespace-123"
+    }
+  }
+]
+```
+___
+#### Multiple Relationships
+If conditions are fulfiled and attributes can be mapped to entities participating in relationships, more than one relationship can be inferred.
+
+This scenario has one limitation and that the entities have to have different sets of IDs, or at least correctly differentiated by prefix. However, this should not be usual case when taking into account the real usage of opentelemetry and the appereance of the incoming telemetry resources.
+**Defined events**
+
+```yaml
+events:
+  relationships:
+    - type: Has
+      action: update
+      context: log
+      source_entity: KubernetesCluster
+      destination_entity: KubernetesNamespace
+    - type: CommunicatesWith
+      action: update
+      context: log
+      source_entity: Snowflake
+      destination_entity: Snowflake
+```
+
+**Input resource attributes**
+
+```
+cluster.uid -> "cluster-123"
+namespace.name -> "namespace-123"
+src.receiver.id -> "snowflake-123"
+dst.receiver.id -> "snowflake-456"
+receiver.name -> "snowflake"
+```
+
+**Output log records**
+```json
+[
+  {
+    "relationship_type": "Has",
+    "source_entity_type": "KubernetesCluster",
+    "source_entity_id": {
+      "cluster.uid": "cluster-123"
+    },
+    "destination_entity_type": "KubernetesNamespace",
+    "destination_entity_id": {
+      "cluster.uid": "cluster-123",
+      "namespace.name": "namespace-123"
+    }
+  },
+    {
+    "relationship_type": "Has",
+    "source_entity_type": "Snowflake",
+    "source_entity_id": {
+      "receiver.id": "snowflake-123",
+      "receiver.name": "snowflake"
+    },
+    "destination_entity_type": "Snowflake",
+    "destination_entity_id": {
+      "receiver.id": "snowflake-456",
+      "receiver.name": "snowflake"
+    }
+  }
+]
+```
+___
+
 ## Entity Attributes
-### Entity with attributes
+### Entity With Attributes (Unprefixed)
 Entity update log will be sent together with an attribute.
 
 **Defined events**
@@ -505,7 +655,7 @@ cluster.name -> "Cluster 123"
 ]
 ```
 ___
-### Entity with prefixed attributes
+### Entity With Prefixed Attributes (No Attributes Output)
 Attribute will not be sent, because the prefix is not accepted when entity is not used as source or destination
 entity in a relationship.
 
@@ -540,7 +690,7 @@ src.cluster.name -> "Cluster 123"
 ___
 
 ## Relationship Attributes
-### Relationship with unprefixed attributes
+### Relationship With Unprefixed Attributes
 An attribute will be sent, because the relationship is defined with the attributes.
 
 :warning: Relationship attributes are used only from unprefixed attributes.
@@ -586,7 +736,7 @@ additional.attribute -> "some value"
 ]
 ```
 ___
-### Relationship And Entities with prefixed attributes
+### Relationship And Entities With Prefixed Attributes
 Attributes will be sent for:
 - relationship, because it is defined with the `events.relationship` section.
 - for entities, because they are defined in the `schema.entities` section.
@@ -655,11 +805,3 @@ additional.attribute -> "some value"
 ]
 ```
 ___
-
-
-
-## Notes
-- Resource Attributes are map so no duplicate entry is expected.
-- `EXAMPLES.md` shows the scenarios simplified, for supported syntax see [README.md](../README.md)
-or [OUTPUT.md](OUTPUT.md) to see actual output of the SolarWinds Entity Connector.
-- `conditions: ["true"]` is the same as not defining conditions at all.
