@@ -124,7 +124,7 @@ One condition can be composed (using operands like and, or, etc...) as OTTL form
 - If *no condition* items are specified, an event will always be created.
 - `context` is required, `conditions` are optional.
 - You can find more information about OTTL paths and syntax examples in the [OTTL contexts documentation](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/pkg/ottl/contexts).
-- Support standard converters described here [Converters](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/pkg/ottl/ottlfuncs#converters).
+- Standard converters are supported, as described here: [Converters](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/pkg/ottl/ottlfuncs#converters). Note that the newest converters listed there might not be consumed by us yet.
 
 
 ## Recommendations
