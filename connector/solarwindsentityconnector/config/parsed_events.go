@@ -75,9 +75,15 @@ func createParsedEvents(s Schema, settings component.TelemetrySettings) (ParsedE
 		}
 		switch event.Context {
 		case ottlmetric.ContextName:
-			addEntityEvent(&metricGroup, event, settings)
+			err = addEntityEvent(&metricGroup, event, settings)
+			if err != nil {
+				return ParsedEvents{}, err
+			}
 		case ottllog.ContextName:
-			addEntityEvent(&logGroup, event, settings)
+			err = addEntityEvent(&logGroup, event, settings)
+			if err != nil {
+				return ParsedEvents{}, err
+			}
 		}
 	}
 
@@ -87,9 +93,15 @@ func createParsedEvents(s Schema, settings component.TelemetrySettings) (ParsedE
 		}
 		switch event.Context {
 		case ottlmetric.ContextName:
-			addRelationshipEvent(&metricGroup, event, settings)
+			err = addRelationshipEvent(&metricGroup, event, settings)
+			if err != nil {
+				return ParsedEvents{}, err
+			}
 		case ottllog.ContextName:
-			addRelationshipEvent(&logGroup, event, settings)
+			err = addRelationshipEvent(&logGroup, event, settings)
+			if err != nil {
+				return ParsedEvents{}, err
+			}
 		}
 	}
 
@@ -99,26 +111,28 @@ func createParsedEvents(s Schema, settings component.TelemetrySettings) (ParsedE
 	}, nil
 }
 
-func addEntityEvent[C any](group *EventsGroup[C], event EntityEvent, settings component.TelemetrySettings) {
+func addEntityEvent[C any](group *EventsGroup[C], event EntityEvent, settings component.TelemetrySettings) error {
 	stmts, err := group.Parser.ParseConditions(event.Conditions)
 	seq := ottl.NewConditionSequence(stmts, settings)
 	if err != nil {
-		panic("failed to parse conditions for entity event")
+		return fmt.Errorf("failed to parse conditions for entity event: %w", err)
 	}
 	group.Entities = append(group.Entities, ParsedEntityEvent[C]{
 		Definition:   &event,
 		ConditionSeq: seq,
 	})
+	return nil
 }
 
-func addRelationshipEvent[C any](group *EventsGroup[C], event RelationshipEvent, settings component.TelemetrySettings) {
+func addRelationshipEvent[C any](group *EventsGroup[C], event RelationshipEvent, settings component.TelemetrySettings) error {
 	stmts, err := group.Parser.ParseConditions(event.Conditions)
 	seq := ottl.NewConditionSequence(stmts, settings)
 	if err != nil {
-		panic("failed to parse conditions for relationship event")
+		return fmt.Errorf("failed to parse conditions for relationship event: %w", err)
 	}
 	group.Relationships = append(group.Relationships, ParsedRelationshipEvent[C]{
 		Definition:   &event,
 		ConditionSeq: seq,
 	})
+	return nil
 }
