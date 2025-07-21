@@ -2,6 +2,7 @@
 
 ## vNext
 - `solarwindsentityconnector` Fix extra output log issue by adding missing yaml tags for cache configuration parsing
+- `swok8sworkloadtypeprocessor` Support addresses ending with dot
 - `swohostmetricsreceiver` separated `wmi` and `registry` packages in their own modules
 
 ## v0.127.5
