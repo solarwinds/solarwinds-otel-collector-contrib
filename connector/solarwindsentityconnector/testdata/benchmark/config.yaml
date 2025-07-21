@@ -20,15 +20,15 @@ schema:
         conditions: ["true"]
         context: "log"
         action: "update"
-      - type: "kubernetes.node"
+      - entity: "kubernetes.node"
         conditions: ["true"]
         context: "log"
         action: "update"
-      - type: "kubernetes.cluster"
+      - entity: "kubernetes.cluster"
         conditions: ["true"]
         action: "update"
         context: "metric"
-      - type: "kubernetes.node"
+      - entity: "kubernetes.node"
         conditions: ["true"]
         context: "metric"
         action: "update"
