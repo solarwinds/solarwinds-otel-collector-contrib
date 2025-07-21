@@ -18,8 +18,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
-
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal"
 )
 
 // KeyBuilder provides methods for generating consistent keys for entities and relationships

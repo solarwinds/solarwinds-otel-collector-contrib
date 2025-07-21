@@ -17,7 +17,6 @@ package internal
 import (
 	"testing"
 
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 
 	"github.com/stretchr/testify/require"

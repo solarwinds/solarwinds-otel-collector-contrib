@@ -15,8 +15,9 @@
 package internal
 
 import (
-	"go.opentelemetry.io/collector/pdata/pcommon"
 	"strings"
+
+	"go.opentelemetry.io/collector/pdata/pcommon"
 )
 
 type AttributesMap map[string]pcommon.Value

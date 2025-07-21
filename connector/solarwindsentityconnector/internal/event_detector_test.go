@@ -485,7 +485,7 @@ func TestGetRelationships_WithSameType(t *testing.T) {
 func TestCollectEvents_WithEntity_AttributesPresent(t *testing.T) {
 	// arrange
 	testEntity := config.Entity{
-		Entity:       "testEntityType",
+		Entity:     "testEntityType",
 		IDs:        []string{"id1", "id2"},
 		Attributes: []string{"attr1", "attr2"},
 	}
@@ -510,7 +510,7 @@ func TestCollectEvents_WithEntity_AttributesPresent(t *testing.T) {
 
 	events, err := eventBuilder.collectEvents(attributes, []*config.EntityEvent{
 		{
-			Entity:   testEntity.Entity,
+			Entity: testEntity.Entity,
 			Action: EventUpdateAction},
 	},
 		nil)
