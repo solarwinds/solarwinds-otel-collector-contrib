@@ -29,19 +29,19 @@ const (
 )
 
 type ExpirationPolicy struct {
-	Enabled bool `mapstructure:"enabled" yaml:"enabled"`
+	Enabled bool `mapstructure:"enabled"`
 	// TTL of relationships in the format accepted by time.ParseDuration, e.g. "5s", "1m", etc.
-	Interval           string             `mapstructure:"interval" yaml:"interval"`
-	CacheConfiguration CacheConfiguration `mapstructure:"cache_configuration" yaml:"cache_configuration"`
+	Interval           string             `mapstructure:"interval"`
+	CacheConfiguration CacheConfiguration `mapstructure:"cache_configuration"`
 }
 
 // By implementing the xconfmap.Validator, we ensure it's validated by the collector automatically
 var _ xconfmap.Validator = (*ExpirationPolicy)(nil)
 
 type CacheConfiguration struct {
-	MaxCapacity int64 `mapstructure:"max_capacity" yaml:"max_capacity"`
+	MaxCapacity int64 `mapstructure:"max_capacity"`
 	// In the format accepted by time.ParseDuration, e.g. "5s", "1m", etc. Granularity is 1 second and it's also a minimal value.
-	TTLCleanupInterval string `mapstructure:"ttl_cleanup_interval" yaml:"ttl_cleanup_interval"`
+	TTLCleanupInterval string `mapstructure:"ttl_cleanup_interval"`
 }
 
 func (e *ExpirationPolicy) Validate() error {

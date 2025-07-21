@@ -19,6 +19,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/go-viper/mapstructure/v2"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 
 	"gopkg.in/yaml.v3"
@@ -32,8 +33,12 @@ func LoadConfigFromFile(tb testing.TB, path string) (*config.Config, error) {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}
 
+	var raw map[string]any
+	if err := yaml.Unmarshal(yamlFile, &raw); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+	}
 	var cfg config.Config
-	if err := yaml.Unmarshal(yamlFile, &cfg); err != nil {
+	if err := mapstructure.Decode(raw, &cfg); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 

@@ -30,9 +30,9 @@ const (
 )
 
 type Entity struct {
-	Entity     string   `mapstructure:"entity" yaml:"entity"`
-	IDs        []string `mapstructure:"id" yaml:"id"`
-	Attributes []string `mapstructure:"attributes" yaml:"attributes"`
+	Entity     string   `mapstructure:"entity"`
+	IDs        []string `mapstructure:"id"`
+	Attributes []string `mapstructure:"attributes"`
 }
 
 // By implementing the xconfmap.Validator, we ensure it's validated by the collector automatically
@@ -53,14 +53,14 @@ func (e *Entity) Validate() error {
 }
 
 type Events struct {
-	Relationships []RelationshipEvent `mapstructure:"relationships" yaml:"relationships"`
-	Entities      []EntityEvent       `mapstructure:"entities" yaml:"entities"`
+	Relationships []RelationshipEvent `mapstructure:"relationships"`
+	Entities      []EntityEvent       `mapstructure:"entities"`
 }
 
 type Event struct {
-	Action     string   `mapstructure:"action" yaml:"action"`
-	Context    string   `mapstructure:"context" yaml:"context"`
-	Conditions []string `mapstructure:"conditions" yaml:"conditions"`
+	Action     string   `mapstructure:"action"`
+	Context    string   `mapstructure:"context"`
+	Conditions []string `mapstructure:"conditions"`
 }
 
 func (e *Event) validateActionAndContext() error {
@@ -83,11 +83,11 @@ func (e *Event) validateActionAndContext() error {
 }
 
 type RelationshipEvent struct {
-	Event       `mapstructure:",squash" yaml:",inline"`
-	Type        string   `mapstructure:"type" yaml:"type"`
-	Source      string   `mapstructure:"source_entity" yaml:"source_entity"`
-	Destination string   `mapstructure:"destination_entity" yaml:"destination_entity"`
-	Attributes  []string `mapstructure:"attributes" yaml:"attributes"`
+	Event       `mapstructure:",squash"`
+	Type        string   `mapstructure:"type"`
+	Source      string   `mapstructure:"source_entity"`
+	Destination string   `mapstructure:"destination_entity"`
+	Attributes  []string `mapstructure:"attributes"`
 }
 
 // By implementing the xconfmap.Validator, we ensure it's validated by the collector automatically
@@ -112,8 +112,8 @@ func (e *RelationshipEvent) Validate() error {
 }
 
 type EntityEvent struct {
-	Event  `mapstructure:",squash" yaml:",inline"`
-	Entity string `mapstructure:"entity" yaml:"entity"`
+	Event  `mapstructure:",squash"`
+	Entity string `mapstructure:"entity"`
 }
 
 // By implementing the xconfmap.Validator, we ensure it's validated by the collector automatically

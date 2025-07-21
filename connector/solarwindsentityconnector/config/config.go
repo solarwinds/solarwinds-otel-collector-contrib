@@ -19,11 +19,11 @@ import (
 )
 
 type Config struct {
-	Schema     Schema           `mapstructure:"schema"  yaml:"schema"`
-	Expiration ExpirationPolicy `mapstructure:"expiration_policy" yaml:"expiration_policy"`
+	Schema     Schema           `mapstructure:"schema"`
+	Expiration ExpirationPolicy `mapstructure:"expiration_policy"`
 
-	SourcePrefix      string `mapstructure:"source_prefix" yaml:"source_prefix"`
-	DestinationPrefix string `mapstructure:"destination_prefix" yaml:"destination_prefix"`
+	SourcePrefix      string `mapstructure:"source_prefix"`
+	DestinationPrefix string `mapstructure:"destination_prefix"`
 }
 
 func NewDefaultConfig() component.Config {

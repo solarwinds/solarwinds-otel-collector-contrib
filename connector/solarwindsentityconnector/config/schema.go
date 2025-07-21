@@ -23,8 +23,8 @@ import (
 )
 
 type Schema struct {
-	Entities []Entity `mapstructure:"entities" yaml:"entities"`
-	Events   Events   `mapstructure:"events" yaml:"events"`
+	Entities []Entity `mapstructure:"entities"`
+	Events   Events   `mapstructure:"events"`
 }
 
 // By implementing the xconfmap.Validator, we ensure it's validated by the collector automatically
