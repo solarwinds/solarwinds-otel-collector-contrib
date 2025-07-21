@@ -8,8 +8,9 @@ require (
 	github.com/shirou/gopsutil/v3 v3.24.5
 	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil v0.127.5
 	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.127.5
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/registry v0.127.5
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/wmi v0.127.5
 	github.com/stretchr/testify v1.10.0
-	github.com/yusufpapurcu/wmi v1.2.4
 	go.opentelemetry.io/collector/component v1.33.0
 	go.opentelemetry.io/collector/component/componenttest v0.127.0
 	go.opentelemetry.io/collector/confmap v1.33.0
@@ -22,17 +23,18 @@ require (
 	go.opentelemetry.io/otel v1.36.0
 	go.uber.org/goleak v1.3.0
 	go.uber.org/zap v1.27.0
-	golang.org/x/sys v0.33.0
 )
 
 require (
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/hashicorp/go-version v1.7.0 // indirect
+	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.opentelemetry.io/collector/featuregate v1.33.0 // indirect
 	go.opentelemetry.io/collector/internal/telemetry v0.127.0 // indirect
 	go.opentelemetry.io/collector/receiver/receiverhelper v0.127.0 // indirect
 	go.opentelemetry.io/contrib/bridges/otelzap v0.11.0 // indirect
 	go.opentelemetry.io/otel/log v0.12.2 // indirect
+	golang.org/x/sys v0.34.0 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
@@ -81,3 +83,7 @@ require (
 replace github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version => ../../pkg/version
 
 replace github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil => ../../pkg/testutil
+
+replace github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/wmi => ./../../pkg/wmi
+
+replace github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/registry => ./../../pkg/registry

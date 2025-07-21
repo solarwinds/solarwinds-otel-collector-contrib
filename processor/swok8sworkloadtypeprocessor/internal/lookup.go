@@ -231,6 +231,11 @@ func extractNameAndNamespaceAndType(host string) (name string, namespace string,
 			// "host" is a five words, so it could be a name, a namespace, a type and a cluster domain
 			return parts[4], parts[3], parts[2]
 		}
+	case 6:
+		if (parts[3] == serviceTypeShort || parts[3] == podTypeShort) && (parts[2] == "cluster" && parts[1] == "local" && parts[0] == "") {
+			// "host" is a six words, so it could be a name, a namespace, a type and a cluster domain ending with a dot
+			return parts[5], parts[4], parts[3]
+		}
 	}
 
 	// "host" is in an unknown format, so we don't know what it is
