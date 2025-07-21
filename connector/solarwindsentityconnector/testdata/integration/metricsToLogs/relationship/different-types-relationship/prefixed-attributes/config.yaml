@@ -18,8 +18,8 @@ schema:
         action: "update"
     relationships:
       - type: "Has"
-        source: "Snowflake"
-        destination: "DockerDaemon"
+        source_entity: "Snowflake"
+        destination_entity: "DockerDaemon"
         attributes: ["snowflake2docker.attribute"]
         context: "metric"
         action: "update"
