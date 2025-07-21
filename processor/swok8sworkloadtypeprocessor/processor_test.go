@@ -421,6 +421,24 @@ func TestProcessorMetricsPipelineWhenSearchingByAddress(t *testing.T) {
 			},
 		},
 		{
+			name:         "mapping matches existing pods - <podname.namespace.pod.cluster.local.> only",
+			existingPods: []*corev1.Pod{testPod},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"pods"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address": testPod.Name + "." + testPod.Namespace + ".pod.cluster.local.",
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address": testPod.Name + "." + testPod.Namespace + ".pod.cluster.local.",
+				"src_type":    "Pod",
+			},
+		},
+		{
 			name:         "mapping matches existing pods - <podname.namespace.pod.cluster.local:8080> only",
 			existingPods: []*corev1.Pod{testPod},
 			workloadMappings: []*K8sWorkloadMappingConfig{
