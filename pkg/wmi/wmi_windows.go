@@ -14,6 +14,10 @@
 
 package wmi
 
+import (
+	"github.com/yusufpapurcu/wmi"
+)
+
 type executor struct{}
 
 func NewExecutor() Executor {
