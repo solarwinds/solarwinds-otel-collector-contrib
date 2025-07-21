@@ -1,6 +1,16 @@
 # Changelog
 
 ## vNext
+- `solarwindsentityconnector` Added support for prefixes on entities when entities are created from relationships
+- `solarwindsentityconnector` Added support for OTTL converters in event condition expressions
+- `solarwindsentityconnector` Fixed extra output log issue by adding missing yaml tags for cache configuration parsing
+- `swok8sworkloadtypeprocessor` Support addresses ending with dot
+- `swohostmetricsreceiver` Separated `wmi` and `registry` packages in their own modules
+- `k8seventgenerationprocessor` Extend the k8seventgeneration processor to extract data for Service mapping
+
+## v0.127.5
+- `solarwindsentityconnector` Benchmark fix
+- Fix GHSA-fv92-fjc5-jj9h: mapstructure May Leak Sensitive Information in Logs When Processing Malformed Data
 
 ## v0.127.4
 - `solarwindsprocessor` Introduced as replacement for `solarwinds` exporter.
@@ -12,7 +22,7 @@
 - `swoworkloadtypeprocessor` Extended the processor to allow searching for owners of Pods.
 
 ## v0.127.3
-- `swok8sobjectsreceiver` Change logging of 410 events to debug level
+- `swok8sobjectsreceiver` Change logging of 410 events to debug level.
 
 ## v0.127.2
 - `solarwindsentityconnector` Added optional prefixes support for entity relationships between entities of different types.

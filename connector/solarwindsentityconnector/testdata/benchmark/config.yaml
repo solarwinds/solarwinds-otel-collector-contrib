@@ -1,8 +1,9 @@
 expiration_policy:
   enabled: true
-  interval: 1ms
+  interval: 10s
   cache_configuration:
-    ttl_cleanup_interval: 1ms
+    ttl_cleanup_interval: 20s
+    max_capacity: 2
 source_prefix: "src."
 destination_prefix: "dst."
 schema:
@@ -38,25 +39,25 @@ schema:
         source_entity: "kubernetes.cluster"
         destination_entity: "kubernetes.node"
         action: "update"
-        attributes:
+        attributes: []
       - context: "metric"
         conditions: ["true"]
         type: "test"
         source_entity: "kubernetes.cluster"
         destination_entity: "kubernetes.node"
         action: "update"
-        attributes:
+        attributes: []
       - context: "log"
         conditions: ["true"]
         type: "test"
         source_entity: "kubernetes.node"
         destination_entity: "kubernetes.node"
         action: "update"
-        attributes:
+        attributes: []
       - context: "metric"
         conditions: ["true"]
         type: "test"
         source_entity: "kubernetes.node"
         destination_entity: "kubernetes.node"
         action: "update"
-        attributes:
+        attributes: []

@@ -3,8 +3,8 @@ module github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwi
 go 1.24.4
 
 require (
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil v0.127.4
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.127.4
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil v0.127.5
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.127.5
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/collector/component v1.33.0
 	go.opentelemetry.io/collector/component/componenttest v0.127.0
@@ -28,7 +28,7 @@ require (
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
+	github.com/go-viper/mapstructure/v2 v2.3.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/snappy v1.0.0 // indirect

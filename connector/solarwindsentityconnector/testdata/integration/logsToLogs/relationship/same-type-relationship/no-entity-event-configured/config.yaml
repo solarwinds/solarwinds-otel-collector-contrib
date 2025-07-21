@@ -8,7 +8,7 @@ schema:
   events:
     relationships:
       - type: "TestRelationshipType"
-        source_entity: "TestEntityType"
-        destination_entity: "TestEntityType"
+        source: "TestEntityType"
+        destination: "TestEntityType"
         context: "log"
         action: "update"

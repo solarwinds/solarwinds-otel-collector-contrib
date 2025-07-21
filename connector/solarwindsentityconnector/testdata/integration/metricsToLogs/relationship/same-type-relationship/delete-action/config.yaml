@@ -14,8 +14,3 @@ schema:
         conditions: ["true"]
         context: "metric"
         action: "delete"
-    entities:
-      - type: "Kubernetes Node"
-        conditions: ["true"]
-        context: "metric"
-        action: "update"

@@ -18,7 +18,7 @@ schema:
         action: "update"
     relationships:
       - type: "Has"
-        source_entity: "Snowflake"
-        destination_entity: "DockerDaemon"
+        source: "Snowflake"
+        destination: "DockerDaemon"
         context: "metric"
         action: "update"

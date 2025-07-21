@@ -11,13 +11,13 @@ schema:
   events:
     relationships:
       - type: "Has"
-        source_entity: "Snowflake"
-        destination_entity: "Service"
+        source: "Snowflake"
+        destination: "Service"
         context: "log"
         action: "update"
       - type: "MemberOf"
-        source_entity: "KubernetesPod"
-        destination_entity: "Snowflake"
+        source: "KubernetesPod"
+        destination: "Snowflake"
         context: "log"
         action: "update"
     entities:

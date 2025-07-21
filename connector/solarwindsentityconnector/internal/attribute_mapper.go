@@ -16,6 +16,7 @@ package internal
 
 import (
 	"fmt"
+
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 )
@@ -31,12 +32,12 @@ func NewAttributeMapper(entityConfigs map[string]config.Entity) AttributeMapper 
 }
 
 func (e *AttributeMapper) getEntity(entityType string, attrs Attributes) (*Entity, error) {
-	entity, ok := e.entityConfigs[entityType]
+	entityConfig, ok := e.entityConfigs[entityType]
 	if !ok {
-		return nil, fmt.Errorf("entity type %s not found", entityType)
+		return nil, fmt.Errorf("configuration for entity type %s not found", entityType)
 	}
 
-	newEntity, err := createEntity(entity, attrs.Common)
+	newEntity, err := createEntity(entityConfig, attrs.Common)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create entity for type %s: %w", entityType, err)
 	}
@@ -53,7 +54,7 @@ func (e *AttributeMapper) getRelationshipEntities(sourceEntityType, destEntityTy
 
 	sourceEntityConfiguration, ok := e.entityConfigs[sourceEntityType]
 	if !ok {
-		return nil, nil, fmt.Errorf("source entity type %s not found", sourceEntityType)
+		return nil, nil, fmt.Errorf("configuration for source entity type %s not found", sourceEntityType)
 	}
 
 	sourceEntity, err := createEntity(sourceEntityConfiguration, attrs.Common, attrs.Source)
@@ -63,7 +64,7 @@ func (e *AttributeMapper) getRelationshipEntities(sourceEntityType, destEntityTy
 
 	destinationEntityConfiguration, ok := e.entityConfigs[destEntityType]
 	if !ok {
-		return nil, nil, fmt.Errorf("destination entity type %s not found", destEntityType)
+		return nil, nil, fmt.Errorf("configuration for destination entity type %s not found", destEntityType)
 	}
 	destinationEntity, err := createEntity(destinationEntityConfiguration, attrs.Common, attrs.Destination)
 	if err != nil {

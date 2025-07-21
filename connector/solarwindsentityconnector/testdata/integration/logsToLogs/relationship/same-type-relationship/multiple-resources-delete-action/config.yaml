@@ -8,8 +8,8 @@ schema:
   events:
     relationships:
       - type: "TestRelationshipType"
-        source_entity: "Kubernetes Node"
-        destination_entity: "Kubernetes Node"
+        source: "Kubernetes Node"
+        destination: "Kubernetes Node"
         attributes: []
         conditions: ['instrumentation_scope.name == "NodeScope" and resource.attributes["service.name"] == "NodeService" and log.body == "test-log-body"']
         context: "log"
