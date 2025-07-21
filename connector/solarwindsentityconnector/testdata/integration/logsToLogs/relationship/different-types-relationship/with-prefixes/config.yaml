@@ -13,6 +13,7 @@ schema:
       - entity: "Snowflake"
         conditions: []
         context: "log"
+        action: "update"
       - entity: "AWS EC2"
         conditions: ["true"]
         context: "log"

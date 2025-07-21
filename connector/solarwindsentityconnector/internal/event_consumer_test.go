@@ -35,7 +35,7 @@ func TestSendExpiredEventsWithRelationship(t *testing.T) {
 	events := []Event{
 		&Relationship{
 			Type: "dependsOn",
-			Source: RelationshipEntity{
+			Source: Entity{
 				Type: "service",
 				IDs: func() pcommon.Map {
 					m := pcommon.NewMap()
@@ -43,7 +43,7 @@ func TestSendExpiredEventsWithRelationship(t *testing.T) {
 					return m
 				}(),
 			},
-			Destination: RelationshipEntity{
+			Destination: Entity{
 				Type: "database",
 				IDs: func() pcommon.Map {
 					m := pcommon.NewMap()

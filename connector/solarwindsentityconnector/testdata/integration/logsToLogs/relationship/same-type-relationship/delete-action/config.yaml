@@ -14,8 +14,3 @@ schema:
         conditions: ['instrumentation_scope.name == "NodeScope" and resource.attributes["service.name"] == "NodeService" and log.body == "test-log-body"']
         context: "log"
         action: "delete"
-    entities:
-      - entity: "Kubernetes Node"
-        conditions: ['instrumentation_scope.name == "NodeScope" and resource.attributes["service.name"] == "NodeService" and log.body == "test-log-body"']
-        context: "log"
-        action: "update"

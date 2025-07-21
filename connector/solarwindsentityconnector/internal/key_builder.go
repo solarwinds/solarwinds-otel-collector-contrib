@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package storage
+package internal
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
@@ -26,7 +25,7 @@ import (
 // KeyBuilder provides methods for generating consistent keys for entities and relationships
 type KeyBuilder interface {
 	// BuildEntityKey constructs a unique key for an entity
-	BuildEntityKey(entity internal.RelationshipEntity) (string, error)
+	BuildEntityKey(entity Entity) (string, error)
 
 	// BuildRelationshipKey constructs a unique key for a relationship using the relationship type
 	// and the hashed keys of the source and destination entities
@@ -43,26 +42,15 @@ func NewKeyBuilder() KeyBuilder {
 
 // BuildEntityKey constructs a unique key for the entity referenced in the relationship.
 // The key is composition of entity type and its ID attributes.
-func (b *defaultKeyBuilder) BuildEntityKey(entity internal.RelationshipEntity) (string, error) {
-	var buf bytes.Buffer
-	enc := json.NewEncoder(&buf)
-	err := enc.Encode(struct {
+func (b *defaultKeyBuilder) BuildEntityKey(entity Entity) (string, error) {
+	data := struct {
 		Type string
 		IDs  map[string]any
 	}{
-		entity.Type,
-		entity.IDs.AsRaw(),
-	})
-	if err != nil {
-		return "", fmt.Errorf("failed to encode entity: %w", err)
+		Type: entity.Type,
+		IDs:  entity.IDs.AsRaw(),
 	}
-
-	h := fnv.New64a()
-	_, err = h.Write(buf.Bytes())
-	if err != nil {
-		return "", fmt.Errorf("failed to write entity bytes to hash: %w", err)
-	}
-	return fmt.Sprintf("%x", h.Sum64()), nil
+	return hashObject(data)
 }
 
 // BuildRelationshipKey constructs a key using the relationship type and the hashed keys
@@ -78,4 +66,19 @@ func (b *defaultKeyBuilder) BuildRelationshipKey(relationshipType string, source
 		return "", fmt.Errorf("destHash cannot be empty")
 	}
 	return fmt.Sprintf("%s:%s:%s", relationshipType, sourceHash, destHash), nil
+}
+
+func hashObject(data interface{}) (string, error) {
+	bytes, err := json.Marshal(data)
+	if err != nil {
+		return "", fmt.Errorf("failed to encode: %w", err)
+	}
+
+	// Create hash from the marshaled bytes
+	h := fnv.New64a()
+	_, err = h.Write(bytes)
+	if err != nil {
+		return "", fmt.Errorf("failed to write bytes to hash: %w", err)
+	}
+	return fmt.Sprintf("%x", h.Sum64()), nil
 }

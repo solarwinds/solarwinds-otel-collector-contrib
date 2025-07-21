@@ -1,0 +1,14 @@
+source_prefix: "src."
+destination_prefix: "dst."
+schema:
+  entities:
+    - type: "TestEntityType"
+      ids: ["id", "name"]
+      attributes: ["random.attribute"]
+  events:
+    relationships:
+      - type: "TestRelationshipType"
+        source: "TestEntityType"
+        destination: "TestEntityType"
+        context: "log"
+        action: "update"

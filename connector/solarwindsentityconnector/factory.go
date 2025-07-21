@@ -63,17 +63,18 @@ func createConnector(settings connector.Settings, cfg component.Config, logs con
 	if err != nil {
 		return nil, err
 	}
+	attributeMapper := internal.NewAttributeMapper(schema.Entities)
 
 	se := &solarwindsentity{
 		logger: logger,
 		eventDetector: internal.NewEventDetector(
-			schema.Entities,
-			baseConfig.SourcePrefix,
-			baseConfig.DestinationPrefix,
+			attributeMapper,
 			schema.Events.LogEvents,
 			schema.Events.MetricEvents,
-			logger,
+			settings.Logger,
 		),
+		sourcePrefix:     baseConfig.SourcePrefix,
+		destPrefix:       baseConfig.DestinationPrefix,
 		expirationPolicy: expirationSettings,
 		logsConsumer:     logs,
 	}

@@ -36,7 +36,7 @@ var cfg = &config.ExpirationSettings{
 	TTLCleanupIntervalSeconds: ttlCleanupInterval,
 }
 
-var sourceEntity = internal.RelationshipEntity{
+var sourceEntity = internal.Entity{
 	Type: "service",
 	IDs: func() pcommon.Map {
 		m := pcommon.NewMap()
@@ -45,7 +45,7 @@ var sourceEntity = internal.RelationshipEntity{
 	}(),
 }
 
-var destEntity = internal.RelationshipEntity{
+var destEntity = internal.Entity{
 	Type: "database",
 	IDs: func() pcommon.Map {
 		m := pcommon.NewMap()
@@ -253,7 +253,7 @@ func TestTtlExpiration_TenDifferentUpdates_ResultInTenExpiryEvents(t *testing.T)
 
 	for i := 0; i < 10; i++ {
 		// Create a unique relationship by varying the source entity's ID
-		sourceEntity := internal.RelationshipEntity{
+		sourceEntity := internal.Entity{
 			Type: "service",
 			IDs: func() pcommon.Map {
 				m := pcommon.NewMap()
@@ -326,7 +326,7 @@ func TestTtlExpiration_RelationshipIsRemovedFirst_EntitiesSecond(t *testing.T) {
 	storage.entities.Wait()
 	storage.relationships.Wait()
 
-	kb := NewKeyBuilder()
+	kb := internal.NewKeyBuilder()
 	sourceHash, err := kb.BuildEntityKey(relationship.Source)
 	require.NoError(t, err)
 	destHash, err := kb.BuildEntityKey(relationship.Destination)
@@ -415,7 +415,7 @@ func TestInternalStorage_Delete(t *testing.T) {
 			name: "Error building relationship hash key",
 			relationship: &internal.Relationship{
 				Type: "", // Empty type should cause an error when building the key
-				Source: internal.RelationshipEntity{
+				Source: internal.Entity{
 					Type: "service",
 					IDs:  pcommon.NewMap(),
 				},
@@ -533,7 +533,7 @@ func TestDelete_ComparedToTTLExpiration(t *testing.T) {
 	createTestRelationship := func(suffix string) *internal.Relationship {
 		return &internal.Relationship{
 			Type: "testRelation" + suffix,
-			Source: internal.RelationshipEntity{
+			Source: internal.Entity{
 				Type: "sourceType",
 				IDs: func() pcommon.Map {
 					m := pcommon.NewMap()
@@ -541,7 +541,7 @@ func TestDelete_ComparedToTTLExpiration(t *testing.T) {
 					return m
 				}(),
 			},
-			Destination: internal.RelationshipEntity{
+			Destination: internal.Entity{
 				Type: "destType",
 				IDs: func() pcommon.Map {
 					m := pcommon.NewMap()
