@@ -2,24 +2,24 @@ source_prefix: "src."
 destination_prefix: "dst."
 schema:
   entities:
-    - type: "Snowflake"
-      ids: ["receiver.id"]
+    - entity: "Snowflake"
+      id: ["receiver.id"]
       attributes: ["receiver.version", "snowflake.version"]
-    - type: "DockerDaemon"
-      ids: ["receiver.id"]
+    - entity: "DockerDaemon"
+      id: ["receiver.id"]
       attributes: ["receiver.version", "docker.version"]
   events:
     entities:
-      - type: "Snowflake"
+      - entity: "Snowflake"
         context: "log"
         action: "update"
-      - type: "DockerDaemon"
+      - entity: "DockerDaemon"
         context: "log"
         action: "update"
     relationships:
       - type: "Has"
-        source: "Snowflake"
-        destination: "DockerDaemon"
+        source_entity: "Snowflake"
+        destination_entity: "DockerDaemon"
         attributes: ["snowflake2docker.attribute"]
         context: "log"
         action: "update"
