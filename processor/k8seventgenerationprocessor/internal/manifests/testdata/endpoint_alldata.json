@@ -1,0 +1,68 @@
+{
+    "apiVersion": "v1",
+    "kind": "Endpoints",
+    "metadata": {
+        "annotations": {
+            "endpoints.kubernetes.io/last-change-trigger-time": "2025-01-01T12:00:00Z"
+        },
+        "creationTimestamp": "2025-01-01T11:00:00Z",
+        "labels": {
+            "k8s-app": "test-app",
+            "kubernetes.io/name": "test-name"
+        },
+        "name": "test-name",
+        "namespace": "test-namespace",
+        "resourceVersion": "1",
+        "uid": "00000000-0000-0000-0000-000000000001"
+    },
+    "subsets": [
+        {
+            "addresses": [
+                {
+                    "ip": "192.168.1.1",
+                    "nodeName": "test-node",
+                    "targetRef": {
+                        "kind": "Pod",
+                        "name": "test-name-0000000000-00001",
+                        "namespace": "test-namespace",
+                        "uid": "00000000-0000-0000-0000-000000000002"
+                    }
+                },
+                {
+                    "ip": "192.168.1.2",
+                    "nodeName": "test-node",
+                    "targetRef": {
+                        "kind": "Pod",
+                        "name": "test-name-0000000000-00002",
+                        "namespace": "test-namespace",
+                        "uid": "00000000-0000-0000-0000-000000000003"
+                    }
+                }
+            ],
+            "notReadyAddresses": [
+                {
+                    "ip": "192.168.1.3",
+                    "nodeName": "test-node",
+                    "targetRef": {
+                        "kind": "Pod",
+                        "name": "test-name-0000000000-00003",
+                        "namespace": "test-namespace",
+                        "uid": "00000000-0000-0000-0000-000000000004"
+                    }
+                }
+            ],
+            "ports": [
+                {
+                    "name": "test-port-1",
+                    "port": 111,
+                    "protocol": "TCP"
+                },
+                {
+                    "name": "test-port-2",
+                    "port": 111,
+                    "protocol": "UDP"
+                }
+            ]
+        }
+    ]
+}

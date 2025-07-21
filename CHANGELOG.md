@@ -5,6 +5,7 @@
 - `solarwindsentityconnector` Fixed extra output log issue by adding missing yaml tags for cache configuration parsing
 - `swok8sworkloadtypeprocessor` Support addresses ending with dot
 - `swohostmetricsreceiver` Separated `wmi` and `registry` packages in their own modules
+- `k8seventgenerationprocessor` Extend the k8seventgeneration processor to extract data for Service mapping
 
 ## v0.127.5
 - `solarwindsentityconnector` Benchmark fix
