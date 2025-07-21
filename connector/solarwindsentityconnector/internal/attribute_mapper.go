@@ -77,7 +77,7 @@ func (e *AttributeMapper) getRelationshipEntities(sourceEntityType, destEntityTy
 func createEntity(entity config.Entity, attrs ...map[string]pcommon.Value) (Entity, error) {
 	ids, err := getRequiredAttributes(entity.IDs, attrs...)
 	if err != nil {
-		return Entity{}, fmt.Errorf("failed to get ID attributes for entity %s: %w", entity.Type, err)
+		return Entity{}, fmt.Errorf("failed to get ID attributes for entity %s: %w", entity.Entity, err)
 	}
 
 	ea := getOptionalAttributes(entity.Attributes, attrs...)
@@ -85,7 +85,7 @@ func createEntity(entity config.Entity, attrs ...map[string]pcommon.Value) (Enti
 	return Entity{
 		IDs:        ids,
 		Attributes: ea,
-		Type:       entity.Type,
+		Type:       entity.Entity,
 	}, nil
 }
 
