@@ -3,6 +3,7 @@
 ## vNext
 - `solarwindsentityconnector` Added support for OTTL converters in event condition expressions
 - `solarwindsentityconnector` Fixed extra output log issue by adding missing yaml tags for cache configuration parsing
+- `swok8sworkloadtypeprocessor` Support addresses ending with dot
 
 ## v0.127.5
 - `solarwindsentityconnector` Benchmark fix
