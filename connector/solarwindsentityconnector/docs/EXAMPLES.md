@@ -24,6 +24,7 @@ schema:
   entities:
     - type: KubernetesCluster
       id: [cluster.uid]
+      attributes: [cluster.name]
     - type: KubernetesNamespace
       id: [cluster.uid, namespace.name]
     - type: Snowflake
@@ -231,7 +232,7 @@ receiver.name -> "snowflake"
 ```
 ___
 ## Relationship ID Attributes
-### Relationship Without Prefix, Creating Entities
+### Different-type Relationship Without Prefix, Creating Entities
 Relationship without prefixed attributes can be used to infer relationships between entities:
 - of different types
 - of different entity IDs sets.
@@ -297,7 +298,7 @@ namespace.name -> "namespace-123"
 ```
 ___
 
-### Relationship Without Prefix, Without entities
+### Different-type Relationship Without Prefix, Without entities
 Example of the same scenarios as above, but without entities defined in the events section.
 
 **Defined events**
@@ -338,15 +339,16 @@ namespace.name -> "namespace-123"
 ```
 ___
 
-### Relationship with Prefixes, creating Entities
+### Different-type Relationship with Prefixes, creating valid Entities
 Relationship with prefixed attributes can be used to infer relationships between entities:
 - of different types
   - with or without same set of IDs, (this example shows with same set of IDs = Snowflake -> DockerDaemon)
 - of the same type.
 
-Together with inferring entities, from prefixed attributes.
+Together with inferring entities, from prefixed attributes. However, in this scenario, we present case where
+conditions for DockerDaemon entity are not met, so only Snowflake is not inferred (no conditions means *true*).
 
-This configuration will output three log records. One for relationship, two for entities, because they were configured in events section.
+This configuration will output two log records. One for relationship, one for Snowflake entity.
 
 
 **Defined events**
@@ -360,6 +362,7 @@ events:
     - type: DockerDaemon
       action: update
       context: log
+      conditions: ["something falsy"]
   relationships:
     - type: Has
       action: update
@@ -387,13 +390,6 @@ dst.receiver.name -> "docker"
     }
   },
   {
-    "entity_type": "DockerDaemon",
-    "entity_id": {
-      "receiver.id": "docker-123",
-      "receiver.name": "docker"
-    }
-  },
-  {
     "relationship_type": "Has",
     "source_entity_type": "Snowflake",
     "source_entity_id": {
@@ -404,6 +400,256 @@ dst.receiver.name -> "docker"
     "destination_entity_id": {
       "receiver.id": "docker-123",
       "receiver.name": "docker"
+    }
+  }
+]
+```
+___
+
+
+### Same-type Relationship with Prefixes, creating Entities
+Relationship with prefixed attributes can be used to infer relationships between entities of the same type.
+
+Together with inferring entities, from prefixed attributes.
+
+This configuration will output three log records. One for relationship, two for entities of KubernetesCluster type,
+because the type is configured in the events section.
+
+
+**Defined events**
+
+```yaml
+events:
+  entities:
+    - type: KubernetesCluster
+      action: update
+      context: log
+  relationships:
+    - type: CommunicatesWith
+      action: update
+      context: log
+      source_entity: KubernetesCluster
+      destination_entity: KubernetesCluster
+```
+
+**Input resource attributes**
+
+```
+src.cluster.uid -> "cluster-123"
+dst.cluster.uid -> "cluster-456"
+```
+
+**Output log records**
+```json
+[
+  {
+    "entity_type": "KubernetesCluster",
+    "entity_id": {
+      "cluster.uid": "cluster-123"
+    }
+  },
+  {
+    "entity_type": "KubernetesCluster",
+    "entity_id": {
+      "cluster.uid": "cluster-456"
+    }
+  },
+  {
+    "relationship_type": "CommunicatesWith",
+    "source_entity_type": "KubernetesCluster",
+    "source_entity_id": {
+      "cluster.uid": "cluster-123"
+    },
+    "destination_entity_type": "KubernetesCluster",
+    "destination_entity_id": {
+      "cluster.uid": "cluster-456"
+    }
+  }
+]
+```
+___
+
+## Entity Attributes
+### Entity with attributes
+Entity update log will be sent together with an attribute.
+
+**Defined events**
+
+```yaml
+events:
+  entities:
+    - type: KubernetesCluster
+      action: update
+      context: log
+```
+
+**Input resource attributes**
+
+```
+cluster.uid -> "cluster-123"
+cluster.name -> "Cluster 123"
+```
+
+**Output log records**
+```json
+[
+  {
+    "entity_type": "KubernetesCluster",
+    "entity_id": {
+      "cluster.uid": "cluster-123"
+    },
+    "entity_attributes": {
+      "cluster.name": "Cluster 123"
+    }
+  }
+]
+```
+___
+### Entity with prefixed attributes
+Attribute will not be sent, because the prefix is not accepted when entity is not used as source or destination
+entity in a relationship.
+
+**Defined events**
+
+```yaml
+events:
+  entities:
+    - type: KubernetesCluster
+      action: update
+      context: log
+```
+
+**Input resource attributes**
+
+```
+cluster.uid -> "cluster-123"
+src.cluster.name -> "Cluster 123"
+```
+
+**Output log records**
+```json
+[
+  {
+    "entity_type": "KubernetesCluster",
+    "entity_id": {
+      "cluster.uid": "cluster-123"
+    }
+  }
+]
+```
+___
+
+## Relationship Attributes
+### Relationship with unprefixed attributes
+An attribute will be sent, because the relationship is defined with the attributes.
+
+:warning: Relationship attributes are used only from unprefixed attributes.
+
+**Defined events**
+
+```yaml
+events:
+  relationships:
+    - type: Has
+      action: update
+      context: log
+      source_entity: KubernetesCluster
+      destination_entity: KubernetesNamespace
+      attributes: ["additional.attribute"]
+```
+
+**Input resource attributes**
+
+```
+cluster.uid -> "cluster-123"
+namespace.name -> "namesapce-123"
+additional.attribute -> "some value"
+```
+
+**Output log records**
+```json
+[
+  {
+    "relationship_type": "Has",
+    "source_entity_type": "KubernetesCluster",
+    "source_entity_id": {
+      "cluster.uid": "cluster-123"
+    },
+    "destination_entity_type": "KubernetesNamespace",
+    "destination_entity_id": {
+      "cluster.uid": "namespace-456"
+    },
+    "relationship_attributes": {
+      "additional.attribute": "some value"
+    }
+  }
+]
+```
+___
+### Relationship And Entities with prefixed attributes
+Attributes will be sent for:
+- relationship, because it is defined with the `events.relationship` section.
+- for entities, because they are defined in the `schema.entities` section.
+
+**Defined events**
+
+```yaml
+events:
+  entities:
+    - type: KubernetesCluster
+      action: update
+      context: log
+  relationships:
+    - type: CommunicatesWith
+      action: update
+      context: log
+      source_entity: KubernetesCluster
+      destination_entity: KubernetesCluster
+```
+
+**Input resource attributes**
+
+```
+src.cluster.uid -> "cluster-123"
+dst.cluster.uid -> "cluster-456"
+src.cluster.name -> "Cluster 123"
+dst.cluster.name -> "Cluster 456"
+additional.attribute -> "some value"
+```
+
+**Output log records**
+```json
+[
+  {
+    "entity_type": "KubernetesCluster",
+    "entity_id": {
+      "cluster.uid": "cluster-123"
+    },
+    "entity_attributes": {
+      "cluster.name": "Cluster 123"
+    }
+  },
+  {
+    "entity_type": "KubernetesCluster",
+    "entity_id": {
+      "cluster.uid": "cluster-456"
+    },
+    "entity_attributes": {
+      "cluster.name": "Cluster 456"
+    }
+  },
+  {
+    "relationship_type": "CommunicatesWith",
+    "source_entity_type": "KubernetesCluster",
+    "source_entity_id": {
+      "cluster.uid": "cluster-123"
+    },
+    "destination_entity_type": "KubernetesCluster",
+    "destination_entity_id": {
+      "cluster.uid": "cluster-456"
+    },
+    "relationship_attributes": {
+      "additional.attribute": "some value"
     }
   }
 ]
