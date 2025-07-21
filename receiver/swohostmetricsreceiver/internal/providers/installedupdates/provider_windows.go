@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/tools/wmi"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/wmi"
 	"go.uber.org/zap"
 )
 

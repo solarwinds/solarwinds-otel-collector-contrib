@@ -1,4 +1,4 @@
-module github.com/solarwinds/solarwinds-otel-collector-contrib/tools/wmi
+module github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/wmi
 
 go 1.24.4
 

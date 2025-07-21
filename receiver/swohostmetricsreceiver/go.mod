@@ -8,8 +8,8 @@ require (
 	github.com/shirou/gopsutil/v3 v3.24.5
 	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil v0.127.5
 	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.127.5
-	github.com/solarwinds/solarwinds-otel-collector-contrib/tools/registry v0.127.5
-	github.com/solarwinds/solarwinds-otel-collector-contrib/tools/wmi v0.127.5
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/registry v0.127.5
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/wmi v0.127.5
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/collector/component v1.33.0
 	go.opentelemetry.io/collector/component/componenttest v0.127.0
@@ -84,6 +84,6 @@ replace github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version => .
 
 replace github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil => ../../pkg/testutil
 
-replace github.com/solarwinds/solarwinds-otel-collector-contrib/tools/wmi => ../../tools/wmi
+replace github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/wmi => ./../../pkg/wmi
 
-replace github.com/solarwinds/solarwinds-otel-collector-contrib/tools/registry => ../../tools/registry
+replace github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/registry => ./../../pkg/registry

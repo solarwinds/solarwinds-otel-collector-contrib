@@ -17,8 +17,8 @@ package cpu
 import (
 	"strings"
 
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/wmi"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/tools/wmi"
 )
 
 type provider struct {
