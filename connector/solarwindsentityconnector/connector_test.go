@@ -377,6 +377,7 @@ func TestRelationshipCacheExpiration(t *testing.T) {
 	expectedFile := filepath.Join(testFolder, "expected-output.yaml")
 	expected, err := golden.ReadLogs(expectedFile)
 	require.NoError(t, err)
+	require.Len(t, allLogs, 2) // one for update events and one for delete
 	assert.Equal(t, expected.LogRecordCount(), allLogs[1].LogRecordCount())
 	assert.NoError(t, plogtest.CompareLogs(expected, allLogs[1], plogtest.IgnoreObservedTimestamp()))
 }
