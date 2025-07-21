@@ -19,19 +19,19 @@ Each example includes
 - [Relationship ID Attributes](#relationship-id-attributes)
   - [Different-Type Relationship](#different-type-relationship)
     - [Without Prefix](#without-prefix-2)
-    - [With Prefixes](#with-prefixes)
+    - [With Prefix](#with-prefix-1)
   - [Same-Type Relationship](#same-type-relationship)
     - [With Partial Prefix](#with-partial-prefix)
-    - [With Prefix](#with-prefix-1)
+    - [With Prefix](#with-prefix-2)
   - [Any-Type Relationship](#any-type-relationship)
     - [Without Inferring of Entities](#without-inferring-of-entities)
     - [Multiple Relationships](#multiple-relationships)
 - [Entity Attributes](#entity-attributes)
-  - [Entity With Attributes (Unprefixed)](#entity-with-attributes-unprefixed)
-  - [Entity With Prefixed Attributes (No Attributes Output)](#entity-with-prefixed-attributes-no-attributes-output)
+  - [Without Prefix](#without-prefix-3)
+  - [With Prefix](#with-prefix-3)
 - [Relationship Attributes](#relationship-attributes)
-  - [Relationship With Unprefixed Attributes](#relationship-with-unprefixed-attributes)
-  - [Relationship And Entities With Prefixed Attributes](#relationship-and-entities-with-prefixed-attributes)
+  - [Without Prefix](#without-prefix-4)
+  - [With Prefix and Entities](#with-prefix-and-entities)
 
 Assume following entities definitions with simplified attribute names and source/destination prefix.
 
@@ -256,7 +256,7 @@ receiver.name -> "snowflake"
 ```
 ___
 ## Relationship ID Attributes
-### Diffferent-Type Relationship
+### Different-Type Relationship
 #### Without Prefix
 Relationship without prefixed attributes can be used to infer relationships between entities of different types (where entity IDs are not the same for each entity).
 
@@ -321,7 +321,7 @@ namespace.name -> "namespace-123"
 ```
 ___
 
-#### With Prefixes
+#### With Prefix
 Relationship with prefixed attributes can be used to infer relationships between entities of different types with or without same set of IDs, (this example shows with same set of IDs = Snowflake -> DockerDaemon).
 
 Together with inferring entities, from prefixed attributes. However, in this scenario, we present case where
@@ -388,8 +388,8 @@ ___
 ### Same-Type Relationship
 Same-type relationship needs at least one prefixed attribute to differ between source and destination entity.
 #### With Partial Prefix
-Relationship with attributes where at least one prefix are supported. All other attributes will be taken from
-the unprefixed and will behave like common attribute for both entities.
+Relationship with attributes where at least one prefix is supported. All other attributes will be taken from
+the unprefixed attributes and will behave like common attributes for both entities.
 
 
 **Defined events**
@@ -516,7 +516,7 @@ ___
 
 
 ### Any-Type Relationship
-Scenarios in this section are applicable to both types of relationship (same/different).
+Scenarios in this section are applicable to both types of relationships (same/different).
 #### Without Inferring of Entities
 This scenario presents case where only relationship is inferred without entities. Entities would be inferred
 if mentioned in `events.entities`.
@@ -559,9 +559,10 @@ namespace.name -> "namespace-123"
 ```
 ___
 #### Multiple Relationships
-If conditions are fulfiled and attributes can be mapped to entities participating in relationships, more than one relationship can be inferred.
+If conditions are fulfilled and attributes can be mapped to entities participating in relationships, more than one relationship can be inferred.
 
-This scenario has one limitation and that the entities have to have different sets of IDs, or at least correctly differentiated by prefix. However, this should not be usual case when taking into account the real usage of opentelemetry and the appereance of the incoming telemetry resources.
+This scenario has one limitation: the entities have to have different sets of IDs, or at least be correctly differentiated by prefix. However, this should not be a usual case when taking into account the real usage of OpenTelemetry and the appearance of the incoming telemetry resources.
+
 **Defined events**
 
 ```yaml
@@ -604,8 +605,8 @@ receiver.name -> "snowflake"
       "namespace.name": "namespace-123"
     }
   },
-    {
-    "relationship_type": "Has",
+  {
+    "relationship_type": "CommunicatesWith",
     "source_entity_type": "Snowflake",
     "source_entity_id": {
       "receiver.id": "snowflake-123",
@@ -622,7 +623,7 @@ receiver.name -> "snowflake"
 ___
 
 ## Entity Attributes
-### Entity With Attributes (Unprefixed)
+### Without Prefix
 Entity update log will be sent together with an attribute.
 
 **Defined events**
@@ -657,7 +658,7 @@ cluster.name -> "Cluster 123"
 ]
 ```
 ___
-### Entity With Prefixed Attributes (No Attributes Output)
+### With Prefix
 Attribute will not be sent, because the prefix is not accepted when entity is not used as source or destination
 entity in a relationship.
 
@@ -692,7 +693,7 @@ src.cluster.name -> "Cluster 123"
 ___
 
 ## Relationship Attributes
-### Relationship With Unprefixed Attributes
+### Without Prefix
 An attribute will be sent, because the relationship is defined with the attributes.
 
 :warning: Relationship attributes are used only from unprefixed attributes.
@@ -729,7 +730,8 @@ additional.attribute -> "some value"
     },
     "destination_entity_type": "KubernetesNamespace",
     "destination_entity_id": {
-      "cluster.uid": "namespace-456"
+      "cluster.uid": "cluster-123",
+      "namespace.name": "namespace-123"
     },
     "relationship_attributes": {
       "additional.attribute": "some value"
@@ -738,10 +740,10 @@ additional.attribute -> "some value"
 ]
 ```
 ___
-### Relationship And Entities With Prefixed Attributes
+### With Prefix and Entities
 Attributes will be sent for:
-- relationship, because it is defined with the `events.relationship` section.
-- for entities, because they are defined in the `schema.entities` section.
+- relationship, because it is defined in the `events.relationships` section.
+- entities, because they are defined in the `schema.entities` section.
 
 **Defined events**
 
