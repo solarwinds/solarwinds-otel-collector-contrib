@@ -1,21 +1,5 @@
 resourceMetrics:
   - resource:
-      attributes: [ { "key": "aws.ec2.id", "value":{"stringValue": "aws-instance-id-first"}},
-                    { "key": "aws.ec2.name", "value":{"stringValue": "aws-instance-name-common"}}]
-    scopeMetrics:
-      - metrics:
-          - name: "test-metric"
-            description: "test metric description"
-            unit: "1"
-  - resource:
-      attributes: [ { "key": "aws.ec2.id", "value":{"stringValue": "aws-instance-id-second"}},
-                    { "key": "aws.ec2.name", "value":{"stringValue": "aws-instance-name-common"}}]
-    scopeMetrics:
-      - metrics:
-          - name: "test-metric"
-            description: "test metric description"
-            unit: "1"
-  - resource:
       attributes: [ { "key": "src.aws.ec2.id", "value":{"stringValue": "aws-instance-id-first"}},
                     { "key": "dst.aws.ec2.id", "value":{"stringValue": "aws-instance-id-second"}},
                     { "key": "aws.ec2.name", "value":{"stringValue": "aws-instance-name-common"}}]

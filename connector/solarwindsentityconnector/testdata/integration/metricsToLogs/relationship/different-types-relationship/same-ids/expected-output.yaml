@@ -1,0 +1,88 @@
+resourceLogs:
+  - resource: {}
+    scopeLogs:
+      - logRecords:
+        - attributes:
+              - key: otel.entity.type
+                value:
+                  stringValue: Snowflake
+              - key: otel.entity.id
+                value:
+                  kvlistValue:
+                    values:
+                      - key: receiver.id
+                        value:
+                          stringValue: snowflake-id
+                      - key: receiver.name
+                        value:
+                          stringValue: snowflake
+              - key: otel.entity.event.type
+                value:
+                  stringValue: entity_state
+          body: { }
+          observedTimeUnixNano: "1747406237566146000"
+          spanId: ""
+          traceId: ""
+        - attributes:
+            - key: otel.entity.type
+              value:
+                stringValue: DockerDaemon
+            - key: otel.entity.id
+              value:
+                kvlistValue:
+                  values:
+                    - key: receiver.id
+                      value:
+                        stringValue: docker-id
+                    - key: receiver.name
+                      value:
+                        stringValue: docker
+            - key: otel.entity.event.type
+              value:
+                stringValue: entity_state
+          body: { }
+          observedTimeUnixNano: "1747406237566146000"
+          spanId: ""
+          traceId: ""
+        - attributes:
+          - key: otel.entity_relationship.source_entity.id
+            value:
+              kvlistValue:
+                values:
+                  - key: receiver.id
+                    value:
+                      stringValue: snowflake-id
+                  - key: receiver.name
+                    value:
+                      stringValue: snowflake
+          - key: otel.entity_relationship.destination_entity.id
+            value:
+              kvlistValue:
+                values:
+                  - key: receiver.id
+                    value:
+                      stringValue: docker-id
+                  - key: receiver.name
+                    value:
+                      stringValue: docker
+          - key: otel.entity_relationship.type
+            value:
+              stringValue: Has
+          - key: otel.entity_relationship.source_entity.type
+            value:
+              stringValue: Snowflake
+          - key: otel.entity_relationship.destination_entity.type
+            value:
+              stringValue: DockerDaemon
+          - key: otel.entity.event.type
+            value:
+              stringValue: entity_relationship_state
+          body: { }
+          observedTimeUnixNano: "1747299066557290000"
+          spanId: ""
+          traceId: ""
+        scope:
+          attributes:
+            - key: otel.entity.event_as_log
+              value:
+                boolValue: true
