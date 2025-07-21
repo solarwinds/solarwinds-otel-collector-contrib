@@ -1,0 +1,13 @@
+resourceLogs:
+  - resource:
+      attributes: [{ "key": "src.receiver.id", "value":{"stringValue": "snowflake-123"}},
+                   { "key": "dst.receiver.id", "value":{"stringValue": "docker-123"}},
+                   { "key": "src.receiver.version", "value":{"stringValue": "1.0.0"} },
+                   { "key": "dst.receiver.version", "value":{"stringValue": "2.0.0"} },
+                   { "key": "src.snowflake.version", "value":{"stringValue": "snowflake-0.1"} },
+                  { "key": "docker.version", "value":{"stringValue": "docker-0.1"} }]
+    scope_logs:
+      - log_records:
+          - body: { "stringValue": "test-log-body" }
+            attributes: [ { "key": "env", "value":{"stringValue": "test"}} ]
+            time_unix_nano: 1234567890

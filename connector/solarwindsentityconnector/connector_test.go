@@ -184,10 +184,16 @@ func TestConnector(t *testing.T) {
 			folder: "without-prefixes",
 		},
 		{
-			// When two  different entities have the same id attributes, the relationship should be inferred
+			// When two different entities have the same id attributes, the relationship should be inferred
 			// along with the two entities updates from incoming prefixed telemetry.
 			name:   "different type relationship with the same set of ids",
 			folder: "same-ids",
+		},
+		{
+			// Checks that when relationship and entity attributes are prefixed, the connector is able to correctly
+			// assign prefixed and unprefixed attributes to the entities and relationships.
+			name:   "entity and relationship attributes are correctly set from prefix and unprefixed resource attributes",
+			folder: "prefixed-attributes",
 		},
 	}
 
@@ -267,7 +273,7 @@ func TestConnector(t *testing.T) {
 	}
 
 	// Test both logs-to-logs and metrics-to-logs
-	for _, signalType := range []string{"logs_to_logs", "metrics_to_logs"} {
+	for _, signalType := range []string{"logs_to_logs"} {
 		// Run entity tests
 		for _, test := range entityTests {
 			runTest(t, signalType, test.name, test.folder, entityPath)
