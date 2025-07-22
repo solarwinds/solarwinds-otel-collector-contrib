@@ -32,7 +32,7 @@ Each example includes
   - [Without Prefix](#without-prefix-4)
   - [With Prefix and Entities](#with-prefix-and-entities)
 
-Assume following entities definitions with simplified attribute names and source/destination prefix.
+Examples below rely on the following entity definitions and schema configuration, including source/destination prefixes.
 
 ```yaml
 source_prefix: "src."
