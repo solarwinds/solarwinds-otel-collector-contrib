@@ -33,23 +33,23 @@ var _ xconfmap.Validator = (*Schema)(nil)
 func (s *Schema) Validate() error {
 	var errs error
 
-	entityTypes := make(map[string]bool)
+	entityTypes := make(map[string]struct{})
 	for _, entity := range s.Entities {
-		entityTypes[entity.Entity] = true
+		entityTypes[entity.Entity] = struct{}{}
 	}
 
 	for i, e := range s.Events.Entities {
-		if !entityTypes[e.Entity] {
+		if _, exists := entityTypes[e.Entity]; !exists {
 			errs = errors.Join(errs, fmt.Errorf("events::entities::%d::entity '%s' must be defined in schema::entities", i, e.Entity))
 		}
 	}
 
 	for i, r := range s.Events.Relationships {
-		if !entityTypes[r.Source] {
+		if _, exists := entityTypes[r.Source]; !exists {
 			errs = errors.Join(errs, fmt.Errorf("events::relationships::%d::source_entity '%s' must be defined in schema::entities", i, r.Source))
 		}
 
-		if !entityTypes[r.Destination] {
+		if _, exists := entityTypes[r.Destination]; !exists {
 			errs = errors.Join(errs, fmt.Errorf("events::relationships::%d::destination_entity '%s' must be defined in schema::entities", i, r.Destination))
 		}
 	}
