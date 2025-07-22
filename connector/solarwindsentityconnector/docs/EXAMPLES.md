@@ -7,6 +7,7 @@ Each example includes:
 - **Expected output**: Log records that will be sent to SolarWinds Observability
 
 ## Table of Contents
+- [Entity Definitions Used in Examples](#entity-definitions-used-in-examples)
 - [Entity ID Attributes](#entity-id-attributes)
   - [Single Entity](#single-entity)
     - [Without Prefix](#without-prefix)
@@ -124,9 +125,9 @@ src.cluster.uid -> "cluster-123"
 ___
 ### Multiple Entities
 #### Without Prefix
-Two entities will be inferred, because conditions are true and all ID attributes for both entities are found in 
-the resource attributes. To send entity log updates for any entity, it has to be defined in the `events.entities` 
-section.
+Two entities will be inferred, because conditions are true and all ID attributes for both entities are found in the resource attributes. 
+
+To send entity log updates for any entity, it has to be defined in the `events.entities` section (see [Entity Definitions Used in Examples](#entity-definitions-used-in-examples)).
 
 
 **Defined events**
@@ -172,8 +173,9 @@ namespace.name -> "namespace-123"
 ___
 
 #### Entities With the Same Set of IDs
-:warning: Two entities will be inferred, because conditions are true and all ID attributes for both entities are found, even if
-it is unexpected. To solve this issue, use `conditions` to filter out entities that should not be inferred (see scenario below).
+:warning: Two entities will be inferred, because conditions are true and all ID attributes for both entities are found, even if it is unexpected. See IDs listed in [Entity Definitions Used in Examples](#entity-definitions-used-in-examples).
+
+To solve this issue, use `conditions` to filter out entities that should not be inferred (see scenario below).
 
 **Defined events**
 
@@ -259,10 +261,9 @@ ___
 ## Relationship ID Attributes
 ### Different-Type Relationship
 #### Without Prefix
-Relationship without prefixed attributes can be used to infer relationships between entities of different types (where entity IDs are not the same for each entity).
+Relationship without prefixed attributes can be used to infer relationships between entities of different types (where entity IDs are not the same for each entity, see entity configurations in [Entity Definitions Used in Examples](#entity-definitions-used-in-examples)).
 
 This configuration will output three log records. One for relationship, two for entities, because they were configured in events section.
-
 
 **Defined events**
 
@@ -323,12 +324,12 @@ namespace.name -> "namespace-123"
 ___
 
 #### With Prefix
-Relationship with prefixed attributes can be used to infer relationships between entities of different types with or without same set of IDs, (this example shows with same set of IDs = Snowflake -> DockerDaemon).
+Relationship with prefixed attributes can be used to infer relationships between entities of different types with or without same set of IDs, (this example shows with same set of IDs = Snowflake -> DockerDaemon, see [Entity Definitions Used in Examples](#entity-definitions-used-in-examples)).
 
-Together with inferring entities, from prefixed attributes. However, in this scenario, we present case where
-conditions for DockerDaemon entity are not met, so only Snowflake is inferred (no conditions means *true*).
+Together with inferring entities, from prefixed attributes. However, in this scenario, we present case where conditions for DockerDaemon entity are not met, so only Snowflake is inferred (no conditions means *true*).
 
 This configuration will output two log records. One for relationship, one for Snowflake entity.
+
 
 
 **Defined events**
@@ -519,9 +520,7 @@ ___
 ### Any-Type Relationship
 Scenarios in this section are applicable to both types of relationships (same/different).
 #### Without Inferring of Entities
-This scenario presents case where only relationship is inferred without entities. Entities would be inferred
-if mentioned in `events.entities`.
-
+This scenario presents case where only relationship is inferred without entities. Entities would be inferred if mentioned in `events.entities` below.
 **Defined events**
 
 ```yaml
@@ -625,7 +624,7 @@ ___
 
 ## Entity Attributes
 ### Without Prefix
-Entity update log will be sent together with an attribute, as configured in the entity definitions above.
+Entity update log will be sent together with an attribute, as configured in the entity definitions (see [Entity Definitions Used in Examples](#entity-definitions-used-in-examples)).
 
 **Defined events**
 
@@ -660,8 +659,7 @@ cluster.name -> "Cluster 123"
 ```
 ___
 ### With Prefix
-Attribute will not be sent, because the prefix is not accepted when entity is not used as source or destination
-entity in a relationship.
+Attribute will not be sent, because the prefix is not accepted when entity is not used as source or destination entity in a relationship.
 
 **Defined events**
 
@@ -695,7 +693,7 @@ ___
 
 ## Relationship Attributes
 ### Without Prefix
-An attribute will be sent, because the relationship is defined with the attributes.
+An attribute will be sent, because the relationship is defined with the attributes in `events.relationships`.
 
 :warning: Relationship attributes are used only from unprefixed attributes.
 
@@ -744,7 +742,7 @@ ___
 ### With Prefix and Entities
 Attributes will be sent for:
 - relationship, because it is defined in the `events.relationships` section.
-- entities, because they are defined in the `schema.entities` section.
+- entities, because they are defined in the `schema.entities` section (see [Entity Definitions Used in Examples](#entity-definitions-used-in-examples)).
 
 **Defined events**
 
