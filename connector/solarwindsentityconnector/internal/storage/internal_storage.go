@@ -81,7 +81,7 @@ type internalStorage struct {
 	// mu sync.Mutex
 }
 
-func newInternalStorage(cfg *config.ExpirationPolicy, logger *zap.Logger, em chan<- internal.Event) (*internalStorage, error) {
+func newInternalStorage(cfg config.ExpirationPolicy, logger *zap.Logger, em chan<- internal.Event) (*internalStorage, error) {
 	var err error
 
 	// maxCost sets the maximum number of items, when itemCost is set to 1

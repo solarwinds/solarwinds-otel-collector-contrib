@@ -73,26 +73,26 @@ type ExpirationPolicy struct {
 	MaxCapacity               int64
 }
 
-func (e *ExpirationSettings) Unmarshal() (*ExpirationPolicy, error) {
+func (e *ExpirationSettings) Unmarshal() (ExpirationPolicy, error) {
 	if !e.Enabled {
-		return &ExpirationPolicy{Enabled: false}, nil
+		return ExpirationPolicy{Enabled: false}, nil
 	}
 
 	interval, err := e.getInterval()
 	if err != nil {
-		return nil, err
+		return ExpirationPolicy{}, err
 	}
 
 	maxCapacity, err := e.getMaxCapacity()
 	if err != nil {
-		return nil, err
+		return ExpirationPolicy{}, err
 	}
 	ttlCleanupInterval, err := e.getTTLCleanupInterval()
 	if err != nil {
-		return nil, err
+		return ExpirationPolicy{}, err
 	}
 
-	return &ExpirationPolicy{
+	return ExpirationPolicy{
 		Enabled:                   true,
 		Interval:                  interval,
 		TTLCleanupIntervalSeconds: ttlCleanupInterval,

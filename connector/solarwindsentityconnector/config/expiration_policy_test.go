@@ -40,8 +40,8 @@ func TestUnmarshalReturnsWithoutErrors(t *testing.T) {
 		MaxCapacity:               10,
 	}
 	result, err := expirationPolicy.Unmarshal()
-	assert.Nil(t, err)
-	assert.Equal(t, result, &expectedExpirationPolicy)
+	assert.NoError(t, err)
+	assert.Equal(t, result, expectedExpirationPolicy)
 }
 
 func TestUnmarshalWhenDisabledReturnsValidResult(t *testing.T) {

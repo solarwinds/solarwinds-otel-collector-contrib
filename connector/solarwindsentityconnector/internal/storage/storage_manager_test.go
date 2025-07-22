@@ -341,13 +341,13 @@ func TestNewStorageManager(t *testing.T) {
 
 	testCases := []struct {
 		name        string
-		cfg         *config.ExpirationPolicy
+		cfg         config.ExpirationPolicy
 		expectError bool
 		errorMsg    string
 	}{
 		{
 			name: "valid configuration",
-			cfg: &config.ExpirationPolicy{
+			cfg: config.ExpirationPolicy{
 				Interval:                  time.Second * 10,
 				MaxCapacity:               1000,
 				TTLCleanupIntervalSeconds: time.Second * 20,
@@ -355,14 +355,8 @@ func TestNewStorageManager(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:        "nil configuration",
-			cfg:         nil,
-			expectError: true,
-			errorMsg:    "expiration settings configuration is nil",
-		},
-		{
 			name: "invalid TTLCleanupIntervalSeconds",
-			cfg: &config.ExpirationPolicy{
+			cfg: config.ExpirationPolicy{
 				Interval:                  time.Second * 10,
 				MaxCapacity:               1000,
 				TTLCleanupIntervalSeconds: time.Millisecond * 500, // Less than 1 second
