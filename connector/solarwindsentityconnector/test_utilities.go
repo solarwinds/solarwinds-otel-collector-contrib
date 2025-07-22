@@ -38,10 +38,10 @@ func LoadConfigFromFile(tb testing.TB, path string) (*config.Config, error) {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
-	cfg := config.NewDefaultConfig()
+	cfg := config.NewDefaultConfig().(*config.Config)
 	if err := mapstructure.Decode(raw, cfg); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
-	return cfg.(*config.Config), nil
+	return cfg, nil
 }
