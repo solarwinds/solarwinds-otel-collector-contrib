@@ -1,4 +1,4 @@
-# Examples
+# SolarWinds Entity Connector Behavior Examples
 This document provides examples of how to configure the SolarWinds Entity Connector correctly to prevent inferring unexpected entities or relationships.
 
 Each example includes
@@ -6,7 +6,7 @@ Each example includes
 - the input resource attributes (what attributes are in the incoming telemetry resource),
 - the expected output log records (what will be sent to the SolarWinds Observability).
 
-#### Table of Contents
+## Table of Contents
 - [Entity ID Attributes](#entity-id-attributes)
   - [Single Entity](#single-entity)
     - [Without Prefix](#without-prefix)
@@ -32,6 +32,7 @@ Each example includes
   - [Without Prefix](#without-prefix-4)
   - [With Prefix and Entities](#with-prefix-and-entities)
 
+## Entity Definitions Used in Examples
 Examples below rely on the following entity definitions and schema configuration, including source/destination prefixes.
 
 ```yaml
@@ -50,12 +51,13 @@ schema:
       id: [receiver.id, receiver.name]
 ```
 
-### Notes
+## Notes
 - Resource Attributes are of `map` type so no duplicate entry is expected.
-- `EXAMPLES.md` shows the scenarios simplified, for supported syntax see [README.md](../README.md)
-or [OUTPUT.md](OUTPUT.md) to see actual output of the SolarWinds Entity Connector.
+- `EXAMPLES.md` describes scenarios with simplified syntax, for supported syntax see [README.md](../README.md)
+or [OUTPUT.md](OUTPUT.md) to see the actual output of the SolarWinds Entity Connector.
 - `conditions: ["true"]` is the same as not defining conditions at all.
 
+# Examples
 ## Entity ID Attributes
 ### Single Entity
 #### Without Prefix
@@ -623,7 +625,7 @@ ___
 
 ## Entity Attributes
 ### Without Prefix
-Entity update log will be sent together with an attribute.
+Entity update log will be sent together with an attribute, as configured in the entity definitions above.
 
 **Defined events**
 
