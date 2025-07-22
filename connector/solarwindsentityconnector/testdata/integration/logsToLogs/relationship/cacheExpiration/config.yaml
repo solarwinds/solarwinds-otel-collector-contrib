@@ -3,7 +3,6 @@ expiration_policy:
   interval: 1ms
   cache_configuration:
     ttl_cleanup_interval: 1s
-    max_capacity: 1000000
 schema:
   entities:
     - entity: "Kubernetes Pod"
