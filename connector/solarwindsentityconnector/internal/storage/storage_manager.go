@@ -33,7 +33,7 @@ type Manager struct {
 	logger *zap.Logger
 }
 
-func NewStorageManager(cfg *config.ExpirationSettings, logger *zap.Logger, logsConsumer internal.EventConsumer) (*Manager, error) {
+func NewStorageManager(cfg *config.ExpirationPolicy, logger *zap.Logger, logsConsumer internal.EventConsumer) (*Manager, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("expiration settings configuration is nil")
 	}

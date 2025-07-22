@@ -19,8 +19,8 @@ import (
 )
 
 type Config struct {
-	Schema     Schema           `mapstructure:"schema"`
-	Expiration ExpirationPolicy `mapstructure:"expiration_policy"`
+	Schema     Schema             `mapstructure:"schema"`
+	Expiration ExpirationSettings `mapstructure:"expiration_policy"`
 
 	SourcePrefix      string `mapstructure:"source_prefix"`
 	DestinationPrefix string `mapstructure:"destination_prefix"`
@@ -28,7 +28,7 @@ type Config struct {
 
 func NewDefaultConfig() component.Config {
 	return &Config{
-		Expiration: ExpirationPolicy{
+		Expiration: ExpirationSettings{
 			Enabled:  true,
 			Interval: defaultInterval.String(),
 			CacheConfiguration: CacheConfiguration{

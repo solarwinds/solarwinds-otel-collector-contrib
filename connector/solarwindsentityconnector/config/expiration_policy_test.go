@@ -24,7 +24,7 @@ import (
 func TestUnmarshalReturnsWithoutErrors(t *testing.T) {
 	capacity := int64(10)
 	cleanupInterval := "10s"
-	expirationPolicy := ExpirationPolicy{
+	expirationPolicy := ExpirationSettings{
 		Enabled:  true,
 		Interval: "5s",
 		CacheConfiguration: CacheConfiguration{
@@ -33,7 +33,7 @@ func TestUnmarshalReturnsWithoutErrors(t *testing.T) {
 		},
 	}
 
-	expectedExpirationPolicy := ExpirationSettings{
+	expectedExpirationPolicy := ExpirationPolicy{
 		Enabled:                   true,
 		Interval:                  5 * time.Second,
 		TTLCleanupIntervalSeconds: 10 * time.Second,
@@ -47,7 +47,7 @@ func TestUnmarshalReturnsWithoutErrors(t *testing.T) {
 func TestUnmarshalWhenDisabledReturnsValidResult(t *testing.T) {
 	capacity := int64(10)
 	cleanupInterval := "5s"
-	expirationPolicy := ExpirationPolicy{
+	expirationPolicy := ExpirationSettings{
 		Enabled:  false,
 		Interval: "1m",
 		CacheConfiguration: CacheConfiguration{
@@ -64,7 +64,7 @@ func TestUnmarshalWhenDisabledReturnsValidResult(t *testing.T) {
 func TestUnmarshalWithEmptyIntervalReturnsError(t *testing.T) {
 	capacity := int64(10)
 	cleanupInterval := "5s"
-	expirationPolicy := ExpirationPolicy{
+	expirationPolicy := ExpirationSettings{
 		Enabled:  true,
 		Interval: "",
 		CacheConfiguration: CacheConfiguration{
@@ -80,7 +80,7 @@ func TestUnmarshalWithEmptyIntervalReturnsError(t *testing.T) {
 func TestUnmarshalWithEmptyCleanupIntervalReturnsError(t *testing.T) {
 	capacity := int64(10)
 	cleanupInterval := ""
-	expirationPolicy := ExpirationPolicy{
+	expirationPolicy := ExpirationSettings{
 		Enabled:  true,
 		Interval: "5s",
 		CacheConfiguration: CacheConfiguration{
@@ -96,7 +96,7 @@ func TestUnmarshalWithEmptyCleanupIntervalReturnsError(t *testing.T) {
 func TestUnmarshalWithZeroCleanupIntervalReturnsError(t *testing.T) {
 	capacity := int64(10)
 	cleanupInterval := "0"
-	expirationPolicy := ExpirationPolicy{
+	expirationPolicy := ExpirationSettings{
 		Enabled:  true,
 		Interval: "5s",
 		CacheConfiguration: CacheConfiguration{
@@ -112,7 +112,7 @@ func TestUnmarshalWithZeroCleanupIntervalReturnsError(t *testing.T) {
 func TestUnmarshalMaxCapacityLessThenZeroReturnError(t *testing.T) {
 	capacity := int64(-10)
 	cleanupInterval := "5s"
-	expirationPolicy := ExpirationPolicy{
+	expirationPolicy := ExpirationSettings{
 		Enabled:  true,
 		Interval: "5s",
 		CacheConfiguration: CacheConfiguration{
@@ -126,7 +126,7 @@ func TestUnmarshalMaxCapacityLessThenZeroReturnError(t *testing.T) {
 }
 
 func TestValidate_DisabledReturnsNil(t *testing.T) {
-	expirationPolicy := ExpirationPolicy{
+	expirationPolicy := ExpirationSettings{
 		Enabled: false,
 		// These values are invalid, but since Enabled is false, validation should pass
 		Interval: "invalid",
@@ -141,7 +141,7 @@ func TestValidate_DisabledReturnsNil(t *testing.T) {
 }
 
 func TestValidate_EnabledValidConfigurationReturnsNil(t *testing.T) {
-	expirationPolicy := ExpirationPolicy{
+	expirationPolicy := ExpirationSettings{
 		Enabled:  true,
 		Interval: "1s",
 		CacheConfiguration: CacheConfiguration{
@@ -155,7 +155,7 @@ func TestValidate_EnabledValidConfigurationReturnsNil(t *testing.T) {
 }
 
 func TestValidate_InvalidIntervalReturnsError(t *testing.T) {
-	expirationPolicy := ExpirationPolicy{
+	expirationPolicy := ExpirationSettings{
 		Enabled:  true,
 		Interval: "invalid",
 		CacheConfiguration: CacheConfiguration{
@@ -169,7 +169,7 @@ func TestValidate_InvalidIntervalReturnsError(t *testing.T) {
 }
 
 func TestValidate_InvalidMaxCapacityReturnsError(t *testing.T) {
-	expirationPolicy := ExpirationPolicy{
+	expirationPolicy := ExpirationSettings{
 		Enabled:  true,
 		Interval: "1s",
 		CacheConfiguration: CacheConfiguration{
@@ -183,7 +183,7 @@ func TestValidate_InvalidMaxCapacityReturnsError(t *testing.T) {
 }
 
 func TestValidate_InvalidTTLCleanupIntervalReturnsError(t *testing.T) {
-	expirationPolicy := ExpirationPolicy{
+	expirationPolicy := ExpirationSettings{
 		Enabled:  true,
 		Interval: "1s",
 		CacheConfiguration: CacheConfiguration{
@@ -197,7 +197,7 @@ func TestValidate_InvalidTTLCleanupIntervalReturnsError(t *testing.T) {
 }
 
 func TestValidate_TTLCleanupIntervalLessThanOneSecondReturnsError(t *testing.T) {
-	expirationPolicy := ExpirationPolicy{
+	expirationPolicy := ExpirationSettings{
 		Enabled:  true,
 		Interval: "1s",
 		CacheConfiguration: CacheConfiguration{

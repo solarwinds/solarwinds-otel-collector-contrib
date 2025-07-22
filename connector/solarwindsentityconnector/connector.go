@@ -39,7 +39,7 @@ type solarwindsentity struct {
 	sourcePrefix string
 	destPrefix   string
 
-	expirationPolicy *config.ExpirationSettings
+	expirationPolicy *config.ExpirationPolicy
 	storageManager   *storage.Manager
 }
 

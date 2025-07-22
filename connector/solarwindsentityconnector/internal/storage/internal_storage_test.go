@@ -29,7 +29,7 @@ import (
 
 var ttl = 1000 * time.Millisecond
 var ttlCleanupInterval = 2 * time.Second
-var cfg = &config.ExpirationSettings{
+var cfg = &config.ExpirationPolicy{
 	Enabled:                   true,
 	Interval:                  ttl,
 	MaxCapacity:               1000,
@@ -66,12 +66,12 @@ func TestNewInternalStorage(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		cfg         *config.ExpirationSettings
+		cfg         *config.ExpirationPolicy
 		expectError bool
 	}{
 		{
 			name: "Valid configuration",
-			cfg: &config.ExpirationSettings{
+			cfg: &config.ExpirationPolicy{
 				Interval:                  10 * time.Second,
 				MaxCapacity:               1000,
 				TTLCleanupIntervalSeconds: 20 * time.Second,
@@ -80,7 +80,7 @@ func TestNewInternalStorage(t *testing.T) {
 		},
 		{
 			name: "Zero MaxCapacity throws error",
-			cfg: &config.ExpirationSettings{
+			cfg: &config.ExpirationPolicy{
 				Interval:                  10 * time.Second,
 				MaxCapacity:               0,
 				TTLCleanupIntervalSeconds: 1 * time.Second,
@@ -89,7 +89,7 @@ func TestNewInternalStorage(t *testing.T) {
 		},
 		{
 			name: "TTl is less than 1 second, throws error",
-			cfg: &config.ExpirationSettings{
+			cfg: &config.ExpirationPolicy{
 				Interval:                  1 * time.Millisecond,
 				MaxCapacity:               1000,
 				TTLCleanupIntervalSeconds: 10 * time.Millisecond,
@@ -180,7 +180,7 @@ func TestTtlExpiration_TenIdenticalUpdates_ResultInOneExpiryEvent(t *testing.T) 
 	// Set up a cache with the entities
 	ttl := 1000 * time.Millisecond
 	ttlCleanupInterval := 2 * time.Second
-	cfg := &config.ExpirationSettings{
+	cfg := &config.ExpirationPolicy{
 		Enabled:                   true,
 		Interval:                  ttl,
 		MaxCapacity:               1000,
@@ -459,7 +459,7 @@ func TestDelete_DoesNotTriggerOnRelationshipEvict(t *testing.T) {
 	// Create test storage with short TTL for quick testing
 	ttl := 60 * time.Second
 	cleanupInterval := 2 * time.Second
-	cfg := &config.ExpirationSettings{
+	cfg := &config.ExpirationPolicy{
 		Enabled:                   true,
 		Interval:                  ttl,
 		MaxCapacity:               1000,
@@ -519,7 +519,7 @@ func TestDelete_ComparedToTTLExpiration(t *testing.T) {
 	// Create test storage with very short TTL for quick testing
 	ttl := 1 * time.Second
 	cleanupInterval := 2 * time.Second
-	cfg := &config.ExpirationSettings{
+	cfg := &config.ExpirationPolicy{
 		Enabled:                   true,
 		Interval:                  ttl,
 		MaxCapacity:               1000,
