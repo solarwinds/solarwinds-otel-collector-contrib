@@ -1,0 +1,11 @@
+resourceMetrics:
+  - resource:
+      attributes: [ { "key": "source.receiver.id", "value":{"stringValue": "snowflake-to-service"}},
+                    { "key": "destination.service.id",  "value":{"stringValue": "service-id"}},
+                    { "key": "source.k8s.pod.id", "value":{"stringValue": "pod-id"}},
+                    { "key": "receiver.id", "value":{"stringValue": "snowflake-to-pod"}}]
+    scopeMetrics:
+    - metrics:
+        - name: "test-metric"
+          description: "test metric description"
+          unit: "1"

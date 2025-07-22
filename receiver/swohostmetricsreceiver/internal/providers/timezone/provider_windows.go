@@ -15,8 +15,8 @@
 package timezone
 
 import (
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/wmi"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/wmi"
 )
 
 type provider struct {
