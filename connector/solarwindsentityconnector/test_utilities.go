@@ -16,6 +16,7 @@ package solarwindsentityconnector
 
 import (
 	"fmt"
+	"go.opentelemetry.io/collector/component"
 	"os"
 	"testing"
 
@@ -25,7 +26,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func LoadConfigFromFile(tb testing.TB, path string) (*config.Config, error) {
+func LoadConfigFromFile(tb testing.TB, path string) (component.Config, error) {
 	tb.Helper()
 
 	yamlFile, err := os.ReadFile(path)
@@ -37,10 +38,11 @@ func LoadConfigFromFile(tb testing.TB, path string) (*config.Config, error) {
 	if err := yaml.Unmarshal(yamlFile, &raw); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
-	var cfg config.Config
-	if err := mapstructure.Decode(raw, &cfg); err != nil {
+
+	cfg := config.NewDefaultConfig()
+	if err := mapstructure.Decode(raw, cfg); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
-	return &cfg, nil
+	return cfg, nil
 }

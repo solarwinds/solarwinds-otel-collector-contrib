@@ -16,6 +16,7 @@ package benchmark
 
 import (
 	"context"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"path/filepath"
 	"testing"
 
@@ -74,7 +75,7 @@ func BenchmarkMetrics(b *testing.B) {
 				assert.NoError(b, conn.Shutdown(context.Background()))
 			}()
 
-			metrics := generateTestMetrics(b, cfg, tc.totalMetrics, tc.invalidRatio, tc.multiple)
+			metrics := generateTestMetrics(b, cfg.(*config.Config), tc.totalMetrics, tc.invalidRatio, tc.multiple)
 
 			b.ReportAllocs()
 			for b.Loop() {
@@ -145,7 +146,7 @@ func BenchmarkLogs(b *testing.B) {
 				assert.NoError(b, conn.Shutdown(context.Background()))
 			}()
 
-			logs := generateTestLogs(b, cfg, tc.totalLogs, tc.invalidRatio, tc.multiple)
+			logs := generateTestLogs(b, cfg.(*config.Config), tc.totalLogs, tc.invalidRatio, tc.multiple)
 
 			b.ReportAllocs()
 			for b.Loop() {
