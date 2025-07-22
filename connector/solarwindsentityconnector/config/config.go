@@ -42,10 +42,10 @@ func NewDefaultConfig() component.Config {
 func (c *Config) EvaluateWarnings() []string {
 	var warnings = make([]string, 0)
 	if len(c.Schema.Entities) == 0 {
-		warnings = append(warnings, "No entities defined in schema")
+		warnings = append(warnings, "no entities defined in schema::entities, there's nothing to do")
 	}
 	if len(c.Schema.Events.Entities) == 0 && len(c.Schema.Events.Relationships) == 0 {
-		warnings = append(warnings, "No events defined in schema, at least one entity or relationship event is required")
+		warnings = append(warnings, "no events defined in schema::events, there's nothing to do")
 	}
 	return warnings
 }

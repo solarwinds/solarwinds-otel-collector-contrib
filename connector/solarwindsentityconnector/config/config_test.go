@@ -32,7 +32,7 @@ func TestConfig_EvaluateWarnings_NoEntitiesInSchema(t *testing.T) {
 	warnings := cfg.EvaluateWarnings()
 
 	assert.Len(t, warnings, 1)
-	assert.Contains(t, warnings, "No entities defined in schema")
+	assert.Contains(t, warnings, "no entities defined in schema::entities, there's nothing to do")
 }
 
 func TestConfig_EvaluateWarnings_NoEventsInSchema(t *testing.T) {
@@ -45,7 +45,7 @@ func TestConfig_EvaluateWarnings_NoEventsInSchema(t *testing.T) {
 	warnings := cfg.EvaluateWarnings()
 
 	assert.Len(t, warnings, 1)
-	assert.Contains(t, warnings, "No events defined in schema, at least one entity or relationship event is required")
+	assert.Contains(t, warnings, "no events defined in schema::events, there's nothing to do")
 }
 
 func TestConfig_EvaluateWarnings_ValidSchemaWithEntityEvents(t *testing.T) {
