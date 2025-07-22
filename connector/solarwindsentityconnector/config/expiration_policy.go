@@ -78,10 +78,6 @@ func (e *ExpirationPolicy) Unmarshal() (*ExpirationSettings, error) {
 		return &ExpirationSettings{Enabled: false}, nil
 	}
 
-	if e.Interval == "" {
-		return nil, fmt.Errorf("expiration interval is not set")
-	}
-
 	interval, err := e.getInterval()
 	if err != nil {
 		return nil, err

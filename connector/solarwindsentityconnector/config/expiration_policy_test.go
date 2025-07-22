@@ -74,7 +74,7 @@ func TestParseWithEmptyIntervalReturnsError(t *testing.T) {
 	}
 
 	_, err := expirationPolicy.Unmarshal()
-	assert.ErrorContains(t, err, "expiration interval is not set")
+	assert.ErrorContains(t, err, "interval must be a valid duration")
 }
 
 func TestParseWithEmptyCleanupIntervalReturnsError(t *testing.T) {
@@ -123,4 +123,89 @@ func TestParseMaxCapacityLessThenZeroReturnError(t *testing.T) {
 
 	_, err := expirationPolicy.Unmarshal()
 	assert.ErrorContains(t, err, "cache_configuration::max_capacity must be greater than zero")
+}
+
+func TestValidate_DisabledReturnsNil(t *testing.T) {
+	expirationPolicy := ExpirationPolicy{
+		Enabled: false,
+		// These values are invalid, but since Enabled is false, validation should pass
+		Interval: "invalid",
+		CacheConfiguration: CacheConfiguration{
+			MaxCapacity:        -1,
+			TTLCleanupInterval: "invalid",
+		},
+	}
+
+	err := expirationPolicy.Validate()
+	assert.NoError(t, err)
+}
+
+func TestValidate_EnabledValidConfigurationReturnsNil(t *testing.T) {
+	expirationPolicy := ExpirationPolicy{
+		Enabled:  true,
+		Interval: "1s",
+		CacheConfiguration: CacheConfiguration{
+			MaxCapacity:        1,
+			TTLCleanupInterval: "1s",
+		},
+	}
+
+	err := expirationPolicy.Validate()
+	assert.NoError(t, err)
+}
+
+func TestValidate_InvalidIntervalReturnsError(t *testing.T) {
+	expirationPolicy := ExpirationPolicy{
+		Enabled:  true,
+		Interval: "invalid",
+		CacheConfiguration: CacheConfiguration{
+			MaxCapacity:        1,
+			TTLCleanupInterval: "1s",
+		},
+	}
+
+	err := expirationPolicy.Validate()
+	assert.ErrorContains(t, err, "interval must be a valid duration")
+}
+
+func TestValidate_InvalidMaxCapacityReturnsError(t *testing.T) {
+	expirationPolicy := ExpirationPolicy{
+		Enabled:  true,
+		Interval: "1s",
+		CacheConfiguration: CacheConfiguration{
+			MaxCapacity:        0,
+			TTLCleanupInterval: "1s",
+		},
+	}
+
+	err := expirationPolicy.Validate()
+	assert.ErrorContains(t, err, "cache_configuration::max_capacity must be greater than zero")
+}
+
+func TestValidate_InvalidTTLCleanupIntervalReturnsError(t *testing.T) {
+	expirationPolicy := ExpirationPolicy{
+		Enabled:  true,
+		Interval: "1s",
+		CacheConfiguration: CacheConfiguration{
+			MaxCapacity:        1,
+			TTLCleanupInterval: "invalid",
+		},
+	}
+
+	err := expirationPolicy.Validate()
+	assert.ErrorContains(t, err, "cache_configuration::ttl_cleanup_interval: invalid format")
+}
+
+func TestValidate_TTLCleanupIntervalLessThanOneSecondReturnsError(t *testing.T) {
+	expirationPolicy := ExpirationPolicy{
+		Enabled:  true,
+		Interval: "1s",
+		CacheConfiguration: CacheConfiguration{
+			MaxCapacity:        1,
+			TTLCleanupInterval: "500ms",
+		},
+	}
+
+	err := expirationPolicy.Validate()
+	assert.ErrorContains(t, err, "cache_configuration::ttl_cleanup_interval must be at least 1 second")
 }
