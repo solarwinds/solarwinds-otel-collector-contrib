@@ -1,6 +1,5 @@
 # Examples
-This document provides examples of how to configure the SolarWinds Entity Connector correctly to prevent from inferring
-unexpected entities or relationships. 
+This document provides examples of how to configure the SolarWinds Entity Connector correctly to prevent inferring unexpected entities or relationships.
 
 Each example includes
 - the defined events (what entity type/relationship should be inferred on what conditions),
