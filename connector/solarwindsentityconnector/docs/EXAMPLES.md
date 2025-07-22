@@ -741,8 +741,11 @@ additional.attribute -> "some value"
 ___
 ### With Prefix and Entities
 Attributes will be sent for:
-- relationship, because it is defined in the `events.relationships` section.
+- relationship, because it is defined in the `events.relationships` section;
+  - unprefixed resource attributes are used for relationship attributes
 - entities, because they are defined in the `schema.entities` section (see [Entity Definitions Used in Examples](#entity-definitions-used-in-examples)).
+  - source entity attributes = taken from unprefixed + source prefixed resource attributes
+  - destination entity attributes = taken from unprefixed + destination prefixed resource attributes
 
 **Defined events**
 
