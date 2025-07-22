@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestParseReturnsWithoutErrors(t *testing.T) {
+func TestUnmarshalReturnsWithoutErrors(t *testing.T) {
 	capacity := int64(10)
 	cleanupInterval := "10s"
 	expirationPolicy := ExpirationPolicy{
@@ -44,7 +44,7 @@ func TestParseReturnsWithoutErrors(t *testing.T) {
 	assert.Equal(t, result, &expectedExpirationPolicy)
 }
 
-func TestParseWhenDisabledReturnsValidResult(t *testing.T) {
+func TestUnmarshalWhenDisabledReturnsValidResult(t *testing.T) {
 	capacity := int64(10)
 	cleanupInterval := "5s"
 	expirationPolicy := ExpirationPolicy{
@@ -61,7 +61,7 @@ func TestParseWhenDisabledReturnsValidResult(t *testing.T) {
 	assert.False(t, result.Enabled)
 }
 
-func TestParseWithEmptyIntervalReturnsError(t *testing.T) {
+func TestUnmarshalWithEmptyIntervalReturnsError(t *testing.T) {
 	capacity := int64(10)
 	cleanupInterval := "5s"
 	expirationPolicy := ExpirationPolicy{
@@ -77,7 +77,7 @@ func TestParseWithEmptyIntervalReturnsError(t *testing.T) {
 	assert.ErrorContains(t, err, "interval must be a valid duration")
 }
 
-func TestParseWithEmptyCleanupIntervalReturnsError(t *testing.T) {
+func TestUnmarshalWithEmptyCleanupIntervalReturnsError(t *testing.T) {
 	capacity := int64(10)
 	cleanupInterval := ""
 	expirationPolicy := ExpirationPolicy{
@@ -93,7 +93,7 @@ func TestParseWithEmptyCleanupIntervalReturnsError(t *testing.T) {
 	assert.ErrorContains(t, err, "cache_configuration::ttl_cleanup_interval: invalid format")
 }
 
-func TestParseWithZeroCleanupIntervalReturnsError(t *testing.T) {
+func TestUnmarshalWithZeroCleanupIntervalReturnsError(t *testing.T) {
 	capacity := int64(10)
 	cleanupInterval := "0"
 	expirationPolicy := ExpirationPolicy{
@@ -109,7 +109,7 @@ func TestParseWithZeroCleanupIntervalReturnsError(t *testing.T) {
 	assert.ErrorContains(t, err, "cache_configuration::ttl_cleanup_interval must be at least 1 second")
 }
 
-func TestParseMaxCapacityLessThenZeroReturnError(t *testing.T) {
+func TestUnmarshalMaxCapacityLessThenZeroReturnError(t *testing.T) {
 	capacity := int64(-10)
 	cleanupInterval := "5s"
 	expirationPolicy := ExpirationPolicy{
