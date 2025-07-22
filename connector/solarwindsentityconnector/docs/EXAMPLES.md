@@ -1,10 +1,10 @@
 # SolarWinds Entity Connector Behavior Examples
 This document provides examples of how to configure the SolarWinds Entity Connector correctly to prevent inferring unexpected entities or relationships.
 
-Each example includes
-- the defined events (what entity type/relationship should be inferred on what conditions),
-- the input resource attributes (what attributes are in the incoming telemetry resource),
-- the expected output log records (what will be sent to the SolarWinds Observability).
+Each example includes:
+- **Defined events**: Configuration specifying which entity types/relationships should be inferred and under what conditions
+- **Input resource attributes**: Attributes present in the incoming telemetry resource  
+- **Expected output**: Log records that will be sent to SolarWinds Observability
 
 ## Table of Contents
 - [Entity ID Attributes](#entity-id-attributes)
