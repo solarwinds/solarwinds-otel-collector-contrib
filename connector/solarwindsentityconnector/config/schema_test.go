@@ -66,11 +66,11 @@ func TestValidate_MixedValidAndInvalidReferences(t *testing.T) {
 	}
 
 	err := schema.Validate()
-	assert.ErrorContains(t, err, "events::entities::1::entity: 'undefined' must be defined in 'entities'")
-	assert.ErrorContains(t, err, "events::relationships::1::source_entity: 'undefined' must be defined in 'entities'")
-	assert.ErrorContains(t, err, "events::relationships::2::destination_entity: 'undefined' must be defined in 'entities'")
-	assert.NotContains(t, err.Error(), "'a' must be defined in 'entities'")
-	assert.NotContains(t, err.Error(), "'b' must be defined in 'entities'")
+	assert.ErrorContains(t, err, "the 'undefined' name for events::entities::1::entity must be defined in 'entities'")
+	assert.ErrorContains(t, err, "the 'undefined' name for events::relationships::1::source_entity must be defined in 'entities'")
+	assert.ErrorContains(t, err, "the 'undefined' name for events::relationships::2::destination_entity must be defined in 'entities'")
+	assert.NotContains(t, err.Error(), "the 'a' name for")
+	assert.NotContains(t, err.Error(), "the 'b' name for")
 }
 
 func TestUnmarshal_ValidSchemaWithSimpleConditions(t *testing.T) {
