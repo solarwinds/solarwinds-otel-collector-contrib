@@ -40,17 +40,17 @@ func (s *Schema) Validate() error {
 
 	for i, e := range s.Events.Entities {
 		if _, exists := entityTypes[e.Entity]; !exists {
-			errs = errors.Join(errs, fmt.Errorf("the events::entities::%d::entity: '%s' must be defined in 'entities'", i, e.Entity))
+			errs = errors.Join(errs, fmt.Errorf("the '%s' name for events::entities::%d::entity must be defined in 'entities'", e.Entity, i))
 		}
 	}
 
 	for i, r := range s.Events.Relationships {
 		if _, exists := entityTypes[r.Source]; !exists {
-			errs = errors.Join(errs, fmt.Errorf("the events::relationships::%d::source_entity: '%s' must be defined in 'entities'", i, r.Source))
+			errs = errors.Join(errs, fmt.Errorf("the '%s' name for events::relationships::%d::source_entity must be defined in 'entities'", r.Source, i))
 		}
 
 		if _, exists := entityTypes[r.Destination]; !exists {
-			errs = errors.Join(errs, fmt.Errorf("the events::relationships::%d::destination_entity: '%s' must be defined in 'entities'", i, r.Destination))
+			errs = errors.Join(errs, fmt.Errorf("the '%s' name for events::relationships::%d::destination_entity must be defined in 'entities'", r.Destination, i))
 		}
 	}
 
