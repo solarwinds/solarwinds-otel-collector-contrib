@@ -25,7 +25,7 @@ import (
 const (
 	defaultInterval           = 5 * time.Minute
 	defaultTTLCleanupInterval = 5 * time.Second
-	defaultMaxCapacity        = 1_000_000 // 1 million items in the cache
+	defaultMaxCapacity        = 1_000_000
 )
 
 type ExpirationSettings struct {
