@@ -6,7 +6,7 @@
 - `solarwindsentityconnector` Added support for prefixes on entities when entities are created from relationships
 - `solarwindsentityconnector` Added support for OTTL converters in event condition expressions
 - `solarwindsentityconnector` Fixed extra output log issue by adding missing yaml tags for cache configuration parsing
-- ⚠️ Breaking change: `solarwindsentityconnector` Added configuration validation - a lot of properties are now required:
+- ⚠️ Breaking change: `solarwindsentityconnector` Added configuration validation - a lot of properties are now required.
 - ⚠️ Breaking change: `solarwindsentityconnector` The entities used in the `schema.events` (both, in entity and relationship events) must be defined in the `schema.entities` section.
 - ⚠️ Breaking change: `solarwindsentityconnector` - `schema.events.entities[].type` renamed to `schema.events.entities[].entity`
 - `swok8sworkloadtypeprocessor` Support addresses ending with dot
