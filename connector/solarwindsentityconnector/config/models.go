@@ -42,11 +42,11 @@ func (e *Entity) Validate() error {
 	var errs error
 
 	if e.Entity == "" {
-		errs = errors.Join(errs, fmt.Errorf("entity is mandatory"))
+		errs = errors.Join(errs, errors.New("the entity is mandatory"))
 	}
 
 	if len(e.IDs) == 0 {
-		errs = errors.Join(errs, fmt.Errorf("id is mandatory and must contain at least 1 item"))
+		errs = errors.Join(errs, errors.New("the id is mandatory and must contain at least 1 item"))
 	}
 
 	return errs
@@ -67,16 +67,16 @@ func (e *Event) validateActionAndContext() error {
 	var errs error
 
 	if e.Action == "" {
-		errs = errors.Join(errs, fmt.Errorf("action is mandatory"))
+		errs = errors.Join(errs, errors.New("the action is mandatory"))
 	} else if e.Action != EventUpdateAction && e.Action != EventDeleteAction {
-		errs = errors.Join(errs, fmt.Errorf("action must be '%s' or '%s', got '%s'",
+		errs = errors.Join(errs, fmt.Errorf("the action must be '%s' or '%s', got '%s'",
 			EventUpdateAction, EventDeleteAction, e.Action))
 	}
 
 	if e.Context == "" {
-		errs = errors.Join(errs, fmt.Errorf("context is mandatory"))
+		errs = errors.Join(errs, errors.New("the context is mandatory"))
 	} else if e.Context != ottllog.ContextName && e.Context != ottlmetric.ContextName {
-		errs = errors.Join(errs, fmt.Errorf("context must be '%s' or '%s', got '%s'",
+		errs = errors.Join(errs, fmt.Errorf("the context must be '%s' or '%s', got '%s'",
 			ottllog.ContextName, ottlmetric.ContextName, e.Context))
 	}
 	return errs
@@ -97,15 +97,15 @@ func (e *RelationshipEvent) Validate() error {
 	errs := e.validateActionAndContext()
 
 	if e.Type == "" {
-		errs = errors.Join(errs, fmt.Errorf("type is mandatory"))
+		errs = errors.Join(errs, errors.New("the type is mandatory"))
 	}
 
 	if e.Source == "" {
-		errs = errors.Join(errs, fmt.Errorf("source_entity is mandatory"))
+		errs = errors.Join(errs, errors.New("the source_entity is mandatory"))
 	}
 
 	if e.Destination == "" {
-		errs = errors.Join(errs, fmt.Errorf("destination_entity is mandatory"))
+		errs = errors.Join(errs, errors.New("the destination_entity is mandatory"))
 	}
 
 	return errs
@@ -123,7 +123,7 @@ func (e *EntityEvent) Validate() error {
 	errs := e.validateActionAndContext()
 
 	if e.Entity == "" {
-		errs = errors.Join(errs, fmt.Errorf("entity is mandatory"))
+		errs = errors.Join(errs, errors.New("the entity is mandatory"))
 	}
 
 	return errs

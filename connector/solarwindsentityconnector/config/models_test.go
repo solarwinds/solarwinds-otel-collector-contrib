@@ -33,14 +33,14 @@ func TestEntity_Validate_EmptyEntityName(t *testing.T) {
 	entity := Entity{Entity: "", IDs: []string{"id1"}}
 
 	err := entity.Validate()
-	assert.ErrorContains(t, err, "entity is mandatory")
+	assert.ErrorContains(t, err, "the entity is mandatory")
 }
 
 func TestEntity_Validate_EmptyIDs(t *testing.T) {
 	entity := Entity{Entity: "entity", IDs: []string{}}
 
 	err := entity.Validate()
-	assert.ErrorContains(t, err, "id is mandatory and must contain at least 1 item")
+	assert.ErrorContains(t, err, "the id is mandatory and must contain at least 1 item")
 }
 
 func TestEvent_validateActionAndContext_ValidUpdateActionLogContext(t *testing.T) {
@@ -61,28 +61,28 @@ func TestEvent_validateActionAndContext_EmptyAction(t *testing.T) {
 	event := Event{Action: "", Context: "log"}
 
 	err := event.validateActionAndContext()
-	assert.ErrorContains(t, err, "action is mandatory")
+	assert.ErrorContains(t, err, "the action is mandatory")
 }
 
 func TestEvent_validateActionAndContext_InvalidAction(t *testing.T) {
 	event := Event{Action: "invalid", Context: "log"}
 
 	err := event.validateActionAndContext()
-	assert.ErrorContains(t, err, "action must be 'update' or 'delete', got 'invalid'")
+	assert.ErrorContains(t, err, "the action must be 'update' or 'delete', got 'invalid'")
 }
 
 func TestEvent_validateActionAndContext_EmptyContext(t *testing.T) {
 	event := Event{Action: EventUpdateAction, Context: ""}
 
 	err := event.validateActionAndContext()
-	assert.ErrorContains(t, err, "context is mandatory")
+	assert.ErrorContains(t, err, "the context is mandatory")
 }
 
 func TestEvent_validateActionAndContext_InvalidContext(t *testing.T) {
 	event := Event{Action: EventUpdateAction, Context: "invalid"}
 
 	err := event.validateActionAndContext()
-	assert.ErrorContains(t, err, "context must be 'log' or 'metric', got 'invalid'")
+	assert.ErrorContains(t, err, "the context must be 'log' or 'metric', got 'invalid'")
 }
 
 func TestRelationshipEvent_Validate_ValidRelationship(t *testing.T) {
@@ -106,7 +106,7 @@ func TestRelationshipEvent_Validate_EmptyType(t *testing.T) {
 	}
 
 	err := relationshipEvent.Validate()
-	assert.ErrorContains(t, err, "type is mandatory")
+	assert.ErrorContains(t, err, "the type is mandatory")
 }
 
 func TestRelationshipEvent_Validate_EmptySource(t *testing.T) {
@@ -118,7 +118,7 @@ func TestRelationshipEvent_Validate_EmptySource(t *testing.T) {
 	}
 
 	err := relationshipEvent.Validate()
-	assert.ErrorContains(t, err, "source_entity is mandatory")
+	assert.ErrorContains(t, err, "the source_entity is mandatory")
 }
 
 func TestRelationshipEvent_Validate_EmptyDestination(t *testing.T) {
@@ -130,7 +130,7 @@ func TestRelationshipEvent_Validate_EmptyDestination(t *testing.T) {
 	}
 
 	err := relationshipEvent.Validate()
-	assert.ErrorContains(t, err, "destination_entity is mandatory")
+	assert.ErrorContains(t, err, "the destination_entity is mandatory")
 }
 
 func TestRelationshipEvent_Validate_InvalidEventFields(t *testing.T) {
@@ -142,8 +142,8 @@ func TestRelationshipEvent_Validate_InvalidEventFields(t *testing.T) {
 	}
 
 	err := relationshipEvent.Validate()
-	assert.ErrorContains(t, err, "action is mandatory")
-	assert.ErrorContains(t, err, "context is mandatory")
+	assert.ErrorContains(t, err, "the action is mandatory")
+	assert.ErrorContains(t, err, "the context is mandatory")
 }
 
 func TestEntityEvent_Validate_ValidEntityEvent(t *testing.T) {
@@ -163,7 +163,7 @@ func TestEntityEvent_Validate_EmptyEntity(t *testing.T) {
 	}
 
 	err := entityEvent.Validate()
-	assert.ErrorContains(t, err, "entity is mandatory")
+	assert.ErrorContains(t, err, "the entity is mandatory")
 }
 
 func TestEntityEvent_Validate_InvalidEventFields(t *testing.T) {
@@ -173,6 +173,6 @@ func TestEntityEvent_Validate_InvalidEventFields(t *testing.T) {
 	}
 
 	err := entityEvent.Validate()
-	assert.ErrorContains(t, err, "action is mandatory")
-	assert.ErrorContains(t, err, "context is mandatory")
+	assert.ErrorContains(t, err, "the action is mandatory")
+	assert.ErrorContains(t, err, "the context is mandatory")
 }

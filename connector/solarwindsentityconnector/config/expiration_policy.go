@@ -103,7 +103,7 @@ func (e *ExpirationSettings) Unmarshal() (ExpirationPolicy, error) {
 func (e *ExpirationSettings) getInterval() (time.Duration, error) {
 	interval, err := time.ParseDuration(e.Interval)
 	if err != nil {
-		return time.Duration(0), fmt.Errorf("interval must be a valid duration (e.g., '5m', '1h'): %w", err)
+		return time.Duration(0), fmt.Errorf("the interval must be a valid duration (e.g., '5m', '1h'): %w", err)
 	}
 
 	return interval, nil
@@ -111,7 +111,7 @@ func (e *ExpirationSettings) getInterval() (time.Duration, error) {
 
 func (e *ExpirationSettings) getMaxCapacity() (int64, error) {
 	if e.CacheConfiguration.MaxCapacity <= 0 {
-		return 0, errors.New("cache_configuration::max_capacity must be greater than zero")
+		return 0, errors.New("the cache_configuration::max_capacity must be greater than zero")
 	}
 
 	return e.CacheConfiguration.MaxCapacity, nil
@@ -120,10 +120,10 @@ func (e *ExpirationSettings) getMaxCapacity() (int64, error) {
 func (e *ExpirationSettings) getTTLCleanupInterval() (time.Duration, error) {
 	parsedCleanupInterval, err := time.ParseDuration(e.CacheConfiguration.TTLCleanupInterval)
 	if err != nil {
-		return time.Duration(0), errors.New("cache_configuration::ttl_cleanup_interval: invalid format")
+		return time.Duration(0), errors.New("the cache_configuration::ttl_cleanup_interval has invalid format")
 	}
 	if parsedCleanupInterval < time.Second {
-		return time.Duration(0), errors.New("cache_configuration::ttl_cleanup_interval must be at least 1 second")
+		return time.Duration(0), errors.New("the cache_configuration::ttl_cleanup_interval must be at least 1 second")
 	}
 
 	return parsedCleanupInterval, nil
