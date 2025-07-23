@@ -88,7 +88,7 @@ connectors:
 
 - `expiration_policy` section defines the expiration policy for relationships.
   - `enabled`
-    - Required: no (default: `true`)
+    - Required: no (default: `false`)
     - Description: Enables the expiration policy.
   - `interval`
     - Required: no (default: `5m`)

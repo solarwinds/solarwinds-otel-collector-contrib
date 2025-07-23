@@ -29,7 +29,6 @@ type Config struct {
 func NewDefaultConfig() component.Config {
 	return &Config{
 		Expiration: ExpirationSettings{
-			Enabled:  true,
 			Interval: defaultInterval.String(),
 			CacheConfiguration: CacheConfiguration{
 				TTLCleanupInterval: defaultTTLCleanupInterval.String(),
