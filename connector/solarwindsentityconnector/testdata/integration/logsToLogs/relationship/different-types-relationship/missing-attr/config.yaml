@@ -1,25 +1,25 @@
 schema:
   entities:
-    - type: "Snowflake"
-      ids: ["snowflake.id"]
+    - entity: "Snowflake"
+      id: ["snowflake.id"]
       attributes: ["attr1"]
-    - type: "AWS EC2"
-      ids: ["aws.ec2.id", "aws.ec2.name"]
+    - entity: "AWS EC2"
+      id: ["aws.ec2.id", "aws.ec2.name"]
       attributes: ["attr2"]
   events:
     entities:
-      - type: "Snowflake"
+      - entity: "Snowflake"
         conditions: []
         context: "log"
         action: "update"
-      - type: "AWS EC2"
+      - entity: "AWS EC2"
         conditions: ["true"]
         context: "log"
         action: "update"
     relationships:
       - type: "MemberOf"
-        source: "Snowflake"
-        destination: "AWS EC2"
+        source_entity: "Snowflake"
+        destination_entity: "AWS EC2"
         attributes: []
         conditions: ["true"]
         context: "log"

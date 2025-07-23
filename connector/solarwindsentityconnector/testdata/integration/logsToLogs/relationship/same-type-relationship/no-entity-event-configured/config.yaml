@@ -2,13 +2,13 @@ source_prefix: "src."
 destination_prefix: "dst."
 schema:
   entities:
-    - type: "TestEntityType"
-      ids: ["id", "name"]
+    - entity: "TestEntityType"
+      id: ["id", "name"]
       attributes: ["random.attribute"]
   events:
     relationships:
       - type: "TestRelationshipType"
-        source: "TestEntityType"
-        destination: "TestEntityType"
+        source_entity: "TestEntityType"
+        destination_entity: "TestEntityType"
         context: "log"
         action: "update"

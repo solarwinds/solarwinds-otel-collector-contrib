@@ -17,8 +17,9 @@ package storage
 import (
 	"errors"
 	"fmt"
-	"go.opentelemetry.io/collector/pdata/pcommon"
 	"time"
+
+	"go.opentelemetry.io/collector/pdata/pcommon"
 
 	"github.com/dgraph-io/ristretto/v2"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
@@ -80,7 +81,7 @@ type internalStorage struct {
 	// mu sync.Mutex
 }
 
-func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em chan<- internal.Event) (*internalStorage, error) {
+func newInternalStorage(cfg config.ExpirationPolicy, logger *zap.Logger, em chan<- internal.Event) (*internalStorage, error) {
 	var err error
 
 	// maxCost sets the maximum number of items, when itemCost is set to 1

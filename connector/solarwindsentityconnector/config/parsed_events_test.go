@@ -29,16 +29,20 @@ func TestCreateParsedEvents(t *testing.T) {
 		Events: Events{
 			Entities: []EntityEvent{
 				{
-					Type:       "test-entity",
-					Context:    "log",
-					Action:     "update",
-					Conditions: []string{"true"},
+					Entity: "test-entity",
+					Event: Event{
+						Context:    "log",
+						Action:     "update",
+						Conditions: []string{"true"},
+					},
 				},
 				{
-					Type:       "test-entity-metric",
-					Context:    "metric",
-					Action:     "update",
-					Conditions: []string{"true"},
+					Entity: "test-entity-metric",
+					Event: Event{
+						Context:    "metric",
+						Action:     "update",
+						Conditions: []string{"true"},
+					},
 				},
 			},
 			Relationships: []RelationshipEvent{
@@ -46,23 +50,28 @@ func TestCreateParsedEvents(t *testing.T) {
 					Type:        "test-relationship",
 					Source:      "source-entity",
 					Destination: "dest-entity",
-					Context:     "log",
-					Action:      "update",
-					Conditions:  []string{"true"},
+					Event: Event{
+						Context:    "log",
+						Action:     "update",
+						Conditions: []string{"true"},
+					},
 				},
 				{
 					Type:        "test-relationship-metric",
 					Source:      "source-entity",
 					Destination: "dest-entity",
-					Context:     "metric",
-					Action:      "update",
-					Conditions:  []string{"true"},
+					Event: Event{
+						Context:    "metric",
+						Action:     "update",
+						Conditions: []string{"true"},
+					},
 				},
 			},
 		},
 	}
 
-	parsedEvents := CreateParsedEvents(schema, settings)
+	parsedEvents, err := createParsedEvents(schema, settings)
+	assert.NoError(t, err)
 
 	// Test that parsers are created
 	assert.NotNil(t, parsedEvents.LogEvents.Parser)
@@ -70,7 +79,7 @@ func TestCreateParsedEvents(t *testing.T) {
 
 	// Test log events
 	assert.Len(t, parsedEvents.LogEvents.Entities, 1)
-	assert.Equal(t, "test-entity", parsedEvents.LogEvents.Entities[0].Definition.Type)
+	assert.Equal(t, "test-entity", parsedEvents.LogEvents.Entities[0].Definition.Entity)
 	assert.NotNil(t, parsedEvents.LogEvents.Entities[0].ConditionSeq)
 
 	assert.Len(t, parsedEvents.LogEvents.Relationships, 1)
@@ -79,7 +88,7 @@ func TestCreateParsedEvents(t *testing.T) {
 
 	// Test metric events
 	assert.Len(t, parsedEvents.MetricEvents.Entities, 1)
-	assert.Equal(t, "test-entity-metric", parsedEvents.MetricEvents.Entities[0].Definition.Type)
+	assert.Equal(t, "test-entity-metric", parsedEvents.MetricEvents.Entities[0].Definition.Entity)
 	assert.NotNil(t, parsedEvents.MetricEvents.Entities[0].ConditionSeq)
 
 	assert.Len(t, parsedEvents.MetricEvents.Relationships, 1)
@@ -95,16 +104,20 @@ func TestCreateParsedEventsWithConverters(t *testing.T) {
 		Events: Events{
 			Entities: []EntityEvent{
 				{
-					Type:       "test-entity",
-					Context:    "log",
-					Action:     "update",
-					Conditions: []string{"Len(\"test\") != 0"},
+					Entity: "test-entity",
+					Event: Event{
+						Context:    "log",
+						Action:     "update",
+						Conditions: []string{"Len(\"test\") != 0"},
+					},
 				},
 				{
-					Type:       "test-entity-metric",
-					Context:    "metric",
-					Action:     "update",
-					Conditions: []string{"MD5(\"test\") != \"expected-value\""},
+					Entity: "test-entity-metric",
+					Event: Event{
+						Context:    "metric",
+						Action:     "update",
+						Conditions: []string{"MD5(\"test\") != \"expected-value\""},
+					},
 				},
 			},
 			Relationships: []RelationshipEvent{
@@ -112,29 +125,34 @@ func TestCreateParsedEventsWithConverters(t *testing.T) {
 					Type:        "test-relationship",
 					Source:      "source-entity",
 					Destination: "dest-entity",
-					Context:     "log",
-					Action:      "update",
-					Conditions:  []string{"SHA1(\"test\") != \"expected-value\""},
+					Event: Event{
+						Context:    "log",
+						Action:     "update",
+						Conditions: []string{"SHA1(\"test\") != \"expected-value\""},
+					},
 				},
 				{
 					Type:        "test-relationship-metric",
 					Source:      "source-entity",
 					Destination: "dest-entity",
-					Context:     "metric",
-					Action:      "update",
-					Conditions:  []string{"Hex(\"test\") != \"1A6B32A\""},
+					Event: Event{
+						Context:    "metric",
+						Action:     "update",
+						Conditions: []string{"Hex(\"test\") != \"1A6B32A\""},
+					},
 				},
 			},
 		},
 	}
-	parsedEvents := CreateParsedEvents(schema, settings)
+	parsedEvents, err := createParsedEvents(schema, settings)
+	assert.NoError(t, err)
 
 	assert.NotNil(t, parsedEvents.LogEvents.Parser)
 	assert.NotNil(t, parsedEvents.MetricEvents.Parser)
 
 	// Test log events
 	assert.Len(t, parsedEvents.LogEvents.Entities, 1)
-	assert.Equal(t, "test-entity", parsedEvents.LogEvents.Entities[0].Definition.Type)
+	assert.Equal(t, "test-entity", parsedEvents.LogEvents.Entities[0].Definition.Entity)
 	assert.NotNil(t, parsedEvents.LogEvents.Entities[0].ConditionSeq)
 
 	assert.Len(t, parsedEvents.LogEvents.Relationships, 1)
@@ -143,7 +161,7 @@ func TestCreateParsedEventsWithConverters(t *testing.T) {
 
 	// Test metric events
 	assert.Len(t, parsedEvents.MetricEvents.Entities, 1)
-	assert.Equal(t, "test-entity-metric", parsedEvents.MetricEvents.Entities[0].Definition.Type)
+	assert.Equal(t, "test-entity-metric", parsedEvents.MetricEvents.Entities[0].Definition.Entity)
 	assert.NotNil(t, parsedEvents.MetricEvents.Entities[0].ConditionSeq)
 
 	assert.Len(t, parsedEvents.MetricEvents.Relationships, 1)
@@ -158,15 +176,18 @@ func TestCreateParsedEventsEmptyConditions(t *testing.T) {
 		Events: Events{
 			Entities: []EntityEvent{
 				{
-					Type:    "test-entity",
-					Context: "log",
-					Action:  "update",
+					Entity: "test-entity",
+					Event: Event{
+						Context: "log",
+						Action:  "update",
+					},
 				},
 			},
 		},
 	}
 
-	parsedEvents := CreateParsedEvents(schema, settings)
+	parsedEvents, err := createParsedEvents(schema, settings)
+	require.NoError(t, err)
 	require.Len(t, parsedEvents.LogEvents.Entities, 1)
 }
 
@@ -177,27 +198,32 @@ func TestCreateParsedEventsUnknownContext(t *testing.T) {
 		Events: Events{
 			Entities: []EntityEvent{
 				{
-					Type:       "test-entity",
-					Context:    "unknown-context", // This should be ignored
-					Action:     "update",
-					Conditions: []string{"true"},
+					Entity: "test-entity",
+					Event: Event{
+						Context:    "unknown-context", // This should be ignored
+						Action:     "update",
+						Conditions: []string{"true"},
+					},
 				},
 				{
-					Type:       "test-entity-log",
-					Context:    "log",
-					Action:     "update",
-					Conditions: []string{"true"},
+					Entity: "test-entity-log",
+					Event: Event{
+						Context:    "log",
+						Action:     "update",
+						Conditions: []string{"true"},
+					},
 				},
 			},
 		},
 	}
 
-	parsedEvents := CreateParsedEvents(schema, settings)
+	parsedEvents, err := createParsedEvents(schema, settings)
+	require.NoError(t, err)
 
 	// Only log event should be parsed, unknown context should be ignored
 	assert.Len(t, parsedEvents.LogEvents.Entities, 1)
 	assert.Len(t, parsedEvents.MetricEvents.Entities, 0)
-	assert.Equal(t, "test-entity-log", parsedEvents.LogEvents.Entities[0].Definition.Type)
+	assert.Equal(t, "test-entity-log", parsedEvents.LogEvents.Entities[0].Definition.Entity)
 }
 
 func TestCreateParsedEventsWithInvalidConditions(t *testing.T) {
@@ -207,19 +233,19 @@ func TestCreateParsedEventsWithInvalidConditions(t *testing.T) {
 		Events: Events{
 			Entities: []EntityEvent{
 				{
-					Type:       "invalid-condition",
-					Context:    "log",
-					Action:     "update",
-					Conditions: []string{"InvalidFunction()"},
+					Entity: "invalid-condition",
+					Event: Event{
+						Context:    "log",
+						Action:     "update",
+						Conditions: []string{"InvalidFunction()"},
+					},
 				},
 			},
 		},
 	}
 
-	// This should panic or handle error gracefully
-	assert.Panics(t, func() {
-		CreateParsedEvents(schema, settings)
-	})
+	_, err := createParsedEvents(schema, settings)
+	require.Error(t, err)
 }
 
 func TestCreateParsedEventsEmptySchema(t *testing.T) {
@@ -232,7 +258,8 @@ func TestCreateParsedEventsEmptySchema(t *testing.T) {
 		},
 	}
 
-	parsedEvents := CreateParsedEvents(schema, settings)
+	parsedEvents, err := createParsedEvents(schema, settings)
+	require.NoError(t, err)
 
 	assert.NotNil(t, parsedEvents.LogEvents.Parser)
 	assert.NotNil(t, parsedEvents.MetricEvents.Parser)

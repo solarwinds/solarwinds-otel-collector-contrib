@@ -4,6 +4,7 @@ go 1.24.4
 
 require (
 	github.com/dgraph-io/ristretto/v2 v2.2.0
+	github.com/go-viper/mapstructure/v2 v2.3.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.127.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl v0.127.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.127.0
@@ -11,6 +12,7 @@ require (
 	go.opentelemetry.io/collector/component v1.33.0
 	go.opentelemetry.io/collector/component/componenttest v0.127.0
 	go.opentelemetry.io/collector/confmap v1.33.0
+	go.opentelemetry.io/collector/confmap/xconfmap v0.127.0
 	go.opentelemetry.io/collector/connector v0.127.0
 	go.opentelemetry.io/collector/connector/connectortest v0.127.0
 	go.opentelemetry.io/collector/consumer v1.33.0
@@ -33,7 +35,6 @@ require (
 	github.com/elastic/lunes v0.1.0 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/go-viper/mapstructure/v2 v2.3.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect

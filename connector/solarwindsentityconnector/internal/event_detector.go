@@ -17,6 +17,7 @@ package internal
 import (
 	"context"
 	"fmt"
+
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottlmetric"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
@@ -153,7 +154,7 @@ func (e *EventDetector) validateRelationshipEntity(
 	for _, event := range validEntityEvents {
 		// If the event type matches, we know that we can infer the entity
 		// because conditions were met.
-		if event.Type == entity.Type {
+		if event.Entity == entity.Type {
 			entity.Action = event.Action
 			return &entity, nil
 		}
@@ -166,7 +167,7 @@ func (e *EventDetector) validateRelationshipEntity(
 func (e *EventDetector) getEntityEvents(attrs Attributes, entityEvents []*config.EntityEvent) map[string]Entity {
 	detectedEntityEvents := make(map[string]Entity)
 	for _, entityEvent := range entityEvents {
-		event, err := e.attributeMapper.getEntity(entityEvent.Type, attrs)
+		event, err := e.attributeMapper.getEntity(entityEvent.Entity, attrs)
 		if err != nil {
 			e.logger.Debug("failed to create entity update event", zap.Error(err))
 			continue

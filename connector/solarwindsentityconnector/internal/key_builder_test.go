@@ -15,8 +15,9 @@
 package internal
 
 import (
-	"go.opentelemetry.io/collector/pdata/pcommon"
 	"testing"
+
+	"go.opentelemetry.io/collector/pdata/pcommon"
 
 	"github.com/stretchr/testify/require"
 )
