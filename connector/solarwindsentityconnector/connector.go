@@ -33,8 +33,9 @@ import (
 type solarwindsentity struct {
 	logger *zap.Logger
 
-	logsConsumer  consumer.Logs
-	eventDetector *internal.EventDetector
+	logsConsumer        consumer.Logs
+	metricEventDetector *internal.EventDetector[ottlmetric.TransformContext]
+	logEventDetector    *internal.EventDetector[ottllog.TransformContext]
 	// Source and destination prefixes for entity attributes
 	sourcePrefix string
 	destPrefix   string
@@ -103,7 +104,7 @@ func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.M
 				metric := scopeMetric.Metrics().At(k)
 
 				tc := ottlmetric.NewTransformContext(metric, scopeMetric.Metrics(), scopeMetric.Scope(), resourceMetric.Resource(), scopeMetric, resourceMetric)
-				events, err := s.eventDetector.DetectMetric(ctx, attrs, tc)
+				events, err := s.metricEventDetector.Detect(ctx, attrs, tc)
 
 				if err != nil {
 					s.logger.Error("Failed to process metric condition", zap.Error(err))
@@ -143,7 +144,7 @@ func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) erro
 				logRecord := scopeLog.LogRecords().At(k)
 
 				tc := ottllog.NewTransformContext(logRecord, scopeLog.Scope(), resourceLog.Resource(), scopeLog, resourceLog)
-				events, err := s.eventDetector.DetectLog(ctx, attrs, tc)
+				events, err := s.logEventDetector.Detect(ctx, attrs, tc)
 
 				if err != nil {
 					s.logger.Error("Failed to process logs condition", zap.Error(err))
