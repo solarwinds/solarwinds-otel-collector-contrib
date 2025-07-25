@@ -17,6 +17,7 @@ package loggedusers
 import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/registry"
+	"go.uber.org/zap"
 )
 
 type provider struct {
@@ -25,7 +26,7 @@ type provider struct {
 
 var _ providers.Provider[Data] = (*provider)(nil)
 
-func CreateProvider() providers.Provider[Data] {
+func CreateProvider(_ *zap.Logger) providers.Provider[Data] {
 	return &provider{getRegistryValues: registry.GetKeyValues}
 }
 

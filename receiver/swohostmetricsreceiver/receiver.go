@@ -88,7 +88,7 @@ func createMetricsReceiver(
 	cfg := config.(*ReceiverConfig)
 
 	// Way of creating receiver with multiple scrapers - here the single one is added
-	scraperControllerOptions, err := createScraperControllerOptions(ctx, cfg)
+	scraperControllerOptions, err := createScraperControllerOptions(ctx, cfg, settings.Logger)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +101,7 @@ func createMetricsReceiver(
 	)
 	if err != nil {
 		message := "Failed to create swohostmetrics receiver"
-		zap.L().Error(message, zap.Error(err))
+		settings.Logger.Error(message, zap.Error(err))
 		return nil, fmt.Errorf(message+logErrorInclude, err)
 	}
 
@@ -111,6 +111,7 @@ func createMetricsReceiver(
 func createScraperControllerOptions(
 	ctx context.Context,
 	receiverConfig *ReceiverConfig,
+	logger *zap.Logger,
 ) ([]scraperhelper.ControllerOption, error) {
 	scraperFactories := scraperFactories()
 	scraperControllerOptions := make([]scraperhelper.ControllerOption, 0, len(scraperFactories))
@@ -127,10 +128,11 @@ func createScraperControllerOptions(
 			ctx,
 			scraper.Settings{},
 			scraperConfig,
+			logger,
 		)
 		if err != nil {
 			message := fmt.Sprintf("creating scraper %s failed", scraperName)
-			zap.L().Error(message, zap.Error(err))
+			logger.Error(message, zap.Error(err))
 			return nil, fmt.Errorf(message+": %w", err)
 		}
 

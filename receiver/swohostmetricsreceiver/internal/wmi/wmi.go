@@ -32,13 +32,13 @@ type Executor interface {
 }
 
 // QueryResult utilizes executor to get TResult.
-func QueryResult[TResult interface{}](executor Executor) (TResult, error) {
+func QueryResult[TResult interface{}](executor Executor, logger *zap.Logger) (TResult, error) {
 	var model TResult
 	query := executor.CreateQuery(&model, "")
 	result, err := executor.Query(query, &model)
 	if err != nil {
 		var nilResult TResult
-		zap.L().Error("wmi query failed.", zap.Error(err))
+		logger.Error("wmi query failed.", zap.Error(err))
 		return nilResult, err
 	}
 
@@ -48,25 +48,25 @@ func QueryResult[TResult interface{}](executor Executor) (TResult, error) {
 // QuerySingleResult utilizes executor to get single result of TResult.
 // If not exactly single result is returned from the query, error with
 // nil result is returned.
-func QuerySingleResult[TResult interface{}](executor Executor) (TResult, error) {
+func QuerySingleResult[TResult interface{}](executor Executor, logger *zap.Logger) (TResult, error) {
 	var nilResult TResult
-	res, err := QueryResult[[]TResult](executor)
+	res, err := QueryResult[[]TResult](executor, logger)
 	if err != nil {
 		return nilResult, err
 	}
 
 	if res == nil {
-		zap.L().Error(ErrWmiNoResult.Error())
+		logger.Error(ErrWmiNoResult.Error())
 		return nilResult, ErrWmiNoResult
 	}
 
 	if len(res) == 0 {
-		zap.L().Error(ErrWmiEmptyResult.Error())
+		logger.Error(ErrWmiEmptyResult.Error())
 		return nilResult, ErrWmiEmptyResult
 	}
 
 	if len(res) > 1 {
-		zap.L().Error(ErrWmiTooManyResults.Error())
+		logger.Error(ErrWmiTooManyResults.Error())
 		return nilResult, ErrWmiTooManyResults
 	}
 

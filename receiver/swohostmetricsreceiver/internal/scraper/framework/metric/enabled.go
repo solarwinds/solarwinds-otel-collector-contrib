@@ -41,6 +41,7 @@ type Enabled struct {
 func GetEnabledMetrics(
 	scraperName string,
 	scraperConfig *types.ScraperConfig,
+	logger *zap.Logger,
 ) (*Enabled, error) {
 	// Check if there are at least some metrics configured.
 	if len(scraperConfig.Metrics) == 0 {
@@ -48,7 +49,7 @@ func GetEnabledMetrics(
 			"no configured metrics for scraper '%s'",
 			scraperName,
 		)
-		zap.L().Error(message)
+		logger.Error(message)
 		return nil, errors.New(message)
 	}
 
@@ -66,7 +67,7 @@ func GetEnabledMetrics(
 			"no enabled metrics available for scpraper '%s'",
 			scraperName,
 		)
-		zap.L().Error(message)
+		logger.Error(message)
 		return nil, errors.New(message)
 	}
 

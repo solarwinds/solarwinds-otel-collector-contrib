@@ -32,15 +32,17 @@ type provider struct {
 	displayNamesMap   map[string]string
 	getRegistryValues registry.GetKeyValuesTypeFunc
 	lcidProvider      LCIDProvider
+	logger            *zap.Logger
 }
 
 var _ providers.Provider[Language] = (*provider)(nil)
 
-func CreateLanguageProvider() providers.Provider[Language] {
+func CreateLanguageProvider(logger *zap.Logger) providers.Provider[Language] {
 	return &provider{
 		displayNamesMap:   getDisplayLanguages(),
 		getRegistryValues: registry.GetKeyValues,
 		lcidProvider:      NewWindowsLCIDProvider(),
+		logger:            logger,
 	}
 }
 
@@ -51,7 +53,7 @@ func (p *provider) Provide() <-chan Language {
 		defer close(ch)
 		lang, err := p.getLanguageInfo()
 		if err != nil {
-			zap.L().Error("failed to get language info", zap.Error(err))
+			p.logger.Error("failed to get language info", zap.Error(err))
 		}
 
 		if err == nil {

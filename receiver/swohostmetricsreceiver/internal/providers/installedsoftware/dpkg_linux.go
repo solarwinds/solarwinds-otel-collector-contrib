@@ -24,7 +24,8 @@ import (
 )
 
 type dpkgProvider struct {
-	bash cli.CommandLineExecutor
+	bash   cli.CommandLineExecutor
+	logger *zap.Logger
 }
 
 const parsingRegexpPattern = "^ii[\\s]+([[:graph:]]+)[\\s]+([[:graph:]]+)[\\s]+.+$"
@@ -33,17 +34,20 @@ var parsingRegexp = regexp.MustCompile(parsingRegexpPattern)
 
 var _ (Provider) = (*dpkgProvider)(nil)
 
-func NewDpkgProvider() Provider {
+func NewDpkgProvider(logger *zap.Logger) Provider {
 	return createDpkgProvider(
 		cli.NewBashCliExecutor(),
+		logger,
 	)
 }
 
 func createDpkgProvider(
 	bash cli.CommandLineExecutor,
+	logger *zap.Logger,
 ) Provider {
 	return &dpkgProvider{
-		bash: bash,
+		bash:   bash,
+		logger: logger,
 	}
 }
 
@@ -54,7 +58,7 @@ func (provider *dpkgProvider) GetSoftware() ([]InstalledSoftware, error) {
 	stdout, _, err := provider.bash.ExecuteCommand(command)
 	if err != nil {
 		message := "DPKG based installed software can not be obtained"
-		zap.L().Error(message, zap.Error(err))
+		provider.logger.Error(message, zap.Error(err))
 		return []InstalledSoftware{}, fmt.Errorf(message+": %w", err)
 	}
 

@@ -37,7 +37,8 @@ type bios struct {
 }
 
 type provider struct {
-	wmi wmi.Executor
+	wmi    wmi.Executor
+	logger *zap.Logger
 }
 
 // Win32_ComputerSystem represents actual Computer System WMI Object
@@ -55,9 +56,10 @@ type Win32_BIOS struct {
 
 var _ providers.Provider[Model] = (*provider)(nil)
 
-func CreateModelProvider() providers.Provider[Model] {
+func CreateModelProvider(logger *zap.Logger) providers.Provider[Model] {
 	return &provider{
-		wmi: wmi.NewExecutor(),
+		wmi:    wmi.NewExecutor(),
+		logger: logger,
 	}
 }
 
@@ -105,7 +107,7 @@ loop:
 		}
 	}
 
-	zap.L().Debug(fmt.Sprintf("Model provider result: %+v", model))
+	p.logger.Debug(fmt.Sprintf("Model provider result: %+v", model))
 
 	ch <- model
 }
@@ -114,7 +116,7 @@ func (p *provider) loadComputerSystem() chan computerSystem {
 	ch := make(chan computerSystem)
 	go func() {
 		defer close(ch)
-		result, err := wmi.QuerySingleResult[Win32_ComputerSystem](p.wmi)
+		result, err := wmi.QuerySingleResult[Win32_ComputerSystem](p.wmi, p.logger)
 		if err == nil {
 			ch <- computerSystem{Model: result.Model, Manufacturer: result.Manufacturer}
 		}
@@ -126,7 +128,7 @@ func (p *provider) loadBios() chan bios {
 	ch := make(chan bios)
 	go func() {
 		defer close(ch)
-		result, err := wmi.QuerySingleResult[Win32_BIOS](p.wmi)
+		result, err := wmi.QuerySingleResult[Win32_BIOS](p.wmi, p.logger)
 		if err == nil {
 			ch <- bios{SerialNumber: result.SerialNumber}
 		}

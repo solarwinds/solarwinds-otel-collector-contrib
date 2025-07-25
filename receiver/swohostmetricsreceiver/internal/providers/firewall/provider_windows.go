@@ -31,13 +31,15 @@ const (
 
 type provider struct {
 	getRegistryValue registry.GetKeyUIntValueTypeFunc
+	logger           *zap.Logger
 }
 
 var _ (providers.Provider[Container]) = (*provider)(nil)
 
-func CreateFirewallProvider() providers.Provider[Container] {
+func CreateFirewallProvider(logger *zap.Logger) providers.Provider[Container] {
 	return &provider{
 		getRegistryValue: registry.GetKeyUIntValue,
+		logger:           logger,
 	}
 }
 
@@ -48,7 +50,7 @@ func (fp *provider) Provide() <-chan Container {
 		defer close(ch)
 		result, err := fp.getFirewallProfiles()
 		if err != nil {
-			zap.L().Error("providing firewall profiles failed", zap.Error(err))
+			fp.logger.Error("providing firewall profiles failed", zap.Error(err))
 		}
 		fc := Container{
 			FirewallProfiles: result,

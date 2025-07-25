@@ -23,7 +23,7 @@ type provider struct{}
 
 var _ (providers.Provider[Container]) = (*provider)(nil)
 
-func CreateFirewallProvider() providers.Provider[Container] {
+func CreateFirewallProvider(_ *zap.Logger) providers.Provider[Container] {
 	return &provider{}
 }
 

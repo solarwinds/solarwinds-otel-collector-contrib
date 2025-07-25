@@ -23,22 +23,26 @@ import (
 )
 
 type windowsProvider struct {
-	wmi wmi.Executor
+	wmi    wmi.Executor
+	logger *zap.Logger
 }
 
 var _ (Provider) = (*windowsProvider)(nil)
 
-func NewProvider() Provider {
+func NewProvider(logger *zap.Logger) Provider {
 	return createWindowsProvider(
 		wmi.NewExecutor(),
+		logger,
 	)
 }
 
 func createWindowsProvider(
 	wmi wmi.Executor,
+	logger *zap.Logger,
 ) Provider {
 	return &windowsProvider{
-		wmi: wmi,
+		wmi:    wmi,
+		logger: logger,
 	}
 }
 
@@ -53,10 +57,10 @@ type Win32_QuickFixEngineering struct {
 }
 
 func (provider *windowsProvider) GetUpdates() ([]InstalledUpdate, error) {
-	result, err := wmi.QueryResult[[]Win32_QuickFixEngineering](provider.wmi)
+	result, err := wmi.QueryResult[[]Win32_QuickFixEngineering](provider.wmi, provider.logger)
 	if err != nil {
 		message := "Invalid installed updates output."
-		zap.L().Error(message, zap.Error(err))
+		provider.logger.Error(message, zap.Error(err))
 
 		return []InstalledUpdate{}, fmt.Errorf("%s %w", message, err)
 	}

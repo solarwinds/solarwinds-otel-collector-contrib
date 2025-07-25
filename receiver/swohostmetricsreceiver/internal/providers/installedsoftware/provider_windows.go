@@ -23,30 +23,34 @@ import (
 
 type windowsProvider struct {
 	registryReaders []registry.Reader
+	logger          *zap.Logger
 }
 
 var _ (Provider) = (*windowsProvider)(nil)
 
-func NewInstalledSoftwareProvider() Provider {
+func NewInstalledSoftwareProvider(logger *zap.Logger) Provider {
 	return createInstalledSoftwareProvider(
-		createRegistryReaders(),
+		createRegistryReaders(logger),
+		logger,
 	)
 }
 
 func createInstalledSoftwareProvider(
 	registryReaders []registry.Reader,
+	logger *zap.Logger,
 ) Provider {
 	return &windowsProvider{
 		registryReaders: registryReaders,
+		logger:          logger,
 	}
 }
 
-func createRegistryReaders() []registry.Reader {
+func createRegistryReaders(logger *zap.Logger) []registry.Reader {
 	// 64-bit reader
 	uninstallRootPath64bit := `Software\Microsoft\Windows\CurrentVersion\Uninstall`
 	registryReader64bit, err := registry.NewReader(registry.LocalMachineKey, uninstallRootPath64bit)
 	if err != nil {
-		zap.L().Sugar().Errorf(
+		logger.Sugar().Errorf(
 			"64-bit registry reader for path '%s' can not be created: %w",
 			uninstallRootPath64bit,
 			err,
@@ -57,7 +61,7 @@ func createRegistryReaders() []registry.Reader {
 	uninstallRootPath32bit := `Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall`
 	registryReader32bit, err := registry.NewReader(registry.LocalMachineKey, uninstallRootPath32bit)
 	if err != nil {
-		zap.L().Sugar().Errorf(
+		logger.Sugar().Errorf(
 			"32-bit registry reader for path '%s' can not be created: %w",
 			uninstallRootPath32bit,
 			err,
@@ -72,13 +76,13 @@ func (provider *windowsProvider) GetSoftware() ([]InstalledSoftware, error) {
 	// From initialization there were no registred registry readers.
 	if len(provider.registryReaders) == 0 {
 		m := "no register reader registred"
-		zap.L().Error(m)
+		provider.logger.Error(m)
 		return make([]InstalledSoftware, 0), fmt.Errorf("%s", m)
 	}
 
 	values := []InstalledSoftware{}
 	for _, registryReader := range provider.registryReaders {
-		readerValues, err := processRegistryReader(registryReader)
+		readerValues, err := processRegistryReader(registryReader, provider.logger)
 		if err != nil {
 			return values, err
 		}
@@ -87,12 +91,12 @@ func (provider *windowsProvider) GetSoftware() ([]InstalledSoftware, error) {
 	return values, nil
 }
 
-func processRegistryReader(registryReader registry.Reader) ([]InstalledSoftware, error) {
+func processRegistryReader(registryReader registry.Reader, logger *zap.Logger) ([]InstalledSoftware, error) {
 	values := []InstalledSoftware{}
 	uninstallKeys, err := registryReader.GetSubKeys()
 	if err != nil {
 		message := "Windows installed software can not be obtained, failed to get installed software registry keys"
-		zap.L().Error(message, zap.Error(err))
+		logger.Error(message, zap.Error(err))
 		return values, fmt.Errorf("%s:%w", message, err)
 	}
 
@@ -100,7 +104,7 @@ func processRegistryReader(registryReader registry.Reader) ([]InstalledSoftware,
 		registryValues, err := registryReader.GetKeyValues(swKeyName, []string{"DisplayName", "DisplayVersion", "Publisher", "InstallDate"})
 		if err != nil {
 			message := fmt.Sprintf("Unable to read from the %s registry key", swKeyName)
-			zap.L().Warn(message, zap.Error(err))
+			logger.Warn(message, zap.Error(err))
 			continue
 		}
 

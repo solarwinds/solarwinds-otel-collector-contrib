@@ -26,11 +26,12 @@ import (
 func ProcessJSONCommand[TResult any](
 	cle CommandLineExecutor,
 	command string,
+	logger *zap.Logger,
 ) (TResult, error) {
 	// actual scraping
 	stdout, stderr, err := cle.ExecuteCommand(command)
 	if err != nil || stderr != "" {
-		logExecutionError(command, stdout, stderr, err)
+		logExecutionError(command, stdout, stderr, err, logger)
 		if err == nil {
 			err = fmt.Errorf("%s", stderr)
 		}
@@ -53,23 +54,23 @@ func ProcessJSONCommand[TResult any](
 
 // ProcessCommand executes passed command with the help of CommandLineExecutor.
 // Returns output from stdout and error indicator.
-func ProcessCommand(cle CommandLineExecutor, command string) (string, error) {
+func ProcessCommand(cle CommandLineExecutor, command string, logger *zap.Logger) (string, error) {
 	stdout, stderr, err := cle.ExecuteCommand(command)
 	if err != nil || stderr != "" {
-		logExecutionError(command, stdout, stderr, err)
+		logExecutionError(command, stdout, stderr, err, logger)
 		if err == nil {
 			err = fmt.Errorf("%s", stderr)
 		}
 		return stdout, err
 	}
 
-	zap.L().Debug(fmt.Sprintf("Command %s succeeded with result %+v", command, stdout))
+	logger.Debug(fmt.Sprintf("Command %s succeeded with result %+v", command, stdout))
 	return stdout, nil
 }
 
 // Logs command, stdout, stderr and error with the Error level.
-func logExecutionError(command, stdout, stderr string, err error) {
-	zap.L().Error(
+func logExecutionError(command, stdout, stderr string, err error, logger *zap.Logger) {
+	logger.Error(
 		fmt.Sprintf(
 			"Command %s failed.",
 			command,

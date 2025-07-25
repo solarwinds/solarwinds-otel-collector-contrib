@@ -16,6 +16,7 @@ package hardwareinventoryscraper
 
 import (
 	"go.opentelemetry.io/collector/component"
+	"go.uber.org/zap"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/metric"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/scope"
@@ -43,6 +44,7 @@ var _ scraper.Scraper = (*Scraper)(nil)
 
 func NewHardwareInventoryScraper(
 	config *Config,
+	logger *zap.Logger,
 ) (*Scraper, error) {
 	descriptor := &scraper.Descriptor{
 		Type: ScraperType(),
@@ -50,7 +52,10 @@ func NewHardwareInventoryScraper(
 			cpuScopeName: {
 				ScopeName: cpuScopeName,
 				MetricDescriptors: map[string]metric.Descriptor{
-					cpu.Name: {Create: cpu.NewEmitter},
+					cpu.Name: {
+						Create: cpu.NewEmitter,
+						Logger: logger,
+					},
 				},
 			},
 		},
@@ -62,7 +67,7 @@ func NewHardwareInventoryScraper(
 	}
 
 	s := &Scraper{
-		Manager: scraper.NewScraperManager(),
+		Manager: scraper.NewScraperManager(logger),
 		config:  config,
 	}
 

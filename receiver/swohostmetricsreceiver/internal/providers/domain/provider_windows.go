@@ -17,10 +17,12 @@ package domain
 import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/wmi"
+	"go.uber.org/zap"
 )
 
 type provider struct {
-	wmi wmi.Executor
+	wmi    wmi.Executor
+	logger *zap.Logger
 }
 
 var _ providers.Provider[Domain] = (*provider)(nil)
@@ -40,7 +42,7 @@ func (dp *provider) Provide() <-chan Domain {
 	ch := make(chan Domain)
 	go func() {
 		defer close(ch)
-		result, err := wmi.QuerySingleResult[Win32_ComputerSystem](dp.wmi)
+		result, err := wmi.QuerySingleResult[Win32_ComputerSystem](dp.wmi, dp.logger)
 		if err == nil {
 			ch <- Domain{
 				Domain:     result.Domain,
@@ -53,8 +55,9 @@ func (dp *provider) Provide() <-chan Domain {
 	return ch
 }
 
-func CreateDomainProvider() providers.Provider[Domain] {
+func CreateDomainProvider(logger *zap.Logger) providers.Provider[Domain] {
 	return &provider{
-		wmi: wmi.NewExecutor(),
+		wmi:    wmi.NewExecutor(),
+		logger: logger,
 	}
 }

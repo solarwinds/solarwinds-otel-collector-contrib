@@ -35,21 +35,25 @@ const (
 type Emitter struct {
 	provider      installedsoftware.Provider
 	startTimeNano time.Time
+	logger        *zap.Logger
 }
 
 var _ metric.Emitter = (*Emitter)(nil)
 
-func NewEmitter() metric.Emitter {
+func NewEmitter(logger *zap.Logger) metric.Emitter {
 	return createInstalledSoftwareEmitter(
-		installedsoftware.NewInstalledSoftwareProvider(),
+		installedsoftware.NewInstalledSoftwareProvider(logger),
+		logger,
 	)
 }
 
 func createInstalledSoftwareEmitter(
 	provider installedsoftware.Provider,
+	logger *zap.Logger,
 ) metric.Emitter {
 	return &Emitter{
 		provider: provider,
+		logger:   logger,
 	}
 }
 
@@ -58,7 +62,7 @@ func (emitter *Emitter) Emit() *metric.Result {
 	ms, err := emitter.populateMetric()
 	if err != nil {
 		message := fmt.Sprintf("metric %s population failed", Name)
-		zap.L().Error(message, zap.Error(err))
+		emitter.logger.Error(message, zap.Error(err))
 
 		return &metric.Result{
 			Data:  pmetric.NewMetricSlice(),
@@ -88,13 +92,13 @@ func (emitter *Emitter) populateMetric() (pmetric.MetricSlice, error) {
 	isCollection, err := emitter.provider.GetSoftware()
 	if err != nil {
 		message := "obtaining installed software failed"
-		zap.L().Error(message, zap.Error(err))
+		emitter.logger.Error(message, zap.Error(err))
 		return pmetric.NewMetricSlice(), fmt.Errorf(message+"%w", err)
 	}
 
 	// Nothing was obtained, so nothing can be sent outside. No error behavior.
 	if len(isCollection) == 0 {
-		zap.L().Debug("no software was obtained from installed sofftware metric emitter")
+		emitter.logger.Debug("no software was obtained from installed software metric emitter")
 		return pmetric.NewMetricSlice(), nil
 	}
 

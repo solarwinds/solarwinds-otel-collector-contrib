@@ -17,20 +17,24 @@ package cpu
 import (
 	"strings"
 
+	"go.uber.org/zap"
+
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/wmi"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
 )
 
 type provider struct {
-	wmi wmi.Executor
+	wmi    wmi.Executor
+	logger *zap.Logger
 }
 
 var _ providers.Provider[Container] = (*provider)(nil)
 
-func CreateProvider() providers.Provider[Container] {
+func CreateProvider(logger *zap.Logger) providers.Provider[Container] {
 	return &provider{
-		wmi: wmi.NewExecutor(),
+		wmi:    wmi.NewExecutor(),
+		logger: logger,
 	}
 }
 
@@ -39,7 +43,7 @@ func (p *provider) Provide() <-chan Container {
 	ch := make(chan Container)
 	go func() {
 		defer close(ch)
-		results, err := wmi.QueryResult[[]Win32_Processor](p.wmi)
+		results, err := wmi.QueryResult[[]Win32_Processor](p.wmi, p.logger)
 		if err != nil {
 			ch <- Container{Error: err}
 			return
