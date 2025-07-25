@@ -33,7 +33,6 @@ import (
 func TestDetect_EntityAndRelationshipEvents(t *testing.T) {
 	ctx := context.Background()
 	settings := componenttest.NewNopTelemetrySettings()
-	logger := zap.NewNop()
 
 	// Prepare OTTL parser and condition sequence that always evaluates to true
 	parser, err := ottllog.NewParser(nil, settings)
@@ -94,7 +93,7 @@ func TestDetect_EntityAndRelationshipEvents(t *testing.T) {
 	eventDetector := NewEventDetector(
 		attributeMapper,
 		eventsGroup,
-		logger,
+		zap.NewNop(),
 	)
 
 	events, err := eventDetector.Detect(ctx, attributes, tc)
@@ -106,7 +105,6 @@ func TestDetect_EntityAndRelationshipEvents(t *testing.T) {
 func TestDetect_NoEvents(t *testing.T) {
 	ctx := context.Background()
 	settings := componenttest.NewNopTelemetrySettings()
-	logger := zap.NewNop()
 
 	// Prepare OTTL parser and condition sequence that always evaluates to false
 	parser, err := ottllog.NewParser(nil, settings)
@@ -150,7 +148,7 @@ func TestDetect_NoEvents(t *testing.T) {
 	eventDetector := NewEventDetector(
 		attributeMapper,
 		eventsGroup,
-		logger,
+		zap.NewNop(),
 	)
 
 	events, err := eventDetector.Detect(ctx, attributes, tc)
@@ -394,7 +392,6 @@ func TestCollectEvents_WithEntity_IDAttributesMissing(t *testing.T) {
 			"id1": pcommon.NewValueStr("idvalue1"),
 		},
 	}
-	logger := zap.NewNop()
 
 	// act
 	attributeMapper := NewAttributeMapper(map[string]config.Entity{testEntity.Entity: testEntity})
@@ -402,7 +399,7 @@ func TestCollectEvents_WithEntity_IDAttributesMissing(t *testing.T) {
 	eventBuilder := NewEventDetector(
 		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
-		logger,
+		zap.NewNop(),
 	)
 
 	events, err := eventBuilder.collectEvents(attributes, []*config.EntityEvent{{Entity: testEntity.Entity}}, nil)
@@ -458,7 +455,6 @@ func TestCollectEvents_WithRelationship_AttributesPresent(t *testing.T) {
 			"attr2": pcommon.NewValueStr("attrvalue2"),
 		},
 	}
-	logger := zap.NewNop()
 
 	// act
 	attributeMapper := NewAttributeMapper(map[string]config.Entity{
@@ -469,7 +465,7 @@ func TestCollectEvents_WithRelationship_AttributesPresent(t *testing.T) {
 	eventBuilder := NewEventDetector(
 		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
-		logger,
+		zap.NewNop(),
 	)
 
 	events, err := eventBuilder.collectEvents(
@@ -508,7 +504,6 @@ func TestCollectEvents_WithRelationship_SameType_AttributesPresent(t *testing.T)
 			"attr": pcommon.NewValueStr("attrvalue"),
 		},
 	}
-	logger := zap.NewNop()
 
 	// act
 	attributeMapper := NewAttributeMapper(map[string]config.Entity{entity.Entity: entity})
@@ -516,7 +511,7 @@ func TestCollectEvents_WithRelationship_SameType_AttributesPresent(t *testing.T)
 	eventBuilder := NewEventDetector(
 		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
-		logger,
+		zap.NewNop(),
 	)
 
 	events, err := eventBuilder.collectEvents(
@@ -552,7 +547,7 @@ func TestCollectEvents_WithRelationship_IDAttributesMissing(t *testing.T) {
 			"id1": pcommon.NewValueStr("idvalue1"),
 		},
 	}
-	logger := zap.NewNop()
+
 	// act
 	attributeMapper := NewAttributeMapper(map[string]config.Entity{
 		srcEntity.Entity:  srcEntity,
@@ -562,7 +557,7 @@ func TestCollectEvents_WithRelationship_IDAttributesMissing(t *testing.T) {
 	eventBuilder := NewEventDetector(
 		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
-		logger,
+		zap.NewNop(),
 	)
 
 	events, err := eventBuilder.collectEvents(
@@ -585,7 +580,7 @@ func TestCollectEvents_WithRelationship_SameType_IDAttributesMissing(t *testing.
 			"id": pcommon.NewValueStr("idvalue1"),
 		},
 	}
-	logger := zap.NewNop()
+
 	// act
 	attributeMapper := NewAttributeMapper(map[string]config.Entity{
 		"KubernetesCluster": entity,
@@ -594,7 +589,7 @@ func TestCollectEvents_WithRelationship_SameType_IDAttributesMissing(t *testing.
 	eventBuilder := NewEventDetector(
 		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
-		logger,
+		zap.NewNop(),
 	)
 	events, err := eventBuilder.collectEvents(
 		attributes,
@@ -624,7 +619,6 @@ func TestCollectEvents_WithRelationship_RelationshipAttributesPresent(t *testing
 			"relationshipAttr": pcommon.NewValueStr("relationshipValue"),
 		},
 	}
-	logger := zap.NewNop()
 
 	// act
 	attributeMapper := NewAttributeMapper(map[string]config.Entity{
@@ -635,7 +629,7 @@ func TestCollectEvents_WithRelationship_RelationshipAttributesPresent(t *testing
 	eventBuilder := NewEventDetector(
 		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
-		logger,
+		zap.NewNop(),
 	)
 	events, err := eventBuilder.collectEvents(
 		attributes,
@@ -677,7 +671,6 @@ func TestCollectEvents_WithRelationship_SameType_RelationshipAttributesPresent(t
 			"relationshipAttr": pcommon.NewValueStr("relationshipValue"),
 		},
 	}
-	logger := zap.NewNop()
 
 	// act
 	attributeMapper := NewAttributeMapper(map[string]config.Entity{entity.Entity: entity})
@@ -685,7 +678,7 @@ func TestCollectEvents_WithRelationship_SameType_RelationshipAttributesPresent(t
 	eventBuilder := NewEventDetector(
 		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
-		logger,
+		zap.NewNop(),
 	)
 	events, err := eventBuilder.collectEvents(
 		attributes,
