@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"testing"
 
+	"go.uber.org/zap"
+
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/attributes/shared"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers/timezone"
 	"github.com/stretchr/testify/assert"
@@ -26,7 +28,7 @@ import (
 func Test_TimezoneAttributesGenerator_Functional(t *testing.T) {
 	t.Skip("This test should be run manually")
 
-	sut := CreateTimeZoneAttributesGenerator(timezone.CreateTimeZoneProvider())
+	sut := CreateTimeZoneAttributesGenerator(timezone.CreateTimeZoneProvider(zap.NewNop()))
 	result := <-sut.Generate()
 
 	fmt.Printf("Result %+v\n", result)

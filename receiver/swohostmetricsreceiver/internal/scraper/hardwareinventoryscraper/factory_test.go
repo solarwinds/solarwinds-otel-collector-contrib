@@ -23,6 +23,7 @@ import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/types"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/scraper"
+	"go.uber.org/zap"
 )
 
 func Test_SpecificMetricIsEnabledByDefault(t *testing.T) {
@@ -45,7 +46,7 @@ func Test_ScraperIsSuccessfullyCreated(t *testing.T) {
 	receiverConfig := scraper.Settings{}
 
 	sut := NewFactory()
-	_, err := sut.CreateMetrics(context.TODO(), receiverConfig, config)
+	_, err := sut.CreateMetrics(context.TODO(), receiverConfig, config, zap.NewNop())
 
 	require.NoErrorf(t, err, "Scraper should be created without any error")
 }

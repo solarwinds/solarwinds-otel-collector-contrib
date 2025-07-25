@@ -19,6 +19,8 @@ import (
 	"strconv"
 	"testing"
 
+	"go.uber.org/zap"
+
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/attributes/shared"
 	"github.com/stretchr/testify/assert"
 
@@ -28,7 +30,7 @@ import (
 func Test_InfoStatAttributesGenerator_Functional(t *testing.T) {
 	t.Skip("This test should be run manually")
 
-	sut := CreateInfoStatAttributesGenerator(infostat.CreateInfoStatProvider())
+	sut := CreateInfoStatAttributesGenerator(infostat.CreateInfoStatProvider(zap.NewNop()))
 	result := <-sut.Generate()
 
 	fmt.Printf("Result %+v\n", result)

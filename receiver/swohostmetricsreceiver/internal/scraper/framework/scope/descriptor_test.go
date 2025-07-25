@@ -15,13 +15,14 @@
 package scope
 
 import (
+	"go.uber.org/zap"
 	"testing"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/metric"
 	"github.com/stretchr/testify/assert"
 )
 
-func createArtificialMetricEmitter() metric.Emitter {
+func createArtificialMetricEmitter(_ *zap.Logger) metric.Emitter {
 	return metric.CreateMetricEmitterMockV2("testing.metric", 0, 0)
 }
 
@@ -41,7 +42,7 @@ func Test_TraverseThroughScopeDescriptors_onNoMatchNoEmittersAreReturned(t *test
 			"scope2.metric.2": {},
 		},
 	}
-	ses := TraverseThroughScopeDescriptors(scopeDescriptors, enabledMetrics)
+	ses := TraverseThroughScopeDescriptors(scopeDescriptors, enabledMetrics, zap.NewNop())
 
 	assert.NotNil(t, ses, "even empty scope emitters but never nil")
 	assert.Zero(t, len(ses), "no match no allocated emitters")
@@ -64,7 +65,7 @@ func Test_TraverseThroughScopeDescriptors_onMatchEmittersAreReturned(t *testing.
 			"scope1.metric.1": {},
 		},
 	}
-	ses := TraverseThroughScopeDescriptors(scopeDescriptors, enabledMetrics)
+	ses := TraverseThroughScopeDescriptors(scopeDescriptors, enabledMetrics, zap.NewNop())
 
 	assert.Equal(t, 1, len(ses), "match must produce scope emitter")
 	_, found := ses["scope1"]
@@ -89,13 +90,13 @@ func Test_TraverseThroughScopeDescriptors_whenCustomAllocatorIsRequiredItIsUsed(
 			"scope1.metric.1": {},
 		},
 	}
-	ses := TraverseThroughScopeDescriptors(scopeDescriptors, enabledMetrics)
+	ses := TraverseThroughScopeDescriptors(scopeDescriptors, enabledMetrics, zap.NewNop())
 
 	assert.Equal(t, 1, len(ses), "match must produce scope emitter")
 	_, found := ses["testing/scope"]
 	assert.True(t, found, "emitter with overiden scope name must exists")
 }
 
-func createArtificialScopeEmitter(string, map[string]metric.Emitter) Emitter {
-	return CreateCustomScopeEmitter("testing/scope", make(map[string]metric.Emitter))
+func createArtificialScopeEmitter(string, map[string]metric.Emitter, *zap.Logger) Emitter {
+	return CreateCustomScopeEmitter("testing/scope", make(map[string]metric.Emitter), zap.NewNop())
 }

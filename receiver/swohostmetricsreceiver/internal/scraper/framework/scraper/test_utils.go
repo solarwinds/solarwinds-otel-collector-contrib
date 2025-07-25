@@ -14,7 +14,10 @@
 
 package scraper
 
-import "github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/metric"
+import (
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/metric"
+	"go.uber.org/zap"
+)
 
 const (
 	// Scraper name definition.
@@ -34,22 +37,22 @@ const (
 	scope2metric2 = "swo.test_scraper.scope2.metric2"
 )
 
-func CreateMetricEmitter1a() metric.Emitter {
+func CreateMetricEmitter1a(_ *zap.Logger) metric.Emitter {
 	return metric.CreateMetricEmitterMockV2(scope1metric1, 1, 101)
 }
 
-func CreateMetricEmitter1b() metric.Emitter {
+func CreateMetricEmitter1b(_ *zap.Logger) metric.Emitter {
 	return metric.CreateMetricEmitterMockV2(scope1metric2, 2, 102)
 }
 
-func CreateMetricEmitter1c() metric.Emitter {
+func CreateMetricEmitter1c(_ *zap.Logger) metric.Emitter {
 	return metric.CreateMetricEmitterMockV2(scope1metric3, 3, 103)
 }
 
-func CreateMetricEmitter2a() metric.Emitter {
+func CreateMetricEmitter2a(_ *zap.Logger) metric.Emitter {
 	return metric.CreateMetricEmitterMockV2(scope2metric1, 2, 201)
 }
 
-func CreateMetricEmitter2b() metric.Emitter {
+func CreateMetricEmitter2b(_ *zap.Logger) metric.Emitter {
 	return metric.CreateMetricEmitterMockV2(scope2metric2, 4, 202)
 }

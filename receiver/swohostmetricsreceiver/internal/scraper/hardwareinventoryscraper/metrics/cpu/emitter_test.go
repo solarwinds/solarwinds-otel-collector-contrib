@@ -20,13 +20,15 @@ import (
 	"fmt"
 	"testing"
 
+	"go.uber.org/zap"
+
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers/cpu"
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_Initialize_NotFailing(t *testing.T) {
-	sut := NewEmitter()
+	sut := NewEmitter(zap.NewNop())
 	err := sut.Init()
 	assert.NoError(t, err, "emitter initialization should not fail")
 }
