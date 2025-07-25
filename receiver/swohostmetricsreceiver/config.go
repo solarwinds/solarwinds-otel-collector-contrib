@@ -20,7 +20,6 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/collector/scraper/scraperhelper"
-	"go.uber.org/zap"
 )
 
 /*
@@ -64,7 +63,6 @@ func (receiverConfig *ReceiverConfig) Unmarshal(rawConfig *confmap.Conf) error {
 	err := rawConfig.Unmarshal(receiverConfig, confmap.WithIgnoreUnused())
 	if err != nil {
 		message := "Config unmarshalling failed"
-		zap.L().Error(message, zap.Error(err))
 		return fmt.Errorf(message+logErrorInclude, err)
 	}
 
@@ -72,7 +70,6 @@ func (receiverConfig *ReceiverConfig) Unmarshal(rawConfig *confmap.Conf) error {
 	scrapersSectionConfigMap, err := rawConfig.Sub("scrapers")
 	if err != nil {
 		message := "Failed to fetch scrapers section from config"
-		zap.L().Error(message, zap.Error(err))
 		return fmt.Errorf(message+logErrorInclude, err)
 	}
 
@@ -83,7 +80,6 @@ func (receiverConfig *ReceiverConfig) Unmarshal(rawConfig *confmap.Conf) error {
 		scraperFactory, err := GetScraperFactory(scraperName)
 		if err != nil {
 			message := fmt.Sprintf("Scraper factory for scraper %s was not found", scraperName)
-			zap.L().Error(message, zap.Error(err))
 			return fmt.Errorf(message+logErrorInclude, err)
 		}
 
@@ -93,7 +89,6 @@ func (receiverConfig *ReceiverConfig) Unmarshal(rawConfig *confmap.Conf) error {
 		scraperSectionConfigMap, err := scrapersSectionConfigMap.Sub(scraperName)
 		if err != nil {
 			message := fmt.Sprintf("Scraper configuration for scraper %s can not be fetched", scraperName)
-			zap.L().Error(message, zap.Error(err))
 			return fmt.Errorf(message+logErrorInclude, err)
 		}
 
@@ -101,7 +96,6 @@ func (receiverConfig *ReceiverConfig) Unmarshal(rawConfig *confmap.Conf) error {
 		err = scraperSectionConfigMap.Unmarshal(scraperConfig, confmap.WithIgnoreUnused())
 		if err != nil {
 			message := fmt.Sprintf("Umarshalling config for scraper %s failed", scraperName)
-			zap.L().Error(message, zap.Error(err))
 			return fmt.Errorf(message+logErrorInclude, err)
 		}
 

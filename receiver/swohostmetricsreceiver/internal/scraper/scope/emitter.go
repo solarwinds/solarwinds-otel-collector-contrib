@@ -19,11 +19,9 @@ import (
 	"fmt"
 	"sync"
 
-	"go.opentelemetry.io/collector/pdata/pmetric"
-	"go.uber.org/zap"
-
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/metric"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/types"
+	"go.opentelemetry.io/collector/pdata/pmetric"
 )
 
 // emitter struct with Name and MetricEmitters.
@@ -65,8 +63,6 @@ func NewScopeEmitter(scopeName string, metricEmitters map[string]types.MetricEmi
 	}
 
 	if len(se.MetricEmitters) == 0 {
-		message := fmt.Sprintf("no metrics are scheduled for %s scope", scopeName)
-		zap.L().Error(message)
 		return nil
 	}
 	return se
@@ -110,7 +106,6 @@ func (s *emitter) Init() error {
 			"emitter initialization failed with following errors %v",
 			err,
 		)
-		zap.L().Error(message)
 		return errors.New(message)
 	}
 
@@ -122,9 +117,7 @@ func (s *emitter) Init() error {
 // possible errors and the metrics are propagated as one pmetric.MetricSlice built from
 // obtained pmetric.MetricSlice of each metric emitter.
 func (s *emitter) Emit() Result {
-	zap.L().Debug("Running metric emitters", zap.String("scope", s.Name))
 	resCh := s.spinMetricEmitters()
-	zap.L().Debug("Collecting data from metric emitters", zap.String("scope", s.Name))
 	data := s.assemblyMetricEmittersResults(resCh)
 
 	return data

@@ -153,7 +153,6 @@ func GetScraperFactory(scraperName string) (types.MetricsScraperFactory, error) 
 	scraperFactory, found := scraperFactories()[scraperName]
 	if !found {
 		message := fmt.Sprintf("Scraper [%s] is unknown", scraperName)
-		zap.L().Error(message)
 		return nil, errors.New(message)
 	}
 
