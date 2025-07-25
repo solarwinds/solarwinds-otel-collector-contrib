@@ -2,6 +2,9 @@
 
 ## vNext
 
+## v0.127.7
+No changes, previous release failed to finish properly.
+
 ## v0.127.6
 - `solarwindsentityconnector` Added support for prefixes on entities when entities are created from relationships
 - `solarwindsentityconnector` Added support for OTTL converters in event condition expressions
