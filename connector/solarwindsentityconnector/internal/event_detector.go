@@ -18,49 +18,35 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottlmetric"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"go.uber.org/zap"
 )
 
-type EventDetector struct {
+type EventDetector[T any] struct {
 	attributeMapper AttributeMapper
-	logEvents       config.EventsGroup[ottllog.TransformContext]
-	metricEvents    config.EventsGroup[ottlmetric.TransformContext]
+	events          config.EventsGroup[T]
 	keyBuilder      KeyBuilder
 	logger          *zap.Logger
 }
 
-func NewEventDetector(
+func NewEventDetector[T any](
 	attributeMapper AttributeMapper,
-	logEvents config.EventsGroup[ottllog.TransformContext],
-	metricEvents config.EventsGroup[ottlmetric.TransformContext],
+	events config.EventsGroup[T],
 	logger *zap.Logger,
-) *EventDetector {
-	return &EventDetector{
+) *EventDetector[T] {
+	return &EventDetector[T]{
 		attributeMapper: attributeMapper,
-		logEvents:       logEvents,
-		metricEvents:    metricEvents,
+		events:          events,
 		keyBuilder:      NewKeyBuilder(),
 		logger:          logger,
 	}
 }
 
-func (e *EventDetector) DetectLog(ctx context.Context, resourceAttrs Attributes, transformCtx ottllog.TransformContext) ([]Event, error) {
-	ee, re, err := processEvents(ctx, e.logEvents, transformCtx)
+func (e *EventDetector[T]) Detect(ctx context.Context, resourceAttrs Attributes, transformCtx T) ([]Event, error) {
+	ee, re, err := e.processEvents(ctx, transformCtx)
 	if err != nil {
 		return nil, err
 	}
-	return e.collectEvents(resourceAttrs, ee, re)
-}
-
-func (e *EventDetector) DetectMetric(ctx context.Context, resourceAttrs Attributes, transformCtx ottlmetric.TransformContext) ([]Event, error) {
-	ee, re, err := processEvents(ctx, e.metricEvents, transformCtx)
-	if err != nil {
-		return nil, err
-	}
-
 	return e.collectEvents(resourceAttrs, ee, re)
 }
 
@@ -68,7 +54,7 @@ func (e *EventDetector) DetectMetric(ctx context.Context, resourceAttrs Attribut
 // First, it gathers entity events and relationship events with their associated entities.
 // Then, it validates the relationship entities against the configured entity events to ensure that only
 // valid and unique entity events are included.
-func (e *EventDetector) collectEvents(
+func (e *EventDetector[T]) collectEvents(
 	attrs Attributes,
 	configuredEvents []*config.EntityEvent,
 	configuredRelationships []*config.RelationshipEvent,
@@ -99,7 +85,7 @@ func (e *EventDetector) collectEvents(
 // validateEntityEvents checks if the entities created from relationship events are not duplicates
 // of those created from entity events. It filters out entities that already exist in the configured entity events.
 // It returns a slice of events that are compared to configured entity events to ensure that only valid events are returned.
-func (e *EventDetector) validateEntityEvents(
+func (e *EventDetector[T]) validateEntityEvents(
 	validEntityEvents []*config.EntityEvent,
 	alreadyExistingEntities map[string]Entity,
 	relationshipEntities []*Relationship,
@@ -132,7 +118,7 @@ func (e *EventDetector) validateEntityEvents(
 //  1. is configured in the connector configuration
 //  2. is not already existing in the alreadyExistingEntities map, which contains entities created from entity events
 //  3. conditions for the entity event were met, so we can infer the entity from the relationship event; these events are stored in validEntityEvents
-func (e *EventDetector) validateRelationshipEntity(
+func (e *EventDetector[T]) validateRelationshipEntity(
 	entity Entity,
 	validEntityEvents []*config.EntityEvent,
 	alreadyExistingEntities map[string]Entity,
@@ -164,7 +150,7 @@ func (e *EventDetector) validateRelationshipEntity(
 }
 
 // getEntityEvents creates entity update events based on the configured entity events.
-func (e *EventDetector) getEntityEvents(attrs Attributes, entityEvents []*config.EntityEvent) map[string]Entity {
+func (e *EventDetector[T]) getEntityEvents(attrs Attributes, entityEvents []*config.EntityEvent) map[string]Entity {
 	detectedEntityEvents := make(map[string]Entity)
 	for _, entityEvent := range entityEvents {
 		event, err := e.attributeMapper.getEntity(entityEvent.Entity, attrs)
@@ -190,7 +176,7 @@ func (e *EventDetector) getEntityEvents(attrs Attributes, entityEvents []*config
 // It also builds a map of entities tied to that relationship - source and destination.
 // The map is used to compare entities created from relationship events with entities created from entity events,
 // so duplicated can be filtered out in case of unprefixed attributes.
-func (e *EventDetector) getRelationshipEvents(attrs Attributes, configuredRelationships []*config.RelationshipEvent) []*Relationship {
+func (e *EventDetector[T]) getRelationshipEvents(attrs Attributes, configuredRelationships []*config.RelationshipEvent) []*Relationship {
 	relationshipEvents := make([]*Relationship, 0, len(configuredRelationships))
 	for _, relationshipEvent := range configuredRelationships {
 		sourceEntity, destEntity, err := e.attributeMapper.getRelationshipEntities(relationshipEvent.Source, relationshipEvent.Destination, attrs)
@@ -212,16 +198,15 @@ func (e *EventDetector) getRelationshipEvents(attrs Attributes, configuredRelati
 // ProcessEvents evaluates the conditions for entityConfigs and relationships events.
 // If the conditions are met, it appends the corresponding entity or relationship update event to the event builder.
 // Multiple condition items are evaluated using OR logic.
-func processEvents[C any](
+func (e *EventDetector[T]) processEvents(
 	ctx context.Context,
-	events config.EventsGroup[C],
-	tc C) ([]*config.EntityEvent, []*config.RelationshipEvent, error) {
+	tc T) ([]*config.EntityEvent, []*config.RelationshipEvent, error) {
 
 	// will be reworked to channel
 	entityEvents := make([]*config.EntityEvent, 0)
 	relationshipEvents := make([]*config.RelationshipEvent, 0)
 
-	for _, entityEvent := range events.Entities {
+	for _, entityEvent := range e.events.Entities {
 		ok, err := entityEvent.ConditionSeq.Eval(ctx, tc)
 		if err != nil {
 			return []*config.EntityEvent{}, []*config.RelationshipEvent{}, err
@@ -232,7 +217,7 @@ func processEvents[C any](
 		}
 	}
 
-	for _, relationshipEvent := range events.Relationships {
+	for _, relationshipEvent := range e.events.Relationships {
 		ok, err := relationshipEvent.ConditionSeq.Eval(ctx, tc)
 		if err != nil {
 			return []*config.EntityEvent{}, []*config.RelationshipEvent{}, err

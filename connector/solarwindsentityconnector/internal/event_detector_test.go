@@ -18,9 +18,6 @@ import (
 	"context"
 	"testing"
 
-	"go.opentelemetry.io/collector/pdata/pmetric"
-
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottlmetric"
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.uber.org/zap"
@@ -33,10 +30,9 @@ import (
 	"go.opentelemetry.io/collector/pdata/plog"
 )
 
-func TestDetectLog_EntityAndRelationshipEvents(t *testing.T) {
+func TestDetect_EntityAndRelationshipEvents(t *testing.T) {
 	ctx := context.Background()
 	settings := componenttest.NewNopTelemetrySettings()
-	logger := zap.NewNop()
 
 	// Prepare OTTL parser and condition sequence that always evaluates to true
 	parser, err := ottllog.NewParser(nil, settings)
@@ -97,20 +93,18 @@ func TestDetectLog_EntityAndRelationshipEvents(t *testing.T) {
 	eventDetector := NewEventDetector(
 		attributeMapper,
 		eventsGroup,
-		config.EventsGroup[ottlmetric.TransformContext]{},
-		logger,
+		zap.NewNop(),
 	)
 
-	events, err := eventDetector.DetectLog(ctx, attributes, tc)
+	events, err := eventDetector.Detect(ctx, attributes, tc)
 	require.NoError(t, err)
 	require.NotNil(t, events)
 	require.Len(t, events, 3)
 }
 
-func TestDetectLog_NoEvents(t *testing.T) {
+func TestDetect_NoEvents(t *testing.T) {
 	ctx := context.Background()
 	settings := componenttest.NewNopTelemetrySettings()
-	logger := zap.NewNop()
 
 	// Prepare OTTL parser and condition sequence that always evaluates to false
 	parser, err := ottllog.NewParser(nil, settings)
@@ -154,155 +148,13 @@ func TestDetectLog_NoEvents(t *testing.T) {
 	eventDetector := NewEventDetector(
 		attributeMapper,
 		eventsGroup,
-		config.EventsGroup[ottlmetric.TransformContext]{},
-		logger,
+		zap.NewNop(),
 	)
 
-	events, err := eventDetector.DetectLog(ctx, attributes, tc)
+	events, err := eventDetector.Detect(ctx, attributes, tc)
 	require.NoError(t, err)
 	require.NotNil(t, events)
 	require.Len(t, events, 0)
-}
-
-func TestDetectMetric_EntityAndRelationshipEvents(t *testing.T) {
-	ctx := context.Background()
-	settings := componenttest.NewNopTelemetrySettings()
-	logger := zap.NewNop()
-
-	// Prepare OTTL parser and condition sequence that always evaluates to true
-	parser, err := ottlmetric.NewParser(nil, settings)
-	require.NoError(t, err)
-	stmts, err := parser.ParseConditions([]string{"true"})
-	require.NoError(t, err)
-	seq := ottl.NewConditionSequence(stmts, settings)
-
-	// Prepare entity and relationship events
-	relationshipType := "MemberOf"
-	entity := config.Entity{
-		Entity:     "Entity",
-		IDs:        []string{"id"},
-		Attributes: []string{"attr"},
-	}
-	entityEvent := config.ParsedEntityEvent[ottlmetric.TransformContext]{
-		Definition: &config.EntityEvent{
-			Event:  config.Event{Action: EventUpdateAction},
-			Entity: entity.Entity,
-		},
-		ConditionSeq: seq,
-	}
-	relationshipEvent := config.ParsedRelationshipEvent[ottlmetric.TransformContext]{
-		Definition: &config.RelationshipEvent{
-			Event:       config.Event{Action: EventUpdateAction},
-			Type:        relationshipType,
-			Source:      entity.Entity,
-			Destination: entity.Entity,
-		},
-		ConditionSeq: seq,
-	}
-	eventsGroup := config.EventsGroup[ottlmetric.TransformContext]{
-		Entities:      []config.ParsedEntityEvent[ottlmetric.TransformContext]{entityEvent},
-		Relationships: []config.ParsedRelationshipEvent[ottlmetric.TransformContext]{relationshipEvent},
-		Parser:        &parser,
-	}
-
-	// Prepare resource attributes
-	attributes := Attributes{
-		Source: map[string]pcommon.Value{
-			"id":   pcommon.NewValueStr("idvalue1"),
-			"attr": pcommon.NewValueStr("attrvalue1"),
-		},
-		Destination: map[string]pcommon.Value{
-			"id":   pcommon.NewValueStr("idvalue2"),
-			"attr": pcommon.NewValueStr("attrvalue2"),
-		},
-		Common: map[string]pcommon.Value{
-			"id":   pcommon.NewValueStr("idvalue1"),
-			"attr": pcommon.NewValueStr("attrvalue1"),
-		},
-	}
-
-	// Prepare transform context
-	metrics := pmetric.NewMetrics()
-	rMetrics := metrics.ResourceMetrics().AppendEmpty()
-	resource := rMetrics.Resource()
-	scopeMetrics := rMetrics.ScopeMetrics().AppendEmpty()
-	scope := scopeMetrics.Scope()
-	metricSlice := scopeMetrics.Metrics()
-	metric := metricSlice.AppendEmpty()
-	tc := ottlmetric.NewTransformContext(metric, metricSlice, scope, resource, scopeMetrics, rMetrics)
-
-	attributeMapper := NewAttributeMapper(map[string]config.Entity{entity.Entity: entity})
-
-	// Create EventDetector
-	eventDetector := NewEventDetector(
-		attributeMapper,
-		config.EventsGroup[ottllog.TransformContext]{},
-		eventsGroup,
-		logger,
-	)
-
-	events, err := eventDetector.DetectMetric(ctx, attributes, tc)
-	require.NoError(t, err)
-	require.NotNil(t, events)
-	require.Len(t, events, 3)
-}
-
-func TestDetectMetric_NoEvents(t *testing.T) {
-	ctx := context.Background()
-	settings := componenttest.NewNopTelemetrySettings()
-	logger := zap.NewNop()
-
-	// Prepare OTTL parser and condition sequence that always evaluates to false
-	parser, err := ottlmetric.NewParser(nil, settings)
-	require.NoError(t, err)
-	stmts, err := parser.ParseConditions([]string{"false"})
-	require.NoError(t, err)
-	seq := ottl.NewConditionSequence(stmts, settings)
-
-	entity := config.Entity{
-		Entity:     "Entity",
-		IDs:        []string{"id"},
-		Attributes: []string{"attr"},
-	}
-	entityEvent := config.ParsedEntityEvent[ottlmetric.TransformContext]{
-		Definition:   &config.EntityEvent{Entity: entity.Entity},
-		ConditionSeq: seq,
-	}
-	eventsGroup := config.EventsGroup[ottlmetric.TransformContext]{
-		Entities:      []config.ParsedEntityEvent[ottlmetric.TransformContext]{entityEvent},
-		Relationships: nil,
-		Parser:        &parser,
-	}
-
-	attributes := Attributes{
-		Common: map[string]pcommon.Value{
-			"id":   pcommon.NewValueStr("idvalue"),
-			"attr": pcommon.NewValueStr("attrvalue"),
-		},
-	}
-
-	metrics := pmetric.NewMetrics()
-	rMetrics := metrics.ResourceMetrics().AppendEmpty()
-	resource := rMetrics.Resource()
-	scopeMetrics := rMetrics.ScopeMetrics().AppendEmpty()
-	scope := scopeMetrics.Scope()
-	metricSlice := scopeMetrics.Metrics()
-	metric := metricSlice.AppendEmpty()
-	tc := ottlmetric.NewTransformContext(metric, metricSlice, scope, resource, scopeMetrics, rMetrics)
-
-	attributeMapper := NewAttributeMapper(map[string]config.Entity{entity.Entity: entity})
-
-	eventDetector := NewEventDetector(
-		attributeMapper,
-		config.EventsGroup[ottllog.TransformContext]{},
-		eventsGroup,
-		logger,
-	)
-
-	events, err := eventDetector.DetectMetric(ctx, attributes, tc)
-	require.NoError(t, err)
-	require.NotNil(t, events)
-	require.Empty(t, events)
 }
 
 func TestProcessEvents_ConditionTrue_EventsCreated(t *testing.T) {
@@ -337,9 +189,11 @@ func TestProcessEvents_ConditionTrue_EventsCreated(t *testing.T) {
 	resource := rLogs.Resource()
 	scope := scopeLogs.Scope()
 	tc := ottllog.NewTransformContext(logRecord, scope, resource, scopeLogs, rLogs)
+	am := NewAttributeMapper(map[string]config.Entity{})
+	ev := NewEventDetector(am, eventsGroup, zap.NewNop())
 
 	// Tested function
-	entities, relationships, err := processEvents(ctx, eventsGroup, tc)
+	entities, relationships, err := ev.processEvents(ctx, tc)
 	require.NoError(t, err)
 
 	require.Len(t, entities, 1)
@@ -378,9 +232,11 @@ func TestProcessEvents_ConditionFalse_EventsNotCreated(t *testing.T) {
 	resource := rLogs.Resource()
 	scope := scopeLogs.Scope()
 	tc := ottllog.NewTransformContext(logRecord, scope, resource, scopeLogs, rLogs)
+	am := NewAttributeMapper(map[string]config.Entity{})
+	ev := NewEventDetector(am, eventsGroup, zap.NewNop())
 
 	// Tested function
-	entities, relationships, err := processEvents(ctx, eventsGroup, tc)
+	entities, relationships, err := ev.processEvents(ctx, tc)
 	require.NoError(t, err)
 	require.Empty(t, entities)
 	require.Empty(t, relationships)
@@ -423,8 +279,7 @@ func TestGetRelationships_WithDifferentTypes(t *testing.T) {
 	eventDetector := NewEventDetector(
 		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
-		config.EventsGroup[ottlmetric.TransformContext]{},
-		nil,
+		zap.NewNop(),
 	)
 
 	relationshipEvents := eventDetector.getRelationshipEvents(attributes, relationships)
@@ -469,8 +324,7 @@ func TestGetRelationships_WithSameType(t *testing.T) {
 	eventDetector := NewEventDetector(
 		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
-		config.EventsGroup[ottlmetric.TransformContext]{},
-		nil,
+		zap.NewNop(),
 	)
 
 	relationshipEvents := eventDetector.getRelationshipEvents(attributes, relationships)
@@ -504,8 +358,7 @@ func TestCollectEvents_WithEntity_AttributesPresent(t *testing.T) {
 	eventBuilder := NewEventDetector(
 		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
-		config.EventsGroup[ottlmetric.TransformContext]{},
-		nil,
+		zap.NewNop(),
 	)
 
 	events, err := eventBuilder.collectEvents(attributes, []*config.EntityEvent{
@@ -539,7 +392,6 @@ func TestCollectEvents_WithEntity_IDAttributesMissing(t *testing.T) {
 			"id1": pcommon.NewValueStr("idvalue1"),
 		},
 	}
-	logger := zap.NewNop()
 
 	// act
 	attributeMapper := NewAttributeMapper(map[string]config.Entity{testEntity.Entity: testEntity})
@@ -547,8 +399,7 @@ func TestCollectEvents_WithEntity_IDAttributesMissing(t *testing.T) {
 	eventBuilder := NewEventDetector(
 		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
-		config.EventsGroup[ottlmetric.TransformContext]{},
-		logger,
+		zap.NewNop(),
 	)
 
 	events, err := eventBuilder.collectEvents(attributes, []*config.EntityEvent{{Entity: testEntity.Entity}}, nil)
@@ -574,8 +425,7 @@ func TestCollectEvents_WithEntity_SomeAttributesMissing(t *testing.T) {
 	eventBuilder := NewEventDetector(
 		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
-		config.EventsGroup[ottlmetric.TransformContext]{},
-		nil,
+		zap.NewNop(),
 	)
 
 	events, err := eventBuilder.collectEvents(attributes, []*config.EntityEvent{{Entity: testEntity.Entity, Event: config.Event{Action: EventUpdateAction}}}, nil)
@@ -605,7 +455,6 @@ func TestCollectEvents_WithRelationship_AttributesPresent(t *testing.T) {
 			"attr2": pcommon.NewValueStr("attrvalue2"),
 		},
 	}
-	logger := zap.NewNop()
 
 	// act
 	attributeMapper := NewAttributeMapper(map[string]config.Entity{
@@ -616,8 +465,7 @@ func TestCollectEvents_WithRelationship_AttributesPresent(t *testing.T) {
 	eventBuilder := NewEventDetector(
 		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
-		config.EventsGroup[ottlmetric.TransformContext]{},
-		logger,
+		zap.NewNop(),
 	)
 
 	events, err := eventBuilder.collectEvents(
@@ -656,7 +504,6 @@ func TestCollectEvents_WithRelationship_SameType_AttributesPresent(t *testing.T)
 			"attr": pcommon.NewValueStr("attrvalue"),
 		},
 	}
-	logger := zap.NewNop()
 
 	// act
 	attributeMapper := NewAttributeMapper(map[string]config.Entity{entity.Entity: entity})
@@ -664,8 +511,7 @@ func TestCollectEvents_WithRelationship_SameType_AttributesPresent(t *testing.T)
 	eventBuilder := NewEventDetector(
 		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
-		config.EventsGroup[ottlmetric.TransformContext]{},
-		logger,
+		zap.NewNop(),
 	)
 
 	events, err := eventBuilder.collectEvents(
@@ -701,7 +547,7 @@ func TestCollectEvents_WithRelationship_IDAttributesMissing(t *testing.T) {
 			"id1": pcommon.NewValueStr("idvalue1"),
 		},
 	}
-	logger := zap.NewNop()
+
 	// act
 	attributeMapper := NewAttributeMapper(map[string]config.Entity{
 		srcEntity.Entity:  srcEntity,
@@ -711,8 +557,7 @@ func TestCollectEvents_WithRelationship_IDAttributesMissing(t *testing.T) {
 	eventBuilder := NewEventDetector(
 		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
-		config.EventsGroup[ottlmetric.TransformContext]{},
-		logger,
+		zap.NewNop(),
 	)
 
 	events, err := eventBuilder.collectEvents(
@@ -735,7 +580,7 @@ func TestCollectEvents_WithRelationship_SameType_IDAttributesMissing(t *testing.
 			"id": pcommon.NewValueStr("idvalue1"),
 		},
 	}
-	logger := zap.NewNop()
+
 	// act
 	attributeMapper := NewAttributeMapper(map[string]config.Entity{
 		"KubernetesCluster": entity,
@@ -744,8 +589,7 @@ func TestCollectEvents_WithRelationship_SameType_IDAttributesMissing(t *testing.
 	eventBuilder := NewEventDetector(
 		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
-		config.EventsGroup[ottlmetric.TransformContext]{},
-		logger,
+		zap.NewNop(),
 	)
 	events, err := eventBuilder.collectEvents(
 		attributes,
@@ -775,7 +619,6 @@ func TestCollectEvents_WithRelationship_RelationshipAttributesPresent(t *testing
 			"relationshipAttr": pcommon.NewValueStr("relationshipValue"),
 		},
 	}
-	logger := zap.NewNop()
 
 	// act
 	attributeMapper := NewAttributeMapper(map[string]config.Entity{
@@ -786,8 +629,7 @@ func TestCollectEvents_WithRelationship_RelationshipAttributesPresent(t *testing
 	eventBuilder := NewEventDetector(
 		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
-		config.EventsGroup[ottlmetric.TransformContext]{},
-		logger,
+		zap.NewNop(),
 	)
 	events, err := eventBuilder.collectEvents(
 		attributes,
@@ -829,7 +671,6 @@ func TestCollectEvents_WithRelationship_SameType_RelationshipAttributesPresent(t
 			"relationshipAttr": pcommon.NewValueStr("relationshipValue"),
 		},
 	}
-	logger := zap.NewNop()
 
 	// act
 	attributeMapper := NewAttributeMapper(map[string]config.Entity{entity.Entity: entity})
@@ -837,8 +678,7 @@ func TestCollectEvents_WithRelationship_SameType_RelationshipAttributesPresent(t
 	eventBuilder := NewEventDetector(
 		attributeMapper,
 		config.EventsGroup[ottllog.TransformContext]{},
-		config.EventsGroup[ottlmetric.TransformContext]{},
-		logger,
+		zap.NewNop(),
 	)
 	events, err := eventBuilder.collectEvents(
 		attributes,
