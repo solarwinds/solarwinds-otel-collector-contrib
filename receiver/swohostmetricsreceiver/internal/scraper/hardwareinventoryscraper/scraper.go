@@ -52,10 +52,7 @@ func NewHardwareInventoryScraper(
 			cpuScopeName: {
 				ScopeName: cpuScopeName,
 				MetricDescriptors: map[string]metric.Descriptor{
-					cpu.Name: {
-						Create: cpu.NewEmitter,
-						Logger: logger,
-					},
+					cpu.Name: {Create: cpu.NewEmitter},
 				},
 			},
 		},

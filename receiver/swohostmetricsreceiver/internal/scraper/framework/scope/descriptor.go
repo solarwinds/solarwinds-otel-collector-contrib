@@ -35,7 +35,6 @@ type Descriptor struct {
 	// Overrideable creator for custom scope creator. In case there is none
 	// it is supposed to be replaced by generic one.
 	Create EmitterCreateFunc
-	Logger *zap.Logger // TODO remove
 }
 
 func TraverseThroughScopeDescriptors(

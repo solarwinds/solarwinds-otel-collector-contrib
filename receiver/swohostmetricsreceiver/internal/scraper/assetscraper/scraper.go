@@ -44,14 +44,8 @@ func NewAssetScraper(
 			scopeMetricsName: {
 				ScopeName: scopeMetricsName,
 				MetricDescriptors: map[string]metric.Descriptor{
-					installedsoftware.Name: {
-						Create: installedsoftware.NewEmitter,
-						Logger: logger,
-					},
-					installedupdates.Name: {
-						Create: installedupdates.NewEmitter,
-						Logger: logger,
-					},
+					installedsoftware.Name: {Create: installedsoftware.NewEmitter},
+					installedupdates.Name:  {Create: installedupdates.NewEmitter},
 				},
 			},
 		},

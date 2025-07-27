@@ -49,52 +49,25 @@ func NewHostInfoScraper(
 			hostinfoScopeName: {
 				ScopeName: hostinfoScopeName,
 				MetricDescriptors: map[string]metric.Descriptor{
-					firewall.MetricName: {
-						Create: firewall.NewEmitter,
-						Logger: logger,
-					},
-					uptime.MetricName: {
-						Create: uptime.NewEmitter,
-						Logger: logger,
-					},
+					firewall.MetricName: {Create: firewall.NewEmitter},
+					uptime.MetricName:   {Create: uptime.NewEmitter},
 				},
 			},
 			userScopeName: {
 				ScopeName: userScopeName,
 				MetricDescriptors: map[string]metric.Descriptor{
-					lastloggeduser.MetricName: {
-						Create: lastloggeduser.NewEmitter,
-						Logger: logger,
-					},
+					lastloggeduser.MetricName: {Create: lastloggeduser.NewEmitter},
 				},
 			},
 			cpuStatsScopeName: {
 				ScopeName: cpuStatsScopeName,
 				MetricDescriptors: map[string]metric.Descriptor{
-					cpustats.MetricNameCPUTime: {
-						Create: cpustats.NewEmitter(cpustats.MetricNameCPUTime),
-						Logger: logger,
-					},
-					cpustats.MetricNameProcs: {
-						Create: cpustats.NewEmitter(cpustats.MetricNameProcs),
-						Logger: logger,
-					},
-					cpustats.MetricNameCurrentProcs: {
-						Create: cpustats.NewEmitter(cpustats.MetricNameCurrentProcs),
-						Logger: logger,
-					},
-					cpustats.MetricNameIntr: {
-						Create: cpustats.NewEmitter(cpustats.MetricNameIntr),
-						Logger: logger,
-					},
-					cpustats.MetricNameCtxt: {
-						Create: cpustats.NewEmitter(cpustats.MetricNameCtxt),
-						Logger: logger,
-					},
-					cpustats.MetricNameNumCores: {
-						Create: cpustats.NewEmitter(cpustats.MetricNameNumCores),
-						Logger: logger,
-					},
+					cpustats.MetricNameCPUTime:      {Create: cpustats.NewEmitter(cpustats.MetricNameCPUTime)},
+					cpustats.MetricNameProcs:        {Create: cpustats.NewEmitter(cpustats.MetricNameProcs)},
+					cpustats.MetricNameCurrentProcs: {Create: cpustats.NewEmitter(cpustats.MetricNameCurrentProcs)},
+					cpustats.MetricNameIntr:         {Create: cpustats.NewEmitter(cpustats.MetricNameIntr)},
+					cpustats.MetricNameCtxt:         {Create: cpustats.NewEmitter(cpustats.MetricNameCtxt)},
+					cpustats.MetricNameNumCores:     {Create: cpustats.NewEmitter(cpustats.MetricNameNumCores)},
 				},
 			},
 		},

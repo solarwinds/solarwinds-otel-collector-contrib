@@ -39,7 +39,6 @@ const (
 type emitter struct {
 	metricName       string
 	cpuStatsProvider providers.Provider[cpustats.Container]
-	logger           *zap.Logger
 }
 
 var _ metric.Emitter = (*emitter)(nil)
