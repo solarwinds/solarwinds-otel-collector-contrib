@@ -193,15 +193,7 @@ func TestCreateParsedEventsUnknownContext(t *testing.T) {
 				{
 					Entity: "test-entity",
 					Event: Event{
-						Context:    "unknown-context", // This should be ignored
-						Action:     "update",
-						Conditions: []string{"true"},
-					},
-				},
-				{
-					Entity: "test-entity-log",
-					Event: Event{
-						Context:    "log",
+						Context:    "unknown-context",
 						Action:     "update",
 						Conditions: []string{"true"},
 					},
@@ -210,13 +202,9 @@ func TestCreateParsedEventsUnknownContext(t *testing.T) {
 		},
 	}
 
-	parsedEvents, err := createParsedEvents(schema, settings)
-	require.NoError(t, err)
-
-	// Only log event should be parsed, unknown context should be ignored
-	assert.Len(t, parsedEvents.LogEvents.Entities, 1)
-	assert.Len(t, parsedEvents.MetricEvents.Entities, 0)
-	assert.Equal(t, "test-entity-log", parsedEvents.LogEvents.Entities[0].Definition.Entity)
+	_, err := createParsedEvents(schema, settings)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "unsupported context: unknown-context")
 }
 
 func TestCreateParsedEventsWithInvalidConditions(t *testing.T) {
