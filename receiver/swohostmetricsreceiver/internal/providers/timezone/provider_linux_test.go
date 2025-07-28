@@ -20,6 +20,7 @@ import (
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 func Test_Provide_ProvidesCompleteDataAndChannelIsClosedAfterDelivery(t *testing.T) {
@@ -30,7 +31,8 @@ func Test_Provide_ProvidesCompleteDataAndChannelIsClosedAfterDelivery(t *testing
 	}
 
 	sut := provider{
-		cli: providers.CreateCommandLineExecutorMock(commandOutput, "", nil),
+		cli:    providers.CreateCommandLineExecutorMock(commandOutput, "", nil),
+		logger: zap.NewNop(),
 	}
 
 	ch := sut.Provide()
@@ -47,7 +49,8 @@ func Test_Provide_FailsAndProvidesInvalidObjectAndChannelIsClosedAfterDelivery(t
 	}
 
 	sut := provider{
-		cli: providers.CreateCommandLineExecutorMock("", "", fmt.Errorf("something went wrong")),
+		cli:    providers.CreateCommandLineExecutorMock("", "", fmt.Errorf("something went wrong")),
+		logger: zap.NewNop(),
 	}
 
 	ch := sut.Provide()
@@ -64,7 +67,8 @@ func Test_Provide_ErrorIsInStdErrReturnsEmptyObjectAndChannelIsClosedAfterDelive
 	}
 
 	sut := provider{
-		cli: providers.CreateCommandLineExecutorMock("some output", "some error in stderr", nil),
+		cli:    providers.CreateCommandLineExecutorMock("some output", "some error in stderr", nil),
+		logger: zap.NewNop(),
 	}
 	ch := sut.Provide()
 	actualTimeZone := <-ch

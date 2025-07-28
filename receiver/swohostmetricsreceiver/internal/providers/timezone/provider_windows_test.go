@@ -48,7 +48,8 @@ func Test_Provide_ProvidesCompleteDataAndChannelIsClosedAfterDelivery(t *testing
 	}
 
 	sut := provider{
-		wmi.CreateWmiExecutorMock([]interface{}{&timeZoneMock}, nil),
+		wmi:    wmi.CreateWmiExecutorMock([]interface{}{&timeZoneMock}, nil),
+		logger: zap.NewNop(),
 	}
 
 	ch := sut.Provide()

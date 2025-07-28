@@ -21,6 +21,7 @@ import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/wmi"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 func Test_Provide_ProvidesCompleteDataAndChannelIsClosedAfterDelivery(t *testing.T) {
@@ -70,7 +71,8 @@ func Test_Provide_ProvidesCompleteDataAndChannelIsClosedAfterDelivery(t *testing
 	}
 
 	sut := provider{
-		wmi: wmi.CreateWmiExecutorMock([]interface{}{&wmiOutput}, nil),
+		wmi:    wmi.CreateWmiExecutorMock([]interface{}{&wmiOutput}, nil),
+		logger: zap.NewNop(),
 	}
 
 	ch := sut.Provide()
@@ -92,6 +94,7 @@ func Test_Provide_FailsAndProvidesEmptyObjectAndChannelIsClosedAfterDelivery(t *
 		wmi: wmi.CreateWmiExecutorMock(nil, map[interface{}]error{
 			&[]Win32_Processor{}: err,
 		}),
+		logger: zap.NewNop(),
 	}
 
 	ch := sut.Provide()

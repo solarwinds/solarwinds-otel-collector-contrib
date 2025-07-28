@@ -50,7 +50,8 @@ func Test_Provide_ProvidesCompleteDataAndChannelIsClosedAfterDelivery(t *testing
 	}
 
 	sut := provider{
-		wmi: wmi.CreateWmiExecutorMock([]interface{}{&wmiOutput}, nil),
+		wmi:    wmi.CreateWmiExecutorMock([]interface{}{&wmiOutput}, nil),
+		logger: zap.NewNop(),
 	}
 
 	ch := sut.Provide()
@@ -73,6 +74,7 @@ func Test_Provide_FailsAndProvidesEmptyObjectAndChannelIsClosedAfterDelivery(t *
 		wmi: wmi.CreateWmiExecutorMock(nil, map[interface{}]error{
 			&[]Win32_ComputerSystem{}: fmt.Errorf("kokoha error"),
 		}),
+		logger: zap.NewNop(),
 	}
 
 	ch := sut.Provide()
