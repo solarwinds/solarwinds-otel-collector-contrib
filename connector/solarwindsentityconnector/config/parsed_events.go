@@ -65,38 +65,21 @@ func createParsedEvents(s Schema, settings component.TelemetrySettings) (ParsedE
 
 	var result ParsedEvents
 
-	if err := processEvents(s.Events.Entities, &result.MetricEvents.Entities, &result.LogEvents.Entities, ctx); err != nil {
-		return ParsedEvents{}, err
+	for _, event := range s.Events.Entities {
+		if err := processEvent(event, event.Context, event.Conditions, &result.MetricEvents.Entities, &result.LogEvents.Entities, ctx); err != nil {
+			return ParsedEvents{}, err
+		}
 	}
-	if err := processEvents(s.Events.Relationships, &result.MetricEvents.Relationships, &result.LogEvents.Relationships, ctx); err != nil {
-		return ParsedEvents{}, err
+	for _, event := range s.Events.Relationships {
+		if err := processEvent(event, event.Context, event.Conditions, &result.MetricEvents.Relationships, &result.LogEvents.Relationships, ctx); err != nil {
+			return ParsedEvents{}, err
+		}
 	}
 
 	return result, nil
 }
 
-func processEvents[T any](events []T, metricEvents *[]ParsedEvent[T, ottlmetric.TransformContext], logEvents *[]ParsedEvent[T, ottllog.TransformContext], ctx ProcessingContext) error {
-	for _, event := range events {
-		if err := processEvent(event, metricEvents, logEvents, ctx); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func processEvent[T any](event T, metricEvents *[]ParsedEvent[T, ottlmetric.TransformContext], logEvents *[]ParsedEvent[T, ottllog.TransformContext], ctx ProcessingContext) error {
-	var context string
-	var conditions []string
-
-	switch e := any(event).(type) {
-	case EntityEvent:
-		context, conditions = e.Context, e.Conditions
-	case RelationshipEvent:
-		context, conditions = e.Context, e.Conditions
-	default:
-		return fmt.Errorf("unsupported event type: %T", event)
-	}
-
+func processEvent[T any](event T, context string, conditions []string, metricEvents *[]ParsedEvent[T, ottlmetric.TransformContext], logEvents *[]ParsedEvent[T, ottllog.TransformContext], ctx ProcessingContext) error {
 	if len(conditions) == 0 {
 		conditions = []string{"true"}
 	}
