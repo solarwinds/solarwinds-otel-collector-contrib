@@ -56,9 +56,7 @@ func TestDetect_EntityAndRelationshipEvents(t *testing.T) {
 		Definition:   &config.RelationshipEvent{Type: relationshipType, Source: entity.Entity, Destination: entity.Entity, Event: config.Event{Action: EventUpdateAction}},
 		ConditionSeq: seq,
 	}
-	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
-		Events: []config.ParsedEventInterface[ottllog.TransformContext]{entityEvent, relationshipEvent},
-	}
+	eventsGroup := []config.ParsedEventInterface[ottllog.TransformContext]{entityEvent, relationshipEvent}
 
 	// Prepare resource attributes
 	attributes := Attributes{
@@ -120,8 +118,8 @@ func TestDetect_NoEvents(t *testing.T) {
 		Definition:   &config.EntityEvent{Entity: entity.Entity},
 		ConditionSeq: seq,
 	}
-	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
-		Events: []config.ParsedEventInterface[ottllog.TransformContext]{entityEvent},
+	eventsGroup := []config.ParsedEventInterface[ottllog.TransformContext]{
+		entityEvent,
 	}
 
 	attributes := Attributes{
@@ -178,8 +176,8 @@ func TestDetect_ConditionTrue_EventsCreated(t *testing.T) {
 		Definition:   &config.RelationshipEvent{Type: "test-rel", Source: "test-entity", Destination: "test-entity", Event: config.Event{Action: EventUpdateAction}},
 		ConditionSeq: seq,
 	}
-	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
-		Events: []config.ParsedEventInterface[ottllog.TransformContext]{entityEvent, relationshipEvent},
+	eventsGroup := []config.ParsedEventInterface[ottllog.TransformContext]{
+		entityEvent, relationshipEvent,
 	}
 
 	attributes := Attributes{
@@ -239,8 +237,8 @@ func TestDetect_ConditionFalse_EventsNotCreated(t *testing.T) {
 		Definition:   &config.RelationshipEvent{Type: "test-rel", Source: "test-entity", Destination: "test-entity", Event: config.Event{Action: EventUpdateAction}},
 		ConditionSeq: seq,
 	}
-	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
-		Events: []config.ParsedEventInterface[ottllog.TransformContext]{entityEvent, relationshipEvent},
+	eventsGroup := []config.ParsedEventInterface[ottllog.TransformContext]{
+		entityEvent, relationshipEvent,
 	}
 
 	attributes := Attributes{
@@ -307,8 +305,8 @@ func TestDetect_EntityAndRelationshipEventsWithDifferentTypes(t *testing.T) {
 		ConditionSeq: seq,
 	}
 
-	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
-		Events: []config.ParsedEventInterface[ottllog.TransformContext]{relationshipEvent},
+	eventsGroup := []config.ParsedEventInterface[ottllog.TransformContext]{
+		relationshipEvent,
 	}
 
 	// Prepare transform context
@@ -384,8 +382,8 @@ func TestDetect_EntityAndRelationshipEventsWithSameType(t *testing.T) {
 		ConditionSeq: seq,
 	}
 
-	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
-		Events: []config.ParsedEventInterface[ottllog.TransformContext]{relationshipEvent},
+	eventsGroup := []config.ParsedEventInterface[ottllog.TransformContext]{
+		relationshipEvent,
 	}
 
 	// Prepare transform context
@@ -445,8 +443,8 @@ func TestDetect_EntityEvents_AttributesPresent(t *testing.T) {
 		ConditionSeq: seq,
 	}
 
-	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
-		Events: []config.ParsedEventInterface[ottllog.TransformContext]{entityEvent},
+	eventsGroup := []config.ParsedEventInterface[ottllog.TransformContext]{
+		entityEvent,
 	}
 
 	attributes := Attributes{
@@ -506,8 +504,8 @@ func TestDetect_EntityEvents_IDAttributesMissing(t *testing.T) {
 		ConditionSeq: seq,
 	}
 
-	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
-		Events: []config.ParsedEventInterface[ottllog.TransformContext]{entityEvent},
+	eventsGroup := []config.ParsedEventInterface[ottllog.TransformContext]{
+		entityEvent,
 	}
 
 	attributes := Attributes{
@@ -553,8 +551,8 @@ func TestDetect_EntityEvents_SomeAttributesMissing(t *testing.T) {
 		ConditionSeq: seq,
 	}
 
-	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
-		Events: []config.ParsedEventInterface[ottllog.TransformContext]{entityEvent},
+	eventsGroup := []config.ParsedEventInterface[ottllog.TransformContext]{
+		entityEvent,
 	}
 
 	attributes := Attributes{
@@ -614,8 +612,8 @@ func TestDetect_RelationshipEvents_AttributesPresent(t *testing.T) {
 		ConditionSeq: seq,
 	}
 
-	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
-		Events: []config.ParsedEventInterface[ottllog.TransformContext]{relationshipEvent},
+	eventsGroup := []config.ParsedEventInterface[ottllog.TransformContext]{
+		relationshipEvent,
 	}
 
 	attributes := Attributes{
@@ -682,8 +680,8 @@ func TestDetect_RelationshipEvents_SameType_AttributesPresent(t *testing.T) {
 		ConditionSeq: seq,
 	}
 
-	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
-		Events: []config.ParsedEventInterface[ottllog.TransformContext]{relationshipEvent},
+	eventsGroup := []config.ParsedEventInterface[ottllog.TransformContext]{
+		relationshipEvent,
 	}
 
 	attributes := Attributes{
@@ -751,8 +749,8 @@ func TestDetect_RelationshipEvents_IDAttributesMissing(t *testing.T) {
 		ConditionSeq: seq,
 	}
 
-	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
-		Events: []config.ParsedEventInterface[ottllog.TransformContext]{relationshipEvent},
+	eventsGroup := []config.ParsedEventInterface[ottllog.TransformContext]{
+		relationshipEvent,
 	}
 
 	attributes := Attributes{
@@ -807,8 +805,8 @@ func TestDetect_RelationshipEvents_WithRelationshipAttributes(t *testing.T) {
 		ConditionSeq: seq,
 	}
 
-	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
-		Events: []config.ParsedEventInterface[ottllog.TransformContext]{relationshipEvent},
+	eventsGroup := []config.ParsedEventInterface[ottllog.TransformContext]{
+		relationshipEvent,
 	}
 
 	attributes := Attributes{

@@ -24,14 +24,14 @@ import (
 
 type EventDetector[T any] struct {
 	attributeMapper AttributeMapper
-	events          config.EventsGroup[T]
+	events          []config.ParsedEventInterface[T]
 	keyBuilder      KeyBuilder
 	logger          *zap.Logger
 }
 
 func NewEventDetector[T any](
 	attributeMapper AttributeMapper,
-	events config.EventsGroup[T],
+	events []config.ParsedEventInterface[T],
 	logger *zap.Logger,
 ) *EventDetector[T] {
 	return &EventDetector[T]{
@@ -214,9 +214,9 @@ func (e *EventDetector[T]) processEvents(
 	ctx context.Context,
 	tc T) ([]config.ParsedEventInterface[T], error) {
 
-	events := make([]config.ParsedEventInterface[T], 0, len(e.events.Events))
+	events := make([]config.ParsedEventInterface[T], 0, len(e.events))
 
-	for _, event := range e.events.Events {
+	for _, event := range e.events {
 		conditionSeq := event.GetConditionSeq()
 		ok, err := conditionSeq.Eval(ctx, tc)
 		if err != nil {
