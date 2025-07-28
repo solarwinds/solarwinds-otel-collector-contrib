@@ -63,7 +63,7 @@ func createParsedEvents(s Schema, settings component.TelemetrySettings) (ParsedE
 	var result ParsedEvents
 
 	for _, event := range s.Events.Entities {
-		err = processEvent(
+		err = dispatchAddingEvent(
 			event,
 			event.Context,
 			event.Conditions,
@@ -75,7 +75,7 @@ func createParsedEvents(s Schema, settings component.TelemetrySettings) (ParsedE
 		}
 	}
 	for _, event := range s.Events.Relationships {
-		err = processEvent(
+		err = dispatchAddingEvent(
 			event,
 			event.Context,
 			event.Conditions,
@@ -90,7 +90,7 @@ func createParsedEvents(s Schema, settings component.TelemetrySettings) (ParsedE
 	return result, nil
 }
 
-func processEvent[T any](
+func dispatchAddingEvent[T any](
 	event T,
 	context string,
 	conditions []string,
