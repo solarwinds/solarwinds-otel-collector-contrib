@@ -43,7 +43,7 @@ func TraverseThroughMetricDescriptors(
 		}
 
 		// Metric is enabled by config, let's use it.
-		logger.Sugar().Debugf("creating metric emitter for '%s", mName)
+		logger.Debug("creating metric emitter", zap.String("metric", mName))
 		me := mDescriptor.Create(logger)
 		mes[me.Name()] = me
 	}

@@ -70,8 +70,6 @@ func (*scheduler) Schedule(
 		return nil, fmt.Errorf("%s: %w", m, err)
 	}
 
-	logger.Sugar().Debugf(
-		"scheduling of scraper '%s' finished successfully",
-		sn)
+	logger.Debug("scheduling of scraper finished successfully", zap.String("scraper", sn.String()))
 	return scraperRuntime, nil
 }

@@ -15,8 +15,6 @@
 package infostat
 
 import (
-	"fmt"
-
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
 
 	"github.com/shirou/gopsutil/v3/host"
@@ -94,6 +92,6 @@ func (is *provider) provideInternal(ch chan<- InfoStat) {
 		HostID:               infoStat.HostID,
 	}
 
-	is.logger.Debug(fmt.Sprintf("InfoStat provided %+v", infoStatDetails))
+	is.logger.Debug("InfoStat provided", zap.Any("infoStatDetails", infoStatDetails))
 	ch <- infoStatDetails
 }

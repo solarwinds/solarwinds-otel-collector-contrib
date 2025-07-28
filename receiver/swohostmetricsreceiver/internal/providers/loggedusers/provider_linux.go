@@ -15,7 +15,6 @@
 package loggedusers
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/cli"
@@ -55,7 +54,7 @@ func (lup *provider) Provide() <-chan Data {
 		if err == nil {
 			result.Users = getUsers(stdout)
 		}
-		lup.logger.Debug(fmt.Sprintf("loggedusers provider result: %+v", result))
+		lup.logger.Debug("loggedusers provider result", zap.Any("result", result))
 		ch <- result
 	}()
 	return ch

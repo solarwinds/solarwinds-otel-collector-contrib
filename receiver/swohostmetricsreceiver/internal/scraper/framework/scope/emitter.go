@@ -90,9 +90,7 @@ func (s *emitter) Emit() *Result {
 		return createErrorScopeResult(err)
 	}
 
-	s.logger.Sugar().Debugf(
-		"emit of scope emitter '%s' finished successfully",
-		s.scopeName)
+	s.logger.Debug("emit of scope emitter finished successfully", zap.String("scopeName", s.scopeName))
 	return &Result{scopeMetric, nil}
 }
 
@@ -140,10 +138,7 @@ func processMetricEmitter(
 ) {
 	defer emitWg.Done()
 
-	logger.Sugar().Debugf(
-		"emitting of metric emitter for metric '%s'",
-		meName)
-
+	logger.Debug("emitting of metric emitter", zap.String("metric", meName))
 	mr := me.Emit()
 	rCh <- &metricEmitterEmitResult{mr, meName}
 }
@@ -202,10 +197,10 @@ func (s *emitter) assemblyScopeMetricSlice(
 		m.MoveAndAppendTo(sm.Metrics())
 	}
 
-	s.logger.Sugar().Debugf(
-		"assembled scope metric for scope '%s' with '%d' metrics",
-		s.scopeName,
-		sm.Metrics().Len(),
+	s.logger.Debug(
+		"assembled scope metric finished successfully",
+		zap.String("scope_name", s.scopeName),
+		zap.Int("metric_count", sm.Metrics().Len()),
 	)
 	return sms, nil
 }
@@ -232,9 +227,7 @@ func (s *emitter) Init() error {
 		return fmt.Errorf("%s: %w", message, err)
 	}
 
-	s.logger.Sugar().Debugf(
-		"initialization of scope emitter '%s' succeeded",
-		s.scopeName)
+	s.logger.Debug("scope emitter initialized successfully", zap.String("scope_name", s.scopeName))
 	return nil
 }
 
@@ -307,9 +300,7 @@ func initMetricEmitter(
 ) {
 	defer wg.Done()
 
-	logger.Sugar().Debugf(
-		"initializing of metric emitter for metric '%s'",
-		meName)
+	logger.Debug("initializing of metric emitter", zap.String("metric", meName))
 
 	err := me.Init()
 	rCh <- &metricEmitterInitResult{meName, err}

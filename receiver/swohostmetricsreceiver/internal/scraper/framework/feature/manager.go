@@ -99,9 +99,7 @@ func (fm *manager) Init(c *ManagerConfig) error {
 func (fm *manager) tryToActivateDelayedProcessing(c *ManagerConfig) {
 	// Delay processing is part of config.
 	if c.DelayedProcessingConfig != nil {
-		fm.logger.Sugar().Debugf(
-			"activating delayed processing for scraper '%s'",
-			c.ScraperType)
+		fm.logger.Debug("activating delayed processing for scraper", zap.String("scraper", c.ScraperType.String()))
 		fm.activateFeature(DelayedProcessingFeature)
 	}
 }

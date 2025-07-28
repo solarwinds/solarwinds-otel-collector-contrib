@@ -32,7 +32,12 @@ func ProcessCommand(cle CommandLineExecutor, command string, logger *zap.Logger)
 		return stdout, err
 	}
 
-	logger.Debug(fmt.Sprintf("command %s succeeded with result %+v", command, stdout))
+	logger.Debug(
+		"command succeeded",
+		zap.String("command", command),
+		zap.String("stdout", stdout),
+	)
+
 	return stdout, nil
 }
 

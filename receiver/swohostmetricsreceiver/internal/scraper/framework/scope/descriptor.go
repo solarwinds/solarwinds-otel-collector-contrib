@@ -63,10 +63,7 @@ func TraverseThroughScopeDescriptors(
 		// Creates scope emitter with proper setup for given metric emitters.
 		se := create(sDescriptor.ScopeName, mes, logger)
 
-		logger.Sugar().Debugf(
-			"creation of scope emitter for scope '%s' was finished successfully",
-			sName,
-		)
+		logger.Debug("creation of scope emitter was finished successfully", zap.String("scope_name", sName))
 		ses[se.Name()] = se
 	}
 
@@ -80,16 +77,10 @@ func chooseEmitterAllocator(
 	var createEmitter EmitterCreateFunc
 
 	if descriptor.Create != nil {
-		logger.Sugar().Debugf(
-			"custom scope allocator will be used for scope '%s'",
-			descriptor.ScopeName,
-		)
+		logger.Debug("custom scope allocator will be used", zap.String("scope_name", descriptor.ScopeName))
 		createEmitter = descriptor.Create
 	} else {
-		logger.Sugar().Debugf(
-			"default scope allocator will be used for scope '%s'",
-			descriptor.ScopeName,
-		)
+		logger.Debug("default scope allocator will be used", zap.String("scope_name", descriptor.ScopeName))
 		createEmitter = CreateDefaultScopeEmitter
 	}
 	return createEmitter

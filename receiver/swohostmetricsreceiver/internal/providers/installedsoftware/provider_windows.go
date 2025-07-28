@@ -50,10 +50,10 @@ func createRegistryReaders(logger *zap.Logger) []registry.Reader {
 	uninstallRootPath64bit := `Software\Microsoft\Windows\CurrentVersion\Uninstall`
 	registryReader64bit, err := registry.NewReader(registry.LocalMachineKey, uninstallRootPath64bit)
 	if err != nil {
-		logger.Sugar().Errorf(
-			"64-bit registry reader for path '%s' can not be created: %w",
-			uninstallRootPath64bit,
-			err,
+		logger.Error(
+			"64-bit registry reader for path can not be created",
+			zap.String("path", uninstallRootPath64bit),
+			zap.Error(err),
 		)
 		return make([]registry.Reader, 0)
 	}
@@ -61,10 +61,10 @@ func createRegistryReaders(logger *zap.Logger) []registry.Reader {
 	uninstallRootPath32bit := `Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall`
 	registryReader32bit, err := registry.NewReader(registry.LocalMachineKey, uninstallRootPath32bit)
 	if err != nil {
-		logger.Sugar().Errorf(
-			"32-bit registry reader for path '%s' can not be created: %w",
-			uninstallRootPath32bit,
-			err,
+		logger.Error(
+			"32-bit registry reader for path can not be created",
+			zap.String("path", uninstallRootPath32bit),
+			zap.Error(err),
 		)
 		return make([]registry.Reader, 0)
 	}

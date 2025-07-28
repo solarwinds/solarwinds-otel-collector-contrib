@@ -15,7 +15,6 @@
 package model
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/wmi"
@@ -104,7 +103,7 @@ loop:
 		}
 	}
 
-	p.logger.Debug(fmt.Sprintf("model provider result: %+v", model))
+	p.logger.Debug("model provider result", zap.Any("model", model))
 
 	ch <- model
 }

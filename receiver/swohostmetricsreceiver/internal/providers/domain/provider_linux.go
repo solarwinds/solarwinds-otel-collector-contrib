@@ -15,7 +15,6 @@
 package domain
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/cli"
@@ -86,7 +85,7 @@ loop:
 		}
 	}
 
-	dp.logger.Debug(fmt.Sprintf("domain provider result: %+v", domain))
+	dp.logger.Debug("domain provider result", zap.Any("domain", domain))
 	wg.Wait()
 	ch <- domain
 }
