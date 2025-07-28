@@ -67,10 +67,14 @@ func createConnector(settings connector.Settings, cfg component.Config, logs con
 
 	se := &solarwindsentity{
 		logger: logger,
-		eventDetector: internal.NewEventDetector(
+		metricEventDetector: internal.NewEventDetector(
+			attributeMapper,
+			schema.Events.MetricEvents,
+			settings.Logger,
+		),
+		logEventDetector: internal.NewEventDetector(
 			attributeMapper,
 			schema.Events.LogEvents,
-			schema.Events.MetricEvents,
 			settings.Logger,
 		),
 		sourcePrefix:     baseConfig.SourcePrefix,
