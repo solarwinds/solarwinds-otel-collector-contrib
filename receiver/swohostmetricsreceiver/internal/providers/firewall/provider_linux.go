@@ -26,7 +26,7 @@ type provider struct {
 var _ (providers.Provider[Container]) = (*provider)(nil)
 
 func CreateFirewallProvider(logger *zap.Logger) providers.Provider[Container] {
-	return &provider{}
+	return &provider{logger: logger}
 }
 
 // Provide implements providers.Provider.
