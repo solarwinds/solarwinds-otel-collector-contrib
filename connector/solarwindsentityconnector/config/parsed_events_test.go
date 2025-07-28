@@ -73,10 +73,6 @@ func TestCreateParsedEvents(t *testing.T) {
 	parsedEvents, err := createParsedEvents(schema, settings)
 	assert.NoError(t, err)
 
-	// Test that parsers are created
-	assert.NotNil(t, parsedEvents.LogEvents.Parser)
-	assert.NotNil(t, parsedEvents.MetricEvents.Parser)
-
 	// Test log events
 	assert.Len(t, parsedEvents.LogEvents.Entities, 1)
 	assert.Equal(t, "test-entity", parsedEvents.LogEvents.Entities[0].Definition.Entity)
@@ -146,9 +142,6 @@ func TestCreateParsedEventsWithConverters(t *testing.T) {
 	}
 	parsedEvents, err := createParsedEvents(schema, settings)
 	assert.NoError(t, err)
-
-	assert.NotNil(t, parsedEvents.LogEvents.Parser)
-	assert.NotNil(t, parsedEvents.MetricEvents.Parser)
 
 	// Test log events
 	assert.Len(t, parsedEvents.LogEvents.Entities, 1)
@@ -261,8 +254,6 @@ func TestCreateParsedEventsEmptySchema(t *testing.T) {
 	parsedEvents, err := createParsedEvents(schema, settings)
 	require.NoError(t, err)
 
-	assert.NotNil(t, parsedEvents.LogEvents.Parser)
-	assert.NotNil(t, parsedEvents.MetricEvents.Parser)
 	assert.Len(t, parsedEvents.LogEvents.Entities, 0)
 	assert.Len(t, parsedEvents.LogEvents.Relationships, 0)
 	assert.Len(t, parsedEvents.MetricEvents.Entities, 0)

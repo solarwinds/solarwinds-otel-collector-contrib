@@ -48,18 +48,17 @@ func TestDetect_EntityAndRelationshipEvents(t *testing.T) {
 		IDs:        []string{"id"},
 		Attributes: []string{"attr"},
 	}
-	entityEvent := config.ParsedEntityEvent[ottllog.TransformContext]{
+	entityEvent := config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{
 		Definition:   &config.EntityEvent{Entity: entity.Entity, Event: config.Event{Action: EventUpdateAction}},
 		ConditionSeq: seq,
 	}
-	relationshipEvent := config.ParsedRelationshipEvent[ottllog.TransformContext]{
+	relationshipEvent := config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{
 		Definition:   &config.RelationshipEvent{Type: relationshipType, Source: entity.Entity, Destination: entity.Entity, Event: config.Event{Action: EventUpdateAction}},
 		ConditionSeq: seq,
 	}
 	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
-		Entities:      []config.ParsedEntityEvent[ottllog.TransformContext]{entityEvent},
-		Relationships: []config.ParsedRelationshipEvent[ottllog.TransformContext]{relationshipEvent},
-		Parser:        &parser,
+		Entities:      []config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{entityEvent},
+		Relationships: []config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{relationshipEvent},
 	}
 
 	// Prepare resource attributes
@@ -118,14 +117,13 @@ func TestDetect_NoEvents(t *testing.T) {
 		IDs:        []string{"id"},
 		Attributes: []string{"attr"},
 	}
-	entityEvent := config.ParsedEntityEvent[ottllog.TransformContext]{
+	entityEvent := config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{
 		Definition:   &config.EntityEvent{Entity: entity.Entity},
 		ConditionSeq: seq,
 	}
 	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
-		Entities:      []config.ParsedEntityEvent[ottllog.TransformContext]{entityEvent},
+		Entities:      []config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{entityEvent},
 		Relationships: nil,
-		Parser:        &parser,
 	}
 
 	attributes := Attributes{
@@ -169,18 +167,17 @@ func TestProcessEvents_ConditionTrue_EventsCreated(t *testing.T) {
 	require.NoError(t, err)
 	seq := ottl.NewConditionSequence(stmts, settings)
 
-	entityEvent := config.ParsedEntityEvent[ottllog.TransformContext]{
+	entityEvent := config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{
 		Definition:   &config.EntityEvent{Entity: "test-entity"},
 		ConditionSeq: seq,
 	}
-	relationshipEvent := config.ParsedRelationshipEvent[ottllog.TransformContext]{
+	relationshipEvent := config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{
 		Definition:   &config.RelationshipEvent{Type: "test-rel"},
 		ConditionSeq: seq,
 	}
 	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
-		Entities:      []config.ParsedEntityEvent[ottllog.TransformContext]{entityEvent},
-		Relationships: []config.ParsedRelationshipEvent[ottllog.TransformContext]{relationshipEvent},
-		Parser:        &parserLog,
+		Entities:      []config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{entityEvent},
+		Relationships: []config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{relationshipEvent},
 	}
 
 	rLogs := logs.ResourceLogs().AppendEmpty()
@@ -212,18 +209,17 @@ func TestProcessEvents_ConditionFalse_EventsNotCreated(t *testing.T) {
 	require.NoError(t, err)
 	seq := ottl.NewConditionSequence(stmts, settings)
 
-	entityEvent := config.ParsedEntityEvent[ottllog.TransformContext]{
+	entityEvent := config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{
 		Definition:   &config.EntityEvent{Entity: "test-entity"},
 		ConditionSeq: seq,
 	}
-	relationshipEvent := config.ParsedRelationshipEvent[ottllog.TransformContext]{
+	relationshipEvent := config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{
 		Definition:   &config.RelationshipEvent{Type: "test-rel"},
 		ConditionSeq: seq,
 	}
 	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
-		Entities:      []config.ParsedEntityEvent[ottllog.TransformContext]{entityEvent},
-		Relationships: []config.ParsedRelationshipEvent[ottllog.TransformContext]{relationshipEvent},
-		Parser:        &parserLog,
+		Entities:      []config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{entityEvent},
+		Relationships: []config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{relationshipEvent},
 	}
 
 	rLogs := logs.ResourceLogs().AppendEmpty()

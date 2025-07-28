@@ -30,17 +30,14 @@ type ParsedEvents struct {
 }
 
 type EventsGroup[C any] struct {
-	Entities      []ParsedEntityEvent[C]
-	Relationships []ParsedRelationshipEvent[C]
+	Entities      []ParsedEvent[EntityEvent, C]
+	Relationships []ParsedEvent[RelationshipEvent, C]
 }
 
 type ParsedEvent[T any, C any] struct {
 	Definition   *T
 	ConditionSeq ottl.ConditionSequence[C]
 }
-
-type ParsedRelationshipEvent[C any] = ParsedEvent[RelationshipEvent, C]
-type ParsedEntityEvent[C any] = ParsedEvent[EntityEvent, C]
 
 // createParsedEvents initializes and returns a ParsedEvents structure containing parsed entity and relationship events.
 // It exist to patse ottl conditions for entity and relationship events at the time of creation, allowing for efficient evaluation later.
@@ -55,13 +52,13 @@ func createParsedEvents(s Schema, settings component.TelemetrySettings) (ParsedE
 	}
 
 	metricGroup := EventsGroup[ottlmetric.TransformContext]{
-		Entities:      []ParsedEntityEvent[ottlmetric.TransformContext]{},
-		Relationships: []ParsedRelationshipEvent[ottlmetric.TransformContext]{},
+		Entities:      []ParsedEvent[EntityEvent, ottlmetric.TransformContext]{},
+		Relationships: []ParsedEvent[RelationshipEvent, ottlmetric.TransformContext]{},
 	}
 
 	logGroup := EventsGroup[ottllog.TransformContext]{
-		Entities:      []ParsedEntityEvent[ottllog.TransformContext]{},
-		Relationships: []ParsedRelationshipEvent[ottllog.TransformContext]{},
+		Entities:      []ParsedEvent[EntityEvent, ottllog.TransformContext]{},
+		Relationships: []ParsedEvent[RelationshipEvent, ottllog.TransformContext]{},
 	}
 
 	for _, event := range s.Events.Entities {
@@ -112,7 +109,7 @@ func addEntityEvent[C any](group *EventsGroup[C], event EntityEvent, settings co
 	if err != nil {
 		return fmt.Errorf("failed to parse conditions for entity event: %w", err)
 	}
-	group.Entities = append(group.Entities, ParsedEntityEvent[C]{
+	group.Entities = append(group.Entities, ParsedEvent[EntityEvent, C]{
 		Definition:   &event,
 		ConditionSeq: seq,
 	})
@@ -125,7 +122,7 @@ func addRelationshipEvent[C any](group *EventsGroup[C], event RelationshipEvent,
 	if err != nil {
 		return fmt.Errorf("failed to parse conditions for relationship event: %w", err)
 	}
-	group.Relationships = append(group.Relationships, ParsedRelationshipEvent[C]{
+	group.Relationships = append(group.Relationships, ParsedEvent[RelationshipEvent, C]{
 		Definition:   &event,
 		ConditionSeq: seq,
 	})
