@@ -40,33 +40,30 @@ type ParsedEvent[T any, C any] struct {
 }
 
 type ProcessingContext struct {
-	metricParser *ottl.Parser[ottlmetric.TransformContext]
-	logParser    *ottl.Parser[ottllog.TransformContext]
+	metricParser ottl.Parser[ottlmetric.TransformContext]
+	logParser    ottl.Parser[ottllog.TransformContext]
 	settings     component.TelemetrySettings
 }
 
 // createParsedEvents initializes and returns a ParsedEvents structure containing parsed entity and relationship events.
 // It exists to parse ottl conditions for entity and relationship events at the time of creation, allowing for efficient evaluation later.
 func createParsedEvents(s Schema, settings component.TelemetrySettings) (ParsedEvents, error) {
-	metricParser, err := ottlmetric.NewParser(ottlfuncs.StandardConverters[ottlmetric.TransformContext](), settings)
+	ctx := ProcessingContext{settings: settings}
+
+	var err error
+	ctx.metricParser, err = ottlmetric.NewParser(ottlfuncs.StandardConverters[ottlmetric.TransformContext](), settings)
 	if err != nil {
 		return ParsedEvents{}, fmt.Errorf("failed to create parser for metric events: %w", err)
 	}
-	logParser, err := ottllog.NewParser(ottlfuncs.StandardConverters[ottllog.TransformContext](), settings)
+	ctx.logParser, err = ottllog.NewParser(ottlfuncs.StandardConverters[ottllog.TransformContext](), settings)
 	if err != nil {
 		return ParsedEvents{}, fmt.Errorf("failed to create parser for log events: %w", err)
-	}
-
-	ctx := ProcessingContext{
-		metricParser: &metricParser,
-		logParser:    &logParser,
-		settings:     settings,
 	}
 
 	var result ParsedEvents
 
 	for _, event := range s.Events.Entities {
-		err := processEvent(
+		err = processEvent(
 			event,
 			event.Context,
 			event.Conditions,
@@ -78,7 +75,7 @@ func createParsedEvents(s Schema, settings component.TelemetrySettings) (ParsedE
 		}
 	}
 	for _, event := range s.Events.Relationships {
-		err := processEvent(
+		err = processEvent(
 			event,
 			event.Context,
 			event.Conditions,
@@ -118,7 +115,7 @@ func addEvent[T any, C any](
 	parsedEvents *[]ParsedEvent[T, C],
 	event T,
 	conditions []string,
-	parser *ottl.Parser[C],
+	parser ottl.Parser[C],
 	settings component.TelemetrySettings) error {
 	stmts, err := parser.ParseConditions(conditions)
 	if err != nil {
