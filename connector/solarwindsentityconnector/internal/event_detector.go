@@ -22,33 +22,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// ConfiguredEvent represents a unified interface for both entity and relationship events.
-// This allows the EventDetector to work with a single array of events instead of
-// maintaining separate arrays for entities and relationships.
-type ConfiguredEvent interface {
-	IsEntityEvent() bool
-	GetEntityEvent() *config.EntityEvent
-	GetRelationshipEvent() *config.RelationshipEvent
-}
-
-// EntityConfiguredEvent wraps an EntityEvent for the unified event interface
-type EntityConfiguredEvent struct {
-	Event *config.EntityEvent
-}
-
-func (e EntityConfiguredEvent) IsEntityEvent() bool                             { return true }
-func (e EntityConfiguredEvent) GetEntityEvent() *config.EntityEvent             { return e.Event }
-func (e EntityConfiguredEvent) GetRelationshipEvent() *config.RelationshipEvent { return nil }
-
-// RelationshipConfiguredEvent wraps a RelationshipEvent for the unified event interface
-type RelationshipConfiguredEvent struct {
-	Event *config.RelationshipEvent
-}
-
-func (r RelationshipConfiguredEvent) IsEntityEvent() bool                             { return false }
-func (r RelationshipConfiguredEvent) GetEntityEvent() *config.EntityEvent             { return nil }
-func (r RelationshipConfiguredEvent) GetRelationshipEvent() *config.RelationshipEvent { return r.Event }
-
 type EventDetector[T any] struct {
 	attributeMapper AttributeMapper
 	events          config.EventsGroup[T]
@@ -84,7 +57,7 @@ func (e *EventDetector[T]) Detect(ctx context.Context, resourceAttrs Attributes,
 // valid and unique entity events are included.
 func (e *EventDetector[T]) collectEvents(
 	attrs Attributes,
-	configuredEvents []ConfiguredEvent,
+	configuredEvents []config.ParsedEventInterface[T],
 ) ([]Event, error) {
 	// Separate entity and relationship events
 	var entityEvents []*config.EntityEvent
@@ -234,35 +207,27 @@ func (e *EventDetector[T]) getRelationshipEvents(attrs Attributes, configuredRel
 	return relationshipEvents
 }
 
-// processEvents evaluates the conditions for entity and relationship events.
+// processEvents evaluates the conditions for entity and relationship events from a unified array.
 // If the conditions are met, it appends the corresponding event to a unified array.
 // Multiple condition items are evaluated using OR logic.
 func (e *EventDetector[T]) processEvents(
 	ctx context.Context,
-	tc T) ([]ConfiguredEvent, error) {
+	tc T) ([]config.ParsedEventInterface[T], error) {
 
-	events := make([]ConfiguredEvent, 0, len(e.events.Entities)+len(e.events.Relationships))
+	events := make([]config.ParsedEventInterface[T], 0, len(e.events.Events))
 
-	for _, entityEvent := range e.events.Entities {
-		ok, err := entityEvent.ConditionSeq.Eval(ctx, tc)
+	for _, event := range e.events.Events {
+		conditionSeq := event.GetConditionSeq()
+		ok, err := conditionSeq.Eval(ctx, tc)
 		if err != nil {
 			return nil, err
 		}
 
-		if ok {
-			events = append(events, EntityConfiguredEvent{Event: entityEvent.Definition})
-		}
-	}
-
-	for _, relationshipEvent := range e.events.Relationships {
-		ok, err := relationshipEvent.ConditionSeq.Eval(ctx, tc)
-		if err != nil {
-			return nil, err
+		if !ok {
+			continue
 		}
 
-		if ok {
-			events = append(events, RelationshipConfiguredEvent{Event: relationshipEvent.Definition})
-		}
+		events = append(events, event)
 	}
 	return events, nil
 }

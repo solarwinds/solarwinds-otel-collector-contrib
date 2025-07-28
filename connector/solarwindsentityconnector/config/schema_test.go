@@ -101,6 +101,12 @@ func TestUnmarshal_ValidSchemaWithSimpleConditions(t *testing.T) {
 	assert.Equal(t, expectedEntities, parsedSchema.Entities)
 
 	// Check that events structure is created
-	assert.Len(t, parsedSchema.Events.LogEvents.Entities, 1)
-	assert.Len(t, parsedSchema.Events.MetricEvents.Relationships, 1)
+	assert.Len(t, parsedSchema.Events.LogEvents.Events, 1)
+	assert.Len(t, parsedSchema.Events.MetricEvents.Events, 1)
+
+	// Verify the log event is an entity event
+	assert.True(t, parsedSchema.Events.LogEvents.Events[0].IsEntityEvent())
+
+	// Verify the metric event is a relationship event
+	assert.False(t, parsedSchema.Events.MetricEvents.Events[0].IsEntityEvent())
 }

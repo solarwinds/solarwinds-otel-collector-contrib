@@ -29,9 +29,40 @@ type ParsedEvents struct {
 	LogEvents    EventsGroup[ottllog.TransformContext]
 }
 
+// ParsedEventInterface represents a unified interface for parsed events
+type ParsedEventInterface[C any] interface {
+	IsEntityEvent() bool
+	GetEntityEvent() *EntityEvent
+	GetRelationshipEvent() *RelationshipEvent
+	GetConditionSeq() ottl.ConditionSequence[C]
+}
+
+// EntityParsedEvent wraps an EntityEvent with its conditions
+type EntityParsedEvent[C any] struct {
+	Definition   *EntityEvent
+	ConditionSeq ottl.ConditionSequence[C]
+}
+
+func (e EntityParsedEvent[C]) IsEntityEvent() bool                        { return true }
+func (e EntityParsedEvent[C]) GetEntityEvent() *EntityEvent               { return e.Definition }
+func (e EntityParsedEvent[C]) GetRelationshipEvent() *RelationshipEvent   { return nil }
+func (e EntityParsedEvent[C]) GetConditionSeq() ottl.ConditionSequence[C] { return e.ConditionSeq }
+
+// RelationshipParsedEvent wraps a RelationshipEvent with its conditions
+type RelationshipParsedEvent[C any] struct {
+	Definition   *RelationshipEvent
+	ConditionSeq ottl.ConditionSequence[C]
+}
+
+func (r RelationshipParsedEvent[C]) IsEntityEvent() bool                      { return false }
+func (r RelationshipParsedEvent[C]) GetEntityEvent() *EntityEvent             { return nil }
+func (r RelationshipParsedEvent[C]) GetRelationshipEvent() *RelationshipEvent { return r.Definition }
+func (r RelationshipParsedEvent[C]) GetConditionSeq() ottl.ConditionSequence[C] {
+	return r.ConditionSeq
+}
+
 type EventsGroup[C any] struct {
-	Entities      []ParsedEvent[EntityEvent, C]
-	Relationships []ParsedEvent[RelationshipEvent, C]
+	Events []ParsedEventInterface[C]
 }
 
 type ParsedEvent[T any, C any] struct {
@@ -62,26 +93,17 @@ func createParsedEvents(s Schema, settings component.TelemetrySettings) (ParsedE
 
 	var result ParsedEvents
 
+	// Process entity events
 	for _, event := range s.Events.Entities {
-		err = processEvent(
-			event,
-			event.Context,
-			event.Conditions,
-			&result.MetricEvents.Entities,
-			&result.LogEvents.Entities,
-			ctx)
+		err = processEntityEvent(event, event.Context, event.Conditions, &result.MetricEvents, &result.LogEvents, ctx)
 		if err != nil {
 			return ParsedEvents{}, err
 		}
 	}
+
+	// Process relationship events
 	for _, event := range s.Events.Relationships {
-		err = processEvent(
-			event,
-			event.Context,
-			event.Conditions,
-			&result.MetricEvents.Relationships,
-			&result.LogEvents.Relationships,
-			ctx)
+		err = processRelationshipEvent(event, event.Context, event.Conditions, &result.MetricEvents, &result.LogEvents, ctx)
 		if err != nil {
 			return ParsedEvents{}, err
 		}
@@ -90,12 +112,12 @@ func createParsedEvents(s Schema, settings component.TelemetrySettings) (ParsedE
 	return result, nil
 }
 
-func processEvent[T any](
-	event T,
+func processEntityEvent(
+	event EntityEvent,
 	context string,
 	conditions []string,
-	metricEvents *[]ParsedEvent[T, ottlmetric.TransformContext],
-	logEvents *[]ParsedEvent[T, ottllog.TransformContext],
+	metricEvents *EventsGroup[ottlmetric.TransformContext],
+	logEvents *EventsGroup[ottllog.TransformContext],
 	ctx ProcessingContext) error {
 	if len(conditions) == 0 {
 		conditions = []string{"true"}
@@ -103,26 +125,65 @@ func processEvent[T any](
 
 	switch context {
 	case ottlmetric.ContextName:
-		return addEvent(metricEvents, event, conditions, ctx.metricParser, ctx.settings)
+		return addEntityEvent(metricEvents, event, conditions, ctx.metricParser, ctx.settings)
 	case ottllog.ContextName:
-		return addEvent(logEvents, event, conditions, ctx.logParser, ctx.settings)
+		return addEntityEvent(logEvents, event, conditions, ctx.logParser, ctx.settings)
 	default:
 		return fmt.Errorf("unsupported context: %s", context)
 	}
 }
 
-func addEvent[T any, C any](
-	parsedEvents *[]ParsedEvent[T, C],
-	event T,
+func processRelationshipEvent(
+	event RelationshipEvent,
+	context string,
+	conditions []string,
+	metricEvents *EventsGroup[ottlmetric.TransformContext],
+	logEvents *EventsGroup[ottllog.TransformContext],
+	ctx ProcessingContext) error {
+	if len(conditions) == 0 {
+		conditions = []string{"true"}
+	}
+
+	switch context {
+	case ottlmetric.ContextName:
+		return addRelationshipEvent(metricEvents, event, conditions, ctx.metricParser, ctx.settings)
+	case ottllog.ContextName:
+		return addRelationshipEvent(logEvents, event, conditions, ctx.logParser, ctx.settings)
+	default:
+		return fmt.Errorf("unsupported context: %s", context)
+	}
+}
+
+func addEntityEvent[C any](
+	eventsGroup *EventsGroup[C],
+	event EntityEvent,
 	conditions []string,
 	parser ottl.Parser[C],
 	settings component.TelemetrySettings) error {
 	stmts, err := parser.ParseConditions(conditions)
 	if err != nil {
-		return fmt.Errorf("failed to parse conditions for event: %w", err)
+		return fmt.Errorf("failed to parse conditions for entity event: %w", err)
 	}
 	seq := ottl.NewConditionSequence(stmts, settings)
-	*parsedEvents = append(*parsedEvents, ParsedEvent[T, C]{
+	eventsGroup.Events = append(eventsGroup.Events, EntityParsedEvent[C]{
+		Definition:   &event,
+		ConditionSeq: seq,
+	})
+	return nil
+}
+
+func addRelationshipEvent[C any](
+	eventsGroup *EventsGroup[C],
+	event RelationshipEvent,
+	conditions []string,
+	parser ottl.Parser[C],
+	settings component.TelemetrySettings) error {
+	stmts, err := parser.ParseConditions(conditions)
+	if err != nil {
+		return fmt.Errorf("failed to parse conditions for relationship event: %w", err)
+	}
+	seq := ottl.NewConditionSequence(stmts, settings)
+	eventsGroup.Events = append(eventsGroup.Events, RelationshipParsedEvent[C]{
 		Definition:   &event,
 		ConditionSeq: seq,
 	})

@@ -17,6 +17,8 @@ package config
 import (
 	"testing"
 
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottlmetric"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component/componenttest"
@@ -73,23 +75,49 @@ func TestCreateParsedEvents(t *testing.T) {
 	parsedEvents, err := createParsedEvents(schema, settings)
 	assert.NoError(t, err)
 
-	// Test log events
-	assert.Len(t, parsedEvents.LogEvents.Entities, 1)
-	assert.Equal(t, "test-entity", parsedEvents.LogEvents.Entities[0].Definition.Entity)
-	assert.NotNil(t, parsedEvents.LogEvents.Entities[0].ConditionSeq)
+	// Test log events - should have 2 events total (1 entity + 1 relationship)
+	assert.Len(t, parsedEvents.LogEvents.Events, 2)
 
-	assert.Len(t, parsedEvents.LogEvents.Relationships, 1)
-	assert.Equal(t, "test-relationship", parsedEvents.LogEvents.Relationships[0].Definition.Type)
-	assert.NotNil(t, parsedEvents.LogEvents.Relationships[0].ConditionSeq)
+	// Find and test entity event
+	var logEntityEvent ParsedEventInterface[ottllog.TransformContext]
+	var logRelationshipEvent ParsedEventInterface[ottllog.TransformContext]
+	for _, event := range parsedEvents.LogEvents.Events {
+		if event.IsEntityEvent() {
+			logEntityEvent = event
+		} else {
+			logRelationshipEvent = event
+		}
+	}
 
-	// Test metric events
-	assert.Len(t, parsedEvents.MetricEvents.Entities, 1)
-	assert.Equal(t, "test-entity-metric", parsedEvents.MetricEvents.Entities[0].Definition.Entity)
-	assert.NotNil(t, parsedEvents.MetricEvents.Entities[0].ConditionSeq)
+	assert.NotNil(t, logEntityEvent)
+	assert.Equal(t, "test-entity", logEntityEvent.GetEntityEvent().Entity)
+	assert.NotNil(t, logEntityEvent.GetConditionSeq())
 
-	assert.Len(t, parsedEvents.MetricEvents.Relationships, 1)
-	assert.Equal(t, "test-relationship-metric", parsedEvents.MetricEvents.Relationships[0].Definition.Type)
-	assert.NotNil(t, parsedEvents.MetricEvents.Relationships[0].ConditionSeq)
+	assert.NotNil(t, logRelationshipEvent)
+	assert.Equal(t, "test-relationship", logRelationshipEvent.GetRelationshipEvent().Type)
+	assert.NotNil(t, logRelationshipEvent.GetConditionSeq())
+
+	// Test metric events - should have 2 events total (1 entity + 1 relationship)
+	assert.Len(t, parsedEvents.MetricEvents.Events, 2)
+
+	// Find and test entity event
+	var metricEntityEvent ParsedEventInterface[ottlmetric.TransformContext]
+	var metricRelationshipEvent ParsedEventInterface[ottlmetric.TransformContext]
+	for _, event := range parsedEvents.MetricEvents.Events {
+		if event.IsEntityEvent() {
+			metricEntityEvent = event
+		} else {
+			metricRelationshipEvent = event
+		}
+	}
+
+	assert.NotNil(t, metricEntityEvent)
+	assert.Equal(t, "test-entity-metric", metricEntityEvent.GetEntityEvent().Entity)
+	assert.NotNil(t, metricEntityEvent.GetConditionSeq())
+
+	assert.NotNil(t, metricRelationshipEvent)
+	assert.Equal(t, "test-relationship-metric", metricRelationshipEvent.GetRelationshipEvent().Type)
+	assert.NotNil(t, metricRelationshipEvent.GetConditionSeq())
 }
 
 func TestCreateParsedEventsWithConverters(t *testing.T) {
@@ -143,23 +171,49 @@ func TestCreateParsedEventsWithConverters(t *testing.T) {
 	parsedEvents, err := createParsedEvents(schema, settings)
 	assert.NoError(t, err)
 
-	// Test log events
-	assert.Len(t, parsedEvents.LogEvents.Entities, 1)
-	assert.Equal(t, "test-entity", parsedEvents.LogEvents.Entities[0].Definition.Entity)
-	assert.NotNil(t, parsedEvents.LogEvents.Entities[0].ConditionSeq)
+	// Test log events - should have 2 events total (1 entity + 1 relationship)
+	assert.Len(t, parsedEvents.LogEvents.Events, 2)
 
-	assert.Len(t, parsedEvents.LogEvents.Relationships, 1)
-	assert.Equal(t, "test-relationship", parsedEvents.LogEvents.Relationships[0].Definition.Type)
-	assert.NotNil(t, parsedEvents.LogEvents.Relationships[0].ConditionSeq)
+	// Find and test entity event
+	var logEntityEvent ParsedEventInterface[ottllog.TransformContext]
+	var logRelationshipEvent ParsedEventInterface[ottllog.TransformContext]
+	for _, event := range parsedEvents.LogEvents.Events {
+		if event.IsEntityEvent() {
+			logEntityEvent = event
+		} else {
+			logRelationshipEvent = event
+		}
+	}
 
-	// Test metric events
-	assert.Len(t, parsedEvents.MetricEvents.Entities, 1)
-	assert.Equal(t, "test-entity-metric", parsedEvents.MetricEvents.Entities[0].Definition.Entity)
-	assert.NotNil(t, parsedEvents.MetricEvents.Entities[0].ConditionSeq)
+	assert.NotNil(t, logEntityEvent)
+	assert.Equal(t, "test-entity", logEntityEvent.GetEntityEvent().Entity)
+	assert.NotNil(t, logEntityEvent.GetConditionSeq())
 
-	assert.Len(t, parsedEvents.MetricEvents.Relationships, 1)
-	assert.Equal(t, "test-relationship-metric", parsedEvents.MetricEvents.Relationships[0].Definition.Type)
-	assert.NotNil(t, parsedEvents.MetricEvents.Relationships[0].ConditionSeq)
+	assert.NotNil(t, logRelationshipEvent)
+	assert.Equal(t, "test-relationship", logRelationshipEvent.GetRelationshipEvent().Type)
+	assert.NotNil(t, logRelationshipEvent.GetConditionSeq())
+
+	// Test metric events - should have 2 events total (1 entity + 1 relationship)
+	assert.Len(t, parsedEvents.MetricEvents.Events, 2)
+
+	// Find and test entity event
+	var metricEntityEvent ParsedEventInterface[ottlmetric.TransformContext]
+	var metricRelationshipEvent ParsedEventInterface[ottlmetric.TransformContext]
+	for _, event := range parsedEvents.MetricEvents.Events {
+		if event.IsEntityEvent() {
+			metricEntityEvent = event
+		} else {
+			metricRelationshipEvent = event
+		}
+	}
+
+	assert.NotNil(t, metricEntityEvent)
+	assert.Equal(t, "test-entity-metric", metricEntityEvent.GetEntityEvent().Entity)
+	assert.NotNil(t, metricEntityEvent.GetConditionSeq())
+
+	assert.NotNil(t, metricRelationshipEvent)
+	assert.Equal(t, "test-relationship-metric", metricRelationshipEvent.GetRelationshipEvent().Type)
+	assert.NotNil(t, metricRelationshipEvent.GetConditionSeq())
 }
 
 func TestCreateParsedEventsEmptyConditions(t *testing.T) {
@@ -181,7 +235,12 @@ func TestCreateParsedEventsEmptyConditions(t *testing.T) {
 
 	parsedEvents, err := createParsedEvents(schema, settings)
 	require.NoError(t, err)
-	require.Len(t, parsedEvents.LogEvents.Entities, 1)
+	require.Len(t, parsedEvents.LogEvents.Events, 1)
+
+	// Verify it's an entity event
+	event := parsedEvents.LogEvents.Events[0]
+	require.True(t, event.IsEntityEvent())
+	require.NotNil(t, event.GetEntityEvent())
 }
 
 func TestCreateParsedEventsUnknownContext(t *testing.T) {
@@ -242,8 +301,6 @@ func TestCreateParsedEventsEmptySchema(t *testing.T) {
 	parsedEvents, err := createParsedEvents(schema, settings)
 	require.NoError(t, err)
 
-	assert.Len(t, parsedEvents.LogEvents.Entities, 0)
-	assert.Len(t, parsedEvents.LogEvents.Relationships, 0)
-	assert.Len(t, parsedEvents.MetricEvents.Entities, 0)
-	assert.Len(t, parsedEvents.MetricEvents.Relationships, 0)
+	assert.Len(t, parsedEvents.LogEvents.Events, 0)
+	assert.Len(t, parsedEvents.MetricEvents.Events, 0)
 }

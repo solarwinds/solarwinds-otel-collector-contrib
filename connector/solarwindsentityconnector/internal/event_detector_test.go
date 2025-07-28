@@ -48,17 +48,16 @@ func TestDetect_EntityAndRelationshipEvents(t *testing.T) {
 		IDs:        []string{"id"},
 		Attributes: []string{"attr"},
 	}
-	entityEvent := config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{
+	entityEvent := config.EntityParsedEvent[ottllog.TransformContext]{
 		Definition:   &config.EntityEvent{Entity: entity.Entity, Event: config.Event{Action: EventUpdateAction}},
 		ConditionSeq: seq,
 	}
-	relationshipEvent := config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{
+	relationshipEvent := config.RelationshipParsedEvent[ottllog.TransformContext]{
 		Definition:   &config.RelationshipEvent{Type: relationshipType, Source: entity.Entity, Destination: entity.Entity, Event: config.Event{Action: EventUpdateAction}},
 		ConditionSeq: seq,
 	}
 	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
-		Entities:      []config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{entityEvent},
-		Relationships: []config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{relationshipEvent},
+		Events: []config.ParsedEventInterface[ottllog.TransformContext]{entityEvent, relationshipEvent},
 	}
 
 	// Prepare resource attributes
@@ -117,13 +116,12 @@ func TestDetect_NoEvents(t *testing.T) {
 		IDs:        []string{"id"},
 		Attributes: []string{"attr"},
 	}
-	entityEvent := config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{
+	entityEvent := config.EntityParsedEvent[ottllog.TransformContext]{
 		Definition:   &config.EntityEvent{Entity: entity.Entity},
 		ConditionSeq: seq,
 	}
 	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
-		Entities:      []config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{entityEvent},
-		Relationships: nil,
+		Events: []config.ParsedEventInterface[ottllog.TransformContext]{entityEvent},
 	}
 
 	attributes := Attributes{
@@ -172,17 +170,16 @@ func TestDetect_ConditionTrue_EventsCreated(t *testing.T) {
 		IDs:        []string{"id"},
 		Attributes: []string{"attr"},
 	}
-	entityEvent := config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{
+	entityEvent := config.EntityParsedEvent[ottllog.TransformContext]{
 		Definition:   &config.EntityEvent{Entity: "test-entity", Event: config.Event{Action: EventUpdateAction}},
 		ConditionSeq: seq,
 	}
-	relationshipEvent := config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{
+	relationshipEvent := config.RelationshipParsedEvent[ottllog.TransformContext]{
 		Definition:   &config.RelationshipEvent{Type: "test-rel", Source: "test-entity", Destination: "test-entity", Event: config.Event{Action: EventUpdateAction}},
 		ConditionSeq: seq,
 	}
 	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
-		Entities:      []config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{entityEvent},
-		Relationships: []config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{relationshipEvent},
+		Events: []config.ParsedEventInterface[ottllog.TransformContext]{entityEvent, relationshipEvent},
 	}
 
 	attributes := Attributes{
@@ -234,17 +231,16 @@ func TestDetect_ConditionFalse_EventsNotCreated(t *testing.T) {
 		IDs:        []string{"id"},
 		Attributes: []string{"attr"},
 	}
-	entityEvent := config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{
+	entityEvent := config.EntityParsedEvent[ottllog.TransformContext]{
 		Definition:   &config.EntityEvent{Entity: "test-entity", Event: config.Event{Action: EventUpdateAction}},
 		ConditionSeq: seq,
 	}
-	relationshipEvent := config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{
+	relationshipEvent := config.RelationshipParsedEvent[ottllog.TransformContext]{
 		Definition:   &config.RelationshipEvent{Type: "test-rel", Source: "test-entity", Destination: "test-entity", Event: config.Event{Action: EventUpdateAction}},
 		ConditionSeq: seq,
 	}
 	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
-		Entities:      []config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{entityEvent},
-		Relationships: []config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{relationshipEvent},
+		Events: []config.ParsedEventInterface[ottllog.TransformContext]{entityEvent, relationshipEvent},
 	}
 
 	attributes := Attributes{
@@ -301,7 +297,7 @@ func TestDetect_EntityAndRelationshipEventsWithDifferentTypes(t *testing.T) {
 		Attributes: []string{"attr2"},
 	}
 
-	relationshipEvent := config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{
+	relationshipEvent := config.RelationshipParsedEvent[ottllog.TransformContext]{
 		Definition: &config.RelationshipEvent{
 			Type:        "MemberOf",
 			Source:      srcEntity.Entity,
@@ -312,8 +308,7 @@ func TestDetect_EntityAndRelationshipEventsWithDifferentTypes(t *testing.T) {
 	}
 
 	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
-		Entities:      []config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{},
-		Relationships: []config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{relationshipEvent},
+		Events: []config.ParsedEventInterface[ottllog.TransformContext]{relationshipEvent},
 	}
 
 	// Prepare transform context
@@ -379,7 +374,7 @@ func TestDetect_EntityAndRelationshipEventsWithSameType(t *testing.T) {
 		Attributes: []string{"attr1"},
 	}
 
-	relationshipEvent := config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{
+	relationshipEvent := config.RelationshipParsedEvent[ottllog.TransformContext]{
 		Definition: &config.RelationshipEvent{
 			Event:       config.Event{Action: EventUpdateAction},
 			Type:        "Has",
@@ -390,8 +385,7 @@ func TestDetect_EntityAndRelationshipEventsWithSameType(t *testing.T) {
 	}
 
 	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
-		Entities:      []config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{},
-		Relationships: []config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{relationshipEvent},
+		Events: []config.ParsedEventInterface[ottllog.TransformContext]{relationshipEvent},
 	}
 
 	// Prepare transform context
@@ -443,7 +437,7 @@ func TestDetect_EntityEvents_AttributesPresent(t *testing.T) {
 		Attributes: []string{"attr1", "attr2"},
 	}
 
-	entityEvent := config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{
+	entityEvent := config.EntityParsedEvent[ottllog.TransformContext]{
 		Definition: &config.EntityEvent{
 			Entity: testEntity.Entity,
 			Event:  config.Event{Action: EventUpdateAction},
@@ -452,8 +446,7 @@ func TestDetect_EntityEvents_AttributesPresent(t *testing.T) {
 	}
 
 	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
-		Entities:      []config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{entityEvent},
-		Relationships: []config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{},
+		Events: []config.ParsedEventInterface[ottllog.TransformContext]{entityEvent},
 	}
 
 	attributes := Attributes{
@@ -508,14 +501,13 @@ func TestDetect_EntityEvents_IDAttributesMissing(t *testing.T) {
 
 	testEntity := config.Entity{Entity: "testEntityType", IDs: []string{"id1", "id2"}, Attributes: []string{}}
 
-	entityEvent := config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{
+	entityEvent := config.EntityParsedEvent[ottllog.TransformContext]{
 		Definition:   &config.EntityEvent{Entity: testEntity.Entity, Event: config.Event{Action: EventUpdateAction}},
 		ConditionSeq: seq,
 	}
 
 	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
-		Entities:      []config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{entityEvent},
-		Relationships: []config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{},
+		Events: []config.ParsedEventInterface[ottllog.TransformContext]{entityEvent},
 	}
 
 	attributes := Attributes{
@@ -556,14 +548,13 @@ func TestDetect_EntityEvents_SomeAttributesMissing(t *testing.T) {
 
 	testEntity := config.Entity{Entity: "testEntityType", IDs: []string{"id1"}, Attributes: []string{"attr1", "attr2"}}
 
-	entityEvent := config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{
+	entityEvent := config.EntityParsedEvent[ottllog.TransformContext]{
 		Definition:   &config.EntityEvent{Entity: testEntity.Entity, Event: config.Event{Action: EventUpdateAction}},
 		ConditionSeq: seq,
 	}
 
 	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
-		Entities:      []config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{entityEvent},
-		Relationships: []config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{},
+		Events: []config.ParsedEventInterface[ottllog.TransformContext]{entityEvent},
 	}
 
 	attributes := Attributes{
@@ -614,7 +605,7 @@ func TestDetect_RelationshipEvents_AttributesPresent(t *testing.T) {
 	srcEntity := config.Entity{Entity: "KubernetesCluster", IDs: []string{"id1"}, Attributes: []string{"attr1"}}
 	destEntity := config.Entity{Entity: "KubernetesNamespace", IDs: []string{"id2"}, Attributes: []string{"attr2"}}
 
-	relationshipEvent := config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{
+	relationshipEvent := config.RelationshipParsedEvent[ottllog.TransformContext]{
 		Definition: &config.RelationshipEvent{
 			Source:      srcEntity.Entity,
 			Destination: destEntity.Entity,
@@ -624,8 +615,7 @@ func TestDetect_RelationshipEvents_AttributesPresent(t *testing.T) {
 	}
 
 	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
-		Entities:      []config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{},
-		Relationships: []config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{relationshipEvent},
+		Events: []config.ParsedEventInterface[ottllog.TransformContext]{relationshipEvent},
 	}
 
 	attributes := Attributes{
@@ -683,7 +673,7 @@ func TestDetect_RelationshipEvents_SameType_AttributesPresent(t *testing.T) {
 
 	entity := config.Entity{Entity: "KubernetesCluster", IDs: []string{"id"}, Attributes: []string{"attr"}}
 
-	relationshipEvent := config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{
+	relationshipEvent := config.RelationshipParsedEvent[ottllog.TransformContext]{
 		Definition: &config.RelationshipEvent{
 			Source:      "KubernetesCluster",
 			Destination: "KubernetesCluster",
@@ -693,8 +683,7 @@ func TestDetect_RelationshipEvents_SameType_AttributesPresent(t *testing.T) {
 	}
 
 	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
-		Entities:      []config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{},
-		Relationships: []config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{relationshipEvent},
+		Events: []config.ParsedEventInterface[ottllog.TransformContext]{relationshipEvent},
 	}
 
 	attributes := Attributes{
@@ -754,7 +743,7 @@ func TestDetect_RelationshipEvents_IDAttributesMissing(t *testing.T) {
 	srcEntity := config.Entity{Entity: "KubernetesCluster", IDs: []string{"id1"}, Attributes: []string{}}
 	destEntity := config.Entity{Entity: "KubernetesNamespace", IDs: []string{"id2"}, Attributes: []string{}}
 
-	relationshipEvent := config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{
+	relationshipEvent := config.RelationshipParsedEvent[ottllog.TransformContext]{
 		Definition: &config.RelationshipEvent{
 			Source:      "KubernetesCluster",
 			Destination: "KubernetesNamespace",
@@ -763,8 +752,7 @@ func TestDetect_RelationshipEvents_IDAttributesMissing(t *testing.T) {
 	}
 
 	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
-		Entities:      []config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{},
-		Relationships: []config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{relationshipEvent},
+		Events: []config.ParsedEventInterface[ottllog.TransformContext]{relationshipEvent},
 	}
 
 	attributes := Attributes{
@@ -809,7 +797,7 @@ func TestDetect_RelationshipEvents_WithRelationshipAttributes(t *testing.T) {
 	srcEntity := config.Entity{Entity: "KubernetesCluster", IDs: []string{"id1"}}
 	destEntity := config.Entity{Entity: "KubernetesNamespace", IDs: []string{"id2"}}
 
-	relationshipEvent := config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{
+	relationshipEvent := config.RelationshipParsedEvent[ottllog.TransformContext]{
 		Definition: &config.RelationshipEvent{
 			Source:      "KubernetesCluster",
 			Destination: "KubernetesNamespace",
@@ -820,8 +808,7 @@ func TestDetect_RelationshipEvents_WithRelationshipAttributes(t *testing.T) {
 	}
 
 	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
-		Entities:      []config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{},
-		Relationships: []config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{relationshipEvent},
+		Events: []config.ParsedEventInterface[ottllog.TransformContext]{relationshipEvent},
 	}
 
 	attributes := Attributes{
