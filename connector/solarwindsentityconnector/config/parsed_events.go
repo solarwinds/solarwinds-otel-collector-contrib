@@ -66,12 +66,26 @@ func createParsedEvents(s Schema, settings component.TelemetrySettings) (ParsedE
 	var result ParsedEvents
 
 	for _, event := range s.Events.Entities {
-		if err := processEvent(event, event.Context, event.Conditions, &result.MetricEvents.Entities, &result.LogEvents.Entities, ctx); err != nil {
+		err := processEvent(
+			event,
+			event.Context,
+			event.Conditions,
+			&result.MetricEvents.Entities,
+			&result.LogEvents.Entities,
+			ctx)
+		if err != nil {
 			return ParsedEvents{}, err
 		}
 	}
 	for _, event := range s.Events.Relationships {
-		if err := processEvent(event, event.Context, event.Conditions, &result.MetricEvents.Relationships, &result.LogEvents.Relationships, ctx); err != nil {
+		err := processEvent(
+			event,
+			event.Context,
+			event.Conditions,
+			&result.MetricEvents.Relationships,
+			&result.LogEvents.Relationships,
+			ctx)
+		if err != nil {
 			return ParsedEvents{}, err
 		}
 	}
@@ -79,22 +93,33 @@ func createParsedEvents(s Schema, settings component.TelemetrySettings) (ParsedE
 	return result, nil
 }
 
-func processEvent[T any](event T, context string, conditions []string, metricEvents *[]ParsedEvent[T, ottlmetric.TransformContext], logEvents *[]ParsedEvent[T, ottllog.TransformContext], ctx ProcessingContext) error {
+func processEvent[T any](
+	event T,
+	context string,
+	conditions []string,
+	metricEvents *[]ParsedEvent[T, ottlmetric.TransformContext],
+	logEvents *[]ParsedEvent[T, ottllog.TransformContext],
+	ctx ProcessingContext) error {
 	if len(conditions) == 0 {
 		conditions = []string{"true"}
 	}
 
 	switch context {
 	case ottlmetric.ContextName:
-		return addEvent(metricEvents, event, conditions, ctx.settings, ctx.metricParser)
+		return addEvent(metricEvents, event, conditions, ctx.metricParser, ctx.settings)
 	case ottllog.ContextName:
-		return addEvent(logEvents, event, conditions, ctx.settings, ctx.logParser)
+		return addEvent(logEvents, event, conditions, ctx.logParser, ctx.settings)
 	default:
 		return fmt.Errorf("unsupported context: %s", context)
 	}
 }
 
-func addEvent[T any, C any](parsedEvents *[]ParsedEvent[T, C], event T, conditions []string, settings component.TelemetrySettings, parser *ottl.Parser[C]) error {
+func addEvent[T any, C any](
+	parsedEvents *[]ParsedEvent[T, C],
+	event T,
+	conditions []string,
+	parser *ottl.Parser[C],
+	settings component.TelemetrySettings) error {
 	stmts, err := parser.ParseConditions(conditions)
 	if err != nil {
 		return fmt.Errorf("failed to parse conditions for event: %w", err)
