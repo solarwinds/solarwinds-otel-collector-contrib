@@ -155,7 +155,7 @@ func TestDetect_NoEvents(t *testing.T) {
 	require.Len(t, events, 0)
 }
 
-func TestProcessEvents_ConditionTrue_EventsCreated(t *testing.T) {
+func TestDetect_ConditionTrue_EventsCreated(t *testing.T) {
 	// Initialize test data
 	ctx := context.Background()
 	settings := componenttest.NewNopTelemetrySettings()
@@ -167,17 +167,37 @@ func TestProcessEvents_ConditionTrue_EventsCreated(t *testing.T) {
 	require.NoError(t, err)
 	seq := ottl.NewConditionSequence(stmts, settings)
 
+	entity := config.Entity{
+		Entity:     "test-entity",
+		IDs:        []string{"id"},
+		Attributes: []string{"attr"},
+	}
 	entityEvent := config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{
-		Definition:   &config.EntityEvent{Entity: "test-entity"},
+		Definition:   &config.EntityEvent{Entity: "test-entity", Event: config.Event{Action: EventUpdateAction}},
 		ConditionSeq: seq,
 	}
 	relationshipEvent := config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{
-		Definition:   &config.RelationshipEvent{Type: "test-rel"},
+		Definition:   &config.RelationshipEvent{Type: "test-rel", Source: "test-entity", Destination: "test-entity", Event: config.Event{Action: EventUpdateAction}},
 		ConditionSeq: seq,
 	}
 	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
 		Entities:      []config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{entityEvent},
 		Relationships: []config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{relationshipEvent},
+	}
+
+	attributes := Attributes{
+		Source: map[string]pcommon.Value{
+			"id":   pcommon.NewValueStr("idvalue1"),
+			"attr": pcommon.NewValueStr("attrvalue1"),
+		},
+		Destination: map[string]pcommon.Value{
+			"id":   pcommon.NewValueStr("idvalue2"),
+			"attr": pcommon.NewValueStr("attrvalue2"),
+		},
+		Common: map[string]pcommon.Value{
+			"id":   pcommon.NewValueStr("idvalue1"),
+			"attr": pcommon.NewValueStr("attrvalue1"),
+		},
 	}
 
 	rLogs := logs.ResourceLogs().AppendEmpty()
@@ -186,18 +206,18 @@ func TestProcessEvents_ConditionTrue_EventsCreated(t *testing.T) {
 	resource := rLogs.Resource()
 	scope := scopeLogs.Scope()
 	tc := ottllog.NewTransformContext(logRecord, scope, resource, scopeLogs, rLogs)
-	am := NewAttributeMapper(map[string]config.Entity{})
+	am := NewAttributeMapper(map[string]config.Entity{entity.Entity: entity})
 	ev := NewEventDetector(am, eventsGroup, zap.NewNop())
 
 	// Tested function
-	entities, relationships, err := ev.processEvents(ctx, tc)
+	events, err := ev.Detect(ctx, attributes, tc)
 	require.NoError(t, err)
 
-	require.Len(t, entities, 1)
-	require.Len(t, relationships, 1)
+	// Should detect 1 entity event, 1 relationship event, and 1 additional entity event inferred from the relationship (same-type relationship)
+	require.Len(t, events, 3)
 }
 
-func TestProcessEvents_ConditionFalse_EventsNotCreated(t *testing.T) {
+func TestDetect_ConditionFalse_EventsNotCreated(t *testing.T) {
 	// Initialize test data
 	ctx := context.Background()
 	settings := componenttest.NewNopTelemetrySettings()
@@ -209,17 +229,29 @@ func TestProcessEvents_ConditionFalse_EventsNotCreated(t *testing.T) {
 	require.NoError(t, err)
 	seq := ottl.NewConditionSequence(stmts, settings)
 
+	entity := config.Entity{
+		Entity:     "test-entity",
+		IDs:        []string{"id"},
+		Attributes: []string{"attr"},
+	}
 	entityEvent := config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{
-		Definition:   &config.EntityEvent{Entity: "test-entity"},
+		Definition:   &config.EntityEvent{Entity: "test-entity", Event: config.Event{Action: EventUpdateAction}},
 		ConditionSeq: seq,
 	}
 	relationshipEvent := config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{
-		Definition:   &config.RelationshipEvent{Type: "test-rel"},
+		Definition:   &config.RelationshipEvent{Type: "test-rel", Source: "test-entity", Destination: "test-entity", Event: config.Event{Action: EventUpdateAction}},
 		ConditionSeq: seq,
 	}
 	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
 		Entities:      []config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{entityEvent},
 		Relationships: []config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{relationshipEvent},
+	}
+
+	attributes := Attributes{
+		Common: map[string]pcommon.Value{
+			"id":   pcommon.NewValueStr("idvalue1"),
+			"attr": pcommon.NewValueStr("attrvalue1"),
+		},
 	}
 
 	rLogs := logs.ResourceLogs().AppendEmpty()
@@ -228,17 +260,27 @@ func TestProcessEvents_ConditionFalse_EventsNotCreated(t *testing.T) {
 	resource := rLogs.Resource()
 	scope := scopeLogs.Scope()
 	tc := ottllog.NewTransformContext(logRecord, scope, resource, scopeLogs, rLogs)
-	am := NewAttributeMapper(map[string]config.Entity{})
+	am := NewAttributeMapper(map[string]config.Entity{entity.Entity: entity})
 	ev := NewEventDetector(am, eventsGroup, zap.NewNop())
 
 	// Tested function
-	entities, relationships, err := ev.processEvents(ctx, tc)
+	events, err := ev.Detect(ctx, attributes, tc)
 	require.NoError(t, err)
-	require.Empty(t, entities)
-	require.Empty(t, relationships)
+	require.Empty(t, events)
 }
 
-func TestGetRelationships_WithDifferentTypes(t *testing.T) {
+func TestDetect_EntityAndRelationshipEventsWithDifferentTypes(t *testing.T) {
+	ctx := context.Background()
+	settings := componenttest.NewNopTelemetrySettings()
+
+	// Prepare OTTL parser and condition sequence that always evaluates to true
+	parser, err := ottllog.NewParser(nil, settings)
+	require.NoError(t, err)
+	stmts, err := parser.ParseConditions([]string{"true"})
+	require.NoError(t, err)
+	seq := ottl.NewConditionSequence(stmts, settings)
+
+	// Prepare attributes for different entity types
 	attributes := Attributes{
 		Common: map[string]pcommon.Value{
 			"id1":   pcommon.NewValueStr("idvalue1"),
@@ -259,35 +301,66 @@ func TestGetRelationships_WithDifferentTypes(t *testing.T) {
 		Attributes: []string{"attr2"},
 	}
 
-	relationships := []*config.RelationshipEvent{{
-		Type:        "MemberOf",
-		Event:       config.Event{Action: EventUpdateAction},
-		Source:      srcEntity.Entity,
-		Destination: destEntity.Entity,
-	},
+	relationshipEvent := config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{
+		Definition: &config.RelationshipEvent{
+			Type:        "MemberOf",
+			Source:      srcEntity.Entity,
+			Destination: destEntity.Entity,
+			Event:       config.Event{Action: EventUpdateAction},
+		},
+		ConditionSeq: seq,
 	}
+
+	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
+		Entities:      []config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{},
+		Relationships: []config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{relationshipEvent},
+	}
+
+	// Prepare transform context
+	logs := plog.NewLogs()
+	rLogs := logs.ResourceLogs().AppendEmpty()
+	scopeLogs := rLogs.ScopeLogs().AppendEmpty()
+	logRecord := scopeLogs.LogRecords().AppendEmpty()
+	resource := rLogs.Resource()
+	scope := scopeLogs.Scope()
+	tc := ottllog.NewTransformContext(logRecord, scope, resource, scopeLogs, rLogs)
 
 	attributeMapper := NewAttributeMapper(map[string]config.Entity{
 		srcEntity.Entity:  srcEntity,
 		destEntity.Entity: destEntity,
 	})
 
+	// Create EventDetector
 	eventDetector := NewEventDetector(
 		attributeMapper,
-		config.EventsGroup[ottllog.TransformContext]{},
+		eventsGroup,
 		zap.NewNop(),
 	)
 
-	relationshipEvents := eventDetector.getRelationshipEvents(attributes, relationships)
-	assert.Equal(t, 1, len(relationshipEvents))
-	r1 := relationshipEvents[0]
-	assert.Equal(t, "MemberOf", r1.Type)
+	events, err := eventDetector.Detect(ctx, attributes, tc)
+	require.NoError(t, err)
+	require.NotNil(t, events)
+	require.Len(t, events, 1)
 
-	assert.Equal(t, srcEntity.Entity, r1.Source.Type)
-	assert.Equal(t, destEntity.Entity, r1.Destination.Type)
+	// Should be a relationship event
+	relationship, ok := events[0].(*Relationship)
+	require.True(t, ok)
+	assert.Equal(t, "MemberOf", relationship.Type)
+	assert.Equal(t, srcEntity.Entity, relationship.Source.Type)
+	assert.Equal(t, destEntity.Entity, relationship.Destination.Type)
 }
 
-func TestGetRelationships_WithSameType(t *testing.T) {
+func TestDetect_EntityAndRelationshipEventsWithSameType(t *testing.T) {
+	ctx := context.Background()
+	settings := componenttest.NewNopTelemetrySettings()
+
+	// Prepare OTTL parser and condition sequence that always evaluates to true
+	parser, err := ottllog.NewParser(nil, settings)
+	require.NoError(t, err)
+	stmts, err := parser.ParseConditions([]string{"true"})
+	require.NoError(t, err)
+	seq := ottl.NewConditionSequence(stmts, settings)
+
 	attributes := Attributes{
 		Source: map[string]pcommon.Value{
 			"id": pcommon.NewValueStr("idvalue1"),
@@ -306,12 +379,29 @@ func TestGetRelationships_WithSameType(t *testing.T) {
 		Attributes: []string{"attr1"},
 	}
 
-	relationships := []*config.RelationshipEvent{{
-		Event:       config.Event{Action: EventUpdateAction},
-		Type:        "Has",
-		Source:      "KubernetesCluster",
-		Destination: "KubernetesCluster",
-	}}
+	relationshipEvent := config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{
+		Definition: &config.RelationshipEvent{
+			Event:       config.Event{Action: EventUpdateAction},
+			Type:        "Has",
+			Source:      "KubernetesCluster",
+			Destination: "KubernetesCluster",
+		},
+		ConditionSeq: seq,
+	}
+
+	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
+		Entities:      []config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{},
+		Relationships: []config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{relationshipEvent},
+	}
+
+	// Prepare transform context
+	logs := plog.NewLogs()
+	rLogs := logs.ResourceLogs().AppendEmpty()
+	scopeLogs := rLogs.ScopeLogs().AppendEmpty()
+	logRecord := scopeLogs.LogRecords().AppendEmpty()
+	resource := rLogs.Resource()
+	scope := scopeLogs.Scope()
+	tc := ottllog.NewTransformContext(logRecord, scope, resource, scopeLogs, rLogs)
 
 	attributeMapper := NewAttributeMapper(map[string]config.Entity{
 		"KubernetesCluster": entity,
@@ -319,26 +409,53 @@ func TestGetRelationships_WithSameType(t *testing.T) {
 
 	eventDetector := NewEventDetector(
 		attributeMapper,
-		config.EventsGroup[ottllog.TransformContext]{},
+		eventsGroup,
 		zap.NewNop(),
 	)
 
-	relationshipEvents := eventDetector.getRelationshipEvents(attributes, relationships)
-	assert.Equal(t, 1, len(relationshipEvents))
-	r1 := relationshipEvents[0]
-	assert.Equal(t, "Has", r1.Type)
+	events, err := eventDetector.Detect(ctx, attributes, tc)
+	require.NoError(t, err)
+	require.NotNil(t, events)
+	require.Len(t, events, 1)
 
-	assert.Equal(t, entity.Entity, r1.Source.Type)
-	assert.Equal(t, entity.Entity, r1.Destination.Type)
+	// Should be a relationship event
+	relationship, ok := events[0].(*Relationship)
+	require.True(t, ok)
+	assert.Equal(t, "Has", relationship.Type)
+	assert.Equal(t, entity.Entity, relationship.Source.Type)
+	assert.Equal(t, entity.Entity, relationship.Destination.Type)
 }
 
-func TestCollectEvents_WithEntity_AttributesPresent(t *testing.T) {
-	// arrange
+func TestDetect_EntityEvents_AttributesPresent(t *testing.T) {
+	ctx := context.Background()
+	settings := componenttest.NewNopTelemetrySettings()
+
+	// Prepare OTTL parser and condition sequence that always evaluates to true
+	parser, err := ottllog.NewParser(nil, settings)
+	require.NoError(t, err)
+	stmts, err := parser.ParseConditions([]string{"true"})
+	require.NoError(t, err)
+	seq := ottl.NewConditionSequence(stmts, settings)
+
 	testEntity := config.Entity{
 		Entity:     "testEntityType",
 		IDs:        []string{"id1", "id2"},
 		Attributes: []string{"attr1", "attr2"},
 	}
+
+	entityEvent := config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{
+		Definition: &config.EntityEvent{
+			Entity: testEntity.Entity,
+			Event:  config.Event{Action: EventUpdateAction},
+		},
+		ConditionSeq: seq,
+	}
+
+	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
+		Entities:      []config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{entityEvent},
+		Relationships: []config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{},
+	}
+
 	attributes := Attributes{
 		Common: map[string]pcommon.Value{
 			"id1":   pcommon.NewValueStr("idvalue1"),
@@ -348,24 +465,22 @@ func TestCollectEvents_WithEntity_AttributesPresent(t *testing.T) {
 		},
 	}
 
-	// act
+	// Prepare transform context
+	logs := plog.NewLogs()
+	rLogs := logs.ResourceLogs().AppendEmpty()
+	scopeLogs := rLogs.ScopeLogs().AppendEmpty()
+	logRecord := scopeLogs.LogRecords().AppendEmpty()
+	resource := rLogs.Resource()
+	scope := scopeLogs.Scope()
+	tc := ottllog.NewTransformContext(logRecord, scope, resource, scopeLogs, rLogs)
+
 	attributeMapper := NewAttributeMapper(map[string]config.Entity{testEntity.Entity: testEntity})
+	eventDetector := NewEventDetector(attributeMapper, eventsGroup, zap.NewNop())
 
-	eventBuilder := NewEventDetector(
-		attributeMapper,
-		config.EventsGroup[ottllog.TransformContext]{},
-		zap.NewNop(),
-	)
-
-	events, err := eventBuilder.collectEvents(attributes, []*config.EntityEvent{
-		{
-			Entity: testEntity.Entity,
-			Event:  config.Event{Action: EventUpdateAction},
-		},
-	},
-		nil)
+	events, err := eventDetector.Detect(ctx, attributes, tc)
 	require.NoError(t, err)
 	require.Len(t, events, 1)
+
 	e1, ok := events[0].(Entity)
 	require.True(t, ok)
 	assert.Equal(t, "testEntityType", e1.Type)
@@ -380,34 +495,77 @@ func TestCollectEvents_WithEntity_AttributesPresent(t *testing.T) {
 	assertAttributeIsPresent(t, e1.Attributes, "attr2", "attrvalue2")
 }
 
-func TestCollectEvents_WithEntity_IDAttributesMissing(t *testing.T) {
-	// arrange
+func TestDetect_EntityEvents_IDAttributesMissing(t *testing.T) {
+	ctx := context.Background()
+	settings := componenttest.NewNopTelemetrySettings()
+
+	// Prepare OTTL parser and condition sequence that always evaluates to true
+	parser, err := ottllog.NewParser(nil, settings)
+	require.NoError(t, err)
+	stmts, err := parser.ParseConditions([]string{"true"})
+	require.NoError(t, err)
+	seq := ottl.NewConditionSequence(stmts, settings)
+
 	testEntity := config.Entity{Entity: "testEntityType", IDs: []string{"id1", "id2"}, Attributes: []string{}}
+
+	entityEvent := config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{
+		Definition:   &config.EntityEvent{Entity: testEntity.Entity, Event: config.Event{Action: EventUpdateAction}},
+		ConditionSeq: seq,
+	}
+
+	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
+		Entities:      []config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{entityEvent},
+		Relationships: []config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{},
+	}
+
 	attributes := Attributes{
 		Common: map[string]pcommon.Value{
 			"id1": pcommon.NewValueStr("idvalue1"),
 		},
 	}
 
-	// act
+	// Prepare transform context
+	logs := plog.NewLogs()
+	rLogs := logs.ResourceLogs().AppendEmpty()
+	scopeLogs := rLogs.ScopeLogs().AppendEmpty()
+	logRecord := scopeLogs.LogRecords().AppendEmpty()
+	resource := rLogs.Resource()
+	scope := scopeLogs.Scope()
+	tc := ottllog.NewTransformContext(logRecord, scope, resource, scopeLogs, rLogs)
+
 	attributeMapper := NewAttributeMapper(map[string]config.Entity{testEntity.Entity: testEntity})
+	eventDetector := NewEventDetector(attributeMapper, eventsGroup, zap.NewNop())
 
-	eventBuilder := NewEventDetector(
-		attributeMapper,
-		config.EventsGroup[ottllog.TransformContext]{},
-		zap.NewNop(),
-	)
-
-	events, err := eventBuilder.collectEvents(attributes, []*config.EntityEvent{{Entity: testEntity.Entity}}, nil)
+	events, err := eventDetector.Detect(ctx, attributes, tc)
 	require.NoError(t, err)
 
-	// assert
+	// Should be empty because required ID attributes are missing
 	require.Len(t, events, 0)
 }
 
-func TestCollectEvents_WithEntity_SomeAttributesMissing(t *testing.T) {
-	// arrange
+func TestDetect_EntityEvents_SomeAttributesMissing(t *testing.T) {
+	ctx := context.Background()
+	settings := componenttest.NewNopTelemetrySettings()
+
+	// Prepare OTTL parser and condition sequence that always evaluates to true
+	parser, err := ottllog.NewParser(nil, settings)
+	require.NoError(t, err)
+	stmts, err := parser.ParseConditions([]string{"true"})
+	require.NoError(t, err)
+	seq := ottl.NewConditionSequence(stmts, settings)
+
 	testEntity := config.Entity{Entity: "testEntityType", IDs: []string{"id1"}, Attributes: []string{"attr1", "attr2"}}
+
+	entityEvent := config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{
+		Definition:   &config.EntityEvent{Entity: testEntity.Entity, Event: config.Event{Action: EventUpdateAction}},
+		ConditionSeq: seq,
+	}
+
+	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
+		Entities:      []config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{entityEvent},
+		Relationships: []config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{},
+	}
+
 	attributes := Attributes{
 		Common: map[string]pcommon.Value{
 			"id1":   pcommon.NewValueStr("idvalue1"),
@@ -415,34 +573,61 @@ func TestCollectEvents_WithEntity_SomeAttributesMissing(t *testing.T) {
 		},
 	}
 
-	// act
+	// Prepare transform context
+	logs := plog.NewLogs()
+	rLogs := logs.ResourceLogs().AppendEmpty()
+	scopeLogs := rLogs.ScopeLogs().AppendEmpty()
+	logRecord := scopeLogs.LogRecords().AppendEmpty()
+	resource := rLogs.Resource()
+	scope := scopeLogs.Scope()
+	tc := ottllog.NewTransformContext(logRecord, scope, resource, scopeLogs, rLogs)
+
 	attributeMapper := NewAttributeMapper(map[string]config.Entity{testEntity.Entity: testEntity})
+	eventDetector := NewEventDetector(attributeMapper, eventsGroup, zap.NewNop())
 
-	eventBuilder := NewEventDetector(
-		attributeMapper,
-		config.EventsGroup[ottllog.TransformContext]{},
-		zap.NewNop(),
-	)
-
-	events, err := eventBuilder.collectEvents(attributes, []*config.EntityEvent{{Entity: testEntity.Entity, Event: config.Event{Action: EventUpdateAction}}}, nil)
+	events, err := eventDetector.Detect(ctx, attributes, tc)
 	require.NoError(t, err)
 	require.Len(t, events, 1)
-	entityEvent, ok := events[0].(Entity)
+
+	entityEvent1, ok := events[0].(Entity)
 	require.True(t, ok)
 
-	assert.Equal(t, testEntity.Entity, entityEvent.Type)
-	assert.Equal(t, "update", entityEvent.Action)
-	assert.Equal(t, 1, entityEvent.IDs.Len())
-	assertAttributeIsPresent(t, entityEvent.IDs, "id1", "idvalue1")
-	assert.Equal(t, 1, entityEvent.Attributes.Len())
-	assertAttributeIsPresent(t, entityEvent.Attributes, "attr1", "attrvalue1")
+	assert.Equal(t, testEntity.Entity, entityEvent1.Type)
+	assert.Equal(t, "update", entityEvent1.Action)
+	assert.Equal(t, 1, entityEvent1.IDs.Len())
+	assertAttributeIsPresent(t, entityEvent1.IDs, "id1", "idvalue1")
+	assert.Equal(t, 1, entityEvent1.Attributes.Len())
+	assertAttributeIsPresent(t, entityEvent1.Attributes, "attr1", "attrvalue1")
 }
 
-func TestCollectEvents_WithRelationship_AttributesPresent(t *testing.T) {
-	// arrange
+func TestDetect_RelationshipEvents_AttributesPresent(t *testing.T) {
+	ctx := context.Background()
+	settings := componenttest.NewNopTelemetrySettings()
+
+	// Prepare OTTL parser and condition sequence that always evaluates to true
+	parser, err := ottllog.NewParser(nil, settings)
+	require.NoError(t, err)
+	stmts, err := parser.ParseConditions([]string{"true"})
+	require.NoError(t, err)
+	seq := ottl.NewConditionSequence(stmts, settings)
+
 	srcEntity := config.Entity{Entity: "KubernetesCluster", IDs: []string{"id1"}, Attributes: []string{"attr1"}}
 	destEntity := config.Entity{Entity: "KubernetesNamespace", IDs: []string{"id2"}, Attributes: []string{"attr2"}}
-	testRelationship := config.RelationshipEvent{Source: srcEntity.Entity, Destination: destEntity.Entity, Event: config.Event{Action: EventUpdateAction}}
+
+	relationshipEvent := config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{
+		Definition: &config.RelationshipEvent{
+			Source:      srcEntity.Entity,
+			Destination: destEntity.Entity,
+			Event:       config.Event{Action: EventUpdateAction},
+		},
+		ConditionSeq: seq,
+	}
+
+	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
+		Entities:      []config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{},
+		Relationships: []config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{relationshipEvent},
+	}
+
 	attributes := Attributes{
 		Common: map[string]pcommon.Value{
 			"id1":   pcommon.NewValueStr("idvalue1"),
@@ -452,25 +637,25 @@ func TestCollectEvents_WithRelationship_AttributesPresent(t *testing.T) {
 		},
 	}
 
-	// act
+	// Prepare transform context
+	logs := plog.NewLogs()
+	rLogs := logs.ResourceLogs().AppendEmpty()
+	scopeLogs := rLogs.ScopeLogs().AppendEmpty()
+	logRecord := scopeLogs.LogRecords().AppendEmpty()
+	resource := rLogs.Resource()
+	scope := scopeLogs.Scope()
+	tc := ottllog.NewTransformContext(logRecord, scope, resource, scopeLogs, rLogs)
+
 	attributeMapper := NewAttributeMapper(map[string]config.Entity{
 		srcEntity.Entity:  srcEntity,
 		destEntity.Entity: destEntity,
 	})
+	eventDetector := NewEventDetector(attributeMapper, eventsGroup, zap.NewNop())
 
-	eventBuilder := NewEventDetector(
-		attributeMapper,
-		config.EventsGroup[ottllog.TransformContext]{},
-		zap.NewNop(),
-	)
-
-	events, err := eventBuilder.collectEvents(
-		attributes,
-		nil,
-		[]*config.RelationshipEvent{&testRelationship},
-	)
+	events, err := eventDetector.Detect(ctx, attributes, tc)
 	require.NoError(t, err)
 	require.Len(t, events, 1)
+
 	relationship, ok := events[0].(*Relationship)
 	require.True(t, ok)
 
@@ -485,10 +670,33 @@ func TestCollectEvents_WithRelationship_AttributesPresent(t *testing.T) {
 	assertAttributeIsPresent(t, relationship.Destination.IDs, "id2", "idvalue2")
 }
 
-func TestCollectEvents_WithRelationship_SameType_AttributesPresent(t *testing.T) {
-	// arrange
+func TestDetect_RelationshipEvents_SameType_AttributesPresent(t *testing.T) {
+	ctx := context.Background()
+	settings := componenttest.NewNopTelemetrySettings()
+
+	// Prepare OTTL parser and condition sequence that always evaluates to true
+	parser, err := ottllog.NewParser(nil, settings)
+	require.NoError(t, err)
+	stmts, err := parser.ParseConditions([]string{"true"})
+	require.NoError(t, err)
+	seq := ottl.NewConditionSequence(stmts, settings)
+
 	entity := config.Entity{Entity: "KubernetesCluster", IDs: []string{"id"}, Attributes: []string{"attr"}}
-	testRelationship := config.RelationshipEvent{Source: "KubernetesCluster", Destination: "KubernetesCluster", Event: config.Event{Action: EventUpdateAction}}
+
+	relationshipEvent := config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{
+		Definition: &config.RelationshipEvent{
+			Source:      "KubernetesCluster",
+			Destination: "KubernetesCluster",
+			Event:       config.Event{Action: EventUpdateAction},
+		},
+		ConditionSeq: seq,
+	}
+
+	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
+		Entities:      []config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{},
+		Relationships: []config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{relationshipEvent},
+	}
+
 	attributes := Attributes{
 		Source: map[string]pcommon.Value{
 			"id": pcommon.NewValueStr("idvalue1"),
@@ -501,20 +709,19 @@ func TestCollectEvents_WithRelationship_SameType_AttributesPresent(t *testing.T)
 		},
 	}
 
-	// act
+	// Prepare transform context
+	logs := plog.NewLogs()
+	rLogs := logs.ResourceLogs().AppendEmpty()
+	scopeLogs := rLogs.ScopeLogs().AppendEmpty()
+	logRecord := scopeLogs.LogRecords().AppendEmpty()
+	resource := rLogs.Resource()
+	scope := scopeLogs.Scope()
+	tc := ottllog.NewTransformContext(logRecord, scope, resource, scopeLogs, rLogs)
+
 	attributeMapper := NewAttributeMapper(map[string]config.Entity{entity.Entity: entity})
+	eventDetector := NewEventDetector(attributeMapper, eventsGroup, zap.NewNop())
 
-	eventBuilder := NewEventDetector(
-		attributeMapper,
-		config.EventsGroup[ottllog.TransformContext]{},
-		zap.NewNop(),
-	)
-
-	events, err := eventBuilder.collectEvents(
-		attributes,
-		nil,
-		[]*config.RelationshipEvent{&testRelationship},
-	)
+	events, err := eventDetector.Detect(ctx, attributes, tc)
 	require.NoError(t, err)
 	require.Len(t, events, 1)
 
@@ -533,81 +740,90 @@ func TestCollectEvents_WithRelationship_SameType_AttributesPresent(t *testing.T)
 	assertAttributeIsPresent(t, relationship.Destination.IDs, "id", "idvalue2")
 }
 
-func TestCollectEvents_WithRelationship_IDAttributesMissing(t *testing.T) {
-	// arrange
+func TestDetect_RelationshipEvents_IDAttributesMissing(t *testing.T) {
+	ctx := context.Background()
+	settings := componenttest.NewNopTelemetrySettings()
+
+	// Prepare OTTL parser and condition sequence that always evaluates to true
+	parser, err := ottllog.NewParser(nil, settings)
+	require.NoError(t, err)
+	stmts, err := parser.ParseConditions([]string{"true"})
+	require.NoError(t, err)
+	seq := ottl.NewConditionSequence(stmts, settings)
+
 	srcEntity := config.Entity{Entity: "KubernetesCluster", IDs: []string{"id1"}, Attributes: []string{}}
 	destEntity := config.Entity{Entity: "KubernetesNamespace", IDs: []string{"id2"}, Attributes: []string{}}
-	testRelationship := config.RelationshipEvent{Source: "KubernetesCluster", Destination: "KubernetesNamespace"}
+
+	relationshipEvent := config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{
+		Definition: &config.RelationshipEvent{
+			Source:      "KubernetesCluster",
+			Destination: "KubernetesNamespace",
+		},
+		ConditionSeq: seq,
+	}
+
+	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
+		Entities:      []config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{},
+		Relationships: []config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{relationshipEvent},
+	}
+
 	attributes := Attributes{
 		Common: map[string]pcommon.Value{
 			"id1": pcommon.NewValueStr("idvalue1"),
 		},
 	}
 
-	// act
+	// Prepare transform context
+	logs := plog.NewLogs()
+	rLogs := logs.ResourceLogs().AppendEmpty()
+	scopeLogs := rLogs.ScopeLogs().AppendEmpty()
+	logRecord := scopeLogs.LogRecords().AppendEmpty()
+	resource := rLogs.Resource()
+	scope := scopeLogs.Scope()
+	tc := ottllog.NewTransformContext(logRecord, scope, resource, scopeLogs, rLogs)
+
 	attributeMapper := NewAttributeMapper(map[string]config.Entity{
 		srcEntity.Entity:  srcEntity,
 		destEntity.Entity: destEntity,
 	})
+	eventDetector := NewEventDetector(attributeMapper, eventsGroup, zap.NewNop())
 
-	eventBuilder := NewEventDetector(
-		attributeMapper,
-		config.EventsGroup[ottllog.TransformContext]{},
-		zap.NewNop(),
-	)
-
-	events, err := eventBuilder.collectEvents(
-		attributes,
-		nil,
-		[]*config.RelationshipEvent{{Type: testRelationship.Type}},
-	)
+	events, err := eventDetector.Detect(ctx, attributes, tc)
 	require.NoError(t, err)
 
-	// assert
+	// Should be empty because required ID attributes are missing for destination entity
 	require.Len(t, events, 0)
 }
 
-func TestCollectEvents_WithRelationship_SameType_IDAttributesMissing(t *testing.T) {
-	// arrange
-	entity := config.Entity{Entity: "KubernetesCluster", IDs: []string{"id"}, Attributes: []string{}}
-	testRelationship := config.RelationshipEvent{Source: "KubernetesCluster", Destination: "KubernetesCluster"}
-	attributes := Attributes{
-		Source: map[string]pcommon.Value{
-			"id": pcommon.NewValueStr("idvalue1"),
-		},
-	}
+func TestDetect_RelationshipEvents_WithRelationshipAttributes(t *testing.T) {
+	ctx := context.Background()
+	settings := componenttest.NewNopTelemetrySettings()
 
-	// act
-	attributeMapper := NewAttributeMapper(map[string]config.Entity{
-		"KubernetesCluster": entity,
-	})
-
-	eventBuilder := NewEventDetector(
-		attributeMapper,
-		config.EventsGroup[ottllog.TransformContext]{},
-		zap.NewNop(),
-	)
-	events, err := eventBuilder.collectEvents(
-		attributes,
-		nil,
-		[]*config.RelationshipEvent{{Type: testRelationship.Type}},
-	)
+	// Prepare OTTL parser and condition sequence that always evaluates to true
+	parser, err := ottllog.NewParser(nil, settings)
 	require.NoError(t, err)
+	stmts, err := parser.ParseConditions([]string{"true"})
+	require.NoError(t, err)
+	seq := ottl.NewConditionSequence(stmts, settings)
 
-	// assert
-	require.Len(t, events, 0)
-}
-
-func TestCollectEvents_WithRelationship_RelationshipAttributesPresent(t *testing.T) {
-	// arrange
 	srcEntity := config.Entity{Entity: "KubernetesCluster", IDs: []string{"id1"}}
 	destEntity := config.Entity{Entity: "KubernetesNamespace", IDs: []string{"id2"}}
-	testRelationship := config.RelationshipEvent{
-		Source:      "KubernetesCluster",
-		Destination: "KubernetesNamespace",
-		Attributes:  []string{"relationshipAttr"},
-		Event:       config.Event{Action: EventUpdateAction},
+
+	relationshipEvent := config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{
+		Definition: &config.RelationshipEvent{
+			Source:      "KubernetesCluster",
+			Destination: "KubernetesNamespace",
+			Attributes:  []string{"relationshipAttr"},
+			Event:       config.Event{Action: EventUpdateAction},
+		},
+		ConditionSeq: seq,
 	}
+
+	eventsGroup := config.EventsGroup[ottllog.TransformContext]{
+		Entities:      []config.ParsedEvent[config.EntityEvent, ottllog.TransformContext]{},
+		Relationships: []config.ParsedEvent[config.RelationshipEvent, ottllog.TransformContext]{relationshipEvent},
+	}
+
 	attributes := Attributes{
 		Common: map[string]pcommon.Value{
 			"id1":              pcommon.NewValueStr("idvalue1"),
@@ -616,24 +832,25 @@ func TestCollectEvents_WithRelationship_RelationshipAttributesPresent(t *testing
 		},
 	}
 
-	// act
+	// Prepare transform context
+	logs := plog.NewLogs()
+	rLogs := logs.ResourceLogs().AppendEmpty()
+	scopeLogs := rLogs.ScopeLogs().AppendEmpty()
+	logRecord := scopeLogs.LogRecords().AppendEmpty()
+	resource := rLogs.Resource()
+	scope := scopeLogs.Scope()
+	tc := ottllog.NewTransformContext(logRecord, scope, resource, scopeLogs, rLogs)
+
 	attributeMapper := NewAttributeMapper(map[string]config.Entity{
 		"KubernetesCluster":   srcEntity,
 		"KubernetesNamespace": destEntity,
 	})
+	eventDetector := NewEventDetector(attributeMapper, eventsGroup, zap.NewNop())
 
-	eventBuilder := NewEventDetector(
-		attributeMapper,
-		config.EventsGroup[ottllog.TransformContext]{},
-		zap.NewNop(),
-	)
-	events, err := eventBuilder.collectEvents(
-		attributes,
-		nil,
-		[]*config.RelationshipEvent{&testRelationship},
-	)
+	events, err := eventDetector.Detect(ctx, attributes, tc)
 	require.NoError(t, err)
 	require.Len(t, events, 1)
+
 	r1, ok := events[0].(*Relationship)
 	require.True(t, ok)
 	assert.Equal(t, "KubernetesCluster", r1.Source.Type)
@@ -643,54 +860,6 @@ func TestCollectEvents_WithRelationship_RelationshipAttributesPresent(t *testing
 	// assert relationship attributes
 	assert.Equal(t, 1, r1.Attributes.Len())
 	assertAttributeIsPresent(t, r1.Attributes, "relationshipAttr", "relationshipValue")
-}
-
-func TestCollectEvents_WithRelationship_SameType_RelationshipAttributesPresent(t *testing.T) {
-	// arrange
-	entity := config.Entity{Entity: "KubernetesCluster", IDs: []string{"id"}}
-	testRelationship := config.RelationshipEvent{
-		Source:      "KubernetesCluster",
-		Destination: "KubernetesCluster",
-		Attributes:  []string{"relationshipAttr"},
-		Event:       config.Event{Action: EventUpdateAction},
-		Type:        "Has",
-	}
-
-	attributes := Attributes{
-		Source: map[string]pcommon.Value{
-			"id": pcommon.NewValueStr("idvalue1"),
-		},
-		Destination: map[string]pcommon.Value{
-			"id": pcommon.NewValueStr("idvalue2"),
-		},
-		Common: map[string]pcommon.Value{
-			"relationshipAttr": pcommon.NewValueStr("relationshipValue"),
-		},
-	}
-
-	// act
-	attributeMapper := NewAttributeMapper(map[string]config.Entity{entity.Entity: entity})
-
-	eventBuilder := NewEventDetector(
-		attributeMapper,
-		config.EventsGroup[ottllog.TransformContext]{},
-		zap.NewNop(),
-	)
-	events, err := eventBuilder.collectEvents(
-		attributes,
-		nil,
-		[]*config.RelationshipEvent{&testRelationship},
-	)
-	require.NoError(t, err)
-	require.Len(t, events, 1)
-	r1, ok := events[0].(*Relationship)
-	require.True(t, ok)
-	assert.Equal(t, "KubernetesCluster", r1.Source.Type)
-	assertAttributeIsPresent(t, r1.Source.IDs, "id", "idvalue1")
-	assert.Equal(t, "KubernetesCluster", r1.Destination.Type)
-	assertAttributeIsPresent(t, r1.Destination.IDs, "id", "idvalue2")
-	assert.Equal(t, "update", r1.Action)
-	assert.Equal(t, "Has", r1.Type)
 }
 
 func assertAttributeIsPresent(t *testing.T, attrs pcommon.Map, key string, expected string) {
