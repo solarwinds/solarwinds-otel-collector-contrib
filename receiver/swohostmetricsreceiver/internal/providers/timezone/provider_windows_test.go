@@ -21,12 +21,13 @@ import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/wmi"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 func Test_Provider_Functional(t *testing.T) {
 	t.Skip("This test should be run manually")
 
-	sut := CreateTimeZoneProvider()
+	sut := CreateTimeZoneProvider(zap.NewNop())
 	result := <-sut.Provide()
 	fmt.Printf("Result: %+v\n", result)
 }
@@ -69,7 +70,8 @@ func Test_Provide_FailsAndProvidesEmptyObjectAndChannelIsClosedAfterDelivery(t *
 		&[]Win32_TimeZone{}: fmt.Errorf("some timezone error"),
 	}
 	sut := provider{
-		wmi: wmi.CreateWmiExecutorMock(nil, errors),
+		wmi:    wmi.CreateWmiExecutorMock(nil, errors),
+		logger: zap.NewNop(),
 	}
 
 	ch := sut.Provide()
