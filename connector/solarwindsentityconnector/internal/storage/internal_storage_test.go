@@ -16,26 +16,27 @@ package storage
 
 import (
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.uber.org/zap"
-	"testing"
-	"time"
 )
 
 var ttl = 1000 * time.Millisecond
 var ttlCleanupInterval = 2 * time.Second
-var cfg = &config.ExpirationSettings{
+var cfg = config.ExpirationPolicy{
 	Enabled:                   true,
 	Interval:                  ttl,
 	MaxCapacity:               1000,
 	TTLCleanupIntervalSeconds: ttlCleanupInterval,
 }
 
-var sourceEntity = internal.RelationshipEntity{
+var sourceEntity = internal.Entity{
 	Type: "service",
 	IDs: func() pcommon.Map {
 		m := pcommon.NewMap()
@@ -44,7 +45,7 @@ var sourceEntity = internal.RelationshipEntity{
 	}(),
 }
 
-var destEntity = internal.RelationshipEntity{
+var destEntity = internal.Entity{
 	Type: "database",
 	IDs: func() pcommon.Map {
 		m := pcommon.NewMap()
@@ -65,12 +66,12 @@ func TestNewInternalStorage(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		cfg         *config.ExpirationSettings
+		cfg         config.ExpirationPolicy
 		expectError bool
 	}{
 		{
 			name: "Valid configuration",
-			cfg: &config.ExpirationSettings{
+			cfg: config.ExpirationPolicy{
 				Interval:                  10 * time.Second,
 				MaxCapacity:               1000,
 				TTLCleanupIntervalSeconds: 20 * time.Second,
@@ -79,7 +80,7 @@ func TestNewInternalStorage(t *testing.T) {
 		},
 		{
 			name: "Zero MaxCapacity throws error",
-			cfg: &config.ExpirationSettings{
+			cfg: config.ExpirationPolicy{
 				Interval:                  10 * time.Second,
 				MaxCapacity:               0,
 				TTLCleanupIntervalSeconds: 1 * time.Second,
@@ -88,7 +89,7 @@ func TestNewInternalStorage(t *testing.T) {
 		},
 		{
 			name: "TTl is less than 1 second, throws error",
-			cfg: &config.ExpirationSettings{
+			cfg: config.ExpirationPolicy{
 				Interval:                  1 * time.Millisecond,
 				MaxCapacity:               1000,
 				TTLCleanupIntervalSeconds: 10 * time.Millisecond,
@@ -179,7 +180,7 @@ func TestTtlExpiration_TenIdenticalUpdates_ResultInOneExpiryEvent(t *testing.T) 
 	// Set up a cache with the entities
 	ttl := 1000 * time.Millisecond
 	ttlCleanupInterval := 2 * time.Second
-	cfg := &config.ExpirationSettings{
+	cfg := config.ExpirationPolicy{
 		Enabled:                   true,
 		Interval:                  ttl,
 		MaxCapacity:               1000,
@@ -252,7 +253,7 @@ func TestTtlExpiration_TenDifferentUpdates_ResultInTenExpiryEvents(t *testing.T)
 
 	for i := 0; i < 10; i++ {
 		// Create a unique relationship by varying the source entity's ID
-		sourceEntity := internal.RelationshipEntity{
+		sourceEntity := internal.Entity{
 			Type: "service",
 			IDs: func() pcommon.Map {
 				m := pcommon.NewMap()
@@ -325,7 +326,7 @@ func TestTtlExpiration_RelationshipIsRemovedFirst_EntitiesSecond(t *testing.T) {
 	storage.entities.Wait()
 	storage.relationships.Wait()
 
-	kb := NewKeyBuilder()
+	kb := internal.NewKeyBuilder()
 	sourceHash, err := kb.BuildEntityKey(relationship.Source)
 	require.NoError(t, err)
 	destHash, err := kb.BuildEntityKey(relationship.Destination)
@@ -414,7 +415,7 @@ func TestInternalStorage_Delete(t *testing.T) {
 			name: "Error building relationship hash key",
 			relationship: &internal.Relationship{
 				Type: "", // Empty type should cause an error when building the key
-				Source: internal.RelationshipEntity{
+				Source: internal.Entity{
 					Type: "service",
 					IDs:  pcommon.NewMap(),
 				},
@@ -458,7 +459,7 @@ func TestDelete_DoesNotTriggerOnRelationshipEvict(t *testing.T) {
 	// Create test storage with short TTL for quick testing
 	ttl := 60 * time.Second
 	cleanupInterval := 2 * time.Second
-	cfg := &config.ExpirationSettings{
+	cfg := config.ExpirationPolicy{
 		Enabled:                   true,
 		Interval:                  ttl,
 		MaxCapacity:               1000,
@@ -518,7 +519,7 @@ func TestDelete_ComparedToTTLExpiration(t *testing.T) {
 	// Create test storage with very short TTL for quick testing
 	ttl := 1 * time.Second
 	cleanupInterval := 2 * time.Second
-	cfg := &config.ExpirationSettings{
+	cfg := config.ExpirationPolicy{
 		Enabled:                   true,
 		Interval:                  ttl,
 		MaxCapacity:               1000,
@@ -532,7 +533,7 @@ func TestDelete_ComparedToTTLExpiration(t *testing.T) {
 	createTestRelationship := func(suffix string) *internal.Relationship {
 		return &internal.Relationship{
 			Type: "testRelation" + suffix,
-			Source: internal.RelationshipEntity{
+			Source: internal.Entity{
 				Type: "sourceType",
 				IDs: func() pcommon.Map {
 					m := pcommon.NewMap()
@@ -540,7 +541,7 @@ func TestDelete_ComparedToTTLExpiration(t *testing.T) {
 					return m
 				}(),
 			},
-			Destination: internal.RelationshipEntity{
+			Destination: internal.Entity{
 				Type: "destType",
 				IDs: func() pcommon.Map {
 					m := pcommon.NewMap()

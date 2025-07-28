@@ -17,6 +17,9 @@ package solarwindsentityconnector
 import (
 	"context"
 	"fmt"
+	"strings"
+
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal/metadata"
@@ -28,7 +31,7 @@ import (
 func NewFactory() connector.Factory {
 	return connector.NewFactory(
 		metadata.Type,
-		NewDefaultConfig,
+		config.NewDefaultConfig,
 		connector.WithMetricsToLogs(createMetricsToLogsConnector, metadata.MetricsToLogsStability),
 		connector.WithLogsToLogs(createLogsToLogsConnector, metadata.LogsToLogsStability),
 	)
@@ -42,24 +45,37 @@ func createMetricsToLogsConnector(ctx context.Context, settings connector.Settin
 	return createConnector(settings, config, logs)
 }
 
-func createConnector(settings connector.Settings, config component.Config, logs consumer.Logs) (*solarwindsentity, error) {
-	cfg, ok := config.(*Config)
+func createConnector(settings connector.Settings, cfg component.Config, logs consumer.Logs) (*solarwindsentity, error) {
+	logger := settings.Logger
+	baseConfig, ok := cfg.(*config.Config)
 	if !ok {
-		return nil, fmt.Errorf("expected config of type *Config, got %T", config)
+		return nil, fmt.Errorf("expected config of type *config.Config, got %T", cfg)
 	}
-	events := cfg.Schema.NewEvents(settings.TelemetrySettings)
+	if warnings := baseConfig.EvaluateWarnings(); len(warnings) > 0 {
+		logger.Warn(strings.Join(warnings, "\n"))
+	}
+	expirationSettings, err := baseConfig.Expiration.Unmarshal()
+	if err != nil {
+		return nil, err
+	}
+
+	schema, err := baseConfig.Schema.Unmarshal(settings.TelemetrySettings)
+	if err != nil {
+		return nil, err
+	}
+	attributeMapper := internal.NewAttributeMapper(schema.Entities)
 
 	se := &solarwindsentity{
-		logger: settings.Logger,
+		logger: logger,
 		eventDetector: internal.NewEventDetector(
-			cfg.Schema.NewEntities(),
-			cfg.SourcePrefix,
-			cfg.DestinationPrefix,
-			events.LogEvents,
-			events.MetricEvents,
+			attributeMapper,
+			schema.Events.LogEvents,
+			schema.Events.MetricEvents,
 			settings.Logger,
 		),
-		expirationPolicy: cfg.Expiration,
+		sourcePrefix:     baseConfig.SourcePrefix,
+		destPrefix:       baseConfig.DestinationPrefix,
+		expirationPolicy: expirationSettings,
 		logsConsumer:     logs,
 	}
 	return se, nil

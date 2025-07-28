@@ -17,11 +17,9 @@ package cpu
 import (
 	"strings"
 
-	"go.uber.org/zap"
-
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/wmi"
-
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/wmi"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
+	"go.uber.org/zap"
 )
 
 type provider struct {

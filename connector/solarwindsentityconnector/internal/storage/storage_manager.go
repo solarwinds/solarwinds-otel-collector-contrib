@@ -17,10 +17,11 @@ package storage
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal"
 	"go.uber.org/zap"
-	"time"
 )
 
 type Manager struct {
@@ -32,11 +33,7 @@ type Manager struct {
 	logger *zap.Logger
 }
 
-func NewStorageManager(cfg *config.ExpirationSettings, logger *zap.Logger, logsConsumer internal.EventConsumer) (*Manager, error) {
-	if cfg == nil {
-		return nil, fmt.Errorf("expiration settings configuration is nil")
-	}
-
+func NewStorageManager(cfg config.ExpirationPolicy, logger *zap.Logger, logsConsumer internal.EventConsumer) (*Manager, error) {
 	expiredCh := make(chan internal.Event)
 	cache, err := newInternalStorage(cfg, logger, expiredCh)
 	if err != nil {

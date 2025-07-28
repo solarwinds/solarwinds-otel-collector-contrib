@@ -1,23 +1,4 @@
 resourceLogs:
-  # for creation of first AWS EC2 entity
-  - resource:
-      attributes: [ { "key": "aws.ec2.id", "value":{"stringValue": "aws-instance-id-first"}},
-                    { "key": "aws.ec2.name", "value":{"stringValue": "aws-instance-name-first"}}]
-    scope_logs:
-    - log_records:
-      - body: { "stringValue": "test-log-body" }
-        attributes: [ { "key": "env", "value":{"stringValue": "test"}} ]
-        time_unix_nano: 1234567890
-  # for creation of second AWS EC2 entity
-  - resource:
-      attributes: [ { "key": "aws.ec2.id", "value":{"stringValue": "aws-instance-id-second"}},
-                    { "key": "aws.ec2.name", "value":{"stringValue": "aws-instance-name-second"}}]   
-    scope_logs:
-    - log_records:
-      - body: { "stringValue": "test-log-body" }
-        attributes: [ { "key": "env", "value":{"stringValue": "test"}} ]
-        time_unix_nano: 1234567891
-  # for creation of relationship between the two AWS EC2 entities
   - resource:
       attributes: [ { "key": "src.aws.ec2.id", "value":{"stringValue": "aws-instance-id-first"}},
                     { "key": "src.aws.ec2.name", "value":{"stringValue": "aws-instance-name-first"}},

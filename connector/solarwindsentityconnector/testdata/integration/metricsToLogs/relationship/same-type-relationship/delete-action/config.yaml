@@ -2,20 +2,15 @@ source_prefix: "src."
 destination_prefix: "dst."
 schema:
   entities:
-    - type: "Kubernetes Node"
-      ids: ["k8s.node.id"]
+    - entity: "Kubernetes Node"
+      id: ["k8s.node.id"]
       attributes: []
   events:
     relationships:
       - type: "TestRelationshipType"
-        source: "Kubernetes Node"
-        destination: "Kubernetes Node"
+        source_entity: "Kubernetes Node"
+        destination_entity: "Kubernetes Node"
         attributes: []
         conditions: ["true"]
         context: "metric"
         action: "delete"
-    entities:
-      - type: "Kubernetes Node"
-        conditions: ["true"]
-        context: "metric"
-        action: "update"

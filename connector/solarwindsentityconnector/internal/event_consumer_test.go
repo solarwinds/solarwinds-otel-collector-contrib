@@ -16,11 +16,12 @@ package internal
 
 import (
 	"context"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/consumer/consumertest"
 	"go.opentelemetry.io/collector/pdata/pcommon"
-	"testing"
 )
 
 func TestSendExpiredEventsWithRelationship(t *testing.T) {
@@ -34,7 +35,7 @@ func TestSendExpiredEventsWithRelationship(t *testing.T) {
 	events := []Event{
 		&Relationship{
 			Type: "dependsOn",
-			Source: RelationshipEntity{
+			Source: Entity{
 				Type: "service",
 				IDs: func() pcommon.Map {
 					m := pcommon.NewMap()
@@ -42,7 +43,7 @@ func TestSendExpiredEventsWithRelationship(t *testing.T) {
 					return m
 				}(),
 			},
-			Destination: RelationshipEntity{
+			Destination: Entity{
 				Type: "database",
 				IDs: func() pcommon.Map {
 					m := pcommon.NewMap()

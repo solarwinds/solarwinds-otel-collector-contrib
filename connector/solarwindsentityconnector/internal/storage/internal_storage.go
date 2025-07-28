@@ -15,18 +15,22 @@
 package storage
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"hash/fnv"
 	"time"
+
+	"go.opentelemetry.io/collector/pdata/pcommon"
 
 	"github.com/dgraph-io/ristretto/v2"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal"
 	"go.uber.org/zap"
 )
+
+type storedEntity struct {
+	Type string
+	IDs  pcommon.Map
+}
 
 const (
 	// ristretto cache provides cost management, but we need to set the same cost for all items.
@@ -64,20 +68,20 @@ type storedRelationship struct {
 }
 
 type internalStorage struct {
-	entities                  *ristretto.Cache[string, internal.RelationshipEntity]
+	entities                  *ristretto.Cache[string, storedEntity]
 	relationships             *ristretto.Cache[string, storedRelationship]
 	relationshipTtl           time.Duration
 	entityTtl                 time.Duration
 	ttlCleanUpIntervalSeconds time.Duration
 	logger                    *zap.Logger
-	cacheKeyBuilder           KeyBuilder
+	cacheKeyBuilder           internal.KeyBuilder
 
 	// TODO: Introduce mutex to protect concurrent access to the cache when parallelization is used
 	// in the upper layers (NH-112603).
 	// mu sync.Mutex
 }
 
-func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em chan<- internal.Event) (*internalStorage, error) {
+func newInternalStorage(cfg config.ExpirationPolicy, logger *zap.Logger, em chan<- internal.Event) (*internalStorage, error) {
 	var err error
 
 	// maxCost sets the maximum number of items, when itemCost is set to 1
@@ -93,7 +97,7 @@ func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em c
 		return nil, fmt.Errorf("ttlCleanupSeconds has to be at least 1 second, got %d", ttlCleanupSeconds)
 	}
 
-	entityCache, err := ristretto.NewCache(&ristretto.Config[string, internal.RelationshipEntity]{
+	entityCache, err := ristretto.NewCache(&ristretto.Config[string, storedEntity]{
 		NumCounters:            numCounters,
 		MaxCost:                maxCost * entityCapacityFactor,
 		TtlTickerDurationInSec: ttlCleanupSeconds * entityTTLCleanupFactor,
@@ -126,7 +130,7 @@ func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em c
 		// The TTL + clean-up interval should be the longest interval after which the relationship would be evicted.
 		entityTtl:       (cfg.Interval + cfg.TTLCleanupIntervalSeconds) * entityTTLFactor,
 		logger:          logger,
-		cacheKeyBuilder: NewKeyBuilder(),
+		cacheKeyBuilder: internal.NewKeyBuilder(),
 	}, nil
 }
 
@@ -134,7 +138,7 @@ func newInternalStorage(cfg *config.ExpirationSettings, logger *zap.Logger, em c
 // It retrieves the source and destination entities from the entity cache and sends a relationship event.
 func onRelationshipEvict(
 	item *ristretto.Item[storedRelationship],
-	entityCache *ristretto.Cache[string, internal.RelationshipEntity],
+	entityCache *ristretto.Cache[string, storedEntity],
 	logger *zap.Logger,
 	em chan<- internal.Event) {
 
@@ -153,11 +157,11 @@ func onRelationshipEvict(
 
 	em <- &internal.Relationship{
 		Type: item.Value.relationshipType,
-		Source: internal.RelationshipEntity{
+		Source: internal.Entity{
 			Type: source.Type,
 			IDs:  source.IDs,
 		},
-		Destination: internal.RelationshipEntity{
+		Destination: internal.Entity{
 			Type: dest.Type,
 			IDs:  dest.IDs,
 		},
@@ -217,12 +221,22 @@ func (c *internalStorage) update(relationship *internal.Relationship) error {
 		return errors.Join(err, fmt.Errorf("failed to hash key for destination entity: %s", relationship.Destination.Type))
 	}
 
-	sourceUpdated := c.entities.SetWithTTL(sourceHash, relationship.Source, itemCost, c.entityTtl)
+	sourceUpdated := c.entities.SetWithTTL(
+		sourceHash,
+		storedEntity{
+			Type: relationship.Source.Type,
+			IDs:  relationship.Source.IDs,
+		},
+		itemCost, c.entityTtl)
+
 	if !sourceUpdated {
 		return fmt.Errorf("failed to update source entity: %s", relationship.Source.Type)
 	}
 
-	destUpdated := c.entities.SetWithTTL(destHash, relationship.Destination, itemCost, c.entityTtl)
+	destUpdated := c.entities.SetWithTTL(destHash, storedEntity{
+		Type: relationship.Destination.Type,
+		IDs:  relationship.Destination.IDs,
+	}, itemCost, c.entityTtl)
 	if !destUpdated {
 		return fmt.Errorf("failed to update destination entity: %s", relationship.Destination.Type)
 	}
@@ -243,28 +257,4 @@ func (c *internalStorage) update(relationship *internal.Relationship) error {
 		return fmt.Errorf("failed to update relationship: %s", relationship.Type)
 	}
 	return nil
-}
-
-// buildKey constructs a unique key for the entity referenced in the relationship.
-// The key is composition of entity type and its ID attributes.
-func buildKey(entity internal.RelationshipEntity) (string, error) {
-	var buf bytes.Buffer
-	enc := json.NewEncoder(&buf)
-	err := enc.Encode(struct {
-		Type string
-		IDs  map[string]any
-	}{
-		entity.Type,
-		entity.IDs.AsRaw(),
-	})
-	if err != nil {
-		return "", fmt.Errorf("failed to encode entity: %w", err)
-	}
-
-	h := fnv.New64a()
-	_, err = h.Write(buf.Bytes())
-	if err != nil {
-		return "", fmt.Errorf("failed to write entity bytes to hash: %w", err)
-	}
-	return fmt.Sprintf("%x", h.Sum64()), nil
 }

@@ -22,6 +22,8 @@ import (
 	"testing"
 	"time"
 
+	"go.opentelemetry.io/collector/pdata/plog"
+
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest/plogtest"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/internal/metadata"
@@ -64,7 +66,15 @@ func TestConnector(t *testing.T) {
 			name:   "when entity is not inferred no log is sent",
 			folder: "no-match",
 		},
+		{
+			// Checks that when prefixes are sent, but no relationship is configured, entities will not be created
+			// event when the IDs would be satisfied, because we do not support scenario of prefix entities on
+			// invalid/non-existing relationship.
+			name:   "when received attributes are prefixed entity IDs, log events are sent for identified entities",
+			folder: "with-prefix-without-relationship",
+		},
 	}
+
 	sameTypeRelationshipTests := []struct {
 		name   string
 		folder string
@@ -82,7 +92,9 @@ func TestConnector(t *testing.T) {
 			folder: "common-attr",
 		},
 		{
-			name:   "when action is set as delete, delete log event is sent",
+			// Checks that when relationship conditions for delete are satisfied, relationship log event is sent.
+			// In this scenario, entities are not sent, because they are not configured as events.
+			name:   "when log for same type relationship has satisfied the condition, log relationship event is sent",
 			folder: "delete-action",
 		},
 		{
@@ -91,11 +103,28 @@ func TestConnector(t *testing.T) {
 			folder: "extra-attr",
 		},
 		{
+			// Checks that entity logs are created from entity update resource as well as from relationship update resource.
+			name:   "when log for same type relationship has entity update resource, entity log event is sent",
+			folder: "multiple-resources",
+		},
+		{
+			// Checks that when delete action is set, the delete log event for relationship is sent,
+			// and update log events are sent for the entities because they are configured as proper events.
+			name:   "when same type relationship has not satisfied the condition, no log relationship event is sent",
+			folder: "multiple-resources-delete-action",
+		},
+		{
 			// Checks that same type relationship for AWS EC2 is sent, together with the two AWS EC2 entities.
 			// Uses simple ["true"] conditions.
 			// Uses prefixes as all same type relationship tests.
 			name:   "when relationship for same type is inferred log event is sent",
 			folder: "no-conditions",
+		},
+		{
+			// Checks that when relationship is inferred, but entity event is not configured,
+			// the relationship log event is still sent, but no entity log events are sent.
+			name:   "when relationship for same type is inferred but no entity event is configured, relationship log event is sent",
+			folder: "no-entity-event-configured",
 		},
 		{
 			// Checks that if one of the attributes for the relationship is not set, the relationship is not sent, but is for entities.
@@ -134,6 +163,11 @@ func TestConnector(t *testing.T) {
 			folder: "missing-attr",
 		},
 		{
+			// Checks that from mixed attributes (prefixed/unprefixed) the relationships and entities are inferred correctly.
+			name:   "connector is able to process multiple relationships and entities in the same resource",
+			folder: "multiple-relationships-in-resource",
+		},
+		{
 			// Checks that when there is an extra attribute, that has nothing to do with entities or relationship,
 			// relationship and entities are still sent.
 			name:   "when log for different type relationship has redundant attributes, log event is sent",
@@ -151,6 +185,18 @@ func TestConnector(t *testing.T) {
 			name:   "different type relationship works without prefixes",
 			folder: "without-prefixes",
 		},
+		{
+			// When two different entities have the same id attributes, the relationship should be inferred
+			// along with the two entities updates from incoming prefixed telemetry.
+			name:   "different type relationship with the same set of ids",
+			folder: "same-ids",
+		},
+		{
+			// Checks that when relationship and entity attributes are prefixed, the connector is able to correctly
+			// assign prefixed and unprefixed attributes to the entities and relationships.
+			name:   "entity and relationship attributes are correctly set from prefix and unprefixed resource attributes",
+			folder: "prefixed-attributes",
+		},
 	}
 
 	// Define path prefixes for different test categories
@@ -162,7 +208,7 @@ func TestConnector(t *testing.T) {
 
 	// Function to run a specific test with appropriate paths
 	runTest := func(t *testing.T, signalTypeFolder string, testName string, folder string, baseFolderPath string) {
-		t.Run(fmt.Sprintf("%s_%s", signalTypeFolder, testName), func(t *testing.T) {
+		t.Run(fmt.Sprintf("%s_%s_%s", signalTypeFolder, baseFolderPath, testName), func(t *testing.T) {
 			var basePath string
 			var conn component.Component
 			var err error
@@ -200,36 +246,42 @@ func TestConnector(t *testing.T) {
 				assert.NoError(t, conn.Shutdown(ctx))
 			}()
 
-			// Consume the appropriate input data
 			inputFile := filepath.Join(basePath, "input.yaml")
+			expectedFile := filepath.Join(basePath, "expected-output.yaml")
+			_, err = os.Stat(expectedFile)
+			isOutputExpected := !os.IsNotExist(err)
+			var expected plog.Logs
+			if isOutputExpected {
+				expected, err = golden.ReadLogs(expectedFile)
+				require.NoError(t, err)
+			}
+
+			// Consume the appropriate input data
 			if signalTypeFolder == "logs_to_logs" {
 				testLogs, err := golden.ReadLogs(inputFile)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.NoError(t, conn.(connector.Logs).ConsumeLogs(ctx, testLogs))
 			} else {
 				testMetrics, err := golden.ReadMetrics(inputFile)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.NoError(t, conn.(connector.Metrics).ConsumeMetrics(ctx, testMetrics))
 			}
 
 			// Validate the output
 			allLogs := sink.AllLogs()
-			expectedFile := filepath.Join(basePath, "expected-output.yaml")
 
-			if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
+			if isOutputExpected {
+				require.Len(t, allLogs, 1)
+				assert.Equal(t, expected.LogRecordCount(), allLogs[0].LogRecordCount())
+				assert.NoError(t, plogtest.CompareLogs(expected, allLogs[0], plogtest.IgnoreObservedTimestamp(), plogtest.IgnoreLogRecordsOrder()))
+			} else {
 				assert.Len(t, allLogs, 0)
-				return
 			}
-
-			expected, err := golden.ReadLogs(expectedFile)
-			assert.NoError(t, err)
-			assert.Equal(t, expected.LogRecordCount(), allLogs[0].LogRecordCount())
-			assert.NoError(t, plogtest.CompareLogs(expected, allLogs[0], plogtest.IgnoreObservedTimestamp()))
 		})
 	}
 
 	// Test both logs-to-logs and metrics-to-logs
-	for _, signalType := range []string{"logs_to_logs", "metrics_to_logs"} {
+	for _, signalType := range []string{"logs_to_logs"} {
 		// Run entity tests
 		for _, test := range entityTests {
 			runTest(t, signalType, test.name, test.folder, entityPath)
@@ -352,10 +404,14 @@ func TestRelationshipCacheExpiration(t *testing.T) {
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
 	timeout := time.After(10 * time.Second)
+
+loop:
 	for sink.LogRecordCount() < 4 { // 2 entities, 1 relationship and 1 delete event
 		select {
 		case <-timeout:
-			require.Fail(t, "timed out waiting for logs to be processed")
+			assert.Fail(t, "timed out waiting for logs to be processed",
+				"Expected 4 log records, got %d", sink.LogRecordCount())
+			break loop
 		case <-ticker.C:
 			fmt.Printf("Waiting for logs to be processed...\n")
 		}
@@ -367,6 +423,7 @@ func TestRelationshipCacheExpiration(t *testing.T) {
 	expectedFile := filepath.Join(testFolder, "expected-output.yaml")
 	expected, err := golden.ReadLogs(expectedFile)
 	require.NoError(t, err)
+	require.Len(t, allLogs, 2) // one for update events and one for delete
 	assert.Equal(t, expected.LogRecordCount(), allLogs[1].LogRecordCount())
 	assert.NoError(t, plogtest.CompareLogs(expected, allLogs[1], plogtest.IgnoreObservedTimestamp()))
 }

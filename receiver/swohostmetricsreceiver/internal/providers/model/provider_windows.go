@@ -18,12 +18,9 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/wmi"
-
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/synchronization"
-
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/wmi"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
-
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/synchronization"
 	"go.uber.org/zap"
 )
 

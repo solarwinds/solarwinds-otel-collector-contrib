@@ -1,0 +1,24 @@
+source_prefix: "src."
+destination_prefix: "dst."
+schema:
+  entities:
+    - entity: "Snowflake"
+      id: ["receiver.id", "receiver.name"]
+      attributes: ["attr1"]
+    - entity: "DockerDaemon"
+      id: ["receiver.id", "receiver.name"]
+      attributes: ["attr2"]
+  events:
+    entities:
+      - entity: "Snowflake"
+        context: "log"
+        action: "update"
+      - entity: "DockerDaemon"
+        context: "log"
+        action: "update"
+    relationships:
+      - type: "Has"
+        source_entity: "Snowflake"
+        destination_entity: "DockerDaemon"
+        context: "log"
+        action: "update"

@@ -1,0 +1,46 @@
+resourceLogs:
+  - resource: {}
+    scopeLogs:
+      - logRecords:
+          - attributes:
+              - key: otel.entity_relationship.source_entity.id
+                value:
+                  kvlistValue:
+                    values:
+                      - key: id
+                        value:
+                          stringValue: source-entity-id
+                      - key: name
+                        value:
+                          stringValue: source-entity-name
+              - key: otel.entity_relationship.destination_entity.id
+                value:
+                  kvlistValue:
+                    values:
+                      - key: id
+                        value:
+                          stringValue: dst-entity-id
+                      - key: name
+                        value:
+                          stringValue: dst-entity-name
+              - key: otel.entity_relationship.type
+                value:
+                  stringValue: TestRelationshipType
+              - key: otel.entity_relationship.source_entity.type
+                value:
+                  stringValue: TestEntityType
+              - key: otel.entity_relationship.destination_entity.type
+                value:
+                  stringValue: TestEntityType
+              - key: otel.entity.event.type
+                value:
+                  stringValue: entity_relationship_state
+            body: {}
+            observedTimeUnixNano: "1747298584871637000"
+            spanId: ""
+            traceId: ""
+        scope:
+          attributes:
+            - key: otel.entity.event_as_log
+              value:
+                boolValue: true

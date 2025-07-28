@@ -1,0 +1,32 @@
+source_prefix: "source."
+destination_prefix: "destination."
+schema:
+  entities:
+    - entity: "Snowflake"
+      id: ["receiver.id"]
+    - entity: "Service"
+      id: ["service.id"]
+    - entity: "KubernetesPod"
+      id: ["k8s.pod.id"]
+  events:
+    relationships:
+      - type: "Has"
+        source_entity: "Snowflake"
+        destination_entity: "Service"
+        context: "log"
+        action: "update"
+      - type: "MemberOf"
+        source_entity: "KubernetesPod"
+        destination_entity: "Snowflake"
+        context: "log"
+        action: "update"
+    entities:
+      - entity: "Snowflake"
+        context: "log"
+        action: "update"
+      - entity: "Service"
+        context: "log"
+        action: "update"
+      - entity: "KubernetesPod"
+        context: "log"
+        action: "update"

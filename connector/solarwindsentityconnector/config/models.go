@@ -14,10 +14,42 @@
 
 package config
 
+import (
+	"errors"
+	"fmt"
+
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottlmetric"
+	"go.opentelemetry.io/collector/confmap/xconfmap"
+)
+
+const (
+	// Event action types
+	EventUpdateAction = "update"
+	EventDeleteAction = "delete"
+)
+
 type Entity struct {
-	Type       string   `mapstructure:"entity"`
+	Entity     string   `mapstructure:"entity"`
 	IDs        []string `mapstructure:"id"`
 	Attributes []string `mapstructure:"attributes"`
+}
+
+// By implementing the xconfmap.Validator, we ensure it's validated by the collector automatically
+var _ xconfmap.Validator = (*Entity)(nil)
+
+func (e *Entity) Validate() error {
+	var errs error
+
+	if e.Entity == "" {
+		errs = errors.Join(errs, errors.New("the entity is mandatory"))
+	}
+
+	if len(e.IDs) == 0 {
+		errs = errors.Join(errs, errors.New("the id is mandatory and must contain at least 1 item"))
+	}
+
+	return errs
 }
 
 type Events struct {
@@ -25,25 +57,74 @@ type Events struct {
 	Entities      []EntityEvent       `mapstructure:"entities"`
 }
 
-type Relationship struct {
-	Type        string `mapstructure:"type"`
-	Source      string `mapstructure:"source_entity"`
-	Destination string `mapstructure:"destination_entity"`
+type Event struct {
+	Action     string   `mapstructure:"action"`
+	Context    string   `mapstructure:"context"`
+	Conditions []string `mapstructure:"conditions"`
+}
+
+func (e *Event) validateActionAndContext() error {
+	var errs error
+
+	if e.Action == "" {
+		errs = errors.Join(errs, errors.New("the action is mandatory"))
+	} else if e.Action != EventUpdateAction && e.Action != EventDeleteAction {
+		errs = errors.Join(errs, fmt.Errorf("the action must be '%s' or '%s', got '%s'",
+			EventUpdateAction, EventDeleteAction, e.Action))
+	}
+
+	if e.Context == "" {
+		errs = errors.Join(errs, errors.New("the context is mandatory"))
+	} else if e.Context != ottllog.ContextName && e.Context != ottlmetric.ContextName {
+		errs = errors.Join(errs, fmt.Errorf("the context must be '%s' or '%s', got '%s'",
+			ottllog.ContextName, ottlmetric.ContextName, e.Context))
+	}
+	return errs
 }
 
 type RelationshipEvent struct {
+	Event       `mapstructure:",squash"`
 	Type        string   `mapstructure:"type"`
 	Source      string   `mapstructure:"source_entity"`
 	Destination string   `mapstructure:"destination_entity"`
 	Attributes  []string `mapstructure:"attributes"`
-	Conditions  []string `mapstructure:"conditions"`
-	Context     string   `mapstructure:"context"`
-	Action      string   `mapstructure:"action"`
+}
+
+// By implementing the xconfmap.Validator, we ensure it's validated by the collector automatically
+var _ xconfmap.Validator = (*RelationshipEvent)(nil)
+
+func (e *RelationshipEvent) Validate() error {
+	errs := e.validateActionAndContext()
+
+	if e.Type == "" {
+		errs = errors.Join(errs, errors.New("the type is mandatory"))
+	}
+
+	if e.Source == "" {
+		errs = errors.Join(errs, errors.New("the source_entity is mandatory"))
+	}
+
+	if e.Destination == "" {
+		errs = errors.Join(errs, errors.New("the destination_entity is mandatory"))
+	}
+
+	return errs
 }
 
 type EntityEvent struct {
-	Context    string   `mapstructure:"context"`
-	Conditions []string `mapstructure:"conditions"`
-	Type       string   `mapstructure:"type"`
-	Action     string   `mapstructure:"action"`
+	Event  `mapstructure:",squash"`
+	Entity string `mapstructure:"entity"`
+}
+
+// By implementing the xconfmap.Validator, we ensure it's validated by the collector automatically
+var _ xconfmap.Validator = (*EntityEvent)(nil)
+
+func (e *EntityEvent) Validate() error {
+	errs := e.validateActionAndContext()
+
+	if e.Entity == "" {
+		errs = errors.Join(errs, errors.New("the entity is mandatory"))
+	}
+
+	return errs
 }

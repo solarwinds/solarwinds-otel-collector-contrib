@@ -17,7 +17,7 @@ package installedsoftware
 import (
 	"fmt"
 
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/registry"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/registry"
 	"go.uber.org/zap"
 )
 
