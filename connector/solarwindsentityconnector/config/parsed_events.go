@@ -35,15 +35,13 @@ type EventsGroup[C any] struct {
 	Parser        *ottl.Parser[C]
 }
 
-type ParsedRelationshipEvent[C any] struct {
-	Definition   *RelationshipEvent
+type ParsedEvent[T any, C any] struct {
+	Definition   *T
 	ConditionSeq ottl.ConditionSequence[C]
 }
 
-type ParsedEntityEvent[C any] struct {
-	Definition   *EntityEvent
-	ConditionSeq ottl.ConditionSequence[C]
-}
+type ParsedRelationshipEvent[C any] = ParsedEvent[RelationshipEvent, C]
+type ParsedEntityEvent[C any] = ParsedEvent[EntityEvent, C]
 
 // createParsedEvents initializes and returns a ParsedEvents structure containing parsed entity and relationship events.
 // It exist to patse ottl conditions for entity and relationship events at the time of creation, allowing for efficient evaluation later.
