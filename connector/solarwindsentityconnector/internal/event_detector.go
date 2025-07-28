@@ -22,6 +22,33 @@ import (
 	"go.uber.org/zap"
 )
 
+// ConfiguredEvent represents a unified interface for both entity and relationship events.
+// This allows the EventDetector to work with a single array of events instead of
+// maintaining separate arrays for entities and relationships.
+type ConfiguredEvent interface {
+	IsEntityEvent() bool
+	GetEntityEvent() *config.EntityEvent
+	GetRelationshipEvent() *config.RelationshipEvent
+}
+
+// EntityConfiguredEvent wraps an EntityEvent for the unified event interface
+type EntityConfiguredEvent struct {
+	Event *config.EntityEvent
+}
+
+func (e EntityConfiguredEvent) IsEntityEvent() bool                             { return true }
+func (e EntityConfiguredEvent) GetEntityEvent() *config.EntityEvent             { return e.Event }
+func (e EntityConfiguredEvent) GetRelationshipEvent() *config.RelationshipEvent { return nil }
+
+// RelationshipConfiguredEvent wraps a RelationshipEvent for the unified event interface
+type RelationshipConfiguredEvent struct {
+	Event *config.RelationshipEvent
+}
+
+func (r RelationshipConfiguredEvent) IsEntityEvent() bool                             { return false }
+func (r RelationshipConfiguredEvent) GetEntityEvent() *config.EntityEvent             { return nil }
+func (r RelationshipConfiguredEvent) GetRelationshipEvent() *config.RelationshipEvent { return r.Event }
+
 type EventDetector[T any] struct {
 	attributeMapper AttributeMapper
 	events          config.EventsGroup[T]
@@ -43,35 +70,47 @@ func NewEventDetector[T any](
 }
 
 func (e *EventDetector[T]) Detect(ctx context.Context, resourceAttrs Attributes, transformCtx T) ([]Event, error) {
-	ee, re, err := e.processEvents(ctx, transformCtx)
+	configuredEvents, err := e.processEvents(ctx, transformCtx)
 	if err != nil {
 		return nil, err
 	}
-	return e.collectEvents(resourceAttrs, ee, re)
+	return e.collectEvents(resourceAttrs, configuredEvents)
 }
 
 // collectEvents processes the attributes and configured events to create a list of detected events.
-// First, it gathers entity events and relationship events with their associated entities.
-// Then, it validates the relationship entities against the configured entity events to ensure that only
+// First, it separates entity and relationship events from the unified array.
+// Then, it gathers entity events and relationship events with their associated entities.
+// Finally, it validates the relationship entities against the configured entity events to ensure that only
 // valid and unique entity events are included.
 func (e *EventDetector[T]) collectEvents(
 	attrs Attributes,
-	configuredEvents []*config.EntityEvent,
-	configuredRelationships []*config.RelationshipEvent,
+	configuredEvents []ConfiguredEvent,
 ) ([]Event, error) {
-	entityEvents := e.getEntityEvents(attrs, configuredEvents)
-	relationshipEvents := e.getRelationshipEvents(attrs, configuredRelationships)
-	validRelationshipEntities := e.validateEntityEvents(configuredEvents, entityEvents, relationshipEvents)
+	// Separate entity and relationship events
+	var entityEvents []*config.EntityEvent
+	var relationshipEvents []*config.RelationshipEvent
 
-	allEvents := make([]Event, 0, len(relationshipEvents)+len(entityEvents)+len(validRelationshipEntities))
+	for _, event := range configuredEvents {
+		if event.IsEntityEvent() {
+			entityEvents = append(entityEvents, event.GetEntityEvent())
+		} else {
+			relationshipEvents = append(relationshipEvents, event.GetRelationshipEvent())
+		}
+	}
+
+	detectedEntityEvents := e.getEntityEvents(attrs, entityEvents)
+	detectedRelationshipEvents := e.getRelationshipEvents(attrs, relationshipEvents)
+	validRelationshipEntities := e.validateEntityEvents(entityEvents, detectedEntityEvents, detectedRelationshipEvents)
+
+	allEvents := make([]Event, 0, len(detectedRelationshipEvents)+len(detectedEntityEvents)+len(validRelationshipEntities))
 
 	// append all entity events detected from entity events
-	for _, entity := range entityEvents {
+	for _, entity := range detectedEntityEvents {
 		allEvents = append(allEvents, entity)
 	}
 
 	// append all relationship events
-	for _, relationshipEvent := range relationshipEvents {
+	for _, relationshipEvent := range detectedRelationshipEvents {
 		allEvents = append(allEvents, relationshipEvent)
 	}
 
@@ -195,39 +234,37 @@ func (e *EventDetector[T]) getRelationshipEvents(attrs Attributes, configuredRel
 	return relationshipEvents
 }
 
-// ProcessEvents evaluates the conditions for entityConfigs and relationships events.
-// If the conditions are met, it appends the corresponding entity or relationship update event to the event builder.
+// processEvents evaluates the conditions for entity and relationship events.
+// If the conditions are met, it appends the corresponding event to a unified array.
 // Multiple condition items are evaluated using OR logic.
 func (e *EventDetector[T]) processEvents(
 	ctx context.Context,
-	tc T) ([]*config.EntityEvent, []*config.RelationshipEvent, error) {
+	tc T) ([]ConfiguredEvent, error) {
 
-	// will be reworked to channel
-	entityEvents := make([]*config.EntityEvent, 0)
-	relationshipEvents := make([]*config.RelationshipEvent, 0)
+	events := make([]ConfiguredEvent, 0, len(e.events.Entities)+len(e.events.Relationships))
 
 	for _, entityEvent := range e.events.Entities {
 		ok, err := entityEvent.ConditionSeq.Eval(ctx, tc)
 		if err != nil {
-			return []*config.EntityEvent{}, []*config.RelationshipEvent{}, err
+			return nil, err
 		}
 
 		if ok {
-			entityEvents = append(entityEvents, entityEvent.Definition)
+			events = append(events, EntityConfiguredEvent{Event: entityEvent.Definition})
 		}
 	}
 
 	for _, relationshipEvent := range e.events.Relationships {
 		ok, err := relationshipEvent.ConditionSeq.Eval(ctx, tc)
 		if err != nil {
-			return []*config.EntityEvent{}, []*config.RelationshipEvent{}, err
+			return nil, err
 		}
 
 		if ok {
-			relationshipEvents = append(relationshipEvents, relationshipEvent.Definition)
+			events = append(events, RelationshipConfiguredEvent{Event: relationshipEvent.Definition})
 		}
 	}
-	return entityEvents, relationshipEvents, nil
+	return events, nil
 }
 
 func createRelationship(relationship *config.RelationshipEvent, source, dest *Entity, attrs Attributes) (Relationship, error) {
