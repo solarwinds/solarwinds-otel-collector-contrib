@@ -86,7 +86,7 @@ loop:
 		}
 	}
 
-	dp.logger.Debug(fmt.Sprintf("Domain provider result: %+v", domain))
+	dp.logger.Debug(fmt.Sprintf("domain provider result: %+v", domain))
 	wg.Wait()
 	ch <- domain
 }

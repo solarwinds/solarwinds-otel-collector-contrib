@@ -159,7 +159,7 @@ func (s *manager) Scrape(
 	now := time.Now()
 	if !s.featureManager.IsReady(now) {
 		s.logger.Sugar().Debugf(
-			"Scraping of '%s' skipped for processing.",
+			"scraping of '%s' skipped for processing",
 			s.scraperType,
 		)
 		return pmetric.NewMetrics(), nil
@@ -184,7 +184,7 @@ func (s *manager) Scrape(
 	s.featureManager.UpdateLastProcessedTime(now)
 
 	s.logger.Sugar().Debugf(
-		"Scraping of '%s' finished with '%d' metrics and '%d' data points",
+		"scraping of '%s' finished with '%d' metrics and '%d' data points",
 		s.scraperType,
 		metrics.MetricCount(),
 		metrics.DataPointCount(),

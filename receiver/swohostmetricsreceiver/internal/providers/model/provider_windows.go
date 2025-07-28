@@ -104,7 +104,7 @@ loop:
 		}
 	}
 
-	p.logger.Debug(fmt.Sprintf("Model provider result: %+v", model))
+	p.logger.Debug(fmt.Sprintf("model provider result: %+v", model))
 
 	ch <- model
 }

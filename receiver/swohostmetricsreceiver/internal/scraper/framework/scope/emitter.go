@@ -233,7 +233,7 @@ func (s *emitter) Init() error {
 	}
 
 	s.logger.Sugar().Debugf(
-		"Initialization of scope emitter '%s' succeeded",
+		"initialization of scope emitter '%s' succeeded",
 		s.scopeName)
 	return nil
 }

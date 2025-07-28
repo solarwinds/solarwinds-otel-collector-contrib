@@ -196,7 +196,7 @@ func mergeAttributes(base shared.Attributes, increment shared.Attributes) {
 
 func calculateUptime(uptime uptimeprovider.Uptime, logger *zap.Logger) (int64, error) {
 	if uptime.Error != nil {
-		message := fmt.Sprintf("Failed to receive uptime from %s emitter", MetricName)
+		message := fmt.Sprintf("failed to receive uptime from %s emitter", MetricName)
 		logger.Error(message, zap.Error(uptime.Error))
 		return 0, fmt.Errorf("%s: %w", message, uptime.Error)
 	}

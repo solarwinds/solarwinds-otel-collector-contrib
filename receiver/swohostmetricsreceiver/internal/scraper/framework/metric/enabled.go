@@ -64,7 +64,7 @@ func GetEnabledMetrics(
 
 	if len(em.Metrics) == 0 {
 		message := fmt.Sprintf(
-			"no enabled metrics available for scpraper '%s'",
+			"no enabled metrics available for scraper '%s'",
 			scraperName,
 		)
 		logger.Error(message)

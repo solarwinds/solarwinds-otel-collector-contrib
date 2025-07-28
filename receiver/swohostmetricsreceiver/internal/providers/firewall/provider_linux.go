@@ -34,7 +34,7 @@ func (p *provider) Provide() <-chan Container {
 	ch := make(chan Container)
 	go func() {
 		defer close(ch)
-		p.logger.Warn("This provider is not supported on Linux")
+		p.logger.Warn("this provider is not supported on Linux")
 	}()
 	return ch
 }

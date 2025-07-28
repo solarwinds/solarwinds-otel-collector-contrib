@@ -55,7 +55,7 @@ func (lup *provider) Provide() <-chan Data {
 		if err == nil {
 			result.Users = getUsers(stdout)
 		}
-		lup.logger.Debug(fmt.Sprintf("LoggedUsers provider result: %+v", result))
+		lup.logger.Debug(fmt.Sprintf("loggedusers provider result: %+v", result))
 		ch <- result
 	}()
 	return ch

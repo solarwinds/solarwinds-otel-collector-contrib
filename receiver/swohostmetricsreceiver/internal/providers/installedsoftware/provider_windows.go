@@ -75,7 +75,7 @@ func createRegistryReaders(logger *zap.Logger) []registry.Reader {
 func (provider *windowsProvider) GetSoftware() ([]InstalledSoftware, error) {
 	// From initialization there were no registred registry readers.
 	if len(provider.registryReaders) == 0 {
-		m := "no register reader registred"
+		m := "no register reader registered"
 		provider.logger.Error(m)
 		return make([]InstalledSoftware, 0), fmt.Errorf("%s", m)
 	}
@@ -103,7 +103,7 @@ func processRegistryReader(registryReader registry.Reader, logger *zap.Logger) (
 	for _, swKeyName := range uninstallKeys {
 		registryValues, err := registryReader.GetKeyValues(swKeyName, []string{"DisplayName", "DisplayVersion", "Publisher", "InstallDate"})
 		if err != nil {
-			message := fmt.Sprintf("Unable to read from the %s registry key", swKeyName)
+			message := fmt.Sprintf("unable to read from the %s registry key", swKeyName)
 			logger.Warn(message, zap.Error(err))
 			continue
 		}

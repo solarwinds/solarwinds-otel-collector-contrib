@@ -32,7 +32,7 @@ func ProcessCommand(cle CommandLineExecutor, command string, logger *zap.Logger)
 		return stdout, err
 	}
 
-	logger.Debug(fmt.Sprintf("Command %s succeeded with result %+v", command, stdout))
+	logger.Debug(fmt.Sprintf("command %s succeeded with result %+v", command, stdout))
 	return stdout, nil
 }
 
@@ -40,7 +40,7 @@ func ProcessCommand(cle CommandLineExecutor, command string, logger *zap.Logger)
 func logExecutionError(command, stdout, stderr string, err error, logger *zap.Logger) {
 	logger.Error(
 		fmt.Sprintf(
-			"Command %s failed.",
+			"command %s failed",
 			command,
 		),
 		zap.String("command", command),
