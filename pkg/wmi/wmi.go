@@ -38,7 +38,7 @@ func QueryResult[TResult interface{}](executor Executor, logger *zap.Logger) (TR
 	result, err := executor.Query(query, &model)
 	if err != nil {
 		var nilResult TResult
-		logger.Error("wmi query failed.", zap.Error(err))
+		logger.Error("wmi query failed", zap.Error(err))
 		return nilResult, err
 	}
 
