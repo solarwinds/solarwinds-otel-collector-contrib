@@ -87,7 +87,7 @@ func Test_Provide_FailsAndProvidesEmptyObjectAndChannelIsClosedAfterDelivery(t *
 	err := fmt.Errorf("processor error")
 	expectedModel := Container{
 		Processors: nil,
-		Error:      err,
+		Error:      fmt.Errorf("wmi query failed: %w", err),
 	}
 
 	sut := provider{
