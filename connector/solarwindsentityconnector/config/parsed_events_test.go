@@ -73,10 +73,6 @@ func TestCreateParsedEvents(t *testing.T) {
 	parsedEvents, err := createParsedEvents(schema, settings)
 	assert.NoError(t, err)
 
-	// Test that parsers are created
-	assert.NotNil(t, parsedEvents.LogEvents.Parser)
-	assert.NotNil(t, parsedEvents.MetricEvents.Parser)
-
 	// Test log events
 	assert.Len(t, parsedEvents.LogEvents.Entities, 1)
 	assert.Equal(t, "test-entity", parsedEvents.LogEvents.Entities[0].Definition.Entity)
@@ -147,9 +143,6 @@ func TestCreateParsedEventsWithConverters(t *testing.T) {
 	parsedEvents, err := createParsedEvents(schema, settings)
 	assert.NoError(t, err)
 
-	assert.NotNil(t, parsedEvents.LogEvents.Parser)
-	assert.NotNil(t, parsedEvents.MetricEvents.Parser)
-
 	// Test log events
 	assert.Len(t, parsedEvents.LogEvents.Entities, 1)
 	assert.Equal(t, "test-entity", parsedEvents.LogEvents.Entities[0].Definition.Entity)
@@ -200,15 +193,7 @@ func TestCreateParsedEventsUnknownContext(t *testing.T) {
 				{
 					Entity: "test-entity",
 					Event: Event{
-						Context:    "unknown-context", // This should be ignored
-						Action:     "update",
-						Conditions: []string{"true"},
-					},
-				},
-				{
-					Entity: "test-entity-log",
-					Event: Event{
-						Context:    "log",
+						Context:    "unknown-context",
 						Action:     "update",
 						Conditions: []string{"true"},
 					},
@@ -217,13 +202,9 @@ func TestCreateParsedEventsUnknownContext(t *testing.T) {
 		},
 	}
 
-	parsedEvents, err := createParsedEvents(schema, settings)
-	require.NoError(t, err)
-
-	// Only log event should be parsed, unknown context should be ignored
-	assert.Len(t, parsedEvents.LogEvents.Entities, 1)
-	assert.Len(t, parsedEvents.MetricEvents.Entities, 0)
-	assert.Equal(t, "test-entity-log", parsedEvents.LogEvents.Entities[0].Definition.Entity)
+	_, err := createParsedEvents(schema, settings)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "unsupported context: unknown-context")
 }
 
 func TestCreateParsedEventsWithInvalidConditions(t *testing.T) {
@@ -261,8 +242,6 @@ func TestCreateParsedEventsEmptySchema(t *testing.T) {
 	parsedEvents, err := createParsedEvents(schema, settings)
 	require.NoError(t, err)
 
-	assert.NotNil(t, parsedEvents.LogEvents.Parser)
-	assert.NotNil(t, parsedEvents.MetricEvents.Parser)
 	assert.Len(t, parsedEvents.LogEvents.Entities, 0)
 	assert.Len(t, parsedEvents.LogEvents.Relationships, 0)
 	assert.Len(t, parsedEvents.MetricEvents.Entities, 0)
