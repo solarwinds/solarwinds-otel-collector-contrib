@@ -45,7 +45,7 @@ func createScraperRuntime(
 
 	// No schedule scope emitters.
 	if len(ses) == 0 {
-		return nil, fmt.Errorf("no scheduled scope emitters: %s", scraperDescriptor.Type)
+		return nil, fmt.Errorf("no scheduled scope emitters for scraper '%s'", scraperDescriptor.Type)
 	}
 
 	sr := new(Runtime)

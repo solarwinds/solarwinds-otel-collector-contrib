@@ -368,7 +368,7 @@ func (s *manager) checkRuntimeReadiness(
 	pointOfOrigin string,
 ) error {
 	if s.scraperRuntime == nil {
-		return fmt.Errorf("scraper manager at '%s' for scraper '%s' is not ready with runtime: %w", pointOfOrigin, s.scraperType)
+		return fmt.Errorf("scraper manager at '%s' for scraper '%s' is not ready with runtime", pointOfOrigin, s.scraperType)
 	}
 	return nil
 }
