@@ -28,6 +28,10 @@ updates:
       time: "03:30"
     allow:
       - dependency-type: "direct"
+    # these are to be handled by opentelemtery bumps, and releases
+    ignore:
+      - dependency-name: "*opentelemetry*"
+      - dependency-name: "*solarwinds-otel-collector*"
     groups:
       components-security:
         applies-to: security-updates
