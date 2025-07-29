@@ -17,7 +17,8 @@ type EntityParsedEvent[C any] struct {
 	ConditionSeq ottl.ConditionSequence[C]
 }
 
-// Interface implementations for EntityParsedEvent
+var _ ParsedEventInterface[any] = (*EntityParsedEvent[any])(nil)
+
 func (e EntityParsedEvent[C]) IsEntityEvent() bool                        { return true }
 func (e EntityParsedEvent[C]) GetEntityEvent() *EntityEvent               { return e.Definition }
 func (e EntityParsedEvent[C]) GetRelationshipEvent() *RelationshipEvent   { return nil }
@@ -29,7 +30,8 @@ type RelationshipParsedEvent[C any] struct {
 	ConditionSeq ottl.ConditionSequence[C]
 }
 
-// Interface implementations for RelationshipParsedEvent
+var _ ParsedEventInterface[any] = (*RelationshipParsedEvent[any])(nil)
+
 func (r RelationshipParsedEvent[C]) IsEntityEvent() bool                      { return false }
 func (r RelationshipParsedEvent[C]) GetEntityEvent() *EntityEvent             { return nil }
 func (r RelationshipParsedEvent[C]) GetRelationshipEvent() *RelationshipEvent { return r.Definition }
