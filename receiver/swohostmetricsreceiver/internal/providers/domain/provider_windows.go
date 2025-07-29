@@ -42,7 +42,7 @@ func (dp *provider) Provide() <-chan Domain {
 	ch := make(chan Domain)
 	go func() {
 		defer close(ch)
-		result, err := wmi.QuerySingleResult[Win32_ComputerSystem](dp.wmi, dp.logger)
+		result, err := wmi.QuerySingleResult[Win32_ComputerSystem](dp.wmi)
 		if err == nil {
 			ch <- Domain{
 				Domain:     result.Domain,

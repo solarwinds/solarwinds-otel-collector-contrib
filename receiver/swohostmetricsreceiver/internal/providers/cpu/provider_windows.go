@@ -41,7 +41,7 @@ func (p *provider) Provide() <-chan Container {
 	ch := make(chan Container)
 	go func() {
 		defer close(ch)
-		results, err := wmi.QueryResult[[]Win32_Processor](p.wmi, p.logger)
+		results, err := wmi.QueryResult[[]Win32_Processor](p.wmi)
 		if err != nil {
 			ch <- Container{Error: err}
 			return

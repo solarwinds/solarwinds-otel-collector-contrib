@@ -16,8 +16,7 @@ package wmi
 
 import (
 	"errors"
-
-	"go.uber.org/zap"
+	"fmt"
 )
 
 var (
@@ -32,14 +31,13 @@ type Executor interface {
 }
 
 // QueryResult utilizes executor to get TResult.
-func QueryResult[TResult interface{}](executor Executor, logger *zap.Logger) (TResult, error) {
+func QueryResult[TResult interface{}](executor Executor) (TResult, error) {
 	var model TResult
 	query := executor.CreateQuery(&model, "")
 	result, err := executor.Query(query, &model)
 	if err != nil {
 		var nilResult TResult
-		logger.Error("wmi query failed", zap.Error(err))
-		return nilResult, err
+		return nilResult, fmt.Errorf("wmi query failed: %w", err)
 	}
 
 	return *result.(*TResult), err
@@ -48,25 +46,22 @@ func QueryResult[TResult interface{}](executor Executor, logger *zap.Logger) (TR
 // QuerySingleResult utilizes executor to get single result of TResult.
 // If not exactly single result is returned from the query, error with
 // nil result is returned.
-func QuerySingleResult[TResult interface{}](executor Executor, logger *zap.Logger) (TResult, error) {
+func QuerySingleResult[TResult interface{}](executor Executor) (TResult, error) {
 	var nilResult TResult
-	res, err := QueryResult[[]TResult](executor, logger)
+	res, err := QueryResult[[]TResult](executor)
 	if err != nil {
 		return nilResult, err
 	}
 
 	if res == nil {
-		logger.Error(ErrWmiNoResult.Error())
 		return nilResult, ErrWmiNoResult
 	}
 
 	if len(res) == 0 {
-		logger.Error(ErrWmiEmptyResult.Error())
 		return nilResult, ErrWmiEmptyResult
 	}
 
 	if len(res) > 1 {
-		logger.Error(ErrWmiTooManyResults.Error())
 		return nilResult, ErrWmiTooManyResults
 	}
 

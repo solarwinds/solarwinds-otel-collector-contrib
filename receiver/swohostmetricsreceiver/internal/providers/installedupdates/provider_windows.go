@@ -57,7 +57,7 @@ type Win32_QuickFixEngineering struct {
 }
 
 func (provider *windowsProvider) GetUpdates() ([]InstalledUpdate, error) {
-	result, err := wmi.QueryResult[[]Win32_QuickFixEngineering](provider.wmi, provider.logger)
+	result, err := wmi.QueryResult[[]Win32_QuickFixEngineering](provider.wmi)
 	if err != nil {
 		return []InstalledUpdate{}, fmt.Errorf("invalid installed updates output: %w", err)
 	}

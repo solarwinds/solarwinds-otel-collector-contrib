@@ -112,7 +112,7 @@ func (p *provider) loadComputerSystem() chan computerSystem {
 	ch := make(chan computerSystem)
 	go func() {
 		defer close(ch)
-		result, err := wmi.QuerySingleResult[Win32_ComputerSystem](p.wmi, p.logger)
+		result, err := wmi.QuerySingleResult[Win32_ComputerSystem](p.wmi)
 		if err == nil {
 			ch <- computerSystem{Model: result.Model, Manufacturer: result.Manufacturer}
 		}
@@ -124,7 +124,7 @@ func (p *provider) loadBios() chan bios {
 	ch := make(chan bios)
 	go func() {
 		defer close(ch)
-		result, err := wmi.QuerySingleResult[Win32_BIOS](p.wmi, p.logger)
+		result, err := wmi.QuerySingleResult[Win32_BIOS](p.wmi)
 		if err == nil {
 			ch <- bios{SerialNumber: result.SerialNumber}
 		}
