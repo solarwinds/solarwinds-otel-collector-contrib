@@ -14,7 +14,14 @@ updates:
 
   - package-ecosystem: gomod
     directories:
-      - "*"
+      - "/connector/*/"
+      - "/exporter/*/"
+      - "/extension/*/"
+      - "/internal/*/"
+      - "/pkg/*/"
+      - "/processor/*/"
+      - "/receiver/*/"
+      - "/cmd/*/"
     schedule:
       interval: weekly
       day: sunday
