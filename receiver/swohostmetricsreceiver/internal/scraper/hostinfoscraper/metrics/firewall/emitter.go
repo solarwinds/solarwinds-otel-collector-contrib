@@ -95,10 +95,7 @@ func (e *emitter) getData() ([]firewall.Profile, error) {
 	ch := e.FirewallProvider.Provide()
 	fc := <-ch // get data from channel and continue
 	if fc.Error != nil {
-		message := "getting data from firewall provider failed"
-		err := fmt.Errorf("%s %w", message, fc.Error)
-		e.logger.Error(message, zap.Error(fc.Error))
-		return nil, err
+		return nil, fmt.Errorf("getting data from firewall provider failed: %w", fc.Error)
 	}
 	return fc.FirewallProfiles, nil
 }

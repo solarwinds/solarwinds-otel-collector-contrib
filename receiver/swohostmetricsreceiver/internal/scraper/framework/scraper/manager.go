@@ -106,23 +106,13 @@ func (s *manager) Init(
 	// configuration.
 	err := s.featureManager.Init(fmConfig)
 	if err != nil {
-		m := fmt.Sprintf(
-			"initialization of feature manager for scraper '%s' failed",
-			descriptor.Type,
-		)
-		s.logger.Error(m, zap.Error(err))
-		return fmt.Errorf("%s: %w", m, err)
+		return fmt.Errorf("initialization of feature manager for scraper '%s' failed: %w", descriptor.Type, err)
 	}
 
 	// Scheduling scraper internals based on config.
 	sRuntime, err := s.scheduler.Schedule(descriptor, config.ScraperConfig, s.logger)
 	if err != nil {
-		m := fmt.Sprintf(
-			"scheduling in scpraper manager for scraper '%s' failed",
-			descriptor.Type,
-		)
-		s.logger.Error(m, zap.Error(err))
-		return fmt.Errorf("%s: %w", m, err)
+		return fmt.Errorf("scheduling in scraper manager for scraper '%s' failed: %w", descriptor.Type, err)
 	}
 
 	s.logger.Debug(
@@ -196,12 +186,7 @@ func (s *manager) assemblyMetrics(
 	scopeMetrics []pmetric.ScopeMetricsSlice,
 ) (pmetric.Metrics, error) {
 	if len(scopeMetrics) == 0 {
-		m := fmt.Sprintf(
-			"no scope metrics were gathered for scpraper '%s'",
-			s.scraperType,
-		)
-		s.logger.Error(m)
-		return pmetric.NewMetrics(), errors.New(m)
+		return pmetric.NewMetrics(), fmt.Errorf("no scope metrics were gathered for scraper '%s'", s.scraperType)
 	}
 
 	// Assembly resource metric.
@@ -272,12 +257,7 @@ func (s *manager) receiveAndEvaluateEmitResults(
 	// Evaluate init results.
 	if len(errs) > 0 {
 		err := errors.Join(errs...)
-		m := fmt.Sprintf(
-			"emit action on scope emitters for scraper '%s' failed",
-			s.scraperType,
-		)
-		s.logger.Error(m, zap.Error(err))
-		return make([]pmetric.ScopeMetricsSlice, 0), fmt.Errorf("%s: %w", m, err)
+		return make([]pmetric.ScopeMetricsSlice, 0), fmt.Errorf("emit action on scope emitters for scraper '%s' failed: %w", s.scraperType, err)
 	}
 
 	return data, nil
@@ -368,12 +348,7 @@ func (s *manager) receiveAndEvaluateInitResults(ch initResultChannel) error {
 	// Evaluate init results.
 	if len(errs) > 0 {
 		err := errors.Join(errs...)
-		m := fmt.Sprintf(
-			"init action on scope emitters for scraper '%s' failed",
-			s.scraperType,
-		)
-		s.logger.Error(m, zap.Error(err))
-		return fmt.Errorf("%s: %w", m, err)
+		return fmt.Errorf("init action on scope emitters for scraper '%s' failed: %w", s.scraperType, err)
 	}
 
 	return nil
@@ -393,13 +368,7 @@ func (s *manager) checkRuntimeReadiness(
 	pointOfOrigin string,
 ) error {
 	if s.scraperRuntime == nil {
-		m := fmt.Sprintf(
-			"scraper manager at '%s' for scraper '%s' is not ready with runtime",
-			pointOfOrigin,
-			s.scraperType,
-		)
-		s.logger.Error(m)
-		return errors.New(m)
+		return fmt.Errorf("scraper manager at '%s' for scraper '%s' is not ready with runtime: %w", pointOfOrigin, s.scraperType)
 	}
 	return nil
 }

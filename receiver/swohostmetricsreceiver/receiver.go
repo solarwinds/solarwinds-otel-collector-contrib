@@ -84,7 +84,6 @@ func createMetricsReceiver(
 	config component.Config,
 	metrics consumer.Metrics,
 ) (receiver.Metrics, error) {
-	const logErrorInclude = ": %w"
 	cfg := config.(*ReceiverConfig)
 
 	// Way of creating receiver with multiple scrapers - here the single one is added
@@ -100,9 +99,7 @@ func createMetricsReceiver(
 		scraperControllerOptions...,
 	)
 	if err != nil {
-		message := "Failed to create swohostmetrics receiver"
-		settings.Logger.Error(message, zap.Error(err))
-		return nil, fmt.Errorf(message+logErrorInclude, err)
+		return nil, fmt.Errorf("failed to create swohostmetrics receiver: %w", err)
 	}
 
 	return receiver, nil
@@ -131,14 +128,12 @@ func createScraperControllerOptions(
 			logger,
 		)
 		if err != nil {
-			message := fmt.Sprintf("creating scraper %s failed", scraperName)
-			logger.Error(message, zap.Error(err))
-			return nil, fmt.Errorf(message+": %w", err)
+			return nil, fmt.Errorf("creating scraper %s failed: %w", scraperName, err)
 		}
 
 		ct, err := component.NewType(scraperName)
 		if err != nil {
-			return nil, fmt.Errorf("invalid scraper key name: %s", scraperName)
+			return nil, fmt.Errorf("invalid scraper key name: %s : %w", scraperName, err)
 		}
 
 		scraperControllerOptions = append(scraperControllerOptions, scraperhelper.AddScraper(ct, scraper))

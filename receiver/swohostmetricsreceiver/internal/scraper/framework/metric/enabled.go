@@ -15,7 +15,6 @@
 package metric
 
 import (
-	"errors"
 	"fmt"
 
 	"go.uber.org/zap"
@@ -45,12 +44,7 @@ func GetEnabledMetrics(
 ) (*Enabled, error) {
 	// Check if there are at least some metrics configured.
 	if len(scraperConfig.Metrics) == 0 {
-		message := fmt.Sprintf(
-			"no configured metrics for scraper '%s'",
-			scraperName,
-		)
-		logger.Error(message)
-		return nil, errors.New(message)
+		return nil, fmt.Errorf("no configured metrics for scraper '%s'", scraperName)
 	}
 
 	// Traverse scraper config and setup only enabled metrics.
@@ -63,12 +57,7 @@ func GetEnabledMetrics(
 	}
 
 	if len(em.Metrics) == 0 {
-		message := fmt.Sprintf(
-			"no enabled metrics available for scraper '%s'",
-			scraperName,
-		)
-		logger.Error(message)
-		return nil, errors.New(message)
+		return nil, fmt.Errorf("no enabled metrics available for scraper '%s'", scraperName)
 	}
 
 	return em, nil

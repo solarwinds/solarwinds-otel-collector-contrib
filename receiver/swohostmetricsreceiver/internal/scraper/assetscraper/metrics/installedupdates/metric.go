@@ -61,11 +61,9 @@ func createEmitter(
 func (emitter *Emitter) Emit() *metric.Result {
 	ms, err := emitter.populateMetric()
 	if err != nil {
-		message := fmt.Sprintf("faild to populate metric %s", Name)
-		emitter.logger.Error(message, zap.Error(err))
 		return &metric.Result{
 			Data:  pmetric.NewMetricSlice(),
-			Error: fmt.Errorf("%s: %w", message, err),
+			Error: fmt.Errorf("failed to populate metric %s: %w", Name, err),
 		}
 	}
 
@@ -89,10 +87,7 @@ func (emitter *Emitter) Name() string {
 func (emitter *Emitter) populateMetric() (pmetric.MetricSlice, error) {
 	installedUpdates, err := emitter.provider.GetUpdates()
 	if err != nil {
-		message := "failed to obtain installed updates"
-		emitter.logger.Error(message, zap.Error(err))
-
-		return pmetric.NewMetricSlice(), fmt.Errorf("%s %w", message, err)
+		return pmetric.NewMetricSlice(), fmt.Errorf("failed to obtain installed updates: %w", err)
 	}
 
 	// Nothing to be sent up. No error.

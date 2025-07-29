@@ -57,17 +57,13 @@ func (*scheduler) Schedule(
 	// Obtains enabled metrics for scheduled scraper.
 	enabledMetrics, err := metric.GetEnabledMetrics(sn.String(), config, logger)
 	if err != nil {
-		m := fmt.Sprintf("failed to get enabled metrics for scraper '%s'", sn)
-		logger.Error(m, zap.Error(err))
-		return nil, fmt.Errorf("%s: %w", m, err)
+		return nil, fmt.Errorf("failed to get enabled metrics for scraper '%s': %w", sn, err)
 	}
 
 	// Assembly Scraper runtime based on enabled metrics.
 	scraperRuntime, err := createScraperRuntime(descriptor, enabledMetrics, logger)
 	if err != nil {
-		m := fmt.Sprintf("failed to create scraper runtime for scraper '%s'", sn)
-		logger.Error(m, zap.Error(err))
-		return nil, fmt.Errorf("%s: %w", m, err)
+		return nil, fmt.Errorf("failed to create scraper runtime for scraper '%s': %w", sn, err)
 	}
 
 	logger.Debug("scheduling of scraper finished successfully", zap.String("scraper", sn.String()))

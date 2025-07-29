@@ -33,9 +33,7 @@ func CreateScraper[TConfig component.Config, TScraper Scraper](
 ) (scraper.Metrics, error) {
 	sc, err := sAllocator(config.(*TConfig), logger)
 	if err != nil {
-		m := fmt.Sprintf("scraper '%s' creation failed", scraperName)
-		logger.Error(m, zap.Error(err))
-		return nil, fmt.Errorf("%s: %w", m, err)
+		return nil, fmt.Errorf("scraper %s creation failed: %w", scraperName, err)
 	}
 
 	otelScraper, err := scraper.NewMetrics(
@@ -44,9 +42,7 @@ func CreateScraper[TConfig component.Config, TScraper Scraper](
 		scraper.WithShutdown((*sc).Shutdown),
 	)
 	if err != nil {
-		m := fmt.Sprintf("new metrics scraper '%s' creation failed", scraperName)
-		logger.Error(m, zap.Error(err))
-		return nil, fmt.Errorf("%s: %w", m, err)
+		return nil, fmt.Errorf("new metrics scraper '%s' creation failed: %w", scraperName, err)
 	}
 
 	return otelScraper, nil

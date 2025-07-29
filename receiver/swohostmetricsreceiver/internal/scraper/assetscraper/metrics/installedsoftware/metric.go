@@ -61,12 +61,9 @@ func createInstalledSoftwareEmitter(
 func (emitter *Emitter) Emit() *metric.Result {
 	ms, err := emitter.populateMetric()
 	if err != nil {
-		message := fmt.Sprintf("metric %s population failed", Name)
-		emitter.logger.Error(message, zap.Error(err))
-
 		return &metric.Result{
 			Data:  pmetric.NewMetricSlice(),
-			Error: fmt.Errorf(message+": %w", err),
+			Error: fmt.Errorf("metric %s population failed: %w", Name, err),
 		}
 	}
 
@@ -91,9 +88,7 @@ func (emitter *Emitter) Name() string {
 func (emitter *Emitter) populateMetric() (pmetric.MetricSlice, error) {
 	isCollection, err := emitter.provider.GetSoftware()
 	if err != nil {
-		message := "obtaining installed software failed"
-		emitter.logger.Error(message, zap.Error(err))
-		return pmetric.NewMetricSlice(), fmt.Errorf(message+"%w", err)
+		return pmetric.NewMetricSlice(), fmt.Errorf("obtaining installed software failed: %w", err)
 	}
 
 	// Nothing was obtained, so nothing can be sent outside. No error behavior.

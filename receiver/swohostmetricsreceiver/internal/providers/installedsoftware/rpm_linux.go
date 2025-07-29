@@ -60,9 +60,7 @@ func createRpmProvider(
 func (provider *rpmProvider) GetSoftware() ([]InstalledSoftware, error) {
 	stdout, _, err := provider.bash.ExecuteCommand(command)
 	if err != nil {
-		message := "RPM based installed software can not be obtained"
-		provider.logger.Error(message, zap.Error(err))
-		return []InstalledSoftware{}, fmt.Errorf(message+": %w", err)
+		return []InstalledSoftware{}, fmt.Errorf("RPM based installed software can not be obtained: %w", err)
 	}
 
 	result := provider.parse(stdout)

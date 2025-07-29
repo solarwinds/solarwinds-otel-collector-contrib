@@ -153,12 +153,7 @@ func processEmittedResults(
 	// Collect results.
 	for r := range rCh {
 		if r.Result.Error != nil {
-			message := fmt.Sprintf(
-				"emit for metric emitter '%s' failed",
-				r.EmitterName,
-			)
-			logger.Error(message, zap.Error(r.Result.Error))
-			errs = append(errs, fmt.Errorf("%s: %w", message, r.Result.Error))
+			errs = append(errs, fmt.Errorf("emit for metric emitter '%s' failed: %w", r.EmitterName, r.Result.Error))
 		} else {
 			mrs = append(mrs, r.Result.Data)
 		}
@@ -176,12 +171,7 @@ func (s *emitter) assemblyScopeMetricSlice(
 	ms []pmetric.MetricSlice,
 ) (pmetric.ScopeMetricsSlice, error) {
 	if len(ms) == 0 {
-		message := fmt.Sprintf(
-			"no metric slices available for scope emitter '%s'",
-			s.scopeName,
-		)
-		s.logger.Error(message)
-		return pmetric.NewScopeMetricsSlice(), errors.New(message)
+		return pmetric.NewScopeMetricsSlice(), fmt.Errorf("no metric slices available for scope emitter '%s'", s.scopeName)
 	}
 
 	sms := pmetric.NewScopeMetricsSlice()
@@ -219,12 +209,7 @@ func (s *emitter) Init() error {
 	}
 
 	if err := s.initializeMetricEmitters(); err != nil {
-		message := fmt.Sprintf(
-			"initialization of metric emitters in scope emitter '%s' failed",
-			s.scopeName,
-		)
-		s.logger.Error(message, zap.Error(err))
-		return fmt.Errorf("%s: %w", message, err)
+		return fmt.Errorf("initialization of metric emitters in scope emitter '%s' failed: %w", s.scopeName, err)
 	}
 
 	s.logger.Debug("scope emitter initialized successfully", zap.String("scope_name", s.scopeName))
@@ -236,12 +221,7 @@ func (s *emitter) checkIfMetricEmittersAreRegistered() error {
 	// If not, there is no reason to run Init() or even has
 	// this emitter created.
 	if len(s.metricEmitters) == 0 {
-		message := fmt.Sprintf(
-			"scope emitter for '%s' is initialized and has no registered metric emitters",
-			s.scopeName,
-		)
-		s.logger.Error(message)
-		return fmt.Errorf("%s", message)
+		return fmt.Errorf("scope emitter for '%s' is initialized and has no registered metric emitters", s.scopeName)
 	}
 
 	return nil
@@ -274,12 +254,7 @@ func evaluateInitResults(rCh chan *metricEmitterInitResult, logger *zap.Logger) 
 	// Collect results.
 	for r := range rCh {
 		if r.Error != nil {
-			message := fmt.Sprintf(
-				"initialization for metric emitter '%s' failed",
-				r.Name,
-			)
-			logger.Error(message, zap.Error(r.Error))
-			errs = append(errs, fmt.Errorf("%s: %w", message, r.Error))
+			errs = append(errs, fmt.Errorf("initialization for metric emitter '%s' failed: %w", r.Name, r.Error))
 		}
 	}
 

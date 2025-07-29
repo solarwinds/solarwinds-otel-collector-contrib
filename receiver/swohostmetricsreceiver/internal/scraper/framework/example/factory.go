@@ -37,9 +37,7 @@ func CreateScraperExplicitly(
 	// Create scraper directly through allocating callback.
 	exampleScraper, err := NewExemplaryScraper(cfg.(*ScraperConfig), logger)
 	if err != nil {
-		m := fmt.Sprintf("scraper '%s' creation failed", ScraperType())
-		logger.Error(m, zap.Error(err))
-		return nil, fmt.Errorf("%s: %w", m, err)
+		return nil, fmt.Errorf("scraper '%s' creation failed: %w", ScraperType(), err)
 	}
 
 	// In case there is a need to add some more code to be run.
