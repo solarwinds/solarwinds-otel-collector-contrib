@@ -55,7 +55,7 @@ func (*scheduler) Schedule(
 	sn := descriptor.Type
 
 	// Obtains enabled metrics for scheduled scraper.
-	enabledMetrics, err := metric.GetEnabledMetrics(sn.String(), config, logger)
+	enabledMetrics, err := metric.GetEnabledMetrics(sn.String(), config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get enabled metrics for scraper '%s': %w", sn, err)
 	}

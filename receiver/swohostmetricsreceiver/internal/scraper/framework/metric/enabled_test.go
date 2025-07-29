@@ -17,8 +17,6 @@ package metric
 import (
 	"testing"
 
-	"go.uber.org/zap"
-
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -27,7 +25,7 @@ const scraperName = "testing_scraper"
 
 func Test_GetEnabledMetrics_failsOnEmptyScraperConfig(t *testing.T) {
 	config := &types.ScraperConfig{}
-	en, err := GetEnabledMetrics(scraperName, config, zap.NewNop())
+	en, err := GetEnabledMetrics(scraperName, config)
 
 	assert.Error(t, err, "on empty scraper config must fail")
 	assert.ErrorContains(t, err, "no configured metrics for scraper 'testing_scraper'")
@@ -46,7 +44,7 @@ func Test_GetEnabledMetrics_onlyEnabledMetricsAreReturned(t *testing.T) {
 			},
 		},
 	}
-	en, err := GetEnabledMetrics(scraperName, config, zap.NewNop())
+	en, err := GetEnabledMetrics(scraperName, config)
 
 	assert.NoError(t, err, "GetEnabledMetrics call must not fail")
 	assert.NotNil(t, en, "enabled metrics must exists")
@@ -66,7 +64,7 @@ func Test_GetEnabledMetrics_failsOnNoEnabledMetrics(t *testing.T) {
 			},
 		},
 	}
-	en, err := GetEnabledMetrics(scraperName, config, zap.NewNop())
+	en, err := GetEnabledMetrics(scraperName, config)
 
 	assert.Error(t, err, "with no enabled metric call must fail")
 	assert.Nil(t, en, "enable metrics must not exists")

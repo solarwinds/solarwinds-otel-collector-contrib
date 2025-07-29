@@ -17,8 +17,6 @@ package metric
 import (
 	"fmt"
 
-	"go.uber.org/zap"
-
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/types"
 )
 
@@ -40,7 +38,6 @@ type Enabled struct {
 func GetEnabledMetrics(
 	scraperName string,
 	scraperConfig *types.ScraperConfig,
-	logger *zap.Logger,
 ) (*Enabled, error) {
 	// Check if there are at least some metrics configured.
 	if len(scraperConfig.Metrics) == 0 {

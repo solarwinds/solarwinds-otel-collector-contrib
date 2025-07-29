@@ -115,7 +115,7 @@ func (s *emitter) processMetricEmitters() (pmetric.ScopeMetricsSlice, error) {
 	close(rCh)
 
 	// Process & evaluate emitted results.
-	ms, err := processEmittedResults(rCh, s.logger)
+	ms, err := processEmittedResults(rCh)
 	if err != nil {
 		return pmetric.NewScopeMetricsSlice(), err
 	}
@@ -143,10 +143,7 @@ func processMetricEmitter(
 	rCh <- &metricEmitterEmitResult{mr, meName}
 }
 
-func processEmittedResults(
-	rCh chan *metricEmitterEmitResult,
-	logger *zap.Logger,
-) ([]pmetric.MetricSlice, error) {
+func processEmittedResults(rCh chan *metricEmitterEmitResult) ([]pmetric.MetricSlice, error) {
 	errs := make([]error, 0)
 	mrs := make([]pmetric.MetricSlice, 0)
 
@@ -245,10 +242,10 @@ func (s *emitter) initializeMetricEmitters() error {
 	// Close channel when all emitents are done.
 	close(rCh)
 
-	return evaluateInitResults(rCh, s.logger)
+	return evaluateInitResults(rCh)
 }
 
-func evaluateInitResults(rCh chan *metricEmitterInitResult, logger *zap.Logger) error {
+func evaluateInitResults(rCh chan *metricEmitterInitResult) error {
 	errs := make([]error, 0)
 
 	// Collect results.
