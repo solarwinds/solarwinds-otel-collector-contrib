@@ -74,7 +74,7 @@ func (is *provider) provideInternal(ch chan<- InfoStat) {
 
 	infoStat, err := is.internalExecutor.Getinfo()
 	if err != nil {
-		is.logger.Error("InfoStat command execution failed", zap.Error(err))
+		is.logger.Error("infostat command execution failed", zap.Error(err))
 		return
 	}
 
@@ -92,6 +92,6 @@ func (is *provider) provideInternal(ch chan<- InfoStat) {
 		HostID:               infoStat.HostID,
 	}
 
-	is.logger.Debug("InfoStat provided", zap.Any("infoStatDetails", infoStatDetails))
+	is.logger.Debug("infostat provided", zap.Any("infostat_details", infoStatDetails))
 	ch <- infoStatDetails
 }

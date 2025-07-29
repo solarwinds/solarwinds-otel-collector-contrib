@@ -99,8 +99,7 @@ func processRegistryReader(registryReader registry.Reader, logger *zap.Logger) (
 	for _, swKeyName := range uninstallKeys {
 		registryValues, err := registryReader.GetKeyValues(swKeyName, []string{"DisplayName", "DisplayVersion", "Publisher", "InstallDate"})
 		if err != nil {
-			message := fmt.Sprintf("unable to read from the %s registry key", swKeyName)
-			logger.Warn(message, zap.Error(err))
+			logger.Warn("unable to read from the registry key", zap.String("key", swKeyName), zap.Error(err))
 			continue
 		}
 
