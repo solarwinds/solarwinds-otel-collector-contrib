@@ -18,6 +18,8 @@ import (
 	"context"
 	"fmt"
 
+	"go.uber.org/zap"
+
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
 )
@@ -41,7 +43,7 @@ type provider struct {
 	cpuStatsProvider cpuStatsProvider
 }
 
-func CreateProvider() providers.Provider[Container] {
+func CreateProvider(_ *zap.Logger) providers.Provider[Container] {
 	return &provider{
 		cpuStatsProvider: &gopsutilProvider{},
 	}

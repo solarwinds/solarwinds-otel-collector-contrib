@@ -17,6 +17,7 @@ package scraper
 import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/types"
+	"go.uber.org/zap"
 )
 
 type SchedulerMock struct {
@@ -39,7 +40,7 @@ func CreateSchedulerMock(
 }
 
 // Schedule implements Scheduler.
-func (s *SchedulerMock) Schedule(*Descriptor, *types.ScraperConfig) (*Runtime, error) {
+func (s *SchedulerMock) Schedule(*Descriptor, *types.ScraperConfig, *zap.Logger) (*Runtime, error) {
 	s.scheduleCC.IncrementCount()
 	return s.runtime, s.scheduleResult
 }

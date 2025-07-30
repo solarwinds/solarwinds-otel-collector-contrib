@@ -18,10 +18,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 func Test_Provide_ProvidesEmptyFirewallProfileCollectionWithNoErrors(t *testing.T) {
-	sut := CreateFirewallProvider()
+	sut := CreateFirewallProvider(zap.NewNop())
 	ch := sut.Provide()
 	actualModel := <-ch
 	_, open := <-ch

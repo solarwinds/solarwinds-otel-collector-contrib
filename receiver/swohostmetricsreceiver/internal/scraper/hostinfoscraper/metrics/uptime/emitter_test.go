@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"testing"
 
+	"go.uber.org/zap"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -74,7 +76,7 @@ func CreateAttributesMock(
 func Test_Functional(t *testing.T) {
 	t.Skip("This test should be run manually only")
 
-	sut := NewEmitter()
+	sut := NewEmitter(zap.NewNop())
 
 	err := sut.Init()
 	assert.Nil(t, err)
@@ -86,7 +88,7 @@ func Test_Functional(t *testing.T) {
 }
 
 func Test_Initialize_NotFailing(t *testing.T) {
-	sut := NewEmitter()
+	sut := NewEmitter(zap.NewNop())
 	err := sut.Init()
 	require.NoError(t, err)
 }
@@ -100,7 +102,7 @@ func Test_GetEmittingFunction_ProvidesFunctionCapableOfMetricsEmitting(t *testin
 		"hostdetails.kokoha": "777",
 	})
 
-	sut := createUptimeEmitter(hostDetailsAttributes, osDetailsAttributes, uptimeProvider)
+	sut := createUptimeEmitter(hostDetailsAttributes, osDetailsAttributes, uptimeProvider, zap.NewNop())
 
 	er := sut.Emit()
 	if er.Error != nil {

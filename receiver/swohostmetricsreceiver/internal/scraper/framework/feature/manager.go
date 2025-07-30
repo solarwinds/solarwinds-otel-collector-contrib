@@ -56,23 +56,28 @@ type manager struct {
 	// delayedProcessing is core implementation of feature
 	// representing delayed processing.
 	delayedProcessing features.DelayedProcessing
+
+	logger *zap.Logger
 }
 
 var _ Manager = (*manager)(nil)
 
 // Creates product oriented feature manager.
-func NewFeatureManager() Manager {
+func NewFeatureManager(logger *zap.Logger) Manager {
 	return createFeatureManager(
 		features.NewDelayedProcessing(),
+		logger,
 	)
 }
 
 func createFeatureManager(
 	delayedProcessing features.DelayedProcessing,
+	logger *zap.Logger,
 ) Manager {
 	return &manager{
 		activatedFeatures: make(map[Flag]*void),
 		delayedProcessing: delayedProcessing,
+		logger:            logger,
 	}
 }
 
@@ -94,9 +99,7 @@ func (fm *manager) Init(c *ManagerConfig) error {
 func (fm *manager) tryToActivateDelayedProcessing(c *ManagerConfig) {
 	// Delay processing is part of config.
 	if c.DelayedProcessingConfig != nil {
-		zap.L().Sugar().Debugf(
-			"activating delayed processing for scraper '%s'",
-			c.ScraperType)
+		fm.logger.Debug("activating delayed processing for scraper", zap.String("scraper", c.ScraperType.String()))
 		fm.activateFeature(DelayedProcessingFeature)
 	}
 }

@@ -15,7 +15,6 @@
 package domain
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/cli"
@@ -30,7 +29,8 @@ const (
 )
 
 type provider struct {
-	cli cli.CommandLineExecutor
+	cli    cli.CommandLineExecutor
+	logger *zap.Logger
 }
 
 var _ providers.Provider[Domain] = (*provider)(nil)
@@ -42,9 +42,10 @@ func (dp *provider) Provide() <-chan Domain {
 	return ch
 }
 
-func CreateDomainProvider() providers.Provider[Domain] {
+func CreateDomainProvider(logger *zap.Logger) providers.Provider[Domain] {
 	return &provider{
-		cli: &cli.BashCli{},
+		cli:    &cli.BashCli{},
+		logger: logger,
 	}
 }
 
@@ -84,7 +85,7 @@ loop:
 		}
 	}
 
-	zap.L().Debug(fmt.Sprintf("Domain provider result: %+v", domain))
+	dp.logger.Debug("domain provider result", zap.Any("domain", domain))
 	wg.Wait()
 	ch <- domain
 }
@@ -96,7 +97,7 @@ func (dp *provider) executeLinuxCommand(command string) <-chan string {
 	ch := make(chan string)
 	go func() {
 		defer close(ch)
-		stdout, err := cli.ProcessCommand(dp.cli, command)
+		stdout, err := cli.ProcessCommand(dp.cli, command, dp.logger)
 		if err == nil {
 			ch <- stdout
 		}

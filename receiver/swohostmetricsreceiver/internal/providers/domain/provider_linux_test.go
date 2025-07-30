@@ -20,6 +20,7 @@ import (
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 func Test_Provide_ProvidesCompleteData(t *testing.T) {
@@ -168,7 +169,8 @@ func processActWithEvaluation(
 	expectedDomain Domain,
 ) {
 	sut := provider{
-		cli: providers.CreateMultiCommandExecutorMock(commands),
+		cli:    providers.CreateMultiCommandExecutorMock(commands),
+		logger: zap.NewNop(),
 	}
 
 	ch := sut.Provide()

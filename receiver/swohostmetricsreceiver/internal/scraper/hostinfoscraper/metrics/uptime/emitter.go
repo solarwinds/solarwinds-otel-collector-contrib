@@ -50,6 +50,7 @@ type emitter struct {
 	HostdetailsAttributesGenerator shared.AttributesGenerator
 	OsdetailsAttributesGenerator   shared.AttributesGenerator
 	UptimeProvider                 uptimeprovider.Provider
+	logger                         *zap.Logger
 }
 
 var _ metric.Emitter = (*emitter)(nil)
@@ -66,30 +67,31 @@ func safeUint64ToInt64(i uint64) (int64, error) {
 	return int64(i), nil
 }
 
-func NewEmitter() metric.Emitter {
+func NewEmitter(logger *zap.Logger) metric.Emitter {
 	return createUptimeEmitter(
 		hostdetails.CreateHostDetailsAttributesGenerator(
 			hostdetails.CreateDomainAttributesGenerator(
-				domain.CreateDomainProvider(),
+				domain.CreateDomainProvider(logger),
 			),
 			hostdetails.CreateModelAttributesGenerator(
-				model.CreateModelProvider(),
+				model.CreateModelProvider(logger),
 			),
 			hostdetails.CreateTimeZoneAttributesGenerator(
-				timezone.CreateTimeZoneProvider(),
+				timezone.CreateTimeZoneProvider(logger),
 			),
 		),
 		osdetails.CreateOsDetailsAttributesGenerator(
 			osdetails.CreateInfoStatAttributesGenerator(
-				infostat.CreateInfoStatProvider(),
+				infostat.CreateInfoStatProvider(logger),
 			),
 			osdetails.CreateLanguageAttributesGenerator(
-				language.CreateLanguageProvider(),
+				language.CreateLanguageProvider(logger),
 			),
 		),
 		uptimeprovider.CreateUptimeProvider(
 			uptimeprovider.CreateUptimeWrapper(),
 		),
+		logger,
 	)
 }
 
@@ -97,11 +99,13 @@ func createUptimeEmitter(
 	hostdetailsAttributesGenerator shared.AttributesGenerator,
 	osdetailsAttributesGenerator shared.AttributesGenerator,
 	uptimeProvider uptimeprovider.Provider,
+	logger *zap.Logger,
 ) metric.Emitter {
 	return &emitter{
 		HostdetailsAttributesGenerator: hostdetailsAttributesGenerator,
 		OsdetailsAttributesGenerator:   osdetailsAttributesGenerator,
 		UptimeProvider:                 uptimeProvider,
+		logger:                         logger,
 	}
 }
 
@@ -174,7 +178,7 @@ loop:
 				uptimeCh = nil
 				wg.Done()
 			} else {
-				uptime, err = calculateUptime(uVal)
+				uptime, err = calculateUptime(uVal, e.logger)
 			}
 		case <-terminationCh:
 			break loop
@@ -190,11 +194,9 @@ func mergeAttributes(base shared.Attributes, increment shared.Attributes) {
 	}
 }
 
-func calculateUptime(uptime uptimeprovider.Uptime) (int64, error) {
+func calculateUptime(uptime uptimeprovider.Uptime, logger *zap.Logger) (int64, error) {
 	if uptime.Error != nil {
-		message := fmt.Sprintf("Failed to receive uptime from %s emitter", MetricName)
-		zap.L().Error(message, zap.Error(uptime.Error))
-		return 0, fmt.Errorf("%s: %w", message, uptime.Error)
+		return 0, fmt.Errorf("failed to receive uptime from %s emitter: %w", MetricName, uptime.Error)
 	}
 
 	uptimeInt64, err := safeUint64ToInt64(uptime.Uptime)
@@ -202,12 +204,12 @@ func calculateUptime(uptime uptimeprovider.Uptime) (int64, error) {
 		return 0, err
 	}
 
-	if zap.L().Core().Enabled(zap.DebugLevel) {
+	if logger.Core().Enabled(zap.DebugLevel) {
 		days := uptimeInt64 / (60 * 60 * 24)
 		hours := (uptimeInt64 - (days * 60 * 60 * 24)) / (60 * 60)
 		minutes := (uptimeInt64 - (days * 60 * 60 * 24) - (hours * 60 * 60)) / 60
 		seconds := (uptimeInt64 - (days * 60 * 60 * 24) - (hours * 60 * 60) - (minutes * 60))
-		zap.L().Debug(
+		logger.Debug(
 			"UptimeMetricEmitter: uptime received",
 			zap.Int64("uptime", uptimeInt64),
 			zap.Int64("uptime_days", days),

@@ -17,6 +17,8 @@ package cpu
 import (
 	"strconv"
 
+	"go.uber.org/zap"
+
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
 )
@@ -37,7 +39,7 @@ type provider struct {
 	executor cpuExecutor
 }
 
-func CreateProvider() providers.Provider[Container] {
+func CreateProvider(_ *zap.Logger) providers.Provider[Container] {
 	return &provider{
 		executor: &executor{},
 	}

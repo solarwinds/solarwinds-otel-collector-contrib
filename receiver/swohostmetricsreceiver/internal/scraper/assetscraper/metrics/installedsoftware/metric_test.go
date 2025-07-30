@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"testing"
 
+	"go.uber.org/zap"
+
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers/installedsoftware"
 	testinghelper "github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/assetscraper/metrics"
 	"github.com/stretchr/testify/assert"
@@ -29,7 +31,7 @@ import (
 func Test_FunctionalTest_Emit(t *testing.T) {
 	t.Skip("this test must be run manually only")
 
-	emitter := NewEmitter()
+	emitter := NewEmitter(zap.NewNop())
 	err := emitter.Init()
 	if err != nil {
 		assert.Fail(t, "emitter initialization failed")
@@ -59,7 +61,7 @@ const (
 )
 
 func Test_MetricsAreEmitted(t *testing.T) {
-	sut := createInstalledSoftwareEmitter(&InstalledSoftwareProviderStub{})
+	sut := createInstalledSoftwareEmitter(&InstalledSoftwareProviderStub{}, zap.NewNop())
 	err := sut.Init()
 	require.NoErrorf(t, err, "Initialize should not return an error")
 

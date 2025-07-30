@@ -24,6 +24,8 @@ import (
 	"sync"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
 )
 
@@ -47,7 +49,7 @@ func (f *fileCPUStatsReader) Read() (io.ReadCloser, error) {
 	return os.Open("/proc/stat")
 }
 
-func CreateProvider() providers.Provider[Container] {
+func CreateProvider(_ *zap.Logger) providers.Provider[Container] {
 	return createProvider(&fileCPUStatsReader{})
 }
 

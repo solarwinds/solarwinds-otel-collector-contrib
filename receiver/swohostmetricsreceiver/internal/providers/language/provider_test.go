@@ -17,12 +17,14 @@ package language
 import (
 	"fmt"
 	"testing"
+
+	"go.uber.org/zap"
 )
 
 func Test_Functional(t *testing.T) {
 	t.Skip("This test should be run manually")
 
-	sut := CreateLanguageProvider()
+	sut := CreateLanguageProvider(zap.NewNop())
 	result := <-sut.Provide()
 	fmt.Printf("Result: %+v\n", result)
 }

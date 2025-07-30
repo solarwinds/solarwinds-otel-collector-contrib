@@ -17,13 +17,15 @@ package scope
 import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/metric"
 	"go.opentelemetry.io/collector/pdata/pmetric"
+	"go.uber.org/zap"
 )
 
 func CreateCustomScopeEmitter(
 	name string,
 	mes map[string]metric.Emitter,
+	logger *zap.Logger,
 ) Emitter {
-	return CreateDefaultScopeEmitter(name, mes)
+	return CreateDefaultScopeEmitter(name, mes, logger)
 }
 
 type emitterMock struct {

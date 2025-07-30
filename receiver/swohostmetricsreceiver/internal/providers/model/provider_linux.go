@@ -14,13 +14,16 @@
 
 package model
 
-import "github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
+import (
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
+	"go.uber.org/zap"
+)
 
 type provider struct{}
 
 var _ providers.Provider[Model] = (*provider)(nil)
 
-func CreateModelProvider() providers.Provider[Model] {
+func CreateModelProvider(_ *zap.Logger) providers.Provider[Model] {
 	return &provider{}
 }
 

@@ -65,25 +65,30 @@ type manager struct {
 	scraperRuntime *Runtime
 	scraperType    component.Type
 	config         *ManagerConfig
+
+	logger *zap.Logger
 }
 
 var _ Manager = (*manager)(nil)
 
 // Product targeted allocator for scraper manager.
-func NewScraperManager() Manager {
+func NewScraperManager(logger *zap.Logger) Manager {
 	return createScraperManager(
-		feature.NewFeatureManager(),
+		feature.NewFeatureManager(logger),
 		NewScraperScheduler(),
+		logger,
 	)
 }
 
 func createScraperManager(
 	featureManager feature.Manager,
 	scheduler Scheduler,
+	logger *zap.Logger,
 ) Manager {
 	return &manager{
 		featureManager: featureManager,
 		scheduler:      scheduler,
+		logger:         logger,
 	}
 }
 
@@ -101,28 +106,18 @@ func (s *manager) Init(
 	// configuration.
 	err := s.featureManager.Init(fmConfig)
 	if err != nil {
-		m := fmt.Sprintf(
-			"initialization of feature manager for scraper '%s' failed",
-			descriptor.Type,
-		)
-		zap.L().Error(m, zap.Error(err))
-		return fmt.Errorf("%s: %w", m, err)
+		return fmt.Errorf("initialization of feature manager for scraper '%s' failed: %w", descriptor.Type, err)
 	}
 
 	// Scheduling scraper internals based on config.
-	sRuntime, err := s.scheduler.Schedule(descriptor, config.ScraperConfig)
+	sRuntime, err := s.scheduler.Schedule(descriptor, config.ScraperConfig, s.logger)
 	if err != nil {
-		m := fmt.Sprintf(
-			"scheduling in scpraper manager for scraper '%s' failed",
-			descriptor.Type,
-		)
-		zap.L().Error(m, zap.Error(err))
-		return fmt.Errorf("%s: %w", m, err)
+		return fmt.Errorf("scheduling in scraper manager for scraper '%s' failed: %w", descriptor.Type, err)
 	}
 
-	zap.L().Sugar().Debugf(
-		"initialization of scraper manager for scraper '%s' finished successfully",
-		descriptor.Type,
+	s.logger.Debug(
+		"initialization of scraper manager for scraper finished successfully",
+		zap.String("scraper_type", descriptor.Type.String()),
 	)
 
 	s.scraperRuntime = sRuntime
@@ -137,9 +132,9 @@ func (s *manager) Scrape(
 ) (pmetric.Metrics, error) {
 	// Break processing when context is closed.
 	if synchronization.IsContextClosed(ctx) {
-		zap.L().Sugar().Debugf(
-			"context is closed breaking processing of scrape for scraper '%s'",
-			s.scraperType,
+		s.logger.Debug(
+			"context is closed breaking processing of scrape for scraper",
+			zap.String("scraper_type", s.scraperType.String()),
 		)
 		return pmetric.NewMetrics(), ctx.Err()
 	}
@@ -153,9 +148,9 @@ func (s *manager) Scrape(
 	// Check if scraper is ready for processing.
 	now := time.Now()
 	if !s.featureManager.IsReady(now) {
-		zap.L().Sugar().Debugf(
-			"Scraping of '%s' skipped for processing.",
-			s.scraperType,
+		s.logger.Debug(
+			"scraping skipped for processing",
+			zap.String("scraper_type", s.scraperType.String()),
 		)
 		return pmetric.NewMetrics(), nil
 	}
@@ -178,11 +173,11 @@ func (s *manager) Scrape(
 	// Update last processed scrape.
 	s.featureManager.UpdateLastProcessedTime(now)
 
-	zap.L().Sugar().Debugf(
-		"Scraping of '%s' finished with '%d' metrics and '%d' data points",
-		s.scraperType,
-		metrics.MetricCount(),
-		metrics.DataPointCount(),
+	s.logger.Debug(
+		"scraping finished",
+		zap.String("scraper_type", s.scraperType.String()),
+		zap.Int("metric_count", metrics.MetricCount()),
+		zap.Int("data_point_count", metrics.DataPointCount()),
 	)
 	return metrics, nil
 }
@@ -191,12 +186,7 @@ func (s *manager) assemblyMetrics(
 	scopeMetrics []pmetric.ScopeMetricsSlice,
 ) (pmetric.Metrics, error) {
 	if len(scopeMetrics) == 0 {
-		m := fmt.Sprintf(
-			"no scope metrics were gathered for scpraper '%s'",
-			s.scraperType,
-		)
-		zap.L().Error(m)
-		return pmetric.NewMetrics(), errors.New(m)
+		return pmetric.NewMetrics(), fmt.Errorf("no scope metrics were gathered for scraper '%s'", s.scraperType)
 	}
 
 	// Assembly resource metric.
@@ -209,10 +199,10 @@ func (s *manager) assemblyMetrics(
 		sm.MoveAndAppendTo(rms.ScopeMetrics())
 	}
 
-	zap.L().Sugar().Debugf(
-		"assembled resource metric for scraper '%s' with '%d' scope metrics",
-		s.scraperType,
-		rms.ScopeMetrics().Len(),
+	s.logger.Debug(
+		"assembled resource metric for scraper",
+		zap.String("scraper_type", s.scraperType.String()),
+		zap.Int("scope_metrics_count", rms.ScopeMetrics().Len()),
 	)
 	return ms, nil
 }
@@ -228,9 +218,10 @@ func (s *manager) processEmitOnScopeEmitters() emitResultChannel {
 	emittersWg.Add(seCount)
 
 	for name, emitter := range s.scraperRuntime.ScopeEmitters {
-		zap.L().Sugar().Debugf(
-			fmt.Sprintf("starting emit on scope emitter with name '%s'",
-				name))
+		s.logger.Debug(
+			"starting emit on scope emitter",
+			zap.String("emitter_name", name),
+		)
 
 		go func(ch emitResultChannel, emitter scope.Emitter) {
 			defer emittersWg.Done()
@@ -266,12 +257,7 @@ func (s *manager) receiveAndEvaluateEmitResults(
 	// Evaluate init results.
 	if len(errs) > 0 {
 		err := errors.Join(errs...)
-		m := fmt.Sprintf(
-			"emit action on scope emitters for scraper '%s' failed",
-			s.scraperType,
-		)
-		zap.L().Error(m, zap.Error(err))
-		return make([]pmetric.ScopeMetricsSlice, 0), fmt.Errorf("%s: %w", m, err)
+		return make([]pmetric.ScopeMetricsSlice, 0), fmt.Errorf("emit action on scope emitters for scraper '%s' failed: %w", s.scraperType, err)
 	}
 
 	return data, nil
@@ -284,9 +270,9 @@ func (s *manager) Start(
 ) error {
 	// Break processing when context is closed.
 	if synchronization.IsContextClosed(ctx) {
-		zap.L().Sugar().Debugf(
-			"context is closed, breaking processing of start for scraper '%s'",
-			s.scraperType,
+		s.logger.Debug(
+			"context is closed, breaking processing of start for scraper",
+			zap.String("scraper_type", s.scraperType.String()),
 		)
 		return ctx.Err()
 	}
@@ -314,9 +300,9 @@ func (s *manager) Start(
 		return err
 	}
 
-	zap.L().Sugar().Debugf(
-		"scraper manager start for scraper '%s' finished successfully",
-		s.scraperType,
+	s.logger.Debug(
+		"scraper manager start finished successfully",
+		zap.String("scraper_type", s.scraperType.String()),
 	)
 	return nil
 }
@@ -333,9 +319,7 @@ func (s *manager) processInitOnScopeEmitters() initResultChannel {
 
 	// Spin scope emitters.
 	for name, emitter := range s.scraperRuntime.ScopeEmitters {
-		zap.L().Sugar().Debugf(
-			"starting init on scope emitter with name '%s'",
-			name)
+		s.logger.Debug("starting init on scope emitter", zap.String("emitter_name", name))
 
 		go func(ch initResultChannel, emitter scope.Emitter) {
 			defer emittersWg.Done()
@@ -364,12 +348,7 @@ func (s *manager) receiveAndEvaluateInitResults(ch initResultChannel) error {
 	// Evaluate init results.
 	if len(errs) > 0 {
 		err := errors.Join(errs...)
-		m := fmt.Sprintf(
-			"init action on scope emitters for scraper '%s' failed",
-			s.scraperType,
-		)
-		zap.L().Error(m, zap.Error(err))
-		return fmt.Errorf("%s: %w", m, err)
+		return fmt.Errorf("init action on scope emitters for scraper '%s' failed: %w", s.scraperType, err)
 	}
 
 	return nil
@@ -389,13 +368,7 @@ func (s *manager) checkRuntimeReadiness(
 	pointOfOrigin string,
 ) error {
 	if s.scraperRuntime == nil {
-		m := fmt.Sprintf(
-			"scraper manager at '%s' for scraper '%s' is not ready with runtime",
-			pointOfOrigin,
-			s.scraperType,
-		)
-		zap.L().Error(m)
-		return errors.New(m)
+		return fmt.Errorf("scraper manager at '%s' for scraper '%s' is not ready with runtime", pointOfOrigin, s.scraperType)
 	}
 	return nil
 }

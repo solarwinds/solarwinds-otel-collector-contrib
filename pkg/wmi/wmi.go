@@ -16,8 +16,7 @@ package wmi
 
 import (
 	"errors"
-
-	"go.uber.org/zap"
+	"fmt"
 )
 
 var (
@@ -38,8 +37,7 @@ func QueryResult[TResult interface{}](executor Executor) (TResult, error) {
 	result, err := executor.Query(query, &model)
 	if err != nil {
 		var nilResult TResult
-		zap.L().Error("wmi query failed.", zap.Error(err))
-		return nilResult, err
+		return nilResult, fmt.Errorf("wmi query failed: %w", err)
 	}
 
 	return *result.(*TResult), err
@@ -56,17 +54,14 @@ func QuerySingleResult[TResult interface{}](executor Executor) (TResult, error) 
 	}
 
 	if res == nil {
-		zap.L().Error(ErrWmiNoResult.Error())
 		return nilResult, ErrWmiNoResult
 	}
 
 	if len(res) == 0 {
-		zap.L().Error(ErrWmiEmptyResult.Error())
 		return nilResult, ErrWmiEmptyResult
 	}
 
 	if len(res) > 1 {
-		zap.L().Error(ErrWmiTooManyResults.Error())
 		return nilResult, ErrWmiTooManyResults
 	}
 

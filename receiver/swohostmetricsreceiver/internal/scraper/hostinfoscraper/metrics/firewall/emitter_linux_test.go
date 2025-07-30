@@ -20,11 +20,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 // Linux is not supported but metric must not fail.
 func Test_Emit_EmptyMetricSliceIsProvided(t *testing.T) {
-	sut := NewEmitter()
+	sut := NewEmitter(zap.NewNop())
 	err := sut.Init()
 	assert.Nil(t, err, "emitter initialization must not fail on Linux")
 	er := sut.Emit()

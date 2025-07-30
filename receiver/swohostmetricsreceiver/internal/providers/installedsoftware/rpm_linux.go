@@ -33,22 +33,26 @@ const (
 )
 
 type rpmProvider struct {
-	bash cli.CommandLineExecutor
+	bash   cli.CommandLineExecutor
+	logger *zap.Logger
 }
 
 var _ (Provider) = (*rpmProvider)(nil)
 
-func NewRpmProvider() Provider {
+func NewRpmProvider(logger *zap.Logger) Provider {
 	return createRpmProvider(
 		cli.NewBashCliExecutor(),
+		logger,
 	)
 }
 
 func createRpmProvider(
 	bash cli.CommandLineExecutor,
+	logger *zap.Logger,
 ) Provider {
 	return &rpmProvider{
-		bash: bash,
+		bash:   bash,
+		logger: logger,
 	}
 }
 
@@ -56,9 +60,7 @@ func createRpmProvider(
 func (provider *rpmProvider) GetSoftware() ([]InstalledSoftware, error) {
 	stdout, _, err := provider.bash.ExecuteCommand(command)
 	if err != nil {
-		message := "RPM based installed software can not be obtained"
-		zap.L().Error(message, zap.Error(err))
-		return []InstalledSoftware{}, fmt.Errorf(message+": %w", err)
+		return []InstalledSoftware{}, fmt.Errorf("RPM based installed software can not be obtained: %w", err)
 	}
 
 	result := provider.parse(stdout)

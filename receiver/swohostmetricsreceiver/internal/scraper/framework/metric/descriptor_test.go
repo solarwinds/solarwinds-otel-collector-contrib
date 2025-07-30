@@ -17,6 +17,8 @@ package metric
 import (
 	"testing"
 
+	"go.uber.org/zap"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,7 +33,7 @@ func Test_TraverseThroughMetricDescriptors_onNoMatchEmptyEmitterMapIsReturned(t 
 			"testing.metric.2": {},
 		},
 	}
-	mes := TraverseThroughMetricDescriptors(descriptors, enabledMetrics)
+	mes := TraverseThroughMetricDescriptors(descriptors, enabledMetrics, zap.NewNop())
 
 	assert.Zero(t, len(mes), "on no match no emitters are created")
 }
@@ -48,13 +50,13 @@ func Test_TraverseThroughMetricDescriptors_onMatchOnlyMetricEmittersAreCreated(t
 			expectedMetricName: {},
 		},
 	}
-	mes := TraverseThroughMetricDescriptors(descriptors, enabledMetrics)
+	mes := TraverseThroughMetricDescriptors(descriptors, enabledMetrics, zap.NewNop())
 
 	assert.Equal(t, 1, len(mes), "on match metric emitter is created")
 	_, found := mes[expectedMetricName]
 	assert.True(t, found, "emitter for matching metric must be created")
 }
 
-func createArtificialMetricEmitter() Emitter {
+func createArtificialMetricEmitter(_ *zap.Logger) Emitter {
 	return CreateMetricEmitterMockV2("testing.metric.1", 0, 0)
 }

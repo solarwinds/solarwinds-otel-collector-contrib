@@ -21,12 +21,13 @@ import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/wmi"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 func Test_Provider_Functional(t *testing.T) {
 	t.Skip("This test should be run manually")
 
-	sut := CreateDomainProvider()
+	sut := CreateDomainProvider(zap.NewNop())
 	result := <-sut.Provide()
 	fmt.Printf("Result: %+v\n", result)
 }
@@ -49,7 +50,8 @@ func Test_Provide_ProvidesCompleteDataAndChannelIsClosedAfterDelivery(t *testing
 	}
 
 	sut := provider{
-		wmi: wmi.CreateWmiExecutorMock([]interface{}{&wmiOutput}, nil),
+		wmi:    wmi.CreateWmiExecutorMock([]interface{}{&wmiOutput}, nil),
+		logger: zap.NewNop(),
 	}
 
 	ch := sut.Provide()
@@ -72,6 +74,7 @@ func Test_Provide_FailsAndProvidesEmptyObjectAndChannelIsClosedAfterDelivery(t *
 		wmi: wmi.CreateWmiExecutorMock(nil, map[interface{}]error{
 			&[]Win32_ComputerSystem{}: fmt.Errorf("kokoha error"),
 		}),
+		logger: zap.NewNop(),
 	}
 
 	ch := sut.Provide()

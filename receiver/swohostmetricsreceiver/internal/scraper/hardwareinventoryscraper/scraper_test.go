@@ -22,6 +22,8 @@ import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/hardwareinventoryscraper/metrics/cpu"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/types"
 	"github.com/stretchr/testify/assert"
+
+	"go.uber.org/zap"
 )
 
 func Test_Functional(t *testing.T) {
@@ -35,7 +37,7 @@ func Test_Functional(t *testing.T) {
 		},
 	}
 
-	s, err := NewHardwareInventoryScraper(&sc)
+	s, err := NewHardwareInventoryScraper(&sc, zap.NewNop())
 	assert.NoError(t, err, "scraper creation must not fail")
 	err = s.Start(context.TODO(), nil)
 	assert.NoError(t, err)

@@ -15,8 +15,6 @@
 package infostat
 
 import (
-	"fmt"
-
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
 
 	"github.com/shirou/gopsutil/v3/host"
@@ -39,13 +37,15 @@ type InfoStat struct {
 
 type provider struct {
 	internalExecutor infoStatExecutor
+	logger           *zap.Logger
 }
 
 var _ providers.Provider[InfoStat] = (*provider)(nil)
 
-func CreateInfoStatProvider() providers.Provider[InfoStat] {
+func CreateInfoStatProvider(logger *zap.Logger) providers.Provider[InfoStat] {
 	return &provider{
 		internalExecutor: &executor{},
+		logger:           logger,
 	}
 }
 
@@ -74,7 +74,7 @@ func (is *provider) provideInternal(ch chan<- InfoStat) {
 
 	infoStat, err := is.internalExecutor.Getinfo()
 	if err != nil {
-		zap.L().Error("InfoStat command execution failed", zap.Error(err))
+		is.logger.Error("infostat command execution failed", zap.Error(err))
 		return
 	}
 
@@ -92,6 +92,6 @@ func (is *provider) provideInternal(ch chan<- InfoStat) {
 		HostID:               infoStat.HostID,
 	}
 
-	zap.L().Debug(fmt.Sprintf("InfoStat provided %+v", infoStatDetails))
+	is.logger.Debug("infostat provided", zap.Any("infostat_details", infoStatDetails))
 	ch <- infoStatDetails
 }

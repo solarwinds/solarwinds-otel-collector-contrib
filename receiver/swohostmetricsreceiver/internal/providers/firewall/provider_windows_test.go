@@ -20,6 +20,7 @@ import (
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/registry"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 func Test_Provide_ProvidesFirewallContainerOnSucceedingCliCommand(t *testing.T) {
@@ -35,6 +36,7 @@ func Test_Provide_ProvidesFirewallContainerOnSucceedingCliCommand(t *testing.T) 
 			"DomainProfile":   1,
 			"PublicProfile":   1,
 		}),
+		logger: zap.NewNop(),
 	}
 
 	ch := sut.Provide()
@@ -57,6 +59,7 @@ func Test_Provide_ProvidesErrorfullFirewallContainerOnFailingCommandWithPartialR
 			"DomainProfile": 1,
 			"PublicProfile": 0,
 		}),
+		logger: zap.NewNop(),
 	}
 
 	ch := sut.Provide()

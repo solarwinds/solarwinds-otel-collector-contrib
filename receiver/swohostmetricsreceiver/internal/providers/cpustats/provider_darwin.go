@@ -19,19 +19,23 @@ import (
 	"go.uber.org/zap"
 )
 
-type provider struct{}
+type provider struct {
+	logger *zap.Logger
+}
 
-func CreateProvider() providers.Provider[Container] {
-	return &provider{}
+func CreateProvider(logger *zap.Logger) providers.Provider[Container] {
+	return &provider{
+		logger: logger,
+	}
 }
 
 // Provide implements providers.Provider.
-func (*provider) Provide() <-chan Container {
+func (p *provider) Provide() <-chan Container {
 	ch := make(chan Container)
 
 	go func() {
 		defer close(ch)
-		zap.L().Warn("This provider is not supported on Darwin")
+		p.logger.Warn("this provider is not supported on Darwin")
 	}()
 
 	return ch

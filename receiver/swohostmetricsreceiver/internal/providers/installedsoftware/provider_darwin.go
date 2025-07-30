@@ -14,11 +14,13 @@
 
 package installedsoftware
 
+import "go.uber.org/zap"
+
 type darwinProvider struct{}
 
 var _ Provider = (*darwinProvider)(nil)
 
-func NewInstalledSoftwareProvider() Provider {
+func NewInstalledSoftwareProvider(_ *zap.Logger) Provider {
 	return createInstalledSoftwareProvider()
 }
 

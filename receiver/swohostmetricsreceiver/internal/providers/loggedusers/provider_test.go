@@ -39,7 +39,7 @@ func Test_Functional(t *testing.T) {
 		),
 	)
 
-	sut := CreateProvider()
+	sut := CreateProvider(zap.NewNop())
 	result := <-sut.Provide()
 	fmt.Printf("Result: %+v\n", result)
 }

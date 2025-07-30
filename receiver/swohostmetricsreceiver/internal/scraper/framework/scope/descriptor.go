@@ -22,7 +22,7 @@ import (
 // ScopeEmitterCreateFunc is a functor for creation of
 // scope emitter instance.
 // string determines scope name for which emitter is created.
-type EmitterCreateFunc func(string, map[string]metric.Emitter) Emitter
+type EmitterCreateFunc func(string, map[string]metric.Emitter, *zap.Logger) Emitter
 
 // Descriptor for scope emitter. It is used for declarative description of
 // scope emitter.
@@ -40,6 +40,7 @@ type Descriptor struct {
 func TraverseThroughScopeDescriptors(
 	scopeDescriptors map[string]Descriptor,
 	enabledMetrics *metric.Enabled,
+	logger *zap.Logger,
 ) map[string]Emitter {
 	ses := make(map[string]Emitter, 0)
 
@@ -48,6 +49,7 @@ func TraverseThroughScopeDescriptors(
 		mes := metric.TraverseThroughMetricDescriptors(
 			sDescriptor.MetricDescriptors,
 			enabledMetrics,
+			logger,
 		)
 
 		// Given scope was not configured.
@@ -56,15 +58,12 @@ func TraverseThroughScopeDescriptors(
 		}
 
 		// Choose allocator - custom or default.
-		create := chooseEmitterAllocator(&sDescriptor)
+		create := chooseEmitterAllocator(&sDescriptor, logger)
 
 		// Creates scope emitter with proper setup for given metric emitters.
-		se := create(sDescriptor.ScopeName, mes)
+		se := create(sDescriptor.ScopeName, mes, logger)
 
-		zap.L().Sugar().Debugf(
-			"creation of scope emitter for scope '%s' was finished successfully",
-			sName,
-		)
+		logger.Debug("creation of scope emitter was finished successfully", zap.String("scope_name", sName))
 		ses[se.Name()] = se
 	}
 
@@ -73,20 +72,15 @@ func TraverseThroughScopeDescriptors(
 
 func chooseEmitterAllocator(
 	descriptor *Descriptor,
+	logger *zap.Logger,
 ) EmitterCreateFunc {
 	var createEmitter EmitterCreateFunc
 
 	if descriptor.Create != nil {
-		zap.L().Sugar().Debugf(
-			"custom scope allocator will be used for scope '%s'",
-			descriptor.ScopeName,
-		)
+		logger.Debug("custom scope allocator will be used", zap.String("scope_name", descriptor.ScopeName))
 		createEmitter = descriptor.Create
 	} else {
-		zap.L().Sugar().Debugf(
-			"default scope allocator will be used for scope '%s'",
-			descriptor.ScopeName,
-		)
+		logger.Debug("default scope allocator will be used", zap.String("scope_name", descriptor.ScopeName))
 		createEmitter = CreateDefaultScopeEmitter
 	}
 	return createEmitter

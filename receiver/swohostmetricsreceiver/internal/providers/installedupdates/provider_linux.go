@@ -14,6 +14,8 @@
 
 package installedupdates
 
-func NewProvider() Provider {
+import "go.uber.org/zap"
+
+func NewProvider(_ *zap.Logger) Provider {
 	return createNoUpdatesProvider()
 }

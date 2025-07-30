@@ -14,7 +14,10 @@
 
 package timezone
 
-import "github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
+import (
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
+	"go.uber.org/zap"
+)
 
 type provider struct{}
 
@@ -27,7 +30,7 @@ func (dp *provider) Provide() <-chan TimeZone {
 	return ch
 }
 
-func CreateTimeZoneProvider() providers.Provider[TimeZone] {
+func CreateTimeZoneProvider(_ *zap.Logger) providers.Provider[TimeZone] {
 	return &provider{}
 }
 

@@ -23,33 +23,37 @@ import (
 
 type windowsProvider struct {
 	registryReaders []registry.Reader
+	logger          *zap.Logger
 }
 
 var _ (Provider) = (*windowsProvider)(nil)
 
-func NewInstalledSoftwareProvider() Provider {
+func NewInstalledSoftwareProvider(logger *zap.Logger) Provider {
 	return createInstalledSoftwareProvider(
-		createRegistryReaders(),
+		createRegistryReaders(logger),
+		logger,
 	)
 }
 
 func createInstalledSoftwareProvider(
 	registryReaders []registry.Reader,
+	logger *zap.Logger,
 ) Provider {
 	return &windowsProvider{
 		registryReaders: registryReaders,
+		logger:          logger,
 	}
 }
 
-func createRegistryReaders() []registry.Reader {
+func createRegistryReaders(logger *zap.Logger) []registry.Reader {
 	// 64-bit reader
 	uninstallRootPath64bit := `Software\Microsoft\Windows\CurrentVersion\Uninstall`
 	registryReader64bit, err := registry.NewReader(registry.LocalMachineKey, uninstallRootPath64bit)
 	if err != nil {
-		zap.L().Sugar().Errorf(
-			"64-bit registry reader for path '%s' can not be created: %w",
-			uninstallRootPath64bit,
-			err,
+		logger.Error(
+			"64-bit registry reader for path can not be created",
+			zap.String("path", uninstallRootPath64bit),
+			zap.Error(err),
 		)
 		return make([]registry.Reader, 0)
 	}
@@ -57,10 +61,10 @@ func createRegistryReaders() []registry.Reader {
 	uninstallRootPath32bit := `Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall`
 	registryReader32bit, err := registry.NewReader(registry.LocalMachineKey, uninstallRootPath32bit)
 	if err != nil {
-		zap.L().Sugar().Errorf(
-			"32-bit registry reader for path '%s' can not be created: %w",
-			uninstallRootPath32bit,
-			err,
+		logger.Error(
+			"32-bit registry reader for path can not be created",
+			zap.String("path", uninstallRootPath32bit),
+			zap.Error(err),
 		)
 		return make([]registry.Reader, 0)
 	}
@@ -71,14 +75,12 @@ func createRegistryReaders() []registry.Reader {
 func (provider *windowsProvider) GetSoftware() ([]InstalledSoftware, error) {
 	// From initialization there were no registred registry readers.
 	if len(provider.registryReaders) == 0 {
-		m := "no register reader registred"
-		zap.L().Error(m)
-		return make([]InstalledSoftware, 0), fmt.Errorf("%s", m)
+		return make([]InstalledSoftware, 0), fmt.Errorf("no registry reader registered")
 	}
 
 	values := []InstalledSoftware{}
 	for _, registryReader := range provider.registryReaders {
-		readerValues, err := processRegistryReader(registryReader)
+		readerValues, err := processRegistryReader(registryReader, provider.logger)
 		if err != nil {
 			return values, err
 		}
@@ -87,20 +89,17 @@ func (provider *windowsProvider) GetSoftware() ([]InstalledSoftware, error) {
 	return values, nil
 }
 
-func processRegistryReader(registryReader registry.Reader) ([]InstalledSoftware, error) {
+func processRegistryReader(registryReader registry.Reader, logger *zap.Logger) ([]InstalledSoftware, error) {
 	values := []InstalledSoftware{}
 	uninstallKeys, err := registryReader.GetSubKeys()
 	if err != nil {
-		message := "Windows installed software can not be obtained, failed to get installed software registry keys"
-		zap.L().Error(message, zap.Error(err))
-		return values, fmt.Errorf("%s:%w", message, err)
+		return values, fmt.Errorf("Windows installed software can not be obtained: %w", err)
 	}
 
 	for _, swKeyName := range uninstallKeys {
 		registryValues, err := registryReader.GetKeyValues(swKeyName, []string{"DisplayName", "DisplayVersion", "Publisher", "InstallDate"})
 		if err != nil {
-			message := fmt.Sprintf("Unable to read from the %s registry key", swKeyName)
-			zap.L().Warn(message, zap.Error(err))
+			logger.Warn("unable to read from the registry key", zap.String("key", swKeyName), zap.Error(err))
 			continue
 		}
 

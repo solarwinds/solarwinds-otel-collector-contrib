@@ -23,6 +23,8 @@ import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/feature/features"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/types"
+
+	"go.uber.org/zap"
 )
 
 const once = int32(1)
@@ -49,7 +51,7 @@ func Test_ConfigIngestioByFeatureManager(t *testing.T) {
 		DelayedProcessingConfig: &sc.DelayedProcessingConfig, // Not nil config.
 	}
 
-	sut := NewFeatureManager()
+	sut := NewFeatureManager(zap.NewNop())
 	err := sut.Init(fmc)
 
 	assert.Nil(t, err)
@@ -66,6 +68,7 @@ func Test_Init_DelayedProcessingActivated(t *testing.T) {
 
 	sut := &manager{
 		activatedFeatures: features,
+		logger:            zap.NewNop(),
 	}
 	err := sut.Init(config)
 
@@ -103,7 +106,7 @@ func Test_InitDelayedProcessing_whenFeatureActivatedImplementationIsCalled(t *te
 		},
 	}
 
-	sut := createFeatureManager(dpm)
+	sut := createFeatureManager(dpm, zap.NewNop())
 	err := sut.Init(config)
 	assert.NoError(t, err, "init must not fail")
 	_ = sut.InitDelayedProcessing(nil, time.Now())
@@ -119,7 +122,7 @@ func Test_InitDelayedProcessing_whenFeatureNotActivatedImplementationIsNotCalled
 		ScraperType: testingScraper,
 	}
 
-	sut := createFeatureManager(dpm)
+	sut := createFeatureManager(dpm, zap.NewNop())
 	err := sut.Init(config)
 	assert.NoError(t, err, "init must not fail")
 	_ = sut.InitDelayedProcessing(nil, time.Now())
@@ -138,7 +141,7 @@ func Test_IsReady_whenFeatureActivatedImplementationIsCalled(t *testing.T) {
 		},
 	}
 
-	sut := createFeatureManager(dpm)
+	sut := createFeatureManager(dpm, zap.NewNop())
 	err := sut.Init(config)
 	_ = sut.IsReady(time.Now())
 
@@ -154,7 +157,7 @@ func Test_IsReady_whenFeatureNotActivatedImplementationIsNotCalled(t *testing.T)
 		ScraperType: testingScraper,
 	}
 
-	sut := createFeatureManager(dpm)
+	sut := createFeatureManager(dpm, zap.NewNop())
 	err := sut.Init(config)
 	_ = sut.IsReady(time.Now())
 
@@ -173,7 +176,7 @@ func Test_UpdateLastProcessedTime_whenFeatureActivatedImplementationIsCalled(t *
 		},
 	}
 
-	sut := createFeatureManager(dpm)
+	sut := createFeatureManager(dpm, zap.NewNop())
 	err := sut.Init(config)
 	sut.UpdateLastProcessedTime(time.Now())
 
@@ -189,7 +192,7 @@ func Test_UpdateLastProcessedTime_whenFeatureNotActivatedImplementationIsNotCall
 		ScraperType: testingScraper,
 	}
 
-	sut := createFeatureManager(dpm)
+	sut := createFeatureManager(dpm, zap.NewNop())
 	err := sut.Init(config)
 	sut.UpdateLastProcessedTime(time.Now())
 

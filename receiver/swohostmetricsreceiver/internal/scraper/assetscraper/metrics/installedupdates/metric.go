@@ -35,21 +35,25 @@ const (
 type Emitter struct {
 	provider      installedupdates.Provider
 	startTimeNano time.Time
+	logger        *zap.Logger
 }
 
 var _ metric.Emitter = (*Emitter)(nil)
 
-func NewEmitter() metric.Emitter {
+func NewEmitter(logger *zap.Logger) metric.Emitter {
 	return createEmitter(
-		installedupdates.NewProvider(),
+		installedupdates.NewProvider(logger),
+		logger,
 	)
 }
 
 func createEmitter(
 	provider installedupdates.Provider,
+	logger *zap.Logger,
 ) metric.Emitter {
 	return &Emitter{
 		provider: provider,
+		logger:   logger,
 	}
 }
 
@@ -57,11 +61,9 @@ func createEmitter(
 func (emitter *Emitter) Emit() *metric.Result {
 	ms, err := emitter.populateMetric()
 	if err != nil {
-		message := fmt.Sprintf("faild to populate metric %s", Name)
-		zap.L().Error(message, zap.Error(err))
 		return &metric.Result{
 			Data:  pmetric.NewMetricSlice(),
-			Error: fmt.Errorf("%s: %w", message, err),
+			Error: fmt.Errorf("failed to populate metric %s: %w", Name, err),
 		}
 	}
 
@@ -85,15 +87,12 @@ func (emitter *Emitter) Name() string {
 func (emitter *Emitter) populateMetric() (pmetric.MetricSlice, error) {
 	installedUpdates, err := emitter.provider.GetUpdates()
 	if err != nil {
-		message := "failed to obtain installed updates"
-		zap.L().Error(message, zap.Error(err))
-
-		return pmetric.NewMetricSlice(), fmt.Errorf("%s %w", message, err)
+		return pmetric.NewMetricSlice(), fmt.Errorf("failed to obtain installed updates: %w", err)
 	}
 
 	// Nothing to be sent up. No error.
 	if len(installedUpdates) == 0 {
-		zap.L().Debug("no installed update was obtained from installupdate metric emitter")
+		emitter.logger.Debug("no installed update was obtained from installupdate metric emitter")
 		return pmetric.NewMetricSlice(), nil
 	}
 

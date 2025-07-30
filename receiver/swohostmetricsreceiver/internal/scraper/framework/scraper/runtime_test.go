@@ -22,6 +22,8 @@ import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/metric"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/scope"
+
+	"go.uber.org/zap"
 )
 
 func Test_createScraperRuntime_failsOnNoScheduledScopeEmitters(t *testing.T) {
@@ -37,7 +39,7 @@ func Test_createScraperRuntime_failsOnNoScheduledScopeEmitters(t *testing.T) {
 		},
 	}
 
-	rt, err := createScraperRuntime(scraperDescriptor, enabledMetrics)
+	rt, err := createScraperRuntime(scraperDescriptor, enabledMetrics, zap.NewNop())
 
 	assert.Error(t, err, "on empty scraper descriptor runtime creation fails")
 	assert.ErrorContains(t, err, "no scheduled scope emitters for scraper 'testing_scraper'")
@@ -80,7 +82,7 @@ func Test_createScraperRuntime_succeedsOnEnabledMetrics(t *testing.T) {
 			tm2: {},
 		},
 	}
-	rt, err := createScraperRuntime(scraperDescriptor, enabledMetrics)
+	rt, err := createScraperRuntime(scraperDescriptor, enabledMetrics, zap.NewNop())
 
 	assert.NoError(t, err, "creation must succeed")
 	assert.NotNil(t, rt, "runtime must be provided")

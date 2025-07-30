@@ -32,13 +32,12 @@ func CreateScraperExplicitly(
 	_ context.Context,
 	_ receiver.Settings,
 	cfg component.Config,
+	logger *zap.Logger,
 ) (scraper.Metrics, error) {
 	// Create scraper directly through allocating callback.
-	exampleScraper, err := NewExemplaryScraper(cfg.(*ScraperConfig))
+	exampleScraper, err := NewExemplaryScraper(cfg.(*ScraperConfig), logger)
 	if err != nil {
-		m := fmt.Sprintf("scraper '%s	' creation failed", ScraperType())
-		zap.L().Error(m, zap.Error(err))
-		return nil, fmt.Errorf("%s: %w", m, err)
+		return nil, fmt.Errorf("scraper '%s' creation failed: %w", ScraperType(), err)
 	}
 
 	// In case there is a need to add some more code to be run.
@@ -57,10 +56,12 @@ func CreateScraperImplicitly(
 	_ context.Context,
 	_ receiver.Settings,
 	cfg component.Config,
+	logger *zap.Logger,
 ) (scraper.Metrics, error) {
 	return fscraper.CreateScraper[ScraperConfig, ExemplaryScraper](
 		ScraperType(),
 		cfg,
 		NewExemplaryScraper,
+		logger,
 	)
 }

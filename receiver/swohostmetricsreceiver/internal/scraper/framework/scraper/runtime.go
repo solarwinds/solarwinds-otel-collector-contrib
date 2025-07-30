@@ -15,7 +15,6 @@
 package scraper
 
 import (
-	"errors"
 	"fmt"
 
 	"go.uber.org/zap"
@@ -35,21 +34,18 @@ type Runtime struct {
 func createScraperRuntime(
 	scraperDescriptor *Descriptor,
 	enabledMetrics *metric.Enabled,
+	logger *zap.Logger,
 ) (*Runtime, error) {
 	// Traverse and assembly scope descriptors.
 	ses := scope.TraverseThroughScopeDescriptors(
 		scraperDescriptor.ScopeDescriptors,
 		enabledMetrics,
+		logger,
 	)
 
 	// No schedule scope emitters.
 	if len(ses) == 0 {
-		message := fmt.Sprintf(
-			"no scheduled scope emitters for scraper '%s'",
-			scraperDescriptor.Type,
-		)
-		zap.L().Error(message)
-		return nil, errors.New(message)
+		return nil, fmt.Errorf("no scheduled scope emitters for scraper '%s'", scraperDescriptor.Type)
 	}
 
 	sr := new(Runtime)

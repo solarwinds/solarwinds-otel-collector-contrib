@@ -20,7 +20,7 @@ import (
 
 // MetricEmitterCreateFunc is a functor for creation of
 // metric emitter instance.
-type EmitterCreateFunc func() Emitter
+type EmitterCreateFunc func(*zap.Logger) Emitter
 
 // MetricDescriptor represent description of one metric.
 type Descriptor struct {
@@ -32,6 +32,7 @@ type Descriptor struct {
 func TraverseThroughMetricDescriptors(
 	metricDescriptors map[string]Descriptor,
 	enabledMetrics *Enabled,
+	logger *zap.Logger,
 ) map[string]Emitter {
 	mes := make(map[string]Emitter, 0)
 
@@ -42,8 +43,8 @@ func TraverseThroughMetricDescriptors(
 		}
 
 		// Metric is enabled by config, let's use it.
-		zap.L().Sugar().Debugf("creating metric emitter for '%s", mName)
-		me := mDescriptor.Create()
+		logger.Debug("creating metric emitter", zap.String("metric", mName))
+		me := mDescriptor.Create(logger)
 		mes[me.Name()] = me
 	}
 

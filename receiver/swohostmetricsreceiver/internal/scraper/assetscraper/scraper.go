@@ -20,6 +20,7 @@ import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/metric"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/scope"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/scraper"
+	"go.uber.org/zap"
 )
 
 const (
@@ -35,6 +36,7 @@ var _ scraper.Scraper = (*AssetScraper)(nil)
 
 func NewAssetScraper(
 	config *Config,
+	logger *zap.Logger,
 ) (*AssetScraper, error) {
 	descriptor := &scraper.Descriptor{
 		Type: ScraperType(),
@@ -55,7 +57,7 @@ func NewAssetScraper(
 	}
 
 	s := &AssetScraper{
-		Manager: scraper.NewScraperManager(),
+		Manager: scraper.NewScraperManager(logger),
 		config:  config,
 	}
 

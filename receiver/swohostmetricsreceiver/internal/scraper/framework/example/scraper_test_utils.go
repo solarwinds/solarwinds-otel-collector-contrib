@@ -16,16 +16,17 @@ package example
 
 import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/metric"
+	"go.uber.org/zap"
 )
 
-func NewMetricEmitterS1M1() metric.Emitter {
+func NewMetricEmitterS1M1(_ *zap.Logger) metric.Emitter {
 	return metric.CreateMetricEmitterMockV2(scope1metric1, 1, 101)
 }
 
-func NewMetricEmitterS1M2() metric.Emitter {
+func NewMetricEmitterS1M2(_ *zap.Logger) metric.Emitter {
 	return metric.CreateMetricEmitterMockV2(scope1metric2, 2, 102)
 }
 
-func NewMetricEmitterS2M1() metric.Emitter {
+func NewMetricEmitterS2M1(_ *zap.Logger) metric.Emitter {
 	return metric.CreateMetricEmitterMockV2(scope2metric1, 1, 201)
 }

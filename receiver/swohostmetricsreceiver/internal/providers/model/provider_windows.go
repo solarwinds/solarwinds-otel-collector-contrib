@@ -15,7 +15,6 @@
 package model
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/wmi"
@@ -34,7 +33,8 @@ type bios struct {
 }
 
 type provider struct {
-	wmi wmi.Executor
+	wmi    wmi.Executor
+	logger *zap.Logger
 }
 
 // Win32_ComputerSystem represents actual Computer System WMI Object
@@ -52,9 +52,10 @@ type Win32_BIOS struct {
 
 var _ providers.Provider[Model] = (*provider)(nil)
 
-func CreateModelProvider() providers.Provider[Model] {
+func CreateModelProvider(logger *zap.Logger) providers.Provider[Model] {
 	return &provider{
-		wmi: wmi.NewExecutor(),
+		wmi:    wmi.NewExecutor(),
+		logger: logger,
 	}
 }
 
@@ -102,7 +103,7 @@ loop:
 		}
 	}
 
-	zap.L().Debug(fmt.Sprintf("Model provider result: %+v", model))
+	p.logger.Debug("model provider result", zap.Any("model", model))
 
 	ch <- model
 }
