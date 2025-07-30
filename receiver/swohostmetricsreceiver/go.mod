@@ -1,15 +1,15 @@
 module github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver
 
-go 1.24.4
+go 1.24.5
 
 require (
 	github.com/go-ole/go-ole v1.3.0
 	github.com/google/go-cmp v0.7.0
 	github.com/shirou/gopsutil/v3 v3.24.5
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil v0.127.7
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.127.7
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/registry v0.127.7
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/wmi v0.127.7
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil v0.127.8
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.127.8
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/registry v0.127.8
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/wmi v0.127.8
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/collector/component v1.33.0
 	go.opentelemetry.io/collector/component/componenttest v0.127.0

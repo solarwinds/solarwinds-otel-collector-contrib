@@ -2,6 +2,10 @@
 
 ## vNext
 
+## v0.127.8
+- Updates golang to 1.24.5
+- chores like refactoring, version bumps, and buildpipeline improvements.
+
 ## v0.127.7
 No changes, previous release failed to finish properly.
 
