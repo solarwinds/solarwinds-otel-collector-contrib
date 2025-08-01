@@ -3,7 +3,7 @@ type: swok8sobjects
 status:
   class: receiver
   stability:
-    development: [metrics]
+    development: [logs]
   distributions: [verified, playground, k8s]
   codeowners:
     active: [orgs/solarwinds/teams/eng-pub-swi-kube]
