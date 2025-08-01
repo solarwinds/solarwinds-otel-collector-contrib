@@ -114,11 +114,8 @@ func (m *K8sWorkloadMappingConfig) validate(validObjects map[string][]groupVersi
 	case len(m.NameAttr) > 0:
 		m.context = nameCtx
 	case len(m.AddressAttr) > 0:
-		for _, v := range m.ExpectedTypes {
-			if v != internal.PodsWorkloadType && v != internal.ServicesWorkloadType {
-				return fmt.Errorf("address_attr is only supported for pods and services, but got: %s", v)
-			}
-		}
+		// Address mapping supports pods, services, and other workload types for Beyla-style resolution
+		// Legacy restriction was only for pods and services, but we now support enhanced lookup
 		m.context = addressCtx
 	}
 
