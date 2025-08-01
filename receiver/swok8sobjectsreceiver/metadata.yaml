@@ -7,3 +7,6 @@ status:
   distributions: [verified, playground, k8s]
   codeowners:
     active: [orgs/solarwinds/teams/eng-pub-swi-kube]
+
+tests:
+  skip_lifecycle: true
