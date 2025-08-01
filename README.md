@@ -3,3 +3,5 @@ This repository contains components for [SolarWinds OpenTelemetry Collector](htt
 
 ## Contributing
 See [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+PUBLIC 1
