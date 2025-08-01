@@ -27,14 +27,19 @@ import (
 )
 
 const (
-	ServiceKind             = "Service"
-	PodKind                 = "Pod"
-	ReplicaSetKind          = "ReplicaSet"
-	serviceTypeShort        = "svc"
-	podTypeShort            = "pod"
-	PodsWorkloadType        = "pods"
-	ServicesWorkloadType    = "services"
-	ReplicaSetsWorkloadType = "replicasets"
+	ServiceKind              = "Service"
+	PodKind                  = "Pod"
+	ReplicaSetKind           = "ReplicaSet"
+	serviceTypeShort         = "svc"
+	podTypeShort             = "pod"
+	PodsWorkloadType         = "pods"
+	ServicesWorkloadType     = "services"
+	ReplicaSetsWorkloadType  = "replicasets"
+	DeploymentsWorkloadType  = "deployments"
+	StatefulSetsWorkloadType = "statefulsets"
+	DaemonSetsWorkloadType   = "daemonsets"
+	JobsWorkloadType         = "jobs"
+	CronJobsWorkloadType     = "cronjobs"
 )
 
 type LookupResult struct {
@@ -204,6 +209,12 @@ func LookupWorkloadKindByIp(ip string, expectedTypes []string, logger *zap.Logge
 		}
 	}
 	return EmptyLookupResult
+}
+
+// ExtractNameAndNamespaceAndType extracts the possible name, namespace and type from the host string.
+// This is an exported wrapper around the internal function for use by other packages.
+func ExtractNameAndNamespaceAndType(host string) (name string, namespace string, workloadTypeShort string) {
+	return extractNameAndNamespaceAndType(host)
 }
 
 // extractNameAndNamespaceAndType extracts the possible name, namespace and type from the host string.
