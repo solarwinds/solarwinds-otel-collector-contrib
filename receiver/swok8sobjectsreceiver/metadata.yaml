@@ -1,7 +1,9 @@
 type: swok8sobjects
-github_project: solarwinds/solarwinds-otel-collector-contrib
 
 status:
   class: receiver
   stability:
-    development: [ metrics ]
+    development: [metrics]
+  distributions: [verified, playground, k8s]
+  codeowners:
+    active: [orgs/solarwinds/teams/eng-pub-swi-kube]

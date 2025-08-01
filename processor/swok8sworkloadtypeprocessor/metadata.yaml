@@ -1,10 +1,12 @@
 type: swok8sworkloadtype
-github_project: solarwinds/solarwinds-otel-collector-contrib
 
 status:
   class: processor
   stability:
-    development: [ metrics ]
+    development: [metrics]
+  distributions: [verified, playground, k8s]
+  codeowners:
+    active: [orgs/solarwinds/teams/eng-pub-swi-kube]
 
 tests:
   config:

@@ -1,10 +1,12 @@
 type: solarwinds
-github_project: solarwinds/solarwinds-otel-collector-contrib
 
 status:
   class: extension
   stability:
-    development: [ extension ]
+    development: [extension]
+  distributions: [verified, playground, k8s]
+  codeowners:
+    active: [orgs/solarwinds/teams/eng-otel-team]
 
 tests:
   config:
