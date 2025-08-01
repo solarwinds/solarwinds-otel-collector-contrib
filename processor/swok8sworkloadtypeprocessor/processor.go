@@ -63,10 +63,30 @@ func processAttributes(cp *swok8sworkloadtypeProcessor, attributes pcommon.Map, 
 			continue
 		}
 
+		cp.logger.Debug("Processing workload mapping",
+			zap.String("context", string(statementContext)),
+			zap.String("nameAttr", workloadMapping.NameAttr),
+			zap.String("addressAttr", workloadMapping.AddressAttr),
+			zap.String("namespaceAttr", workloadMapping.NamespaceAttr),
+			zap.String("workloadTypeAttr", workloadMapping.WorkloadTypeAttr),
+			zap.Strings("expectedTypes", workloadMapping.ExpectedTypes),
+			zap.Bool("preferOwnerForPods", workloadMapping.PreferOwnerForPods))
+
 		if cp.getAttribute(attributes, workloadMapping.WorkloadTypeAttr) != "" {
 			// Skip if the workload type attribute is already set
+			cp.logger.Debug("Skipping workload mapping - workload type already set",
+				zap.String("workloadTypeAttr", workloadMapping.WorkloadTypeAttr),
+				zap.String("existingValue", cp.getAttribute(attributes, workloadMapping.WorkloadTypeAttr)))
 			continue
 		}
+
+		// Log input attributes for debugging
+		allAttrs := make(map[string]interface{})
+		attributes.Range(func(k string, v pcommon.Value) bool {
+			allAttrs[k] = v.AsString()
+			return true
+		})
+		cp.logger.Debug("Input attributes for workload mapping", zap.Any("attributes", allAttrs))
 
 		var res internal.LookupResult
 		if workloadMapping.NameAttr != "" {
@@ -77,14 +97,29 @@ func processAttributes(cp *swok8sworkloadtypeProcessor, attributes pcommon.Map, 
 			cp.logger.Error("Unexpected workload mapping configuration")
 			continue
 		}
+
+		cp.logger.Debug("Lookup result",
+			zap.String("resultKind", res.Kind),
+			zap.String("resultName", res.Name),
+			zap.String("resultNamespace", res.Namespace))
+
 		if res.Kind != "" {
 			attributes.PutStr(workloadMapping.WorkloadTypeAttr, res.Kind)
+			cp.logger.Debug("Set workload type attribute",
+				zap.String("attribute", workloadMapping.WorkloadTypeAttr),
+				zap.String("value", res.Kind))
 		}
 		if res.Name != "" && workloadMapping.WorkloadNameAttr != "" {
 			attributes.PutStr(workloadMapping.WorkloadNameAttr, res.Name)
+			cp.logger.Debug("Set workload name attribute",
+				zap.String("attribute", workloadMapping.WorkloadNameAttr),
+				zap.String("value", res.Name))
 		}
 		if res.Namespace != "" && workloadMapping.WorkloadNamespaceAttr != "" {
 			attributes.PutStr(workloadMapping.WorkloadNamespaceAttr, res.Namespace)
+			cp.logger.Debug("Set workload namespace attribute",
+				zap.String("attribute", workloadMapping.WorkloadNamespaceAttr),
+				zap.String("value", res.Namespace))
 		}
 	}
 }
@@ -92,9 +127,19 @@ func processAttributes(cp *swok8sworkloadtypeProcessor, attributes pcommon.Map, 
 func (cp *swok8sworkloadtypeProcessor) lookupWorkloadTypeByNameAttr(workloadMapping *K8sWorkloadMappingConfig, attributes pcommon.Map) internal.LookupResult {
 	name := cp.getAttribute(attributes, workloadMapping.NameAttr)
 	if name == "" {
+		cp.logger.Debug("Name attribute not found or empty",
+			zap.String("nameAttr", workloadMapping.NameAttr))
 		return internal.EmptyLookupResult
 	}
 	namespace := cp.getAttribute(attributes, workloadMapping.NamespaceAttr)
+
+	cp.logger.Debug("Looking up workload by name and namespace",
+		zap.String("name", name),
+		zap.String("namespace", namespace),
+		zap.String("nameAttr", workloadMapping.NameAttr),
+		zap.String("namespaceAttr", workloadMapping.NamespaceAttr),
+		zap.Strings("expectedTypes", workloadMapping.ExpectedTypes),
+		zap.Bool("preferOwnerForPods", workloadMapping.PreferOwnerForPods))
 
 	return internal.LookupWorkloadKindByNameAndNamespace(name, namespace, workloadMapping.ExpectedTypes, cp.logger, cp.informers, workloadMapping.PreferOwnerForPods)
 }
@@ -102,14 +147,28 @@ func (cp *swok8sworkloadtypeProcessor) lookupWorkloadTypeByNameAttr(workloadMapp
 func (cp *swok8sworkloadtypeProcessor) lookupWorkloadTypeByAddressAttr(workloadMapping *K8sWorkloadMappingConfig, attributes pcommon.Map) internal.LookupResult {
 	addr := cp.getAttribute(attributes, workloadMapping.AddressAttr)
 	if addr == "" {
+		cp.logger.Debug("Address attribute not found or empty",
+			zap.String("addressAttr", workloadMapping.AddressAttr))
 		return internal.EmptyLookupResult
 	}
 	host := internal.ExtractHostFromAddress(addr)
 
+	cp.logger.Debug("Looking up workload by address",
+		zap.String("address", addr),
+		zap.String("extractedHost", host),
+		zap.String("addressAttr", workloadMapping.AddressAttr),
+		zap.Strings("expectedTypes", workloadMapping.ExpectedTypes),
+		zap.Bool("preferOwnerForPods", workloadMapping.PreferOwnerForPods))
+
 	if net.ParseIP(host) != nil {
+		cp.logger.Debug("Host is an IP address, looking up by IP", zap.String("ip", host))
 		return internal.LookupWorkloadKindByIp(host, workloadMapping.ExpectedTypes, cp.logger, cp.informers, workloadMapping.PreferOwnerForPods)
 	} else {
 		namespace := cp.getAttribute(attributes, workloadMapping.NamespaceAttr)
+		cp.logger.Debug("Host is a hostname, looking up by hostname",
+			zap.String("hostname", host),
+			zap.String("namespace", namespace),
+			zap.String("namespaceAttr", workloadMapping.NamespaceAttr))
 		return internal.LookupWorkloadKindByHostname(host, namespace, workloadMapping.ExpectedTypes, cp.logger, cp.informers, workloadMapping.PreferOwnerForPods)
 	}
 }
