@@ -1,8 +1,9 @@
 type: k8seventgeneration
-github_project: solarwinds/solarwinds-otel-collector-contrib
 
 status:
   class: processor
   stability:
-    development: [ logs ]
-  distributions: [full, k8s]
+    development: [logs]
+  distributions: [verified, playground, k8s]
+  codeowners:
+    active: [orgs/solarwinds/teams/eng-pub-swi-kube]
