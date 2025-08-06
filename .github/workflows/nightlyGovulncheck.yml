@@ -2,15 +2,19 @@ name: "Nightly govulncheck"
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "chore/add-govulncheck" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "chore/add-govulncheck" ]
   schedule:
-    - cron: '0 9 * * 1'
+    - cron: '*/1 * * * *'
 
 jobs:
     nightly-vulncheck-modules:
         runs-on: ubuntu-latest
+        env:
+          SLACK_CHANNEL: "C02698MU18D"
+          NIGHTHAWK_TEST_REPORT: ${{ secrets.NIGHTHAWK_TEST_REPORT }}
+          GH_TOKEN_READ_SOLARWINDS: ${{ secrets.GH_TOKEN_READ_SOLARWINDS }}
         steps:
             - name: Checkout
               uses: actions/checkout@v4
