@@ -2,11 +2,11 @@ name: "Nightly govulncheck"
 
 on:
   push:
-    branches: [ "chore/add-govulncheck" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "chore/add-govulncheck" ]
+    branches: [ "main" ]
   schedule:
-    - cron: '*/1 * * * *'
+    - cron: '0 9 * * 1'
 
 jobs:
     nightly-vulncheck-modules:
