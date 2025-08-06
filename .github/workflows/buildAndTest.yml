@@ -17,7 +17,14 @@ env:
   GO_VERSION: '1.24.5'
   SHARED_SCRIPTS: './submodules/solarwinds-otel-collector-core/build/scripts'
 
-jobs:  
+jobs:
+  govulncheck-modules: 
+    runs-on: ubuntu-latest
+    steps:
+      - name: Go vulnerabilities check
+        run: |
+          make ci-vulncheck-modules 2>&1
+  
   checks:
     runs-on: ubuntu-latest
     steps:
