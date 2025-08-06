@@ -21,6 +21,10 @@ jobs:
   govulncheck-modules: 
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
       - name: Go vulnerabilities check
         run: |
           make ci-vulncheck-modules 2>&1
