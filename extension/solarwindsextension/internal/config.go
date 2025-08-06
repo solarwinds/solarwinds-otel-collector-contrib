@@ -23,6 +23,7 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config/configgrpc"
 	"go.opentelemetry.io/collector/config/configopaque"
+	"go.opentelemetry.io/collector/config/configoptional"
 	"go.opentelemetry.io/collector/config/configtls"
 	"go.opentelemetry.io/collector/exporter/otlpexporter"
 	"go.uber.org/zap"
@@ -118,8 +119,8 @@ func (cfg *Config) OTLPConfig() (*otlpexporter.Config, error) {
 	// gRPC client configuration.
 	otlpConfig := &otlpexporter.Config{
 		ClientConfig: configgrpc.ClientConfig{
-			TLSSetting:   configtls.NewDefaultClientConfig(),
-			Keepalive:    configgrpc.NewDefaultKeepaliveClientConfig(),
+			TLS:          configtls.NewDefaultClientConfig(),
+			Keepalive:    configoptional.Some(configgrpc.NewDefaultKeepaliveClientConfig()),
 			BalancerName: configgrpc.BalancerName(),
 			Headers:      headers,
 			Endpoint:     endpointURL,

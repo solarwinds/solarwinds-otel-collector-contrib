@@ -46,7 +46,7 @@ func TestConfigUnmarshalFull(t *testing.T) {
 			MaxInterval:         40000000000,
 			MaxElapsedTime:      400000000000,
 		},
-		QueueSettings: exporterhelper.QueueConfig{
+		QueueSettings: exporterhelper.QueueBatchConfig{
 			Enabled:      true,
 			NumConsumers: 20,
 			QueueSize:    2000,
