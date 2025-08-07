@@ -23,6 +23,8 @@ import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/metric"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/scope"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/types"
+
+	"go.uber.org/zap"
 )
 
 func Test_HowSchedulerWorks(t *testing.T) {
@@ -79,7 +81,7 @@ func Test_HowSchedulerWorks(t *testing.T) {
 	}
 
 	sut := NewScraperScheduler()
-	runtime, err := sut.Schedule(scraperDefinition, scraperConfig)
+	runtime, err := sut.Schedule(scraperDefinition, scraperConfig, zap.NewNop())
 
 	assert.Nil(t, err, "functionality must be errorless")
 	assert.Equal(t, 2, len(runtime.ScopeEmitters), "there must be two scpe emitters ready for use")

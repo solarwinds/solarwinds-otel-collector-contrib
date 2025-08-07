@@ -21,6 +21,7 @@ import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/wmi"
 
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 func Test_ProvidesInstalledUpdates(t *testing.T) {
@@ -72,7 +73,8 @@ func Test_ProvidesInstalledUpdates(t *testing.T) {
 	}
 
 	sut := &windowsProvider{
-		wmi: wmi.CreateWmiExecutorMock([]interface{}{&updatesMock}, nil),
+		wmi:    wmi.CreateWmiExecutorMock([]interface{}{&updatesMock}, nil),
+		logger: zap.NewNop(),
 	}
 
 	installedUpdates, err := sut.GetUpdates()
@@ -87,6 +89,7 @@ func Test_ProvidesEmptyUpdatesOnFailure(t *testing.T) {
 		wmi: wmi.CreateWmiExecutorMock(nil, map[interface{}]error{
 			&[]Win32_QuickFixEngineering{}: fmt.Errorf("no updates for you"),
 		}),
+		logger: zap.NewNop(),
 	}
 
 	installedUpdates, err := sut.GetUpdates()

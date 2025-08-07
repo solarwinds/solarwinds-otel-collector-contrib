@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"testing"
 
+	"go.uber.org/zap"
+
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/attributes/shared"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers/domain"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers/model"
@@ -30,13 +32,13 @@ func Test_HostDetailsAttributesGenerator_Functional(t *testing.T) {
 
 	sut := CreateHostDetailsAttributesGenerator(
 		CreateDomainAttributesGenerator(
-			domain.CreateDomainProvider(),
+			domain.CreateDomainProvider(zap.NewNop()),
 		),
 		CreateModelAttributesGenerator(
-			model.CreateModelProvider(),
+			model.CreateModelProvider(zap.NewNop()),
 		),
 		CreateTimeZoneAttributesGenerator(
-			timezone.CreateTimeZoneProvider(),
+			timezone.CreateTimeZoneProvider(zap.NewNop()),
 		),
 	)
 

@@ -20,6 +20,7 @@ import (
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 func Test_Provide_ProvidesLanguageNameAndChannelIsClosedAfterDelivery(t *testing.T) {
@@ -30,7 +31,8 @@ func Test_Provide_ProvidesLanguageNameAndChannelIsClosedAfterDelivery(t *testing
 	}
 
 	sut := provider{
-		cli: providers.CreateCommandLineExecutorMock(commandOutput, "", nil),
+		cli:    providers.CreateCommandLineExecutorMock(commandOutput, "", nil),
+		logger: zap.NewNop(),
 	}
 
 	ch := sut.Provide()
@@ -47,7 +49,8 @@ func Test_Provide_ProvidesEmptyLanguageNameWhenLocaleNotSetAndChannelIsClosedAft
 	expectedLanguage := Language{}
 
 	sut := provider{
-		cli: providers.CreateCommandLineExecutorMock(commandOutput, "", nil),
+		cli:    providers.CreateCommandLineExecutorMock(commandOutput, "", nil),
+		logger: zap.NewNop(),
 	}
 
 	ch := sut.Provide()
@@ -62,7 +65,8 @@ func Test_Provide_FailsAndProvidesEmptyObjectAndChannelIsClosedAfterDelivery(t *
 	expectedLanguage := Language{}
 
 	sut := provider{
-		cli: providers.CreateCommandLineExecutorMock("", "", fmt.Errorf("kokoha error")),
+		cli:    providers.CreateCommandLineExecutorMock("", "", fmt.Errorf("kokoha error")),
+		logger: zap.NewNop(),
 	}
 
 	ch := sut.Provide()
@@ -77,7 +81,8 @@ func Test_Provide_ErrorInStdErrItProvidesEmptyObjectAndChannelIsClosedAfterDeliv
 	expectedLanguage := Language{}
 
 	sut := provider{
-		cli: providers.CreateCommandLineExecutorMock("", "kokoha error", nil),
+		cli:    providers.CreateCommandLineExecutorMock("", "kokoha error", nil),
+		logger: zap.NewNop(),
 	}
 
 	ch := sut.Provide()

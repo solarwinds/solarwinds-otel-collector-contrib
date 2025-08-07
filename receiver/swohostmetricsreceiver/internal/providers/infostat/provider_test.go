@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"testing"
 
+	"go.uber.org/zap"
+
 	"github.com/shirou/gopsutil/v3/host"
 	"github.com/stretchr/testify/assert"
 )
@@ -25,7 +27,7 @@ import (
 func Test_Functional(t *testing.T) {
 	t.Skip("This test should be run manually")
 
-	sut := CreateInfoStatProvider()
+	sut := CreateInfoStatProvider(zap.NewNop())
 	result := <-sut.Provide()
 	fmt.Printf("Result: %+v\n", result)
 }
@@ -46,6 +48,7 @@ func Test_Provide_ProvidesCompleteDataAndChannelIsClosedAfterDelivery(t *testing
 	}
 	sut := provider{
 		internalExecutor: CreateInfoStatProviderMock(basicInfoStat(), nil),
+		logger:           zap.NewNop(),
 	}
 
 	ch := sut.Provide()
@@ -72,6 +75,7 @@ func Test_Provide_FailsAndProvidesEmptyObjectAndChannelIsClosedAfterDelivery(t *
 	}
 	sut := provider{
 		internalExecutor: CreateInfoStatProviderMock(&host.InfoStat{}, fmt.Errorf("something went wrong")),
+		logger:           zap.NewNop(),
 	}
 
 	ch := sut.Provide()

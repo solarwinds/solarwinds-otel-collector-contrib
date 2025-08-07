@@ -21,6 +21,7 @@ import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/registry"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 func Test_Provide_ProvidesFullLanguageAndChannelIsClosedAfterDelivery(t *testing.T) {
@@ -36,6 +37,7 @@ func Test_Provide_ProvidesFullLanguageAndChannelIsClosedAfterDelivery(t *testing
 		getRegistryValues: func(_ registry.RootKey, _, _ string, _ []string) (map[string]string, error) {
 			return map[string]string{"LocaleName": "test-short"}, nil
 		},
+		logger: zap.NewNop(),
 	}
 
 	ch := sut.Provide()
@@ -55,6 +57,7 @@ func Test_Provide_ShortNameGettingFailsAndProvidesEmptyObjectAndChannelIsClosedA
 		getRegistryValues: func(_ registry.RootKey, _, _ string, _ []string) (map[string]string, error) {
 			return nil, fmt.Errorf("no short name for you")
 		},
+		logger: zap.NewNop(),
 	}
 
 	ch := sut.Provide()

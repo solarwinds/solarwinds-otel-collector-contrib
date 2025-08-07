@@ -1,9 +1,9 @@
 module github.com/solarwinds/solarwinds-otel-collector-contrib/processor/swok8sworkloadtypeprocessor
 
-go 1.24.4
+go 1.24.5
 
 require (
-	github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfig v0.127.7
+	github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfig v0.127.9
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/collector/component v1.37.0
 	go.opentelemetry.io/collector/component/componenttest v0.131.0
@@ -18,9 +18,9 @@ require (
 	go.opentelemetry.io/collector/processor/xprocessor v0.131.0
 	go.uber.org/goleak v1.3.0
 	go.uber.org/zap v1.27.0
-	k8s.io/api v0.33.1
-	k8s.io/apimachinery v0.33.1
-	k8s.io/client-go v0.33.1
+	k8s.io/api v0.33.3
+	k8s.io/apimachinery v0.33.3
+	k8s.io/client-go v0.33.3
 )
 
 require (

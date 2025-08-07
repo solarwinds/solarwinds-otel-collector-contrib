@@ -43,21 +43,25 @@ const (
 type emitter struct {
 	startTime        time.Time
 	FirewallProvider providers.Provider[firewall.Container]
+	logger           *zap.Logger
 }
 
 var _ metric.Emitter = (*emitter)(nil)
 
-func NewEmitter() metric.Emitter {
+func NewEmitter(logger *zap.Logger) metric.Emitter {
 	return createEmitter(
-		firewall.CreateFirewallProvider(),
+		firewall.CreateFirewallProvider(logger),
+		logger,
 	)
 }
 
 func createEmitter(
 	fp providers.Provider[firewall.Container],
+	logger *zap.Logger,
 ) metric.Emitter {
 	return &emitter{
 		FirewallProvider: fp,
+		logger:           logger,
 	}
 }
 
@@ -91,10 +95,7 @@ func (e *emitter) getData() ([]firewall.Profile, error) {
 	ch := e.FirewallProvider.Provide()
 	fc := <-ch // get data from channel and continue
 	if fc.Error != nil {
-		message := "getting data from firewall provider failed"
-		err := fmt.Errorf("%s %w", message, fc.Error)
-		zap.L().Error(message, zap.Error(fc.Error))
-		return nil, err
+		return nil, fmt.Errorf("getting data from firewall provider failed: %w", fc.Error)
 	}
 	return fc.FirewallProfiles, nil
 }
@@ -103,7 +104,7 @@ func (e *emitter) constructMetric(
 	fps []firewall.Profile,
 ) pmetric.MetricSlice {
 	if len(fps) == 0 {
-		zap.L().Warn("no firewall profiles provided")
+		e.logger.Warn("no firewall profiles provided")
 		return pmetric.NewMetricSlice()
 	}
 	// Metric slice init.

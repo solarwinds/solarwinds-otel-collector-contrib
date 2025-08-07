@@ -21,6 +21,7 @@ import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 func Test_Provide_RetrievingLastLoggedUsersProvidesDataAndChannelIsClosedAfterDelivery(t *testing.T) {
@@ -39,7 +40,8 @@ reboot   system boot  Fri Dec  4 10:15 - 12:25  (02:10)`
 		}},
 	}
 	sut := provider{
-		cli: providers.CreateCommandLineExecutorMock(commandOutput, "", nil),
+		cli:    providers.CreateCommandLineExecutorMock(commandOutput, "", nil),
+		logger: zap.NewNop(),
 	}
 
 	ch := sut.Provide()
@@ -54,7 +56,8 @@ func Test_Provide_IgnoresStillRunningSessionAndChannelIsClosedAfterDelivery(t *t
 	commandOutput := `reboot   system boot  Mon Dec  4 09:05   still running`
 	expectedResult := Data{}
 	sut := provider{
-		cli: providers.CreateCommandLineExecutorMock(commandOutput, "", nil),
+		cli:    providers.CreateCommandLineExecutorMock(commandOutput, "", nil),
+		logger: zap.NewNop(),
 	}
 
 	ch := sut.Provide()
@@ -70,7 +73,8 @@ func Test_Provide_ReturnsErrorIndicationOnStderrErrorAndChannelIsClosedAfterDeli
 		Error: fmt.Errorf("loggedusers provider stderr"),
 	}
 	sut := provider{
-		cli: providers.CreateCommandLineExecutorMock("", "loggedusers provider stderr", nil),
+		cli:    providers.CreateCommandLineExecutorMock("", "loggedusers provider stderr", nil),
+		logger: zap.NewNop(),
 	}
 
 	ch := sut.Provide()
@@ -86,7 +90,8 @@ func Test_Provide_ReturnsErrorIndicationOnErrorAndChannelIsClosedAfterDelivery(t
 		Error: fmt.Errorf("loggedusers provider error"),
 	}
 	sut := provider{
-		cli: providers.CreateCommandLineExecutorMock("", "", fmt.Errorf("loggedusers provider error")),
+		cli:    providers.CreateCommandLineExecutorMock("", "", fmt.Errorf("loggedusers provider error")),
+		logger: zap.NewNop(),
 	}
 
 	ch := sut.Provide()
@@ -100,7 +105,8 @@ func Test_Provide_ReturnsErrorIndicationOnErrorAndChannelIsClosedAfterDelivery(t
 func Test_Provide_ReturnsEmptyObjectWhenNoUserSessionIsOnAndChannelIsClosedAfterDelivery(t *testing.T) {
 	expectedResult := Data{}
 	sut := provider{
-		cli: providers.CreateCommandLineExecutorMock("", "", nil),
+		cli:    providers.CreateCommandLineExecutorMock("", "", nil),
+		logger: zap.NewNop(),
 	}
 
 	ch := sut.Provide()

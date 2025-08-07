@@ -19,6 +19,7 @@ import (
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/scraper"
+	"go.uber.org/zap"
 
 	fscraper "github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/scraper"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/types"
@@ -53,10 +54,12 @@ func (*factory) CreateMetrics(
 	_ context.Context,
 	_ scraper.Settings,
 	cfg component.Config,
+	logger *zap.Logger,
 ) (scraper.Metrics, error) {
 	return fscraper.CreateScraper[Config, AssetScraper](
 		ScraperType(),
 		cfg,
 		NewAssetScraper,
+		logger,
 	)
 }

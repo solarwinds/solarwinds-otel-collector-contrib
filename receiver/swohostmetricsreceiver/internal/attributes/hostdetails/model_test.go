@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"testing"
 
+	"go.uber.org/zap"
+
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/attributes/shared"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers/model"
 	"github.com/stretchr/testify/assert"
@@ -27,7 +29,7 @@ func Test_ModelAttributesGenerator_Functional(t *testing.T) {
 	t.Skip("This test should be run only manually")
 
 	sut := CreateModelAttributesGenerator(
-		model.CreateModelProvider(),
+		model.CreateModelProvider(zap.NewNop()),
 	)
 
 	result := <-sut.Generate()

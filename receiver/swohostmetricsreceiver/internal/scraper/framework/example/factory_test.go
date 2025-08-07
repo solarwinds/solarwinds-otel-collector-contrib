@@ -18,6 +18,8 @@ import (
 	"context"
 	"testing"
 
+	"go.uber.org/zap"
+
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/types"
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/receiver"
@@ -37,6 +39,7 @@ func Test_CreateScraperExplicitly_ScraperIsProvided(t *testing.T) {
 		context.TODO(),
 		receiver.Settings{},
 		config,
+		zap.NewNop(),
 	)
 
 	assert.NoError(t, err, "creation must not fail")
@@ -52,6 +55,7 @@ func Test_CreateScraperExplicitly_FailsOnEmptyConfig(t *testing.T) {
 		context.TODO(),
 		receiver.Settings{},
 		config,
+		zap.NewNop(),
 	)
 
 	assert.Error(t, err, "creation must fail")
@@ -72,6 +76,7 @@ func Test_CreateScraperImplicitly_ScraperIsProvided(t *testing.T) {
 		context.TODO(),
 		receiver.Settings{},
 		config,
+		zap.NewNop(),
 	)
 
 	assert.NoError(t, err, "creation must not fail")
@@ -87,6 +92,7 @@ func Test_CreateScraperImplicitly_FailsOnEmptyConfig(t *testing.T) {
 		context.TODO(),
 		receiver.Settings{},
 		config,
+		zap.NewNop(),
 	)
 
 	assert.Error(t, err, "creation must fail")

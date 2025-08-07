@@ -22,6 +22,7 @@ import (
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers/firewall"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 func Test_Emit_ProduceMetricOnProvidedProfiles(t *testing.T) {
@@ -37,6 +38,7 @@ func Test_Emit_ProduceMetricOnProvidedProfiles(t *testing.T) {
 
 	sut := emitter{
 		FirewallProvider: CreateFirewallProviderMock(fc),
+		logger:           zap.NewNop(),
 	}
 	err := sut.Init()
 	assert.Nil(t, err, "init must not fail")
@@ -66,6 +68,7 @@ func Test_Emit_ProduceEmptyMetricOnProvidedError(t *testing.T) {
 
 	sut := emitter{
 		FirewallProvider: CreateFirewallProviderMock(fc),
+		logger:           zap.NewNop(),
 	}
 	err := sut.Init()
 	assert.Nil(t, err, "init must not fail")
@@ -90,6 +93,7 @@ func Test_Emit_ProduceLimitedMetricOnCorruptedFirewallProfile(t *testing.T) {
 
 	sut := emitter{
 		FirewallProvider: CreateFirewallProviderMock(fc),
+		logger:           zap.NewNop(),
 	}
 	err := sut.Init()
 	assert.Nil(t, err, "init must not fail")

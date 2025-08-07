@@ -44,7 +44,7 @@ func Test_Functional(t *testing.T) {
 		),
 	)
 
-	sut := NewEmitter()
+	sut := NewEmitter(zap.NewNop())
 
 	err := sut.Init()
 	assert.Nil(t, err)
@@ -56,7 +56,7 @@ func Test_Functional(t *testing.T) {
 }
 
 func Test_Initialize_NotFailing(t *testing.T) {
-	sut := NewEmitter()
+	sut := NewEmitter(zap.NewNop())
 	err := sut.Init()
 	require.NoError(t, err)
 }

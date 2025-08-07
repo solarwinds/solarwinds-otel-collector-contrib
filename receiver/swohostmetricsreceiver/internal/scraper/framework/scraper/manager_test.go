@@ -21,6 +21,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/pdata/pmetric"
+	"go.uber.org/zap"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/feature"
@@ -107,7 +108,7 @@ func Test_Example_BasicManagerUsage(t *testing.T) {
 
 	// Factory content: create scraper. When scraper utilizes scraping manager
 	// following lines pay also for scraper, not only for scrapping manager.
-	sut := NewScraperManager()
+	sut := NewScraperManager(zap.NewNop())
 
 	// Factory content: initialize it.
 	err := sut.Init(scraperDefinition, scraperManagerConfigNoDP)
@@ -127,7 +128,7 @@ func Test_Example_BasicManagerUsage(t *testing.T) {
 func Test_Init_OnFailingFeatureManagerInitFails(t *testing.T) {
 	eMessage := errors.New("feature manager init failed")
 	fm := feature.CreateFeatureManagerMock(eMessage, nil, false)
-	sut := createScraperManager(fm, nil)
+	sut := createScraperManager(fm, nil, zap.NewNop())
 
 	descriptor := createArtificialScraperDescriptor(t)
 	config := createEmptyManagerConfig()
@@ -142,7 +143,7 @@ func Test_Init_OnFailingSchedulerInitFails(t *testing.T) {
 	eMessage := errors.New("scheduling failed")
 	fm := feature.CreateFeatureManagerMock(nil, nil, false)
 	sm := CreateSchedulerMock(eMessage, nil)
-	sut := createScraperManager(fm, sm)
+	sut := createScraperManager(fm, sm, zap.NewNop())
 
 	descriptor := createArtificialScraperDescriptor(t)
 	config := createEmptyManagerConfig()
@@ -156,7 +157,7 @@ func Test_Init_OnFailingSchedulerInitFails(t *testing.T) {
 func Test_Init_InitSucceedsWhenAllComponentsSucceeds(t *testing.T) {
 	fm := feature.CreateFeatureManagerMock(nil, nil, false)
 	sm := CreateSchedulerMock(nil, nil)
-	sut := createScraperManager(fm, sm)
+	sut := createScraperManager(fm, sm, zap.NewNop())
 
 	descriptor := createArtificialScraperDescriptor(t)
 	config := createEmptyManagerConfig()
@@ -171,7 +172,7 @@ func Test_Scrape_OnClosedContext_ScrapeFailsNoMetricsEmitted(t *testing.T) {
 	ctx, cancelFn := context.WithCancel(context.Background())
 	cancelFn()
 
-	sut := createScraperManager(nil, nil)
+	sut := createScraperManager(nil, nil, zap.NewNop())
 	ms, err := sut.Scrape(ctx)
 
 	assert.Zero(t, ms.MetricCount(), "result must have no metrics")
@@ -183,6 +184,7 @@ func Test_Scrape_OnNonInitManager_ScrapeFailsNoMetricsEmitted(t *testing.T) {
 
 	sut := &manager{
 		scraperRuntime: nil, // runtime is not initialized due to skipped manager init
+		logger:         zap.NewNop(),
 	}
 	ms, err := sut.Scrape(ctx)
 
@@ -219,6 +221,7 @@ func Test_Scrape_OnOneFailedEmit_ScrapeFailsAndNoMetricsEmitted(t *testing.T) {
 		scraperType:    testingScraper,
 		config:         &ManagerConfig{},
 		featureManager: feature.CreateFeatureManagerMock(nil, nil, true),
+		logger:         zap.NewNop(),
 	}
 	ms, err := sut.Scrape(ctx)
 
@@ -271,6 +274,7 @@ func Test_Scrape_OnSuccessfulEmit_ScrapeSucceedsAndMetricsAreProvided(t *testing
 		scraperType:    testingScraper,
 		config:         &ManagerConfig{},
 		featureManager: feature.CreateFeatureManagerMock(nil, nil, true),
+		logger:         zap.NewNop(),
 	}
 	ms, err := sut.Scrape(ctx)
 
@@ -298,7 +302,7 @@ func Test_Start_FailsOnClosedContext(t *testing.T) {
 	ctx, cancelFn := context.WithCancel(context.Background())
 	cancelFn()
 
-	sut := NewScraperManager()
+	sut := NewScraperManager(zap.NewNop())
 	err := sut.Start(ctx, nil)
 
 	assert.Error(t, err, "on closed context start must fail")
@@ -306,7 +310,7 @@ func Test_Start_FailsOnClosedContext(t *testing.T) {
 }
 
 func Test_Start_FailsOnUninitManager(t *testing.T) {
-	sut := NewScraperManager()
+	sut := NewScraperManager(zap.NewNop())
 	err := sut.Start(context.Background(), nil)
 
 	assert.Error(t, err, "uninitialized manager must fail")
@@ -330,6 +334,7 @@ func Test_Start_FailsWhenAtLeastOneScopeEmitterFailsOnInit(t *testing.T) {
 			},
 		},
 		scraperType: testingScraper,
+		logger:      zap.NewNop(),
 	}
 	err := sut.Start(context.Background(), nil)
 
@@ -358,6 +363,7 @@ func Test_Start_FailsOnFailedDelayedProcessingInit(t *testing.T) {
 				CollectionInterval: 10,
 			},
 		},
+		logger: zap.NewNop(),
 	}
 	err := sut.Start(context.Background(), nil)
 
@@ -383,6 +389,7 @@ func Test_Start_SucceedsOnSuccessfulScopeEmittersInit(t *testing.T) {
 				CollectionInterval: 10,
 			},
 		},
+		logger: zap.NewNop(),
 	}
 	err := sut.Start(context.Background(), nil)
 

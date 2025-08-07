@@ -16,6 +16,7 @@ package example
 
 import (
 	"go.opentelemetry.io/collector/component"
+	"go.uber.org/zap"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/metric"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/scope"
@@ -54,9 +55,10 @@ var _ frameworkscraper.Scraper = (*ExemplaryScraper)(nil)
 
 func NewExemplaryScraper(
 	config *ScraperConfig,
+	logger *zap.Logger,
 ) (*ExemplaryScraper, error) {
 	s := &ExemplaryScraper{
-		Manager: frameworkscraper.NewScraperManager(),
+		Manager: frameworkscraper.NewScraperManager(logger),
 		config:  config,
 	}
 

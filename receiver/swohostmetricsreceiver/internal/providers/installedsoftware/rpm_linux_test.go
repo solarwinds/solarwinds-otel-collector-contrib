@@ -20,6 +20,7 @@ import (
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/cli"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 const rpmPayload = `
@@ -32,7 +33,7 @@ libreport-filesystem;2.15.2;1705517422
 
 func Test_Rpm_GetSoftware_CommandFailsErrorIsReturned(t *testing.T) {
 	cli := cli.CreateNewCliExecutorMock("", "", fmt.Errorf("failed to process command"))
-	sut := createRpmProvider(cli)
+	sut := createRpmProvider(cli, zap.NewNop())
 
 	is, err := sut.GetSoftware()
 
@@ -44,7 +45,7 @@ func Test_Rpm_GetSoftware_CommandSucceedsSoftwareIsReturned(t *testing.T) {
 	expectedSoftwareCount := 5
 
 	cli := cli.CreateNewCliExecutorMock(rpmPayload, "", nil)
-	sut := createRpmProvider(cli)
+	sut := createRpmProvider(cli, zap.NewNop())
 
 	is, err := sut.GetSoftware()
 
@@ -56,7 +57,7 @@ func Test_Rpm_GetSoftware_CommandSucceedsSoftwareIsReturned(t *testing.T) {
 
 func Test_Rpm_GetSoftware_UnsupportedFormatEmptyCollectionIsReturnedWithNoError(t *testing.T) {
 	cli := cli.CreateNewCliExecutorMock("kokoha_unsupported", "", nil)
-	sut := createRpmProvider(cli)
+	sut := createRpmProvider(cli, zap.NewNop())
 
 	is, err := sut.GetSoftware()
 

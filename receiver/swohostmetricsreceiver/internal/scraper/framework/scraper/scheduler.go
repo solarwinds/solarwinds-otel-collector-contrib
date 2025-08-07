@@ -34,6 +34,7 @@ type Scheduler interface {
 	Schedule(
 		*Descriptor,
 		*types.ScraperConfig,
+		*zap.Logger,
 	) (*Runtime, error)
 }
 
@@ -49,27 +50,22 @@ func NewScraperScheduler() Scheduler {
 func (*scheduler) Schedule(
 	descriptor *Descriptor,
 	config *types.ScraperConfig,
+	logger *zap.Logger,
 ) (*Runtime, error) {
 	sn := descriptor.Type
 
 	// Obtains enabled metrics for scheduled scraper.
 	enabledMetrics, err := metric.GetEnabledMetrics(sn.String(), config)
 	if err != nil {
-		m := fmt.Sprintf("failed to get enabled metrics for scraper '%s'", sn)
-		zap.L().Error(m, zap.Error(err))
-		return nil, fmt.Errorf("%s: %w", m, err)
+		return nil, fmt.Errorf("failed to get enabled metrics for scraper '%s': %w", sn, err)
 	}
 
 	// Assembly Scraper runtime based on enabled metrics.
-	scraperRuntime, err := createScraperRuntime(descriptor, enabledMetrics)
+	scraperRuntime, err := createScraperRuntime(descriptor, enabledMetrics, logger)
 	if err != nil {
-		m := fmt.Sprintf("failed to create scraper runtime for scraper '%s'", sn)
-		zap.L().Error(m, zap.Error(err))
-		return nil, fmt.Errorf("%s: %w", m, err)
+		return nil, fmt.Errorf("failed to create scraper runtime for scraper '%s': %w", sn, err)
 	}
 
-	zap.L().Sugar().Debugf(
-		"scheduling of scraper '%s' finished successfully",
-		sn)
+	logger.Debug("scheduling of scraper finished successfully", zap.String("scraper", sn.String()))
 	return scraperRuntime, nil
 }

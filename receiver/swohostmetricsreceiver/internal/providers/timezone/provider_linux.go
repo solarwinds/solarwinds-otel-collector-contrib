@@ -17,6 +17,7 @@ package timezone
 import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/cli"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
+	"go.uber.org/zap"
 )
 
 const (
@@ -25,14 +26,16 @@ const (
 )
 
 type provider struct {
-	cli cli.CommandLineExecutor
+	cli    cli.CommandLineExecutor
+	logger *zap.Logger
 }
 
 var _ providers.Provider[TimeZone] = (*provider)(nil)
 
-func CreateTimeZoneProvider() providers.Provider[TimeZone] {
+func CreateTimeZoneProvider(logger *zap.Logger) providers.Provider[TimeZone] {
 	return &provider{
-		cli: &cli.BashCli{},
+		cli:    &cli.BashCli{},
+		logger: logger,
 	}
 }
 
@@ -41,7 +44,7 @@ func (dp *provider) Provide() <-chan TimeZone {
 	ch := make(chan TimeZone)
 	go func() {
 		defer close(ch)
-		stdout, err := cli.ProcessCommand(dp.cli, timeZoneCommand)
+		stdout, err := cli.ProcessCommand(dp.cli, timeZoneCommand, dp.logger)
 		// Bias field has to be set to invalid value because it
 		// defaults to zero, which is valid in this context
 		result := TimeZone{

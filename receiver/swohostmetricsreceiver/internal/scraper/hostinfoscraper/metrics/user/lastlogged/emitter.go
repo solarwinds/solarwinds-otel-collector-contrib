@@ -25,6 +25,7 @@ import (
 
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
+	"go.uber.org/zap"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
 )
@@ -42,9 +43,9 @@ type emitter struct {
 
 var _ metric.Emitter = (*emitter)(nil)
 
-func NewEmitter() metric.Emitter {
+func NewEmitter(logger *zap.Logger) metric.Emitter {
 	return createMetricEmitter(
-		loggedusers.CreateProvider(),
+		loggedusers.CreateProvider(logger),
 	)
 }
 

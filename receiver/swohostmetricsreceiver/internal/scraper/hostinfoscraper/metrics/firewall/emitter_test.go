@@ -20,13 +20,15 @@ import (
 	"fmt"
 	"testing"
 
+	"go.uber.org/zap"
+
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_Emitter_Functional(t *testing.T) {
 	t.Skip("This test should be run manually")
 
-	sut := NewEmitter()
+	sut := NewEmitter(zap.NewNop())
 	if err := sut.Init(); err != nil {
 		assert.Fail(t, "initialization must not fail")
 	}

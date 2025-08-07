@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"testing"
 
+	"go.uber.org/zap"
+
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/attributes/shared"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers/infostat"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers/language"
@@ -29,10 +31,10 @@ func Test_OsDetailsAttributesGenerator_Functional(t *testing.T) {
 
 	sut := CreateOsDetailsAttributesGenerator(
 		CreateInfoStatAttributesGenerator(
-			infostat.CreateInfoStatProvider(),
+			infostat.CreateInfoStatProvider(zap.NewNop()),
 		),
 		CreateLanguageAttributesGenerator(
-			language.CreateLanguageProvider(),
+			language.CreateLanguageProvider(zap.NewNop()),
 		),
 	)
 

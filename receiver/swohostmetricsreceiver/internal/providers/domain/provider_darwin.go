@@ -14,7 +14,10 @@
 
 package domain
 
-import "github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
+import (
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
+	"go.uber.org/zap"
+)
 
 type provider struct{}
 
@@ -27,7 +30,7 @@ func (dp *provider) Provide() <-chan Domain {
 	return ch
 }
 
-func CreateDomainProvider() providers.Provider[Domain] {
+func CreateDomainProvider(_ *zap.Logger) providers.Provider[Domain] {
 	return &provider{}
 }
 

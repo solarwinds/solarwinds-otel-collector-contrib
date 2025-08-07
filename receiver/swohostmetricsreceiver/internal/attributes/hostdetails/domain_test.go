@@ -19,6 +19,8 @@ import (
 	"strconv"
 	"testing"
 
+	"go.uber.org/zap"
+
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/attributes/shared"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers/domain"
 	"github.com/stretchr/testify/assert"
@@ -28,7 +30,7 @@ func Test_DomainAttributesGenerator_Functional(t *testing.T) {
 	t.Skip("Only for manual run")
 
 	sut := CreateDomainAttributesGenerator(
-		domain.CreateDomainProvider(),
+		domain.CreateDomainProvider(zap.NewNop()),
 	)
 
 	result := <-sut.Generate()

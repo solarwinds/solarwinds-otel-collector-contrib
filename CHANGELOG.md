@@ -2,6 +2,14 @@
 
 ## vNext
 
+## v0.127.9
+- Chores without impact (excluded internal tools from CodeQL analysis, added dependency review action with GHAS)
+- Fix CVE-2025-54388: Moby firewall reload could expose localhost-only containers to external access
+
+## v0.127.8
+- Updates golang to 1.24.5
+- Chores without impact (version bumps, refactors and build pipeline improvements)
+
 ## v0.127.7
 No changes, previous release failed to finish properly.
 

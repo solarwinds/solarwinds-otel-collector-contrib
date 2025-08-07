@@ -14,7 +14,10 @@
 
 package language
 
-import "github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
+import (
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
+	"go.uber.org/zap"
+)
 
 type provider struct{}
 
@@ -27,7 +30,7 @@ func (dp *provider) Provide() <-chan Language {
 	return ch
 }
 
-func CreateLanguageProvider() providers.Provider[Language] {
+func CreateLanguageProvider(_ *zap.Logger) providers.Provider[Language] {
 	return &provider{}
 }
 

@@ -17,17 +17,20 @@ package timezone
 import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/wmi"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
+	"go.uber.org/zap"
 )
 
 type provider struct {
-	wmi wmi.Executor
+	wmi    wmi.Executor
+	logger *zap.Logger
 }
 
 var _ providers.Provider[TimeZone] = (*provider)(nil)
 
-func CreateTimeZoneProvider() providers.Provider[TimeZone] {
+func CreateTimeZoneProvider(logger *zap.Logger) providers.Provider[TimeZone] {
 	return &provider{
-		wmi: wmi.NewExecutor(),
+		wmi:    wmi.NewExecutor(),
+		logger: logger,
 	}
 }
 

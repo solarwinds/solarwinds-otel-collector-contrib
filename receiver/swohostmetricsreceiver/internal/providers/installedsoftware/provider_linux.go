@@ -19,44 +19,51 @@ import (
 	"go.uber.org/zap"
 )
 
-type linuxProvider struct{}
+type linuxProvider struct {
+	logger *zap.Logger
+}
 
 var _ Provider = (*linuxProvider)(nil)
 
-func NewInstalledSoftwareProvider() Provider {
+func NewInstalledSoftwareProvider(logger *zap.Logger) Provider {
 	return createInstalledSoftwareProvider(
 		map[string]linuxInstalledSoftwareContainer{
 			"rpm": {
 				Discovery: discovery.NewRpmDiscovery(),
-				Provider:  NewRpmProvider(),
+				Provider:  NewRpmProvider(logger),
 			},
 			"dpkg": {
 				Discovery: discovery.NewDpkgDiscovery(),
-				Provider:  NewDpkgProvider(),
+				Provider:  NewDpkgProvider(logger),
 			},
 		},
-		getDefaultProvider(),
+		getDefaultProvider(logger),
+		logger,
 	)
 }
 
 func createInstalledSoftwareProvider(
 	discoverableProviders map[string]linuxInstalledSoftwareContainer,
 	fallbackProvider Provider,
+	logger *zap.Logger,
 ) Provider {
 	provider := discoverProvider(
 		discoverableProviders,
 		fallbackProvider,
+		logger,
 	)
 	return provider
 }
 
-func getDefaultProvider() Provider {
-	return new(linuxProvider)
+func getDefaultProvider(logger *zap.Logger) Provider {
+	return &linuxProvider{
+		logger: logger,
+	}
 }
 
 // GetSoftware implements Provider.
 func (p *linuxProvider) GetSoftware() ([]InstalledSoftware, error) {
-	zap.L().Debug("unable to provide installed software via linuxProvider")
+	p.logger.Debug("unable to provide installed software via linuxProvider")
 	return make([]InstalledSoftware, 0), nil
 }
 
@@ -68,6 +75,7 @@ type linuxInstalledSoftwareContainer struct {
 func discoverProvider(
 	discoverableProviders map[string]linuxInstalledSoftwareContainer,
 	fallbackProvider Provider,
+	logger *zap.Logger,
 ) Provider {
 	// go through providers and select the most prioritized one
 	for _, container := range discoverableProviders {
@@ -77,6 +85,6 @@ func discoverProvider(
 		}
 	}
 
-	zap.L().Warn("default installed software provider for linux will be used")
+	logger.Warn("default installed software provider for linux will be used")
 	return fallbackProvider
 }

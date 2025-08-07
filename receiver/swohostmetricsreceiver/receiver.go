@@ -84,11 +84,10 @@ func createMetricsReceiver(
 	config component.Config,
 	metrics consumer.Metrics,
 ) (receiver.Metrics, error) {
-	const logErrorInclude = ": %w"
 	cfg := config.(*ReceiverConfig)
 
 	// Way of creating receiver with multiple scrapers - here the single one is added
-	scraperControllerOptions, err := createScraperControllerOptions(ctx, cfg)
+	scraperControllerOptions, err := createScraperControllerOptions(ctx, cfg, settings.Logger)
 	if err != nil {
 		return nil, err
 	}
@@ -100,9 +99,7 @@ func createMetricsReceiver(
 		scraperControllerOptions...,
 	)
 	if err != nil {
-		message := "Failed to create swohostmetrics receiver"
-		zap.L().Error(message, zap.Error(err))
-		return nil, fmt.Errorf(message+logErrorInclude, err)
+		return nil, fmt.Errorf("failed to create swohostmetrics receiver: %w", err)
 	}
 
 	return receiver, nil
@@ -111,6 +108,7 @@ func createMetricsReceiver(
 func createScraperControllerOptions(
 	ctx context.Context,
 	receiverConfig *ReceiverConfig,
+	logger *zap.Logger,
 ) ([]scraperhelper.ControllerOption, error) {
 	scraperFactories := scraperFactories()
 	scraperControllerOptions := make([]scraperhelper.ControllerOption, 0, len(scraperFactories))
@@ -127,16 +125,15 @@ func createScraperControllerOptions(
 			ctx,
 			scraper.Settings{},
 			scraperConfig,
+			logger,
 		)
 		if err != nil {
-			message := fmt.Sprintf("creating scraper %s failed", scraperName)
-			zap.L().Error(message, zap.Error(err))
-			return nil, fmt.Errorf(message+": %w", err)
+			return nil, fmt.Errorf("creating scraper %s failed: %w", scraperName, err)
 		}
 
 		ct, err := component.NewType(scraperName)
 		if err != nil {
-			return nil, fmt.Errorf("invalid scraper key name: %s", scraperName)
+			return nil, fmt.Errorf("invalid scraper key name: %s : %w", scraperName, err)
 		}
 
 		scraperControllerOptions = append(scraperControllerOptions, scraperhelper.AddScraper(ct, scraper))
@@ -151,7 +148,6 @@ func GetScraperFactory(scraperName string) (types.MetricsScraperFactory, error) 
 	scraperFactory, found := scraperFactories()[scraperName]
 	if !found {
 		message := fmt.Sprintf("Scraper [%s] is unknown", scraperName)
-		zap.L().Error(message)
 		return nil, errors.New(message)
 	}
 

@@ -14,7 +14,10 @@
 
 package loggedusers
 
-import "github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
+import (
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
+	"go.uber.org/zap"
+)
 
 type provider struct{}
 
@@ -27,7 +30,7 @@ func (dp *provider) Provide() <-chan Data {
 	return ch
 }
 
-func CreateProvider() providers.Provider[Data] {
+func CreateProvider(_ *zap.Logger) providers.Provider[Data] {
 	return &provider{}
 }
 

@@ -15,7 +15,6 @@
 package loggedusers
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/cli"
@@ -30,14 +29,16 @@ const (
 )
 
 type provider struct {
-	cli cli.CommandLineExecutor
+	cli    cli.CommandLineExecutor
+	logger *zap.Logger
 }
 
 var _ providers.Provider[Data] = (*provider)(nil)
 
-func CreateProvider() providers.Provider[Data] {
+func CreateProvider(logger *zap.Logger) providers.Provider[Data] {
 	return &provider{
-		cli: &cli.BashCli{},
+		cli:    &cli.BashCli{},
+		logger: logger,
 	}
 }
 
@@ -46,14 +47,14 @@ func (lup *provider) Provide() <-chan Data {
 	ch := make(chan Data)
 	go func() {
 		defer close(ch)
-		stdout, err := cli.ProcessCommand(lup.cli, lastCommand)
+		stdout, err := cli.ProcessCommand(lup.cli, lastCommand, lup.logger)
 		result := Data{
 			Error: err,
 		}
 		if err == nil {
 			result.Users = getUsers(stdout)
 		}
-		zap.L().Debug(fmt.Sprintf("LoggedUsers provider result: %+v", result))
+		lup.logger.Debug("loggedusers provider result", zap.Any("result", result))
 		ch <- result
 	}()
 	return ch

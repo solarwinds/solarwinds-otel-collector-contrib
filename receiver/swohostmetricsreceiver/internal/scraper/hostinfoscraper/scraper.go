@@ -23,6 +23,7 @@ import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/hostinfoscraper/metrics/uptime"
 	lastloggeduser "github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/hostinfoscraper/metrics/user/lastlogged"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/types"
+	"go.uber.org/zap"
 )
 
 const (
@@ -40,6 +41,7 @@ var _ scraper.Scraper = (*Scraper)(nil)
 
 func NewHostInfoScraper(
 	scraperConfig *types.ScraperConfig,
+	logger *zap.Logger,
 ) (*Scraper, error) {
 	descriptor := &scraper.Descriptor{
 		Type: ScraperType(),
@@ -76,7 +78,7 @@ func NewHostInfoScraper(
 	}
 
 	s := &Scraper{
-		Manager: scraper.NewScraperManager(),
+		Manager: scraper.NewScraperManager(logger),
 		config:  scraperConfig,
 	}
 

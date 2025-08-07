@@ -21,12 +21,13 @@ import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/wmi"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 func Test_Provider_Functional(t *testing.T) {
 	t.Skip("This test should be run manually")
 
-	sut := CreateModelProvider()
+	sut := CreateModelProvider(zap.NewNop())
 	result := <-sut.Provide()
 	fmt.Printf("Result: %+v\n", result)
 }
@@ -114,7 +115,8 @@ func processActWithEvaluation(
 	expectedModel Model,
 ) {
 	sut := provider{
-		wmi.CreateWmiExecutorMock(mocks, errors),
+		wmi:    wmi.CreateWmiExecutorMock(mocks, errors),
+		logger: zap.NewNop(),
 	}
 
 	ch := sut.Provide()

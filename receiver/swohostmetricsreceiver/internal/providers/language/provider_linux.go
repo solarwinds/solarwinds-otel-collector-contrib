@@ -17,6 +17,7 @@ package language
 import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/cli"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
+	"go.uber.org/zap"
 )
 
 const (
@@ -25,7 +26,8 @@ const (
 )
 
 type provider struct {
-	cli cli.CommandLineExecutor
+	cli    cli.CommandLineExecutor
+	logger *zap.Logger
 }
 
 var _ providers.Provider[Language] = (*provider)(nil)
@@ -35,7 +37,7 @@ func (lp *provider) Provide() <-chan Language {
 	ch := make(chan Language)
 	go func() {
 		defer close(ch)
-		stdout, err := cli.ProcessCommand(lp.cli, localeCommand)
+		stdout, err := cli.ProcessCommand(lp.cli, localeCommand, lp.logger)
 		if err == nil {
 			// localeCommand output is in format LANGUAGE=en_US
 			parsedOutput := providers.ParseKeyValue(stdout, "=", []string{language})
@@ -47,8 +49,9 @@ func (lp *provider) Provide() <-chan Language {
 	return ch
 }
 
-func CreateLanguageProvider() providers.Provider[Language] {
+func CreateLanguageProvider(logger *zap.Logger) providers.Provider[Language] {
 	return &provider{
-		cli: &cli.BashCli{},
+		cli:    &cli.BashCli{},
+		logger: logger,
 	}
 }

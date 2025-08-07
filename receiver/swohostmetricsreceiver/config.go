@@ -20,7 +20,6 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/collector/scraper/scraperhelper"
-	"go.uber.org/zap"
 )
 
 /*
@@ -59,21 +58,16 @@ func (receiverConfig *ReceiverConfig) Unmarshal(rawConfig *confmap.Conf) error {
 		return fmt.Errorf("raw configuration object is nil")
 	}
 
-	const logErrorInclude = ": %w"
 	// try to unmarshall raw config into receiver config
 	err := rawConfig.Unmarshal(receiverConfig, confmap.WithIgnoreUnused())
 	if err != nil {
-		message := "Config unmarshalling failed"
-		zap.L().Error(message, zap.Error(err))
-		return fmt.Errorf(message+logErrorInclude, err)
+		return fmt.Errorf("config unmarshalling failed: %w", err)
 	}
 
 	// loading scrapers config section
 	scrapersSectionConfigMap, err := rawConfig.Sub("scrapers")
 	if err != nil {
-		message := "Failed to fetch scrapers section from config"
-		zap.L().Error(message, zap.Error(err))
-		return fmt.Errorf(message+logErrorInclude, err)
+		return fmt.Errorf("failed to fetch scrapers section from config: %w", err)
 	}
 
 	// processing scrapers
@@ -82,9 +76,7 @@ func (receiverConfig *ReceiverConfig) Unmarshal(rawConfig *confmap.Conf) error {
 	for scraperName := range scraperMap {
 		scraperFactory, err := GetScraperFactory(scraperName)
 		if err != nil {
-			message := fmt.Sprintf("Scraper factory for scraper %s was not found", scraperName)
-			zap.L().Error(message, zap.Error(err))
-			return fmt.Errorf(message+logErrorInclude, err)
+			return fmt.Errorf("scraper factory for scraper %s was not found: %w", scraperName, err)
 		}
 
 		// loads scraper config with default values
@@ -92,17 +84,13 @@ func (receiverConfig *ReceiverConfig) Unmarshal(rawConfig *confmap.Conf) error {
 		// extracting scraper config from configuration map
 		scraperSectionConfigMap, err := scrapersSectionConfigMap.Sub(scraperName)
 		if err != nil {
-			message := fmt.Sprintf("Scraper configuration for scraper %s can not be fetched", scraperName)
-			zap.L().Error(message, zap.Error(err))
-			return fmt.Errorf(message+logErrorInclude, err)
+			return fmt.Errorf("scraper configuration for scraper %s can not be fetched: %w", scraperName, err)
 		}
 
 		// unmarshal it into scraper configuration struct
 		err = scraperSectionConfigMap.Unmarshal(scraperConfig, confmap.WithIgnoreUnused())
 		if err != nil {
-			message := fmt.Sprintf("Umarshalling config for scraper %s failed", scraperName)
-			zap.L().Error(message, zap.Error(err))
-			return fmt.Errorf(message+logErrorInclude, err)
+			return fmt.Errorf("unmarshalling config for scraper %s failed: %w", scraperName, err)
 		}
 
 		// set up unmarshalled config for given scraper

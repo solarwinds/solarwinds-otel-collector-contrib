@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/receiver"
+	"go.uber.org/zap"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/metric"
@@ -104,7 +105,7 @@ func Test_OverallScraperTest(t *testing.T) {
 	}
 
 	// Creating scraper in factory.
-	sut, err := CreateScraperImplicitly(ctx, receiver.Settings{}, usedConfig)
+	sut, err := CreateScraperImplicitly(ctx, receiver.Settings{}, usedConfig, zap.NewNop())
 	assert.Nil(t, err, "creating scraper must be errorless")
 
 	// Initializes scraper.

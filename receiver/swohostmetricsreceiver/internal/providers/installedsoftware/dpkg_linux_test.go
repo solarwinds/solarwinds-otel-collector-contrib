@@ -16,6 +16,7 @@ package installedsoftware
 
 import (
 	"fmt"
+	"go.uber.org/zap"
 	"testing"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/cli"
@@ -32,7 +33,7 @@ ii  apport                          2.28.1-0ubuntu2                         all 
 
 func Test_Dpkg_GetSoftware_CommandFailsErrorIsReturned(t *testing.T) {
 	cli := cli.CreateNewCliExecutorMock("", "", fmt.Errorf("failed to process command"))
-	sut := createDpkgProvider(cli)
+	sut := createDpkgProvider(cli, zap.NewNop())
 
 	is, err := sut.GetSoftware()
 
@@ -44,7 +45,7 @@ func Test_Dpkg_GetSoftware_CommandSucceedsSoftwareIsReturned(t *testing.T) {
 	expectedSoftwareCount := 5
 
 	cli := cli.CreateNewCliExecutorMock(dpkgPayload, "", nil)
-	sut := createDpkgProvider(cli)
+	sut := createDpkgProvider(cli, zap.NewNop())
 
 	is, err := sut.GetSoftware()
 
@@ -56,7 +57,7 @@ func Test_Dpkg_GetSoftware_CommandSucceedsSoftwareIsReturned(t *testing.T) {
 
 func Test_Dpkg_GetSoftware_UnsupportedFormatEmptyCollectionIsReturnedWithNoError(t *testing.T) {
 	cli := cli.CreateNewCliExecutorMock("kokoha_unsupported", "", nil)
-	sut := createDpkgProvider(cli)
+	sut := createDpkgProvider(cli, zap.NewNop())
 
 	is, err := sut.GetSoftware()
 

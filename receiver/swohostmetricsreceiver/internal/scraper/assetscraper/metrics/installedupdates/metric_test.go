@@ -20,6 +20,7 @@ import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers/installedupdates"
 	testinghelper "github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/assetscraper/metrics"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 const (
@@ -45,7 +46,7 @@ const (
 func Test_Functional(t *testing.T) {
 	t.Skip("this test should be run manually")
 
-	sut := NewEmitter()
+	sut := NewEmitter(zap.NewNop())
 	err := sut.Init()
 	require.NoErrorf(t, err, "Initialize should not return an error")
 
