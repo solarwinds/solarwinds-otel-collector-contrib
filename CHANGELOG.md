@@ -2,6 +2,15 @@
 
 ## vNext
 
+## v0.131.0
+- Updated all OpenTelemetry packages to latest versions
+- OpenTelemetry Collector: v0.127.0 → v0.131.0
+- OpenTelemetry API: v1.33.0 → v1.37.0
+- Updated TLS configuration in extensions and exporters (`TLSSetting` → `TLS`)
+- Wrapped Keepalive configurations with `configoptional.Some()`
+- Replaced deprecated `exporterhelper.QueueConfig` with `exporterhelper.QueueBatchConfig`
+- Components affected: `solarwindsextension`, `solarwindsexporter`
+
 ## v0.127.9
 - Chores without impact (excluded internal tools from CodeQL analysis, added dependency review action with GHAS)
 - Fix CVE-2025-54388: Moby firewall reload could expose localhost-only containers to external access
