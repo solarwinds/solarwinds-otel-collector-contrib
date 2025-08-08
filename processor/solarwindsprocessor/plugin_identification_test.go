@@ -7,7 +7,7 @@ import (
 	"go.opentelemetry.io/collector/pdata/pcommon"
 )
 
-func TestAddAttributes_HostIdScenario1_NonCloudHost(t *testing.T) {
+func TestAddPluginAttributes_HostIdScenario1_NonCloudHost(t *testing.T) {
 	// Scenario 1: Non-cloud host - hostId should be set to clientId
 	pp := PluginProperties{
 		OverrideHostnameEnv:  "",
@@ -29,7 +29,7 @@ func TestAddAttributes_HostIdScenario1_NonCloudHost(t *testing.T) {
 	require.Equal(t, "test-client-id", hostId.Str())
 }
 
-func TestAddAttributes_HostIdScenario2_CloudHostWithContainer(t *testing.T) {
+func TestAddPluginAttributes_HostIdScenario2_CloudHostWithContainer(t *testing.T) {
 	// Scenario 2: Cloud host with container - hostId should be set to clientId
 	pp := PluginProperties{
 		OverrideHostnameEnv:  "",
@@ -52,7 +52,7 @@ func TestAddAttributes_HostIdScenario2_CloudHostWithContainer(t *testing.T) {
 	require.Equal(t, "test-client-id", hostId.Str())
 }
 
-func TestAddAttributes_HostIdScenario3_GcpHost(t *testing.T) {
+func TestAddPluginAttributes_HostIdScenario3_GcpHost(t *testing.T) {
 	// Scenario 3: GCP host - hostId should be projectId:zoneId:instanceId
 	pp := PluginProperties{
 		OverrideHostnameEnv:  "",
@@ -77,7 +77,7 @@ func TestAddAttributes_HostIdScenario3_GcpHost(t *testing.T) {
 	require.Equal(t, "my-project:us-central1-a:instance-123", hostId.Str())
 }
 
-func TestAddAttributes_GcpHostMissingAttributes(t *testing.T) {
+func TestAddPluginAttributes_GcpHostMissingAttributes(t *testing.T) {
 	// GCP host with missing attributes - hostId should be removed
 	pp := PluginProperties{
 		OverrideHostnameEnv:  "",
@@ -100,7 +100,7 @@ func TestAddAttributes_GcpHostMissingAttributes(t *testing.T) {
 	require.False(t, exists)
 }
 
-func TestAddAttributes_CloudHostWithoutContainer(t *testing.T) {
+func TestAddPluginAttributes_CloudHostWithoutContainer(t *testing.T) {
 	// Cloud host without container - hostId should remain unchanged
 	pp := PluginProperties{
 		OverrideHostnameEnv:  "",
@@ -123,7 +123,7 @@ func TestAddAttributes_CloudHostWithoutContainer(t *testing.T) {
 	require.Equal(t, "original-host-id", hostId.Str())
 }
 
-func TestAddAttributes_HostnameScenarios(t *testing.T) {
+func TestAddPluginAttributes_HostnameScenarios(t *testing.T) {
 	testCases := map[string]struct {
 		isInContainerd           bool
 		containerHostnameEnv     string
@@ -186,7 +186,7 @@ func TestAddAttributes_HostnameScenarios(t *testing.T) {
 	}
 }
 
-func TestAddAttributes_OsTypeNormalization(t *testing.T) {
+func TestAddPluginAttributes_OsTypeNormalization(t *testing.T) {
 	pp := PluginProperties{
 		OverrideHostnameEnv:  "",
 		ContainerHostnameEnv: "",
@@ -217,7 +217,7 @@ func TestAddAttributes_OsTypeNormalization(t *testing.T) {
 	}
 }
 
-func TestAddAttributes_ReceiverAttributes(t *testing.T) {
+func TestAddPluginAttributes_ReceiverAttributes(t *testing.T) {
 	pp := PluginProperties{
 		OverrideHostnameEnv:  "",
 		ContainerHostnameEnv: "",
@@ -240,7 +240,7 @@ func TestAddAttributes_ReceiverAttributes(t *testing.T) {
 	require.Equal(t, "Test Receiver", receiverDisplayName.Str())
 }
 
-func TestAddAttributes_DoesNotOverwriteExistingReceiverName(t *testing.T) {
+func TestAddPluginAttributes_DoesNotOverwriteExistingReceiverName(t *testing.T) {
 	pp := PluginProperties{
 		OverrideHostnameEnv:  "",
 		ContainerHostnameEnv: "",
@@ -264,7 +264,7 @@ func TestAddAttributes_DoesNotOverwriteExistingReceiverName(t *testing.T) {
 	require.False(t, exists)
 }
 
-func TestAddPAttributes_OverwriteExistingReceiverDisplayName(t *testing.T) {
+func TestAddPluginAttributes_OverwriteExistingReceiverDisplayName(t *testing.T) {
 	pp := PluginProperties{
 		OverrideHostnameEnv:  "",
 		ContainerHostnameEnv: "",
