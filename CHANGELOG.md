@@ -2,6 +2,9 @@
 
 ## vNext
 
+## v0.131.1
+No changes, issues with previous release.
+
 ## v0.131.0
 - Updated OpenTelemetry modules to [v1.37.0/v0.131.0](https://github.com/open-telemetry/opentelemetry-collector/releases/tag/v0.131.0)
 - Updated TLS configuration in extensions and exporters (`TLSSetting` → `TLS`)
