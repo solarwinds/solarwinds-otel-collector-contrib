@@ -153,6 +153,19 @@ func (p *solarwindsprocessor) processTraces(
 	return traces, nil
 }
 
+func (p *solarwindsprocessor) decorateLogsByHostIdentifiers(resources plog.ResourceLogsSlice) error {
+	if p.cfg.HostIdentification == nil {
+		return nil
+	}
+
+	for _, resource := range resources.All() {
+		resourceAttributes := resource.Resource().Attributes()
+		p.cfg.HostIdentification.addPluginAttributes(resourceAttributes)
+	}
+
+	return nil
+}
+
 func createProcessor(logger *zap.Logger, cfg component.Config) (*solarwindsprocessor, error) {
 	c, err := checkConfig(cfg)
 	if err != nil {

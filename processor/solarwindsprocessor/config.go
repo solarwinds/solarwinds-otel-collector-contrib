@@ -27,6 +27,7 @@ type Config struct {
 	MaxSizeMib int `mapstructure:"max_size_mib,omitempty"`
 	// Resource attributes to be added to the processed signals.
 	ResourceAttributes map[string]string `mapstructure:"resource,omitempty"`
+	HostIdentification *PluginProperties `mapstructure:"host_identification,omitempty"`
 }
 
 func (c *Config) Validate() error {
