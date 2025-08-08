@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/processesscraper"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/receiver"
@@ -53,6 +54,7 @@ func scraperFactories() map[string]types.MetricsScraperFactory {
 		assetscraper.ScraperType().String():             assetscraper.NewFactory(),
 		hardwareinventoryscraper.ScraperType().String(): hardwareinventoryscraper.NewFactory(),
 		hostinfoscraper.ScraperType().String():          hostinfoscraper.NewFactory(),
+		processesscraper.NewFactory().Type().String():   processesscraper.NewFactory(),
 	}
 }
 
@@ -74,6 +76,7 @@ func createDefaultConfig() component.Config {
 			hostinfoscraper.ScraperType().String():          hostinfoscraper.CreateDefaultConfig(),
 			assetscraper.ScraperType().String():             assetscraper.CreateDefaultConfig(),
 			hardwareinventoryscraper.ScraperType().String(): hardwareinventoryscraper.CreateDefaultConfig(),
+			processesscraper.NewFactory().Type().String():   processesscraper.NewFactory().CreateDefaultConfig(),
 		},
 	}
 }
