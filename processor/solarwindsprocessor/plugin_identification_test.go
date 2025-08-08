@@ -7,19 +7,8 @@ import (
 	"go.opentelemetry.io/collector/pdata/pcommon"
 )
 
-// MockIDsProvider for testing
-type MockIDsProvider struct {
-	clientID    string
-	containerID string
-	hasClientID bool
-}
-
 func TestAddAttributes_HostIdScenario1_NonCloudHost(t *testing.T) {
 	// Scenario 1: Non-cloud host - hostId should be set to clientId
-	idsProvider := &MockIDsProvider{
-		clientID: "test-client-id",
-	}
-
 	pp := PluginProperties{
 		OverrideHostnameEnv:  "",
 		ContainerHostnameEnv: "",
@@ -27,7 +16,7 @@ func TestAddAttributes_HostIdScenario1_NonCloudHost(t *testing.T) {
 		ContainerID:          "",
 		ReceiverName:         "",
 		ReceiverDisplayName:  "",
-		ClientID:             idsProvider.clientID,
+		ClientID:             "test-client-id",
 	}
 
 	attributes := pcommon.NewMap()
@@ -42,19 +31,14 @@ func TestAddAttributes_HostIdScenario1_NonCloudHost(t *testing.T) {
 
 func TestAddAttributes_HostIdScenario2_CloudHostWithContainer(t *testing.T) {
 	// Scenario 2: Cloud host with container - hostId should be set to clientId
-	idsProvider := &MockIDsProvider{
-		clientID:    "test-client-id",
-		containerID: "container-123",
-	}
-
 	pp := PluginProperties{
 		OverrideHostnameEnv:  "",
 		ContainerHostnameEnv: "",
 		IsInContainerd:       false,
-		ContainerID:          idsProvider.containerID,
+		ContainerID:          "container-123",
 		ReceiverName:         "",
 		ReceiverDisplayName:  "",
-		ClientID:             idsProvider.clientID,
+		ClientID:             "test-client-id",
 	}
 
 	attributes := pcommon.NewMap()
@@ -70,11 +54,6 @@ func TestAddAttributes_HostIdScenario2_CloudHostWithContainer(t *testing.T) {
 
 func TestAddAttributes_HostIdScenario3_GcpHost(t *testing.T) {
 	// Scenario 3: GCP host - hostId should be projectId:zoneId:instanceId
-	idsProvider := &MockIDsProvider{
-		clientID:    "test-client-id",
-		hasClientID: true,
-	}
-
 	pp := PluginProperties{
 		OverrideHostnameEnv:  "",
 		ContainerHostnameEnv: "",
@@ -82,7 +61,7 @@ func TestAddAttributes_HostIdScenario3_GcpHost(t *testing.T) {
 		ContainerID:          "",
 		ReceiverName:         "",
 		ReceiverDisplayName:  "",
-		ClientID:             idsProvider.clientID,
+		ClientID:             "test-client-id",
 	}
 
 	attributes := pcommon.NewMap()
@@ -100,10 +79,6 @@ func TestAddAttributes_HostIdScenario3_GcpHost(t *testing.T) {
 
 func TestAddAttributes_GcpHostMissingAttributes(t *testing.T) {
 	// GCP host with missing attributes - hostId should be removed
-	idsProvider := &MockIDsProvider{
-		clientID: "test-client-id",
-	}
-
 	pp := PluginProperties{
 		OverrideHostnameEnv:  "",
 		ContainerHostnameEnv: "",
@@ -111,7 +86,7 @@ func TestAddAttributes_GcpHostMissingAttributes(t *testing.T) {
 		ContainerID:          "",
 		ReceiverName:         "",
 		ReceiverDisplayName:  "",
-		ClientID:             idsProvider.clientID,
+		ClientID:             "test-client-id",
 	}
 
 	attributes := pcommon.NewMap()
@@ -127,12 +102,6 @@ func TestAddAttributes_GcpHostMissingAttributes(t *testing.T) {
 
 func TestAddAttributes_CloudHostWithoutContainer(t *testing.T) {
 	// Cloud host without container - hostId should remain unchanged
-	idsProvider := &MockIDsProvider{
-		clientID:    "test-client-id",
-		containerID: "", // No container
-		hasClientID: true,
-	}
-
 	pp := PluginProperties{
 		OverrideHostnameEnv:  "",
 		ContainerHostnameEnv: "",
@@ -140,7 +109,7 @@ func TestAddAttributes_CloudHostWithoutContainer(t *testing.T) {
 		ContainerID:          "", // No container
 		ReceiverName:         "",
 		ReceiverDisplayName:  "",
-		ClientID:             idsProvider.clientID,
+		ClientID:             "test-client-id",
 	}
 
 	attributes := pcommon.NewMap()
@@ -185,11 +154,6 @@ func TestAddAttributes_HostnameScenarios(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			idsProvider := &MockIDsProvider{
-				clientID:    "test-client-id",
-				containerID: tc.containerID,
-			}
-
 			attributes := pcommon.NewMap()
 			if tc.cloudProvider != "" {
 				attributes.PutStr("cloud.provider", tc.cloudProvider)
@@ -203,7 +167,7 @@ func TestAddAttributes_HostnameScenarios(t *testing.T) {
 				ContainerID:          tc.containerID,
 				ReceiverName:         "",
 				ReceiverDisplayName:  "",
-				ClientID:             idsProvider.clientID,
+				ClientID:             "test-client-id",
 			}
 			pp.addPluginAttributes(attributes)
 
@@ -223,10 +187,6 @@ func TestAddAttributes_HostnameScenarios(t *testing.T) {
 }
 
 func TestAddAttributes_OsTypeNormalization(t *testing.T) {
-	idsProvider := &MockIDsProvider{
-		clientID: "test-client-id",
-	}
-
 	pp := PluginProperties{
 		OverrideHostnameEnv:  "",
 		ContainerHostnameEnv: "",
@@ -234,7 +194,7 @@ func TestAddAttributes_OsTypeNormalization(t *testing.T) {
 		ContainerID:          "",
 		ReceiverName:         "",
 		ReceiverDisplayName:  "",
-		ClientID:             idsProvider.clientID,
+		ClientID:             "test-client-id",
 	}
 	testCases := map[string]string{
 		"windows": "Windows",
@@ -258,10 +218,6 @@ func TestAddAttributes_OsTypeNormalization(t *testing.T) {
 }
 
 func TestAddAttributes_ReceiverAttributes(t *testing.T) {
-	idsProvider := &MockIDsProvider{
-		clientID: "test-client-id",
-	}
-
 	pp := PluginProperties{
 		OverrideHostnameEnv:  "",
 		ContainerHostnameEnv: "",
@@ -269,7 +225,7 @@ func TestAddAttributes_ReceiverAttributes(t *testing.T) {
 		ContainerID:          "",
 		ReceiverName:         "test-receiver",
 		ReceiverDisplayName:  "Test Receiver",
-		ClientID:             idsProvider.clientID,
+		ClientID:             "test-client-id",
 	}
 	attributes := pcommon.NewMap()
 
@@ -285,11 +241,6 @@ func TestAddAttributes_ReceiverAttributes(t *testing.T) {
 }
 
 func TestAddAttributes_DoesNotOverwriteExistingReceiverName(t *testing.T) {
-	idsProvider := &MockIDsProvider{
-		clientID:    "test-client-id",
-		hasClientID: true,
-	}
-
 	pp := PluginProperties{
 		OverrideHostnameEnv:  "",
 		ContainerHostnameEnv: "",
@@ -297,7 +248,7 @@ func TestAddAttributes_DoesNotOverwriteExistingReceiverName(t *testing.T) {
 		ContainerID:          "",
 		ReceiverName:         "new-receiver",
 		ReceiverDisplayName:  "",
-		ClientID:             idsProvider.clientID,
+		ClientID:             "test-client-id",
 	}
 
 	attributes := pcommon.NewMap()
@@ -314,11 +265,6 @@ func TestAddAttributes_DoesNotOverwriteExistingReceiverName(t *testing.T) {
 }
 
 func TestAddPAttributes_OverwriteExistingReceiverDisplayName(t *testing.T) {
-	idsProvider := &MockIDsProvider{
-		clientID:    "test-client-id",
-		hasClientID: true,
-	}
-
 	pp := PluginProperties{
 		OverrideHostnameEnv:  "",
 		ContainerHostnameEnv: "",
@@ -326,7 +272,7 @@ func TestAddPAttributes_OverwriteExistingReceiverDisplayName(t *testing.T) {
 		ContainerID:          "",
 		ReceiverName:         "new-receiver",
 		ReceiverDisplayName:  "New Display Name",
-		ClientID:             idsProvider.clientID,
+		ClientID:             "test-client-id",
 	}
 
 	attributes := pcommon.NewMap()
