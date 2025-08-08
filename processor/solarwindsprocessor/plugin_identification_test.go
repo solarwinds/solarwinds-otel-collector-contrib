@@ -11,42 +11,29 @@ import (
 type MockIDsProvider struct {
 	clientID    string
 	containerID string
-	instanceID  uamsid.InstanceID
-	pluginID    uamsid.ComponentID
 	hasClientID bool
-}
-
-func (m *MockIDsProvider) ClientID() string              { return m.clientID }
-func (m *MockIDsProvider) ContainerID() string           { return m.containerID }
-func (m *MockIDsProvider) InstanceID() uamsid.InstanceID { return m.instanceID }
-func (m *MockIDsProvider) PluginID() uamsid.ComponentID  { return m.pluginID }
-func (m *MockIDsProvider) HasClientID() bool             { return m.hasClientID }
-func (m *MockIDsProvider) Start(ctx context.Context)     {}
-func (m *MockIDsProvider) Stop(ctx context.Context)      {}
-
-func createTestProcessor(idsProvider IDsProvider, isInContainerd bool, containerHostnameEnv, overrideHostnameEnv string) *uamsProcessor {
-	receiver := meta.Receiver{
-		Name:        "test-receiver",
-		DisplayName: "Test Receiver",
-	}
-	return newProcessor(idsProvider, receiver, []Attribute{}, isInContainerd, containerHostnameEnv, overrideHostnameEnv)
 }
 
 func TestAddAttributes_HostIdScenario1_NonCloudHost(t *testing.T) {
 	// Scenario 1: Non-cloud host - hostId should be set to clientId
-	instanceId, _ := uamsid.NewInstanceID("test-instance")
 	idsProvider := &MockIDsProvider{
-		clientID:    "test-client-id",
-		instanceID:  instanceId,
-		pluginID:    uamsid.ComponentID{},
-		hasClientID: true,
+		clientID: "test-client-id",
 	}
-	processor := createTestProcessor(idsProvider, false, "", "")
+
+	pp := PluginProperties{
+		OverrideHostnameEnv:  "",
+		ContainerHostnameEnv: "",
+		IsInContainerd:       false,
+		ContainerID:          "",
+		ReceiverName:         "",
+		ReceiverDisplayName:  "",
+		ClientID:             idsProvider.clientID,
+	}
 
 	attributes := pcommon.NewMap()
 	// No cloud.provider attribute = non-cloud host
 
-	processor.addAttributes(context.Background(), attributes)
+	pp.addPluginAttributes(attributes)
 
 	hostId, exists := attributes.Get("host.id")
 	require.True(t, exists)
@@ -55,22 +42,26 @@ func TestAddAttributes_HostIdScenario1_NonCloudHost(t *testing.T) {
 
 func TestAddAttributes_HostIdScenario2_CloudHostWithContainer(t *testing.T) {
 	// Scenario 2: Cloud host with container - hostId should be set to clientId
-	instanceId, _ := uamsid.NewInstanceID("test-instance")
-	pluginId, _ := uamsid.NewComponentID("test-plugin")
 	idsProvider := &MockIDsProvider{
 		clientID:    "test-client-id",
 		containerID: "container-123",
-		instanceID:  instanceId,
-		pluginID:    pluginId,
-		hasClientID: true,
 	}
-	processor := createTestProcessor(idsProvider, false, "", "")
+
+	pp := PluginProperties{
+		OverrideHostnameEnv:  "",
+		ContainerHostnameEnv: "",
+		IsInContainerd:       false,
+		ContainerID:          idsProvider.containerID,
+		ReceiverName:         "",
+		ReceiverDisplayName:  "",
+		ClientID:             idsProvider.clientID,
+	}
 
 	attributes := pcommon.NewMap()
 	attributes.PutStr("cloud.provider", "aws")
 	attributes.PutStr("host.id", "original-host-id")
 
-	processor.addAttributes(context.Background(), attributes)
+	pp.addPluginAttributes(attributes)
 
 	hostId, exists := attributes.Get("host.id")
 	require.True(t, exists)
@@ -79,15 +70,20 @@ func TestAddAttributes_HostIdScenario2_CloudHostWithContainer(t *testing.T) {
 
 func TestAddAttributes_HostIdScenario3_GcpHost(t *testing.T) {
 	// Scenario 3: GCP host - hostId should be projectId:zoneId:instanceId
-	instanceId, _ := uamsid.NewInstanceID("test-instance")
-	pluginId, _ := uamsid.NewComponentID("test-plugin")
 	idsProvider := &MockIDsProvider{
 		clientID:    "test-client-id",
-		instanceID:  instanceId,
-		pluginID:    pluginId,
 		hasClientID: true,
 	}
-	processor := createTestProcessor(idsProvider, false, "", "")
+
+	pp := PluginProperties{
+		OverrideHostnameEnv:  "",
+		ContainerHostnameEnv: "",
+		IsInContainerd:       false,
+		ContainerID:          "",
+		ReceiverName:         "",
+		ReceiverDisplayName:  "",
+		ClientID:             idsProvider.clientID,
+	}
 
 	attributes := pcommon.NewMap()
 	attributes.PutStr("cloud.provider", "gcp")
@@ -95,7 +91,7 @@ func TestAddAttributes_HostIdScenario3_GcpHost(t *testing.T) {
 	attributes.PutStr("cloud.availability_zone", "us-central1-a")
 	attributes.PutStr("host.id", "instance-123")
 
-	processor.addAttributes(context.Background(), attributes)
+	pp.addPluginAttributes(attributes)
 
 	hostId, exists := attributes.Get("host.id")
 	require.True(t, exists)
@@ -104,22 +100,26 @@ func TestAddAttributes_HostIdScenario3_GcpHost(t *testing.T) {
 
 func TestAddAttributes_GcpHostMissingAttributes(t *testing.T) {
 	// GCP host with missing attributes - hostId should be removed
-	instanceId, _ := uamsid.NewInstanceID("test-instance")
-	pluginId, _ := uamsid.NewComponentID("test-plugin")
 	idsProvider := &MockIDsProvider{
-		clientID:    "test-client-id",
-		instanceID:  instanceId,
-		pluginID:    pluginId,
-		hasClientID: true,
+		clientID: "test-client-id",
 	}
-	processor := createTestProcessor(idsProvider, false, "", "")
+
+	pp := PluginProperties{
+		OverrideHostnameEnv:  "",
+		ContainerHostnameEnv: "",
+		IsInContainerd:       false,
+		ContainerID:          "",
+		ReceiverName:         "",
+		ReceiverDisplayName:  "",
+		ClientID:             idsProvider.clientID,
+	}
 
 	attributes := pcommon.NewMap()
 	attributes.PutStr("cloud.provider", "gcp")
 	attributes.PutStr("host.id", "instance-123")
 	// Missing cloud.account.id and cloud.availability_zone
 
-	processor.addAttributes(context.Background(), attributes)
+	pp.addPluginAttributes(attributes)
 
 	_, exists := attributes.Get("host.id")
 	require.False(t, exists)
@@ -127,22 +127,27 @@ func TestAddAttributes_GcpHostMissingAttributes(t *testing.T) {
 
 func TestAddAttributes_CloudHostWithoutContainer(t *testing.T) {
 	// Cloud host without container - hostId should remain unchanged
-	instanceId, _ := uamsid.NewInstanceID("test-instance")
-	pluginId, _ := uamsid.NewComponentID("test-plugin")
 	idsProvider := &MockIDsProvider{
 		clientID:    "test-client-id",
 		containerID: "", // No container
-		instanceID:  instanceId,
-		pluginID:    pluginId,
 		hasClientID: true,
 	}
-	processor := createTestProcessor(idsProvider, false, "", "")
+
+	pp := PluginProperties{
+		OverrideHostnameEnv:  "",
+		ContainerHostnameEnv: "",
+		IsInContainerd:       false,
+		ContainerID:          "", // No container
+		ReceiverName:         "",
+		ReceiverDisplayName:  "",
+		ClientID:             idsProvider.clientID,
+	}
 
 	attributes := pcommon.NewMap()
 	attributes.PutStr("cloud.provider", "aws")
 	attributes.PutStr("host.id", "original-host-id")
 
-	processor.addAttributes(context.Background(), attributes)
+	pp.addPluginAttributes(attributes)
 
 	hostId, exists := attributes.Get("host.id")
 	require.True(t, exists)
@@ -180,16 +185,10 @@ func TestAddAttributes_HostnameScenarios(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			instanceId, _ := uamsid.NewInstanceID("test-instance")
-			pluginId, _ := uamsid.NewComponentID("test-plugin")
 			idsProvider := &MockIDsProvider{
 				clientID:    "test-client-id",
 				containerID: tc.containerID,
-				instanceID:  instanceId,
-				pluginID:    pluginId,
-				hasClientID: true,
 			}
-			processor := createTestProcessor(idsProvider, tc.isInContainerd, tc.containerHostnameEnv, tc.overrideHostnameEnv)
 
 			attributes := pcommon.NewMap()
 			if tc.cloudProvider != "" {
@@ -197,7 +196,16 @@ func TestAddAttributes_HostnameScenarios(t *testing.T) {
 			}
 			attributes.PutStr("host.name", "original-hostname")
 
-			processor.addAttributes(context.Background(), attributes)
+			pp := PluginProperties{
+				OverrideHostnameEnv:  tc.overrideHostnameEnv,
+				ContainerHostnameEnv: tc.containerHostnameEnv,
+				IsInContainerd:       tc.isInContainerd,
+				ContainerID:          tc.containerID,
+				ReceiverName:         "",
+				ReceiverDisplayName:  "",
+				ClientID:             idsProvider.clientID,
+			}
+			pp.addPluginAttributes(attributes)
 
 			if tc.expectedHostname != "" {
 				hostname, exists := attributes.Get("host.name")
@@ -215,16 +223,19 @@ func TestAddAttributes_HostnameScenarios(t *testing.T) {
 }
 
 func TestAddAttributes_OsTypeNormalization(t *testing.T) {
-	instanceId, _ := uamsid.NewInstanceID("test-instance")
-	pluginId, _ := uamsid.NewComponentID("test-plugin")
 	idsProvider := &MockIDsProvider{
-		clientID:    "test-client-id",
-		instanceID:  instanceId,
-		pluginID:    pluginId,
-		hasClientID: true,
+		clientID: "test-client-id",
 	}
-	processor := createTestProcessor(idsProvider, false, "", "")
 
+	pp := PluginProperties{
+		OverrideHostnameEnv:  "",
+		ContainerHostnameEnv: "",
+		IsInContainerd:       false,
+		ContainerID:          "",
+		ReceiverName:         "",
+		ReceiverDisplayName:  "",
+		ClientID:             idsProvider.clientID,
+	}
 	testCases := map[string]string{
 		"windows": "Windows",
 		"linux":   "Linux",
@@ -237,7 +248,7 @@ func TestAddAttributes_OsTypeNormalization(t *testing.T) {
 			attributes := pcommon.NewMap()
 			attributes.PutStr("os.type", input)
 
-			processor.addAttributes(context.Background(), attributes)
+			pp.addPluginAttributes(attributes)
 
 			osType, exists := attributes.Get("os.type")
 			require.True(t, exists)
@@ -246,49 +257,23 @@ func TestAddAttributes_OsTypeNormalization(t *testing.T) {
 	}
 }
 
-func TestAddAttributes_CoreAttributes(t *testing.T) {
-	instanceID, _ := uamsid.NewInstanceID("test-instance")
-	pluginID, _ := uamsid.NewComponentID("test-plugin")
-	idsProvider := &MockIDsProvider{
-		clientID:    "test-client-id",
-		instanceID:  instanceID,
-		pluginID:    pluginID,
-		hasClientID: true,
-	}
-	processor := createTestProcessor(idsProvider, false, "", "")
-
-	attributes := pcommon.NewMap()
-
-	processor.addAttributes(context.Background(), attributes)
-
-	// Check core attributes are always set
-	clientID, exists := attributes.Get("sw.uams.client.id")
-	require.True(t, exists)
-	require.Equal(t, "test-client-id", clientID.Str())
-
-	pluginInstanceID, exists := attributes.Get("sw.uams.plugin.instance.id")
-	require.True(t, exists)
-	require.Equal(t, instanceID.String(), pluginInstanceID.Str())
-
-	pluginIDAttr, exists := attributes.Get("sw.uams.plugin.id")
-	require.True(t, exists)
-	require.Equal(t, pluginID.String(), pluginIDAttr.Str())
-}
-
 func TestAddAttributes_ReceiverAttributes(t *testing.T) {
-	instanceId, _ := uamsid.NewInstanceID("test-instance")
-	pluginId, _ := uamsid.NewComponentID("test-plugin")
 	idsProvider := &MockIDsProvider{
-		clientID:    "test-client-id",
-		instanceID:  instanceId,
-		pluginID:    pluginId,
-		hasClientID: true,
+		clientID: "test-client-id",
 	}
-	processor := createTestProcessor(idsProvider, false, "", "")
 
+	pp := PluginProperties{
+		OverrideHostnameEnv:  "",
+		ContainerHostnameEnv: "",
+		IsInContainerd:       false,
+		ContainerID:          "",
+		ReceiverName:         "test-receiver",
+		ReceiverDisplayName:  "Test Receiver",
+		ClientID:             idsProvider.clientID,
+	}
 	attributes := pcommon.NewMap()
 
-	processor.addAttributes(context.Background(), attributes)
+	pp.addPluginAttributes(attributes)
 
 	receiverName, exists := attributes.Get("sw.uams.receiver.name")
 	require.True(t, exists)
@@ -300,49 +285,58 @@ func TestAddAttributes_ReceiverAttributes(t *testing.T) {
 }
 
 func TestAddAttributes_DoesNotOverwriteExistingReceiverName(t *testing.T) {
-	instanceId, _ := uamsid.NewInstanceID("test-instance")
-	pluginId, _ := uamsid.NewComponentID("test-plugin")
 	idsProvider := &MockIDsProvider{
 		clientID:    "test-client-id",
-		instanceID:  instanceId,
-		pluginID:    pluginId,
 		hasClientID: true,
 	}
-	processor := createTestProcessor(idsProvider, false, "", "")
+
+	pp := PluginProperties{
+		OverrideHostnameEnv:  "",
+		ContainerHostnameEnv: "",
+		IsInContainerd:       false,
+		ContainerID:          "",
+		ReceiverName:         "new-receiver",
+		ReceiverDisplayName:  "",
+		ClientID:             idsProvider.clientID,
+	}
 
 	attributes := pcommon.NewMap()
 	attributes.PutStr("sw.uams.receiver.name", "existing-receiver")
 
-	processor.addAttributes(context.Background(), attributes)
+	pp.addPluginAttributes(attributes)
 
 	receiverName, exists := attributes.Get("sw.uams.receiver.name")
 	require.True(t, exists)
 	require.Equal(t, "existing-receiver", receiverName.Str())
+
+	_, exists = attributes.Get("sw.uams.receiver.display_name")
+	require.False(t, exists)
 }
 
-func TestAddAttributes_CustomAttributes(t *testing.T) {
-	customAttr := NewAttribute("custom.key", "custom-value", func(attributes pcommon.Map, name string, value string) {
-		attributes.PutStr(name, value)
-	})
-
-	instanceId, _ := uamsid.NewInstanceID("test-instance")
-	pluginId, _ := uamsid.NewComponentID("test-plugin")
+func TestAddPAttributes_OverwriteExistingReceiverDisplayName(t *testing.T) {
 	idsProvider := &MockIDsProvider{
 		clientID:    "test-client-id",
-		instanceID:  instanceId,
-		pluginID:    pluginId,
 		hasClientID: true,
 	}
-	receiver := meta.Receiver{Name: "test-receiver"}
-	processor := newProcessor(idsProvider, receiver, []Attribute{customAttr}, false, "", "")
+
+	pp := PluginProperties{
+		OverrideHostnameEnv:  "",
+		ContainerHostnameEnv: "",
+		IsInContainerd:       false,
+		ContainerID:          "",
+		ReceiverName:         "new-receiver",
+		ReceiverDisplayName:  "New Display Name",
+		ClientID:             idsProvider.clientID,
+	}
 
 	attributes := pcommon.NewMap()
+	attributes.PutStr("sw.uams.receiver.display_name", "DISPLAY NAME WILL BE OVERWRITTEN")
 
-	processor.addAttributes(context.Background(), attributes)
+	pp.addPluginAttributes(attributes)
 
-	customValue, exists := attributes.Get("custom.key")
+	receiverDisplayName, exists := attributes.Get("sw.uams.receiver.display_name")
 	require.True(t, exists)
-	require.Equal(t, "custom-value", customValue.Str())
+	require.Equal(t, "New Display Name", receiverDisplayName.Str())
 }
 
 func Test_OsTypeIsNormalized(t *testing.T) {
