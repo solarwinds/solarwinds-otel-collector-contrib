@@ -14,7 +14,7 @@
 
 package infostat
 
-import "github.com/shirou/gopsutil/v3/host"
+import "github.com/shirou/gopsutil/v4/host"
 
 type infoExecutorMock struct {
 	infoStat *host.InfoStat
