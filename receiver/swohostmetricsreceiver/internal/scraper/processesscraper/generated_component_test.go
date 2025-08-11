@@ -12,6 +12,7 @@ import (
 	"go.opentelemetry.io/collector/confmap/confmaptest"
 	"go.opentelemetry.io/collector/scraper"
 	"go.opentelemetry.io/collector/scraper/scrapertest"
+	"go.uber.org/zap"
 )
 
 var typ = component.MustNewType("processes")
@@ -35,7 +36,7 @@ func TestComponentLifecycle(t *testing.T) {
 		{
 			name: "metrics",
 			createFn: func(ctx context.Context, set scraper.Settings, cfg component.Config) (component.Component, error) {
-				return factory.CreateMetrics(ctx, set, cfg)
+				return factory.CreateMetrics(ctx, set, cfg, zap.NewNop())
 			},
 		},
 	}
