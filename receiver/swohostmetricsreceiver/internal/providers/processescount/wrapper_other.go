@@ -1,3 +1,5 @@
+//go:build !windows
+
 // Copyright 2025 SolarWinds Worldwide, LLC. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,14 +16,11 @@
 
 package processescount
 
-type Wrapper interface {
-	GetCount() (int64, error)
-}
+import (
+	"github.com/shirou/gopsutil/v4/process"
+)
 
-type wrapper struct{}
-
-var _ Wrapper = (*wrapper)(nil)
-
-func CreateWrapper() Wrapper {
-	return &wrapper{}
+func (*wrapper) GetCount() (int64, error) {
+	ps, err := process.Processes()
+	return int64(len(ps)), err
 }
