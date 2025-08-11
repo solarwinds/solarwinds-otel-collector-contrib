@@ -20,33 +20,36 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/processesscraper/internal/metadata"
+	"go.opentelemetry.io/collector/scraper"
 	"go.uber.org/zap"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/attributes/shared"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers/uptime"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers/processescount"
 )
 
 const (
-	presetUptime uint64 = 1701
+	count int64 = 1701
 )
 
-type UptimeProviderMock struct{}
+type ProcessesCountProviderMock struct{}
 
-// GetUptime implements count.Provider.
-func (*UptimeProviderMock) GetUptime() <-chan uptime.Uptime {
-	ch := make(chan uptime.Uptime, 1)
-	ch <- uptime.Uptime{
-		Uptime: presetUptime,
-		Error:  nil,
+var _ providers.Provider[processescount.ProcessesCount] = (*ProcessesCountProviderMock)(nil)
+
+// GetCount implements count.Provider.
+func (*ProcessesCountProviderMock) Provide() <-chan processescount.ProcessesCount {
+	ch := make(chan processescount.ProcessesCount, 1)
+	ch <- processescount.ProcessesCount{
+		Count: count,
+		Error: nil,
 	}
 	close(ch)
 	return ch
 }
-
-var _ uptime.Provider = (*UptimeProviderMock)(nil)
 
 type mock struct {
 	Atts shared.Attributes
@@ -94,15 +97,9 @@ func Test_Initialize_NotFailing(t *testing.T) {
 }
 
 func Test_GetEmittingFunction_ProvidesFunctionCapableOfMetricsEmitting(t *testing.T) {
-	uptimeProvider := &UptimeProviderMock{}
-	osDetailsAttributes := CreateAttributesMock(map[string]string{
-		"osdetails.kokoha": "666",
-	})
-	hostDetailsAttributes := CreateAttributesMock(map[string]string{
-		"hostdetails.kokoha": "777",
-	})
+	provider := &ProcessesCountProviderMock{}
 
-	sut := createEmitter(hostDetailsAttributes, osDetailsAttributes, uptimeProvider, zap.NewNop())
+	sut := createEmitter(provider, metadata.NewMetricsBuilder(metadata.DefaultMetricsBuilderConfig(), scraper.Settings{}), zap.NewNop())
 
 	er := sut.Emit()
 	if er.Error != nil {
@@ -113,15 +110,13 @@ func Test_GetEmittingFunction_ProvidesFunctionCapableOfMetricsEmitting(t *testin
 	assert.Equal(t, metricCount, 1, "Expected number of metrics is 1")
 
 	metric := er.Data.At(0)
-	assert.Equal(t, metric.Name(), MetricName)
-	assert.Equal(t, metric.Description(), MetricDescription)
-	assert.Equal(t, metric.Unit(), MetricUnit)
+	assert.Equal(t, metric.Name(), metadata.MetricsInfo.SwoSystemProcessesCount.Name)
 
 	datapointsCount := metric.Sum().DataPoints().Len()
 	assert.Equal(t, datapointsCount, 1, "Metric count is differne than expected")
 
 	datapoint := metric.Sum().DataPoints().At(0)
-	assert.Equal(t, uint64(datapoint.IntValue()), presetUptime, "Count value is different than expected") //nolint:gosec // equals.
+	assert.Equal(t, uint64(datapoint.IntValue()), count, "Count value is different than expected") //nolint:gosec // equals.
 	assert.Equal(t, datapoint.Attributes().Len(), 2, "Count of attributes is different than expected")
 	m := make(map[string]any)
 	m["osdetails.kokoha"] = "666"
