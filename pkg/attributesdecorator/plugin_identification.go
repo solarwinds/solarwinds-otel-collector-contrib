@@ -1,4 +1,4 @@
-package solarwindsprocessor
+package attributesdecorator
 
 import (
 	"strings"

@@ -22,7 +22,6 @@ import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/attributesdecorator"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/extensionfinder"
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/pdata/plog/plogotlp"
 	"go.opentelemetry.io/collector/pdata/pmetric"
@@ -117,12 +116,9 @@ func (p *solarwindsprocessor) processLogs(
 	logs plog.Logs,
 ) (plog.Logs, error) {
 	attributesdecorator.DecorateResourceAttributes(logs.ResourceLogs(), p.cfg.ResourceAttributes)
-	err := p.decorateLogsByPluginIdentifiers(logs.ResourceLogs())
-	if err != nil {
-		return plog.Logs{}, fmt.Errorf("failed to decorate logs by plugin identifiers: %w", err)
-	}
+	attributesdecorator.DecorateResourceAttributesByPlugin(logs.ResourceLogs(), p.cfg.HostIdentification)
 
-	err = notifySignalSizeLimitExceeded(logs, p.cfg.MaxSizeMib, p.logger)
+	err := notifySignalSizeLimitExceeded(logs, p.cfg.MaxSizeMib, p.logger)
 	if err != nil {
 		msg := "failed to notify logs size limit exceeded"
 		p.logger.Error(msg, zap.Error(err))
@@ -136,12 +132,9 @@ func (p *solarwindsprocessor) processMetrics(
 	metrics pmetric.Metrics,
 ) (pmetric.Metrics, error) {
 	attributesdecorator.DecorateResourceAttributes(metrics.ResourceMetrics(), p.cfg.ResourceAttributes)
-	err := p.decorateMetricsByPluginIdentifiers(metrics.ResourceMetrics())
-	if err != nil {
-		return pmetric.Metrics{}, fmt.Errorf("failed to decorate metrics by plugin identifiers: %w", err)
-	}
+	attributesdecorator.DecorateResourceAttributesByPlugin(metrics.ResourceMetrics(), p.cfg.HostIdentification)
 
-	err = notifySignalSizeLimitExceeded(metrics, p.cfg.MaxSizeMib, p.logger)
+	err := notifySignalSizeLimitExceeded(metrics, p.cfg.MaxSizeMib, p.logger)
 	if err != nil {
 		msg := "failed to notify metrics size limit exceeded"
 		p.logger.Error(msg, zap.Error(err))
@@ -155,59 +148,15 @@ func (p *solarwindsprocessor) processTraces(
 	traces ptrace.Traces,
 ) (ptrace.Traces, error) {
 	attributesdecorator.DecorateResourceAttributes(traces.ResourceSpans(), p.cfg.ResourceAttributes)
-	err := p.decorateTracesByPluginIdentifiers(traces.ResourceSpans())
-	if err != nil {
-		return ptrace.Traces{}, fmt.Errorf("failed to decorate traces by plugin identifiers: %w", err)
-	}
+	attributesdecorator.DecorateResourceAttributesByPlugin(traces.ResourceSpans(), p.cfg.HostIdentification)
 
-	err = notifySignalSizeLimitExceeded(traces, p.cfg.MaxSizeMib, p.logger)
+	err := notifySignalSizeLimitExceeded(traces, p.cfg.MaxSizeMib, p.logger)
 	if err != nil {
 		msg := "failed to notify traces size limit exceeded"
 		p.logger.Error(msg, zap.Error(err))
 		return ptrace.Traces{}, fmt.Errorf("%s: %w", msg, err)
 	}
 	return traces, nil
-}
-
-func decorateByPluginIdentifiers[T any](p *solarwindsprocessor, resources interface {
-	Len() int
-	At(i int) T
-}) error {
-	if p.cfg.HostIdentification == nil {
-		return nil
-	}
-
-	for i := 0; i < resources.Len(); i++ {
-		resource := resources.At(i)
-		var resourceAttributes pcommon.Map
-
-		switch v := any(resource).(type) {
-		case plog.ResourceLogs:
-			resourceAttributes = v.Resource().Attributes()
-		case pmetric.ResourceMetrics:
-			resourceAttributes = v.Resource().Attributes()
-		case ptrace.ResourceSpans:
-			resourceAttributes = v.Resource().Attributes()
-		default:
-			continue
-		}
-
-		p.cfg.HostIdentification.addPluginAttributes(resourceAttributes)
-	}
-
-	return nil
-}
-
-func (p *solarwindsprocessor) decorateLogsByPluginIdentifiers(resources plog.ResourceLogsSlice) error {
-	return decorateByPluginIdentifiers[plog.ResourceLogs](p, resources)
-}
-
-func (p *solarwindsprocessor) decorateMetricsByPluginIdentifiers(resources pmetric.ResourceMetricsSlice) error {
-	return decorateByPluginIdentifiers[pmetric.ResourceMetrics](p, resources)
-}
-
-func (p *solarwindsprocessor) decorateTracesByPluginIdentifiers(resources ptrace.ResourceSpansSlice) error {
-	return decorateByPluginIdentifiers[ptrace.ResourceSpans](p, resources)
 }
 
 func createProcessor(logger *zap.Logger, cfg component.Config) (*solarwindsprocessor, error) {

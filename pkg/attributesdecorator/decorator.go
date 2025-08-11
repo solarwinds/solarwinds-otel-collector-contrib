@@ -14,7 +14,9 @@
 
 package attributesdecorator
 
-import "go.opentelemetry.io/collector/pdata/pcommon"
+import (
+	"go.opentelemetry.io/collector/pdata/pcommon"
+)
 
 type Resource interface {
 	Resource() pcommon.Resource
@@ -37,5 +39,13 @@ func DecorateResourceAttributes[T Resource](collection ResourceCollection[T], at
 		for key, value := range atts {
 			resourceAttributes.PutStr(key, value)
 		}
+	}
+}
+
+func DecorateResourceAttributesByPlugin[T Resource](collection ResourceCollection[T], properties *PluginProperties) {
+	for i := 0; i < collection.Len(); i++ {
+		resource := collection.At(i).Resource()
+		resourceAttributes := resource.Attributes()
+		properties.addPluginAttributes(resourceAttributes)
 	}
 }

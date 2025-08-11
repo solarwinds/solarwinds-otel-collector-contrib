@@ -14,7 +14,11 @@
 
 package solarwindsprocessor
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/attributesdecorator"
+)
 
 type Config struct {
 	// Extension identifies a Solarwinds Extension to
@@ -26,8 +30,8 @@ type Config struct {
 	// When maximum size is set to zero, no limit check is performed.
 	MaxSizeMib int `mapstructure:"max_size_mib,omitempty"`
 	// Resource attributes to be added to the processed signals.
-	ResourceAttributes map[string]string `mapstructure:"resource,omitempty"`
-	HostIdentification *PluginProperties `mapstructure:"host_identification,omitempty"`
+	ResourceAttributes map[string]string                     `mapstructure:"resource,omitempty"`
+	HostIdentification *attributesdecorator.PluginProperties `mapstructure:"host_identification,omitempty"`
 }
 
 func (c *Config) Validate() error {
