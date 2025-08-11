@@ -180,7 +180,7 @@ func TestConfigUnmarshalWithGrpc(t *testing.T) {
 			GRPCConfig: internal.GRPCConfig{
 				ClientConfig: configgrpc.ClientConfig{
 					Endpoint: "url",
-					TLSSetting: configtls.ClientConfig{
+					TLS: configtls.ClientConfig{
 						Insecure: false,
 					},
 					Headers: map[string]configopaque.String{
