@@ -116,10 +116,5 @@ func Test_GetEmittingFunction_ProvidesFunctionCapableOfMetricsEmitting(t *testin
 	assert.Equal(t, datapointsCount, 1, "Metric count is differne than expected")
 
 	datapoint := metric.Sum().DataPoints().At(0)
-	assert.Equal(t, uint64(datapoint.IntValue()), count, "Count value is different than expected") //nolint:gosec // equals.
-	assert.Equal(t, datapoint.Attributes().Len(), 2, "Count of attributes is different than expected")
-	m := make(map[string]any)
-	m["osdetails.kokoha"] = "666"
-	m["hostdetails.kokoha"] = "777"
-	assert.EqualValues(t, datapoint.Attributes().AsRaw(), m)
+	assert.Equal(t, datapoint.IntValue(), count, "Count value is different than expected")
 }

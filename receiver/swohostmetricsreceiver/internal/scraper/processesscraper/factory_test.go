@@ -18,7 +18,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/hostinfoscraper/metrics/uptime"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/processesscraper/internal/metadata"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/types"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/scraper"
@@ -26,7 +26,7 @@ import (
 )
 
 func Test_SpecificMetricIsEnabledByDefault(t *testing.T) {
-	enabledMetric := uptime.MetricName
+	enabledMetric := metadata.MetricsInfo.SwoSystemProcessesCount.Name
 
 	sut := NewFactory()
 	defaultConfig := sut.CreateDefaultConfig().(*types.ScraperConfig)
@@ -36,7 +36,7 @@ func Test_SpecificMetricIsEnabledByDefault(t *testing.T) {
 func Test_ScraperIsSuccessfullyCreated(t *testing.T) {
 	config := &types.ScraperConfig{
 		Metrics: map[string]types.MetricSettingsConfig{
-			uptime.MetricName: {Enabled: true},
+			metadata.MetricsInfo.SwoSystemProcessesCount.Name: {Enabled: true},
 		},
 	}
 	sConfig := scraper.Settings{}
