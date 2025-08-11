@@ -89,5 +89,5 @@ func (e *emitter) getMetricData() (
 	error,
 ) {
 	pc := <-e.processesCountProvider.Provide()
-	return int64(pc.Count), pc.Error
+	return pc.Count, pc.Error
 }

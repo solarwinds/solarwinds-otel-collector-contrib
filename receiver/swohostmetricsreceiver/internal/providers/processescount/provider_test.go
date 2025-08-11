@@ -34,7 +34,7 @@ func Test_Functional(t *testing.T) {
 }
 
 func Test_Provide_WhenSucceedsReturnsCountAndChannelIsClosedAfterDelivery(t *testing.T) {
-	expected := 1701
+	expected := int64(1701)
 
 	sut := Create(CreateSucceedingWrapper(expected))
 

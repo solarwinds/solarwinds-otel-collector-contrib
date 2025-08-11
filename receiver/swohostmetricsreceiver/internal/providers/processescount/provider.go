@@ -17,7 +17,7 @@ package processescount
 import "github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
 
 type ProcessesCount struct {
-	Count int
+	Count int64
 	Error error
 }
 

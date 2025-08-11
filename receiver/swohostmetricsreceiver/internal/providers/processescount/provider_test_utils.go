@@ -15,13 +15,13 @@
 package processescount
 
 type succeedingWrapper struct {
-	value int
+	value int64
 }
 
 var _ Wrapper = (*succeedingWrapper)(nil)
 
 func CreateSucceedingWrapper(
-	value int,
+	value int64,
 ) Wrapper {
 	return &succeedingWrapper{
 		value: value,
@@ -29,7 +29,7 @@ func CreateSucceedingWrapper(
 }
 
 // GetCount implements Wrapper.
-func (w *succeedingWrapper) GetCount() (int, error) {
+func (w *succeedingWrapper) GetCount() (int64, error) {
 	return w.value, nil
 }
 
@@ -48,6 +48,6 @@ func CreateFailingUptimeWrapper(
 }
 
 // GetCount implements Wrapper.
-func (w *failingWrapper) GetCount() (int, error) {
+func (w *failingWrapper) GetCount() (int64, error) {
 	return 0, w.err
 }

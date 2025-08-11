@@ -19,7 +19,7 @@ import (
 )
 
 type Wrapper interface {
-	GetCount() (int, error)
+	GetCount() (int64, error)
 }
 
 type wrapper struct{}
@@ -30,7 +30,7 @@ func CreateWrapper() Wrapper {
 	return &wrapper{}
 }
 
-func (*wrapper) GetCount() (int, error) {
+func (*wrapper) GetCount() (int64, error) {
 	ps, err := process.Processes()
-	return len(ps), err
+	return int64(len(ps)), err
 }
