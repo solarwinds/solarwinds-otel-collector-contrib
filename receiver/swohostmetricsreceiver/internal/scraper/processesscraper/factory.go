@@ -39,7 +39,8 @@ func (f *factory) Type() component.Type {
 }
 
 func (f *factory) CreateDefaultConfig() component.Config {
-	return metadata.DefaultMetricsBuilderConfig()
+	config := metadata.DefaultMetricsBuilderConfig()
+	return &config
 }
 
 func (f *factory) CreateMetrics(
@@ -48,7 +49,7 @@ func (f *factory) CreateMetrics(
 	cfg component.Config,
 	_ *zap.Logger) (scraper.Metrics, error) {
 
-	sc, err := NewScraper(cfg.(metadata.MetricsBuilderConfig), set)
+	sc, err := NewScraper(*cfg.(*metadata.MetricsBuilderConfig), set)
 	if err != nil {
 		return nil, fmt.Errorf("scraper %s creation failed: %w", f.Type(), err)
 	}
