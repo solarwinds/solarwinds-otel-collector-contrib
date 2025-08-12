@@ -7,34 +7,21 @@ import (
 )
 
 type PluginProperties struct {
-	OverrideHostnameEnv  string `mapstructure:"override.hostname.env"`
-	ContainerHostnameEnv string `mapstructure:"container.hostname.env"`
-	IsInContainerd       bool   `mapstructure:"is.in.containerd"`
-	ContainerID          string `mapstructure:"container.id"`
-	ReceiverName         string `mapstructure:"receiver.name"`
-	ReceiverDisplayName  string `mapstructure:"receiver.display_name"`
-	ClientID             string `mapstructure:"client.id"`
+	IsInContainerd bool   `mapstructure:"is.in.containerd"`
+	ContainerID    string `mapstructure:"container.id"`
+	ClientID       string `mapstructure:"client.id"`
 }
 
 const (
-	cloudProviderAttribute       = "cloud.provider"
-	hostIDAttribute              = "host.id"
-	hostNameAttribute            = "host.name"
-	hostNameOverrideAttribute    = "host.name.override"
-	receiverNameAttribute        = "sw.uams.receiver.name"
-	receiverDisplayNameAttribute = "sw.uams.receiver.display_name"
-	osTypeAttribute              = "os.type"
+	cloudProviderAttribute = "cloud.provider"
+	hostIDAttribute        = "host.id"
+	hostNameAttribute      = "host.name"
+	osTypeAttribute        = "os.type"
 )
 
 func (h *PluginProperties) addPluginAttributes(
 	resourceAttributes pcommon.Map,
 ) {
-	// resource
-	// Set host name override attribute with overrideHostnameEnv. This env var can be set system-wide and is set
-	// to match host name reported by UAMS Client and host name reported by OTel plugin.
-	if h.OverrideHostnameEnv != "" {
-		resourceAttributes.PutStr(hostNameOverrideAttribute, h.OverrideHostnameEnv)
-	}
 
 	// telemetry
 	_, cloudProviderExists := resourceAttributes.Get(cloudProviderAttribute)
@@ -61,27 +48,11 @@ func (h *PluginProperties) addPluginAttributes(
 		resourceAttributes.PutStr(hostNameAttribute, h.ContainerID)
 	}
 
-	// poll - to hostnameOverride in resource, remove from here
-	// Replace host name attribute with containerHostnameEnv for all containers if UAMS_CONTAINER_HOSTNAME is set
-	// to match host name reported by UAMS Client and host name reported by OTel plugin.
-	if h.ContainerHostnameEnv != "" {
-		resourceAttributes.PutStr(hostNameAttribute, h.ContainerHostnameEnv)
-	}
-
 	// telemetry
 	// Unify the os.type values, supported are only Windows and Linux for now.
 	// Everything what's not Windows should be identified as Linux.
 	if osTypeValue, exists := resourceAttributes.Get(osTypeAttribute); exists {
 		normalizeOsType(osTypeValue)
-	}
-
-	// Don't overwrite receiver name if it's already set (e.g. filelog sets receiver name to hostmetrics).
-	if _, exists := resourceAttributes.Get(receiverNameAttribute); !exists {
-		resourceAttributes.PutStr(receiverNameAttribute, h.ReceiverName)
-	}
-
-	if h.ReceiverDisplayName != "" {
-		resourceAttributes.PutStr(receiverDisplayNameAttribute, h.ReceiverDisplayName)
 	}
 }
 
