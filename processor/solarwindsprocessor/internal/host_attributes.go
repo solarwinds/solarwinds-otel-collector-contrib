@@ -19,7 +19,7 @@ const (
 	osTypeAttribute        = "os.type"
 )
 
-func (h *HostAttributes) addHostAttributes(
+func (h *HostAttributes) applyAttributes(
 	resourceAttributes pcommon.Map,
 ) {
 
