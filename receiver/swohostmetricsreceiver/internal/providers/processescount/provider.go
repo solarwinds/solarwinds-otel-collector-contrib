@@ -14,41 +14,18 @@
 
 package processescount
 
-import "github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
+import (
+	"github.com/shirou/gopsutil/v4/process"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
+)
 
-type ProcessesCount struct {
-	Count int64
-	Error error
+type Provider providers.Provider[providers.Data[int64]]
+
+func Create() Provider {
+	return providers.CreateDataProvider(provide)
 }
 
-type provider struct {
-	Wrapper
-}
-
-var _ providers.Provider[ProcessesCount] = (*provider)(nil)
-
-func Create(
-	w Wrapper,
-) providers.Provider[ProcessesCount] {
-	return &provider{
-		Wrapper: w,
-	}
-}
-
-func (p *provider) Provide() <-chan ProcessesCount {
-	ch := make(chan ProcessesCount)
-	go p.provideInternal(ch)
-	return ch
-}
-
-func (p *provider) provideInternal(ch chan ProcessesCount) {
-	defer close(ch)
-
-	count, err := p.Wrapper.GetCount()
-	d := ProcessesCount{
-		Count: count,
-		Error: err,
-	}
-
-	ch <- d
+func provide() (int64, error) {
+	ps, err := process.Processes()
+	return int64(len(ps)), err
 }

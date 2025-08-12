@@ -14,8 +14,40 @@
 
 package providers
 
+type Data[T any] struct {
+	Value T
+	Error error
+}
+
 // Provider is a general interface for most of the data providers.
 type Provider[T any] interface {
 	// Provide returns a channel through which the data are provided.
 	Provide() <-chan T
+}
+
+// ProviderFunc is a general interface for most of the inner data providers.
+type ProviderFunc[T any] func() (T, error)
+
+type provider[T any] struct {
+	provide ProviderFunc[T]
+}
+
+var _ Provider[Data[any]] = (*provider[any])(nil)
+
+func CreateDataProvider[T any](
+	pf ProviderFunc[T],
+) Provider[Data[T]] {
+	return &provider[T]{provide: pf}
+}
+
+func (p *provider[T]) Provide() <-chan Data[T] {
+	ch := make(chan Data[T])
+	go p.provideInGoRoutine(ch)
+	return ch
+}
+
+func (p *provider[T]) provideInGoRoutine(ch chan Data[T]) {
+	defer close(ch)
+	value, err := p.provide()
+	ch <- Data[T]{value, err}
 }

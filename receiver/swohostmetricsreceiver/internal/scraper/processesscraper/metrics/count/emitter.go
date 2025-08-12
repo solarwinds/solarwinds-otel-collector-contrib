@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/providers/processescount"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/processesscraper/internal/metadata"
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -29,7 +28,7 @@ import (
 )
 
 type emitter struct {
-	processesCountProvider providers.Provider[processescount.ProcessesCount]
+	processesCountProvider processescount.Provider
 	metricsBuilder         *metadata.MetricsBuilder
 	logger                 *zap.Logger
 	metric.InitFunc
@@ -40,14 +39,14 @@ var _ metric.Emitter = (*emitter)(nil)
 func NewEmitter(metricsBuilder *metadata.MetricsBuilder,
 	logger *zap.Logger) metric.Emitter {
 	return createEmitter(
-		processescount.Create(processescount.CreateWrapper()),
+		processescount.Create(),
 		metricsBuilder,
 		logger,
 	)
 }
 
 func createEmitter(
-	processesCountProvider providers.Provider[processescount.ProcessesCount],
+	processesCountProvider processescount.Provider,
 	metricsBuilder *metadata.MetricsBuilder,
 	logger *zap.Logger,
 ) metric.Emitter {
@@ -80,5 +79,5 @@ func (e *emitter) Emit() *metric.Result {
 
 func (e *emitter) getMetricData() (int64, error) {
 	pc := <-e.processesCountProvider.Provide()
-	return pc.Count, pc.Error
+	return pc.Value, pc.Error
 }
