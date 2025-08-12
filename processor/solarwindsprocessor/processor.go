@@ -20,7 +20,9 @@ import (
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/attributesdecorator"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/container"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/extensionfinder"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/solarwindsprocessor/internal"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/pdata/plog/plogotlp"
@@ -32,8 +34,9 @@ import (
 )
 
 type solarwindsprocessor struct {
-	logger *zap.Logger
-	cfg    *Config
+	logger        *zap.Logger
+	cfg           *Config
+	containerInfo internal.ContainerInfo
 }
 
 func (p *solarwindsprocessor) start(ctx context.Context, host component.Host) error {
@@ -50,6 +53,21 @@ func (p *solarwindsprocessor) start(ctx context.Context, host component.Host) er
 
 	// Adjust configuration by fetching values from the extension.
 	p.adjustConfigurationByExtension(swiExtension)
+
+	// Fetch additional properties for host detection if enabled.
+	if p.cfg.HostDecorationEnabled == true {
+		containerProvider := container.NewProvider()
+		containerId, err := containerProvider.ReadContainerInstanceID()
+		if err != nil {
+			return fmt.Errorf("failed to read container instance ID: %w", err)
+		}
+		isInContainerd := containerProvider.IsRunInContainerd()
+
+		p.containerInfo = internal.ContainerInfo{
+			ContainerID:       containerId,
+			IsRunInContainerd: isInContainerd,
+		}
+	}
 
 	return nil
 }
@@ -116,7 +134,7 @@ func (p *solarwindsprocessor) processLogs(
 	logs plog.Logs,
 ) (plog.Logs, error) {
 	attributesdecorator.DecorateResourceAttributes(logs.ResourceLogs(), p.cfg.ResourceAttributes)
-	attributesdecorator.DecorateResourceAttributesByPlugin(logs.ResourceLogs(), p.cfg.HostIdentification)
+	attributesdecorator.DecorateResourceAttributesByPluginIdentifiers(logs.ResourceLogs(), p.cfg.HostIdentification)
 
 	err := notifySignalSizeLimitExceeded(logs, p.cfg.MaxSizeMib, p.logger)
 	if err != nil {
@@ -132,7 +150,7 @@ func (p *solarwindsprocessor) processMetrics(
 	metrics pmetric.Metrics,
 ) (pmetric.Metrics, error) {
 	attributesdecorator.DecorateResourceAttributes(metrics.ResourceMetrics(), p.cfg.ResourceAttributes)
-	attributesdecorator.DecorateResourceAttributesByPlugin(metrics.ResourceMetrics(), p.cfg.HostIdentification)
+	attributesdecorator.DecorateResourceAttributesByPluginIdentifiers(metrics.ResourceMetrics(), p.cfg.HostIdentification)
 
 	err := notifySignalSizeLimitExceeded(metrics, p.cfg.MaxSizeMib, p.logger)
 	if err != nil {
@@ -148,7 +166,7 @@ func (p *solarwindsprocessor) processTraces(
 	traces ptrace.Traces,
 ) (ptrace.Traces, error) {
 	attributesdecorator.DecorateResourceAttributes(traces.ResourceSpans(), p.cfg.ResourceAttributes)
-	attributesdecorator.DecorateResourceAttributesByPlugin(traces.ResourceSpans(), p.cfg.HostIdentification)
+	attributesdecorator.DecorateResourceAttributesByPluginIdentifiers(traces.ResourceSpans(), p.cfg.HostIdentification)
 
 	err := notifySignalSizeLimitExceeded(traces, p.cfg.MaxSizeMib, p.logger)
 	if err != nil {
