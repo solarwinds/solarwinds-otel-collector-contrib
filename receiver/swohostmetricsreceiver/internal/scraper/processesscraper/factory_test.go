@@ -19,7 +19,6 @@ import (
 	"testing"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/processesscraper/internal/metadata"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/types"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/scraper"
@@ -27,17 +26,18 @@ import (
 )
 
 func Test_SpecificMetricIsEnabledByDefault(t *testing.T) {
-	enabledMetric := metadata.MetricsInfo.SwoSystemProcessesCount.Name
-
 	sut := NewFactory()
-	defaultConfig := sut.CreateDefaultConfig().(*types.ScraperConfig)
-	require.Truef(t, defaultConfig.Metrics[enabledMetric].Enabled, enabledMetric+" is disabled by default, but should be enabled.")
+	defaultConfig := sut.CreateDefaultConfig().(*metadata.MetricsBuilderConfig)
+	require.Truef(t,
+		defaultConfig.Metrics.SwoSystemProcessesCount.Enabled,
+		"%s is disabled by default, but should be enabled.",
+		metadata.MetricsInfo.SwoSystemProcessesCount.Name)
 }
 
 func Test_ScraperIsSuccessfullyCreated(t *testing.T) {
-	config := &types.ScraperConfig{
-		Metrics: map[string]types.MetricSettingsConfig{
-			metadata.MetricsInfo.SwoSystemProcessesCount.Name: {Enabled: true},
+	config := &metadata.MetricsBuilderConfig{
+		Metrics: metadata.MetricsConfig{
+			SwoSystemProcessesCount: metadata.MetricConfig{Enabled: true},
 		},
 	}
 	sConfig := scraper.Settings{
