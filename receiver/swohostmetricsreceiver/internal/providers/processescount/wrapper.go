@@ -14,6 +14,8 @@
 
 package processescount
 
+import "github.com/shirou/gopsutil/v4/process"
+
 type Wrapper interface {
 	GetCount() (int64, error)
 }
@@ -24,4 +26,9 @@ var _ Wrapper = (*wrapper)(nil)
 
 func CreateWrapper() Wrapper {
 	return &wrapper{}
+}
+
+func (*wrapper) GetCount() (int64, error) {
+	ps, err := process.Processes()
+	return int64(len(ps)), err
 }
