@@ -6,9 +6,10 @@ import (
 	"go.opentelemetry.io/collector/pdata/pcommon"
 )
 
-type ContainerInfo struct {
+type HostAttributes struct {
 	ContainerID       string
 	IsRunInContainerd bool
+	ClientId          string
 }
 
 const (
@@ -16,31 +17,27 @@ const (
 	hostIDAttribute        = "host.id"
 	hostNameAttribute      = "host.name"
 	osTypeAttribute        = "os.type"
-
-	clientIdAttribute = "sw.uams.client.id"
 )
 
-func (h *ContainerInfo) addHostAttributes(
+func (h *HostAttributes) addHostAttributes(
 	resourceAttributes pcommon.Map,
-	configuredAttributes map[string]string,
 ) {
 
 	_, cloudProviderExists := resourceAttributes.Get(cloudProviderAttribute)
-	clientId, clientIdExists := configuredAttributes[clientIdAttribute]
 
-	if clientIdExists && clientId != "" {
+	if h.ClientId != "" {
 		// Replace host ID attribute with client ID only for hosts that are not cloud-based.
 		// Cloud-based hosts have unique cloud instance host ID that is historically used
 		// in the system.
 		if !cloudProviderExists {
-			resourceAttributes.PutStr(hostIDAttribute, clientId)
+			resourceAttributes.PutStr(hostIDAttribute, h.ClientId)
 		}
 
 		// Replace host ID attribute with client ID if the OTel plugin is running inside a container.
 		// Some containers running on cloud-based hosts can have the same host ID leading to problems
 		// with differentiation of watched containers, so it has to be replaced with client ID which is unique.
 		if cloudProviderExists && h.ContainerID != "" {
-			resourceAttributes.PutStr(hostIDAttribute, clientId)
+			resourceAttributes.PutStr(hostIDAttribute, h.ClientId)
 		}
 	}
 

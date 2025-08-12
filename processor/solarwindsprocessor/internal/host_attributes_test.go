@@ -9,19 +9,16 @@ import (
 
 func TestAddPluginAttributes_HostIdScenario1_NonCloudHost(t *testing.T) {
 	// Scenario 1: Non-cloud host - hostId should be set to clientId
-	pp := ContainerInfo{
+	pp := HostAttributes{
 		IsRunInContainerd: false,
 		ContainerID:       "",
-	}
-
-	configuredAttributes := map[string]string{
-		"sw.uams.client.id": "test-client-id",
+		ClientId:          "test-client-id",
 	}
 
 	attributes := pcommon.NewMap()
 	// No cloud.provider attribute = non-cloud host
 
-	pp.addHostAttributes(attributes, configuredAttributes)
+	pp.addHostAttributes(attributes)
 
 	hostId, exists := attributes.Get("host.id")
 	require.True(t, exists)
@@ -30,20 +27,17 @@ func TestAddPluginAttributes_HostIdScenario1_NonCloudHost(t *testing.T) {
 
 func TestAddPluginAttributes_HostIdScenario2_CloudHostWithContainer(t *testing.T) {
 	// Scenario 2: Cloud host with container - hostId should be set to clientId
-	pp := ContainerInfo{
+	pp := HostAttributes{
 		IsRunInContainerd: false,
 		ContainerID:       "container-123",
-	}
-
-	configuredAttributes := map[string]string{
-		"sw.uams.client.id": "test-client-id",
+		ClientId:          "test-client-id",
 	}
 
 	attributes := pcommon.NewMap()
 	attributes.PutStr("cloud.provider", "aws")
 	attributes.PutStr("host.id", "original-host-id")
 
-	pp.addHostAttributes(attributes, configuredAttributes)
+	pp.addHostAttributes(attributes)
 
 	hostId, exists := attributes.Get("host.id")
 	require.True(t, exists)
@@ -52,19 +46,17 @@ func TestAddPluginAttributes_HostIdScenario2_CloudHostWithContainer(t *testing.T
 
 func TestAddPluginAttributes_CloudHostWithoutContainer(t *testing.T) {
 	// Cloud host without container - hostId should remain unchanged
-	pp := ContainerInfo{
+	pp := HostAttributes{
 		IsRunInContainerd: false,
 		ContainerID:       "", // No container
-	}
-	configuredAttributes := map[string]string{
-		"sw.uams.client.id": "test-client-id",
+		ClientId:          "test-client-id",
 	}
 
 	attributes := pcommon.NewMap()
 	attributes.PutStr("cloud.provider", "aws")
 	attributes.PutStr("host.id", "original-host-id")
 
-	pp.addHostAttributes(attributes, configuredAttributes)
+	pp.addHostAttributes(attributes)
 
 	hostId, exists := attributes.Get("host.id")
 	require.True(t, exists)
@@ -101,10 +93,6 @@ func TestAddPluginAttributes_HostnameScenarios(t *testing.T) {
 		},
 	}
 
-	configuredAttributes := map[string]string{
-		"sw.uams.client.id": "test-client-id",
-	}
-
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			attributes := pcommon.NewMap()
@@ -113,11 +101,12 @@ func TestAddPluginAttributes_HostnameScenarios(t *testing.T) {
 			}
 			attributes.PutStr("host.name", "original-hostname")
 
-			pp := ContainerInfo{
+			pp := HostAttributes{
 				IsRunInContainerd: tc.isRunInContainerd,
 				ContainerID:       tc.containerID,
+				ClientId:          "test-client-id",
 			}
-			pp.addHostAttributes(attributes, configuredAttributes)
+			pp.addHostAttributes(attributes)
 
 			if tc.expectedHostname != "" {
 				hostname, exists := attributes.Get("host.name")
@@ -129,9 +118,10 @@ func TestAddPluginAttributes_HostnameScenarios(t *testing.T) {
 }
 
 func TestAddPluginAttributes_OsTypeNormalization(t *testing.T) {
-	pp := ContainerInfo{
+	pp := HostAttributes{
 		IsRunInContainerd: false,
 		ContainerID:       "",
+		ClientId:          "test-client-id",
 	}
 
 	testCases := map[string]string{
@@ -141,16 +131,12 @@ func TestAddPluginAttributes_OsTypeNormalization(t *testing.T) {
 		"darwin":  "Linux",
 	}
 
-	configuredAttributes := map[string]string{
-		"sw.uams.client.id": "test-client-id",
-	}
-
 	for input, expected := range testCases {
 		t.Run(input, func(t *testing.T) {
 			attributes := pcommon.NewMap()
 			attributes.PutStr("os.type", input)
 
-			pp.addHostAttributes(attributes, configuredAttributes)
+			pp.addHostAttributes(attributes)
 
 			osType, exists := attributes.Get("os.type")
 			require.True(t, exists)

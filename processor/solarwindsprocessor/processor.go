@@ -34,9 +34,9 @@ import (
 )
 
 type solarwindsprocessor struct {
-	logger        *zap.Logger
-	cfg           *Config
-	containerInfo internal.ContainerInfo
+	logger         *zap.Logger
+	cfg            *Config
+	hostAttributes internal.HostAttributes
 }
 
 func (p *solarwindsprocessor) start(ctx context.Context, host component.Host) error {
@@ -55,7 +55,7 @@ func (p *solarwindsprocessor) start(ctx context.Context, host component.Host) er
 	p.adjustConfigurationByExtension(swiExtension)
 
 	// Fetch additional properties for host detection if enabled.
-	if p.cfg.HostDecorationEnabled == true {
+	if p.cfg.HostAttributesEnabled == true {
 		containerProvider := container.NewProvider()
 		containerId, err := containerProvider.ReadContainerInstanceID()
 		if err != nil {
@@ -63,9 +63,10 @@ func (p *solarwindsprocessor) start(ctx context.Context, host component.Host) er
 		}
 		isInContainerd := containerProvider.IsRunInContainerd()
 
-		p.containerInfo = internal.ContainerInfo{
+		p.hostAttributes = internal.HostAttributes{
 			ContainerID:       containerId,
 			IsRunInContainerd: isInContainerd,
+			ClientId:          p.cfg.ClientId,
 		}
 	}
 

@@ -29,7 +29,8 @@ type Config struct {
 	MaxSizeMib int `mapstructure:"max_size_mib,omitempty"`
 	// Resource attributes to be added to the processed signals.
 	ResourceAttributes    map[string]string `mapstructure:"resource,omitempty"`
-	HostDecorationEnabled bool              `mapstructure:"host_enabled,omitempty"`
+	HostAttributesEnabled bool              `mapstructure:"host_enabled,omitempty"`
+	ClientId              string            `mapstructure:"client_id,omitempty"`
 }
 
 func (c *Config) Validate() error {
