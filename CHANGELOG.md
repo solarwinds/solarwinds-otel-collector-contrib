@@ -2,6 +2,8 @@
 
 ## vNext
 
+- Added `processesscraper` to `swohostmetricsreceiver` providing `swo.system.processes.count` metric
+
 ## v0.131.1
 No changes, issues with previous release.
 
