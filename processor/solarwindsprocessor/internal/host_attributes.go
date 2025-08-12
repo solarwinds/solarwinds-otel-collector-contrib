@@ -28,7 +28,7 @@ func (h *ContainerInfo) addHostAttributes(
 	_, cloudProviderExists := resourceAttributes.Get(cloudProviderAttribute)
 	clientId, clientIdExists := configuredAttributes[clientIdAttribute]
 
-	if clientIdExists || clientId != "" {
+	if clientIdExists && clientId != "" {
 		// Replace host ID attribute with client ID only for hosts that are not cloud-based.
 		// Cloud-based hosts have unique cloud instance host ID that is historically used
 		// in the system.
