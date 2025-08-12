@@ -1,6 +1,6 @@
 module tools
 
-go 1.24.5
+go 1.24.6
 
 require github.com/google/addlicense v1.1.1
 
