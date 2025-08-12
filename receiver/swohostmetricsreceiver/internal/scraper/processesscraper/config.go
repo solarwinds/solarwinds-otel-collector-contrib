@@ -19,7 +19,7 @@ import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/types"
 )
 
-func FromMetadataConfig(config metadata.MetricsBuilderConfig) *types.ScraperConfig {
+func scraperConfigFromMetadata(config metadata.MetricsBuilderConfig) *types.ScraperConfig {
 	return &types.ScraperConfig{
 		Metrics: map[string]types.MetricSettingsConfig{
 			metadata.MetricsInfo.SwoSystemProcessesCount.Name: {

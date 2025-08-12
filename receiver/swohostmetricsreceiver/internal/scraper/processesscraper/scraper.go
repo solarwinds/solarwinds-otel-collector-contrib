@@ -42,7 +42,7 @@ func NewScraper(
 		},
 	}
 
-	managerConfig := &fscraper.ManagerConfig{ScraperConfig: FromMetadataConfig(config)}
+	managerConfig := &fscraper.ManagerConfig{ScraperConfig: scraperConfigFromMetadata(config)}
 
 	s := fscraper.NewScraperManager(settings.Logger)
 
