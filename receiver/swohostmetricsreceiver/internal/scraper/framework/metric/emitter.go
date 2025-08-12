@@ -29,10 +29,19 @@ type Result struct {
 // scraping framework.
 type Emitter interface {
 	// Init initializes metric emitter. Returns error
-	// when fail, otherwise nil is returned.
+	// when failed, otherwise nil is returned.
 	Init() error
 	// Emit produces pointer to emitted metric result.
 	Emit() *Result
 	// Name returns name of metric emitted by metric emitter.
 	Name() string
+}
+
+type InitFunc func() error
+
+func (f InitFunc) Init() error {
+	if f == nil {
+		return nil
+	}
+	return f()
 }

@@ -33,6 +33,7 @@ type emitter struct {
 	processesCountProvider providers.Provider[processescount.ProcessesCount]
 	metricsBuilder         *metadata.MetricsBuilder
 	logger                 *zap.Logger
+	metric.InitFunc
 }
 
 var _ metric.Emitter = (*emitter)(nil)
@@ -57,7 +58,10 @@ func createEmitter(
 	}
 }
 
-// Emit implements metric.Emitter.
+func (e *emitter) Name() string {
+	return metadata.MetricsInfo.SwoSystemProcessesCount.Name
+}
+
 func (e *emitter) Emit() *metric.Result {
 	value, err := e.getMetricData()
 	if err != nil {
@@ -74,20 +78,7 @@ func (e *emitter) Emit() *metric.Result {
 	}
 }
 
-// Init implements metric.Emitter.
-func (e *emitter) Init() error {
-	return nil
-}
-
-// Name implements metric.Emitter.
-func (e *emitter) Name() string {
-	return metadata.MetricsInfo.SwoSystemProcessesCount.Name
-}
-
-func (e *emitter) getMetricData() (
-	int64,
-	error,
-) {
+func (e *emitter) getMetricData() (int64, error) {
 	pc := <-e.processesCountProvider.Provide()
 	return pc.Count, pc.Error
 }
