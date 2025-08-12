@@ -6,6 +6,7 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension v0.127.9
 	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/attributesdecorator v0.127.9
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/container v0.0.0-00010101000000-000000000000
 	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/extensionfinder v0.127.9
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/collector/component v1.33.0
@@ -88,7 +89,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.38.0 // indirect
 	golang.org/x/net v0.40.0 // indirect
-	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/sys v0.35.0 // indirect
 	golang.org/x/text v0.25.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250528174236-200df99c418a // indirect
 	google.golang.org/grpc v1.72.2 // indirect
@@ -100,6 +101,7 @@ require (
 replace (
 	github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension => ../../extension/solarwindsextension
 	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/attributesdecorator => ../../pkg/attributesdecorator
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/container => ../../pkg/container
 	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/extensionfinder => ../../pkg/extensionfinder
 	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil => ../../pkg/testutil
 	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version => ../../pkg/version
