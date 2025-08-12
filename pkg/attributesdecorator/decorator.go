@@ -42,7 +42,7 @@ func DecorateResourceAttributes[T Resource](collection ResourceCollection[T], at
 	}
 }
 
-func DecorateResourceAttributesByPlugin[T Resource](collection ResourceCollection[T], properties *PluginProperties) {
+func DecorateResourceAttributesByPluginIdentifiers[T Resource](collection ResourceCollection[T], properties *PluginProperties) {
 	for i := 0; i < collection.Len(); i++ {
 		resource := collection.At(i).Resource()
 		resourceAttributes := resource.Attributes()
