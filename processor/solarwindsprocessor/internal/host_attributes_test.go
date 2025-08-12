@@ -1,4 +1,4 @@
-package attributesdecorator
+package internal
 
 import (
 	"testing"
