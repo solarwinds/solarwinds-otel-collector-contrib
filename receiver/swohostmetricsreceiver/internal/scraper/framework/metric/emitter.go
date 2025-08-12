@@ -37,6 +37,7 @@ type Emitter interface {
 	Name() string
 }
 
+// InitFunc is a var type for Init function. It's used as optional Init implementation (see usage).
 type InitFunc func() error
 
 func (f InitFunc) Init() error {
