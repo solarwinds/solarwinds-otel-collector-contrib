@@ -20,18 +20,16 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/assetscraper"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/hardwareinventoryscraper"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/hostinfoscraper"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/processesscraper"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/types"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/receiver"
 	"go.opentelemetry.io/collector/scraper"
 	"go.opentelemetry.io/collector/scraper/scraperhelper"
-	"go.uber.org/zap"
-
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/assetscraper"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/hardwareinventoryscraper"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/hostinfoscraper"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/types"
 )
 
 const (
@@ -90,7 +88,7 @@ func createMetricsReceiver(
 	cfg := config.(*ReceiverConfig)
 
 	// Way of creating receiver with multiple scrapers - here the single one is added
-	scraperControllerOptions, err := createScraperControllerOptions(ctx, cfg, settings.Logger)
+	scraperControllerOptions, err := createScraperControllerOptions(ctx, cfg, settings)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +109,7 @@ func createMetricsReceiver(
 func createScraperControllerOptions(
 	ctx context.Context,
 	receiverConfig *ReceiverConfig,
-	logger *zap.Logger,
+	settings receiver.Settings,
 ) ([]scraperhelper.ControllerOption, error) {
 	scraperFactories := scraperFactories()
 	scraperControllerOptions := make([]scraperhelper.ControllerOption, 0, len(scraperFactories))
@@ -126,9 +124,13 @@ func createScraperControllerOptions(
 
 		scraper, err := scraperFactory.CreateMetrics(
 			ctx,
-			scraper.Settings{},
+			scraper.Settings{
+				ID:                component.NewID(scraperFactory.Type()),
+				TelemetrySettings: settings.TelemetrySettings,
+				BuildInfo:         settings.BuildInfo,
+			},
 			scraperConfig,
-			logger,
+			settings.Logger,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("creating scraper %s failed: %w", scraperName, err)

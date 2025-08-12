@@ -34,27 +34,24 @@ func NewFactory() types.MetricsScraperFactory {
 	return new(factory)
 }
 
-// Type implements types.MetricsScraperFactory.
 func (f *factory) Type() component.Type {
 	return metadata.Type
 }
 
-// CreateDefaultConfig implements types.MetricsScraperFactory.
 func (f *factory) CreateDefaultConfig() component.Config {
 	return CreateDefaultConfig()
 }
 
-// CreateMetrics implements types.MetricsScraperFactory.
 func (f *factory) CreateMetrics(
 	_ context.Context,
-	_ scraper.Settings,
+	set scraper.Settings,
 	cfg component.Config,
-	logger *zap.Logger,
-) (scraper.Metrics, error) {
+	_ *zap.Logger) (scraper.Metrics, error) {
 	return fscraper.CreateScraper[types.ScraperConfig, Scraper](
 		f.Type(),
 		cfg,
-		NewScraper,
-		logger,
-	)
+		func(scraperConfig *types.ScraperConfig, _ *zap.Logger) (*Scraper, error) {
+			return NewScraper(scraperConfig, set)
+		},
+		set.Logger)
 }

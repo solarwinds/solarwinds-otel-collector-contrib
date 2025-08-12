@@ -17,42 +17,42 @@ package processesscraper
 import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/metric"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/scope"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/scraper"
+	fscraper "github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/scraper"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/processesscraper/internal/metadata"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/processesscraper/metrics/count"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/types"
+	"go.opentelemetry.io/collector/scraper"
 	"go.uber.org/zap"
 )
 
 type Scraper struct {
-	scraper.Manager
+	fscraper.Manager
 	config *types.ScraperConfig
 }
 
-var _ scraper.Scraper = (*Scraper)(nil)
+var _ fscraper.Scraper = (*Scraper)(nil)
 
 func NewScraper(
 	scraperConfig *types.ScraperConfig,
-	logger *zap.Logger,
+	settings scraper.Settings,
 ) (*Scraper, error) {
-	descriptor := &scraper.Descriptor{
+	descriptor := &fscraper.Descriptor{
 		Type: metadata.Type,
 		ScopeDescriptors: map[string]scope.Descriptor{
 			metadata.ScopeName: {
 				ScopeName: metadata.ScopeName,
 				MetricDescriptors: map[string]metric.Descriptor{
-					metadata.MetricsInfo.SwoSystemProcessesCount.Name: {Create: count.NewEmitter},
+					metadata.MetricsInfo.SwoSystemProcessesCount.Name: {
+						Create: func(*zap.Logger) metric.Emitter { return count.NewEmitter(settings) }},
 				},
 			},
 		},
 	}
 
-	managerConfig := &scraper.ManagerConfig{
-		ScraperConfig: scraperConfig,
-	}
-
+	managerConfig := &fscraper.ManagerConfig{ScraperConfig: scraperConfig}
+	
 	s := &Scraper{
-		Manager: scraper.NewScraperManager(logger),
+		Manager: fscraper.NewScraperManager(settings.Logger),
 		config:  scraperConfig,
 	}
 

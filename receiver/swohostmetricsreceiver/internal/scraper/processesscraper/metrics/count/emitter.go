@@ -38,11 +38,11 @@ type emitter struct {
 
 var _ metric.Emitter = (*emitter)(nil)
 
-func NewEmitter(logger *zap.Logger) metric.Emitter {
+func NewEmitter(set scraper.Settings) metric.Emitter {
 	return createEmitter(
 		processescount.Create(processescount.CreateWrapper()),
-		metadata.NewMetricsBuilder(metadata.DefaultMetricsBuilderConfig(), scraper.Settings{}),
-		logger,
+		metadata.NewMetricsBuilder(metadata.DefaultMetricsBuilderConfig(), set),
+		set.Logger,
 	)
 }
 
