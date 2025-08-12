@@ -5,7 +5,7 @@ go 1.24.5
 require (
 	github.com/go-ole/go-ole v1.3.0
 	github.com/google/go-cmp v0.7.0
-	github.com/shirou/gopsutil/v3 v3.24.5
+	github.com/shirou/gopsutil/v4 v4.25.7
 	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/registry v0.131.1
 	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil v0.131.1
 	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.131.1
@@ -26,6 +26,7 @@ require (
 )
 
 require (
+	github.com/ebitengine/purego v0.8.4 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/hashicorp/go-version v1.7.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
@@ -56,7 +57,6 @@ require (
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
-	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/tklauser/go-sysconf v0.3.15 // indirect
 	github.com/tklauser/numcpus v0.10.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
