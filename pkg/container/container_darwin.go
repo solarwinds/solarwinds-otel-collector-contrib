@@ -3,7 +3,7 @@
 package container
 
 import (
-	"fmt"
+	"go.uber.org/zap"
 )
 
 type containerInfo struct{}
@@ -13,7 +13,8 @@ func newProvider() Provider {
 }
 
 func (c *containerInfo) ReadContainerInstanceID() (string, error) {
-	return "", fmt.Errorf("darwin containers are not supported")
+	zap.L().Warn("darwin containers are not supported")
+	return "", nil
 }
 
 func (c *containerInfo) IsRunInContainerd() bool {
