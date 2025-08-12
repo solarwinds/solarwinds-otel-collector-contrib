@@ -20,23 +20,14 @@ import (
 	fscraper "github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/scraper"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/processesscraper/internal/metadata"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/processesscraper/metrics/count"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/types"
 	"go.opentelemetry.io/collector/scraper"
 	"go.uber.org/zap"
 )
 
-type Scraper struct {
-	fscraper.Manager
-	config *types.ScraperConfig
-}
-
-var _ fscraper.Scraper = (*Scraper)(nil)
-
 func NewScraper(
-	scraperConfig *types.ScraperConfig,
+	config metadata.MetricsBuilderConfig,
 	settings scraper.Settings,
-) (*Scraper, error) {
-	config := ToMetadataConfig(scraperConfig)
+) (fscraper.Manager, error) {
 	mb := metadata.NewMetricsBuilder(config, settings)
 	descriptor := &fscraper.Descriptor{
 		Type: metadata.Type,
@@ -51,12 +42,9 @@ func NewScraper(
 		},
 	}
 
-	managerConfig := &fscraper.ManagerConfig{ScraperConfig: scraperConfig}
+	managerConfig := &fscraper.ManagerConfig{ScraperConfig: FromMetadataConfig(config)}
 
-	s := &Scraper{
-		Manager: fscraper.NewScraperManager(settings.Logger),
-		config:  scraperConfig,
-	}
+	s := fscraper.NewScraperManager(settings.Logger)
 
 	if err := s.Init(descriptor, managerConfig); err != nil {
 		return nil, err

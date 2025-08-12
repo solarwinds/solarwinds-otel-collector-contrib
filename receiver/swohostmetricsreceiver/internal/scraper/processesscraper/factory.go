@@ -16,13 +16,13 @@ package processesscraper
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/processesscraper/internal/metadata"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/scraper"
 	"go.uber.org/zap"
 
-	fscraper "github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/scraper"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/types"
 )
 
@@ -39,7 +39,7 @@ func (f *factory) Type() component.Type {
 }
 
 func (f *factory) CreateDefaultConfig() component.Config {
-	return FromMetadataConfig(metadata.DefaultMetricsConfig())
+	return metadata.DefaultMetricsBuilderConfig()
 }
 
 func (f *factory) CreateMetrics(
@@ -47,11 +47,15 @@ func (f *factory) CreateMetrics(
 	set scraper.Settings,
 	cfg component.Config,
 	_ *zap.Logger) (scraper.Metrics, error) {
-	return fscraper.CreateScraper[types.ScraperConfig, Scraper](
-		f.Type(),
-		cfg,
-		func(scraperConfig *types.ScraperConfig, _ *zap.Logger) (*Scraper, error) {
-			return NewScraper(scraperConfig, set)
-		},
-		set.Logger)
+
+	sc, err := NewScraper(cfg.(metadata.MetricsBuilderConfig), set)
+	if err != nil {
+		return nil, fmt.Errorf("scraper %s creation failed: %w", f.Type(), err)
+	}
+
+	return scraper.NewMetrics(
+		sc.Scrape,
+		scraper.WithStart(sc.Start),
+		scraper.WithShutdown(sc.Shutdown),
+	)
 }
