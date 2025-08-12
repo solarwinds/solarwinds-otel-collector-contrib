@@ -134,8 +134,8 @@ func (p *solarwindsprocessor) processLogs(
 	ctx context.Context,
 	logs plog.Logs,
 ) (plog.Logs, error) {
+	attributesdecorator.DecorateResourceAttributesByFunction(logs.ResourceLogs(), p.hostAttributes.ApplyAttributes)
 	attributesdecorator.DecorateResourceAttributes(logs.ResourceLogs(), p.cfg.ResourceAttributes)
-	attributesdecorator.DecorateResourceAttributesByPluginIdentifiers(logs.ResourceLogs(), p.cfg.HostIdentification)
 
 	err := notifySignalSizeLimitExceeded(logs, p.cfg.MaxSizeMib, p.logger)
 	if err != nil {
@@ -150,8 +150,8 @@ func (p *solarwindsprocessor) processMetrics(
 	ctx context.Context,
 	metrics pmetric.Metrics,
 ) (pmetric.Metrics, error) {
+	attributesdecorator.DecorateResourceAttributesByFunction(metrics.ResourceMetrics(), p.hostAttributes.ApplyAttributes)
 	attributesdecorator.DecorateResourceAttributes(metrics.ResourceMetrics(), p.cfg.ResourceAttributes)
-	attributesdecorator.DecorateResourceAttributesByPluginIdentifiers(metrics.ResourceMetrics(), p.cfg.HostIdentification)
 
 	err := notifySignalSizeLimitExceeded(metrics, p.cfg.MaxSizeMib, p.logger)
 	if err != nil {
@@ -166,8 +166,8 @@ func (p *solarwindsprocessor) processTraces(
 	ctx context.Context,
 	traces ptrace.Traces,
 ) (ptrace.Traces, error) {
+	attributesdecorator.DecorateResourceAttributesByFunction(traces.ResourceSpans(), p.hostAttributes.ApplyAttributes)
 	attributesdecorator.DecorateResourceAttributes(traces.ResourceSpans(), p.cfg.ResourceAttributes)
-	attributesdecorator.DecorateResourceAttributesByPluginIdentifiers(traces.ResourceSpans(), p.cfg.HostIdentification)
 
 	err := notifySignalSizeLimitExceeded(traces, p.cfg.MaxSizeMib, p.logger)
 	if err != nil {

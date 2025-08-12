@@ -18,7 +18,7 @@ func TestAddPluginAttributes_HostIdScenario1_NonCloudHost(t *testing.T) {
 	attributes := pcommon.NewMap()
 	// No cloud.provider attribute = non-cloud host
 
-	pp.applyAttributes(attributes)
+	pp.ApplyAttributes(attributes)
 
 	hostId, exists := attributes.Get("host.id")
 	require.True(t, exists)
@@ -37,7 +37,7 @@ func TestAddPluginAttributes_HostIdScenario2_CloudHostWithContainer(t *testing.T
 	attributes.PutStr("cloud.provider", "aws")
 	attributes.PutStr("host.id", "original-host-id")
 
-	pp.applyAttributes(attributes)
+	pp.ApplyAttributes(attributes)
 
 	hostId, exists := attributes.Get("host.id")
 	require.True(t, exists)
@@ -56,7 +56,7 @@ func TestAddPluginAttributes_CloudHostWithoutContainer(t *testing.T) {
 	attributes.PutStr("cloud.provider", "aws")
 	attributes.PutStr("host.id", "original-host-id")
 
-	pp.applyAttributes(attributes)
+	pp.ApplyAttributes(attributes)
 
 	hostId, exists := attributes.Get("host.id")
 	require.True(t, exists)
@@ -106,7 +106,7 @@ func TestAddPluginAttributes_HostnameScenarios(t *testing.T) {
 				ContainerID:       tc.containerID,
 				ClientId:          "test-client-id",
 			}
-			pp.applyAttributes(attributes)
+			pp.ApplyAttributes(attributes)
 
 			if tc.expectedHostname != "" {
 				hostname, exists := attributes.Get("host.name")
@@ -136,7 +136,7 @@ func TestAddPluginAttributes_OsTypeNormalization(t *testing.T) {
 			attributes := pcommon.NewMap()
 			attributes.PutStr("os.type", input)
 
-			pp.applyAttributes(attributes)
+			pp.ApplyAttributes(attributes)
 
 			osType, exists := attributes.Get("os.type")
 			require.True(t, exists)

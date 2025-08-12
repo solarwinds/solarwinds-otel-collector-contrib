@@ -42,10 +42,10 @@ func DecorateResourceAttributes[T Resource](collection ResourceCollection[T], at
 	}
 }
 
-func DecorateResourceAttributesByPluginIdentifiers[T Resource](collection ResourceCollection[T], properties *PluginProperties) {
+func DecorateResourceAttributesByFunction[T Resource](collection ResourceCollection[T], fn func(resourceAttributes pcommon.Map)) {
 	for i := 0; i < collection.Len(); i++ {
 		resource := collection.At(i).Resource()
 		resourceAttributes := resource.Attributes()
-		properties.addPluginAttributes(resourceAttributes)
+		fn(resourceAttributes)
 	}
 }
