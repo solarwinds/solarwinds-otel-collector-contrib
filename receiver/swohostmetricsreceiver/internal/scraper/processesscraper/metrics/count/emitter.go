@@ -23,7 +23,6 @@ import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/processesscraper/internal/metadata"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
-	"go.opentelemetry.io/collector/scraper"
 	"go.uber.org/zap"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/metric"
@@ -38,11 +37,12 @@ type emitter struct {
 
 var _ metric.Emitter = (*emitter)(nil)
 
-func NewEmitter(set scraper.Settings) metric.Emitter {
+func NewEmitter(metricsBuilder *metadata.MetricsBuilder,
+	logger *zap.Logger) metric.Emitter {
 	return createEmitter(
 		processescount.Create(processescount.CreateWrapper()),
-		metadata.NewMetricsBuilder(metadata.DefaultMetricsBuilderConfig(), set),
-		set.Logger,
+		metricsBuilder,
+		logger,
 	)
 }
 

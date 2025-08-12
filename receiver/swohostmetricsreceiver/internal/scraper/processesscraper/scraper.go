@@ -36,6 +36,8 @@ func NewScraper(
 	scraperConfig *types.ScraperConfig,
 	settings scraper.Settings,
 ) (*Scraper, error) {
+	config := ToMetadataConfig(scraperConfig)
+	mb := metadata.NewMetricsBuilder(config, settings)
 	descriptor := &fscraper.Descriptor{
 		Type: metadata.Type,
 		ScopeDescriptors: map[string]scope.Descriptor{
@@ -43,14 +45,14 @@ func NewScraper(
 				ScopeName: metadata.ScopeName,
 				MetricDescriptors: map[string]metric.Descriptor{
 					metadata.MetricsInfo.SwoSystemProcessesCount.Name: {
-						Create: func(*zap.Logger) metric.Emitter { return count.NewEmitter(settings) }},
+						Create: func(*zap.Logger) metric.Emitter { return count.NewEmitter(mb, settings.Logger) }},
 				},
 			},
 		},
 	}
 
 	managerConfig := &fscraper.ManagerConfig{ScraperConfig: scraperConfig}
-	
+
 	s := &Scraper{
 		Manager: fscraper.NewScraperManager(settings.Logger),
 		config:  scraperConfig,

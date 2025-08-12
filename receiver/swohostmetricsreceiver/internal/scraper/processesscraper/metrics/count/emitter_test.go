@@ -21,7 +21,6 @@ import (
 	"testing"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/processesscraper/internal/metadata"
-	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/scraper"
 	"go.uber.org/zap"
 
@@ -81,9 +80,9 @@ func Test_Functional(t *testing.T) {
 	t.Skip("This test should be run manually only")
 
 	sut := NewEmitter(
-		scraper.Settings{
-			TelemetrySettings: component.TelemetrySettings{Logger: zap.NewNop()},
-		})
+		metadata.NewMetricsBuilder(metadata.DefaultMetricsBuilderConfig(), scraper.Settings{}),
+		zap.NewNop(),
+	)
 
 	err := sut.Init()
 	assert.Nil(t, err)
@@ -96,9 +95,9 @@ func Test_Functional(t *testing.T) {
 
 func Test_Initialize_NotFailing(t *testing.T) {
 	sut := NewEmitter(
-		scraper.Settings{
-			TelemetrySettings: component.TelemetrySettings{Logger: zap.NewNop()},
-		})
+		metadata.NewMetricsBuilder(metadata.DefaultMetricsBuilderConfig(), scraper.Settings{}),
+		zap.NewNop(),
+	)
 	err := sut.Init()
 	require.NoError(t, err)
 }

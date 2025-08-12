@@ -17,14 +17,23 @@ package processesscraper
 import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/processesscraper/internal/metadata"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/types"
-	"go.opentelemetry.io/collector/component"
 )
 
-func CreateDefaultConfig() component.Config {
+func FromMetadataConfig(config metadata.MetricsConfig) *types.ScraperConfig {
 	return &types.ScraperConfig{
 		Metrics: map[string]types.MetricSettingsConfig{
 			metadata.MetricsInfo.SwoSystemProcessesCount.Name: {
-				Enabled: metadata.DefaultMetricsConfig().SwoSystemProcessesCount.Enabled,
+				Enabled: config.SwoSystemProcessesCount.Enabled,
+			},
+		},
+	}
+}
+
+func ToMetadataConfig(scraperConfig *types.ScraperConfig) metadata.MetricsBuilderConfig {
+	return metadata.MetricsBuilderConfig{
+		Metrics: metadata.MetricsConfig{
+			SwoSystemProcessesCount: metadata.MetricConfig{
+				Enabled: scraperConfig.Metrics[metadata.MetricsInfo.SwoSystemProcessesCount.Name].Enabled,
 			},
 		},
 	}

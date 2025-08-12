@@ -39,7 +39,7 @@ func (f *factory) Type() component.Type {
 }
 
 func (f *factory) CreateDefaultConfig() component.Config {
-	return CreateDefaultConfig()
+	return FromMetadataConfig(metadata.DefaultMetricsConfig())
 }
 
 func (f *factory) CreateMetrics(
