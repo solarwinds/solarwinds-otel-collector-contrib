@@ -6,16 +6,14 @@ import (
 	"fmt"
 )
 
-var errNotSupported = fmt.Errorf("darwin containers are not supported")
-
 type containerInfo struct{}
 
-func newContainerInfo() Provider {
+func newProvider() Provider {
 	return &containerInfo{}
 }
 
 func (c *containerInfo) ReadContainerInstanceID() (string, error) {
-	return "", errNotSupported
+	return "", fmt.Errorf("darwin containers are not supported")
 }
 
 func (c *containerInfo) IsRunInContainerd() bool {

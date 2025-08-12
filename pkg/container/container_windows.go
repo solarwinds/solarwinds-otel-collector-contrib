@@ -3,27 +3,28 @@
 package container
 
 import (
-	"fmt"
-
+	"go.uber.org/zap"
 	"golang.org/x/sys/windows/registry"
 )
 
-var errNotSupported = fmt.Errorf("windows containers are not fully supported")
-
 type containerInfo struct{}
 
-func newContainerInfo() Provider {
+func newProvider() Provider {
 	return &containerInfo{}
 }
 
-// ReadContainerInstanceID detects if we're running inside of a docker container and returns the instance id if available
+// ReadContainerInstanceID detects if we're running inside a docker container and returns the instance id if available
 func (c *containerInfo) ReadContainerInstanceID() (string, error) {
 	// Check for ContainerType in HKLM\System\CurrentControlSet\Control
 	registryKeyControl, err := registry.OpenKey(registry.LOCAL_MACHINE, `System\CurrentControlSet\Control`, registry.QUERY_VALUE)
 	if err != nil {
 		return "", err
 	}
-	defer registryKeyControl.Close()
+	defer func() {
+		if closeErr := registryKeyControl.Close(); closeErr != nil {
+			zap.L().Error("failed to close registry key", zap.Error(closeErr))
+		}
+	}()
 
 	// Retrieve the ContainerType value (to make sure it exists)
 	// If it does, we are running in a Windows Container
@@ -37,7 +38,12 @@ func (c *containerInfo) ReadContainerInstanceID() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer registryKeyCompName.Close()
+
+	defer func() {
+		if closeErr := registryKeyCompName.Close(); closeErr != nil {
+			zap.L().Error("failed to close registry key", zap.Error(closeErr))
+		}
+	}()
 
 	// Retrieve the ComputerName value
 	// Use it as Container Identifier
