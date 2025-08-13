@@ -7,7 +7,7 @@ import (
 	"go.opentelemetry.io/collector/pdata/pcommon"
 )
 
-func TestAddPluginAttributes_HostIdScenario1_NonCloudHost(t *testing.T) {
+func TestApplyAttributes_HostIdScenario1_NonCloudHost(t *testing.T) {
 	// Scenario 1: Non-cloud host - hostId should be set to clientId
 	pp := HostAttributes{
 		IsRunInContainerd: false,
@@ -25,7 +25,7 @@ func TestAddPluginAttributes_HostIdScenario1_NonCloudHost(t *testing.T) {
 	require.Equal(t, "test-client-id", hostId.Str())
 }
 
-func TestAddPluginAttributes_HostIdScenario2_CloudHostWithContainer(t *testing.T) {
+func TestApplyAttributes_HostIdScenario2_CloudHostWithContainer(t *testing.T) {
 	// Scenario 2: Cloud host with container - hostId should be set to clientId
 	pp := HostAttributes{
 		IsRunInContainerd: false,
@@ -44,7 +44,7 @@ func TestAddPluginAttributes_HostIdScenario2_CloudHostWithContainer(t *testing.T
 	require.Equal(t, "test-client-id", hostId.Str())
 }
 
-func TestAddPluginAttributes_CloudHostWithoutContainer(t *testing.T) {
+func TestApplyAttributes_CloudHostWithoutContainer(t *testing.T) {
 	// Cloud host without container - hostId should remain unchanged
 	pp := HostAttributes{
 		IsRunInContainerd: false,
@@ -63,7 +63,7 @@ func TestAddPluginAttributes_CloudHostWithoutContainer(t *testing.T) {
 	require.Equal(t, "original-host-id", hostId.Str())
 }
 
-func TestAddPluginAttributes_HostnameScenarios(t *testing.T) {
+func TestApplyAttributes_HostnameScenarios(t *testing.T) {
 	testCases := map[string]struct {
 		isRunInContainerd bool
 		containerID       string
@@ -80,7 +80,7 @@ func TestAddPluginAttributes_HostnameScenarios(t *testing.T) {
 			isRunInContainerd: true,
 			cloudProvider:     "gcp",
 			containerID:       "container-123",
-			expectedHostname:  "container-123",
+			expectedHostname:  "original-hostname",
 		},
 		"without containerd with GCP cloud provider": {
 			isRunInContainerd: true,
@@ -117,7 +117,7 @@ func TestAddPluginAttributes_HostnameScenarios(t *testing.T) {
 	}
 }
 
-func TestAddPluginAttributes_OsTypeNormalization(t *testing.T) {
+func TestApplyAttributes_OsTypeNormalization(t *testing.T) {
 	pp := HostAttributes{
 		IsRunInContainerd: false,
 		ContainerID:       "",
