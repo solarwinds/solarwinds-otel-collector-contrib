@@ -38,5 +38,5 @@ func createExtension(ctx context.Context, set extension.Settings, cfg component.
 	if !ok {
 		return nil, fmt.Errorf("unexpected config type: %T", cfg)
 	}
-	return newExtension(ctx, set, extCfg)
+	return NewExtension(ctx, set, extCfg)
 }

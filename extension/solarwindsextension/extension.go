@@ -37,7 +37,7 @@ type SolarwindsExtension struct {
 	heartbeat *internal.Heartbeat
 }
 
-func newExtension(ctx context.Context, set extension.Settings, cfg *config.Config) (*SolarwindsExtension, error) {
+func NewExtension(ctx context.Context, set extension.Settings, cfg *config.Config) (*SolarwindsExtension, error) {
 	set.Logger.Info("Creating Solarwinds Extension")
 	set.Logger.Info("Config", zap.Any("config", cfg))
 
