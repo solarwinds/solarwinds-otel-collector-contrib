@@ -76,6 +76,12 @@ func TestApplyAttributes_HostnameScenarios(t *testing.T) {
 			containerID:       "container-123",
 			expectedHostname:  "container-123",
 		},
+		"no containerd with AWS cloud provider": {
+			isRunInContainerd: false,
+			cloudProvider:     "aws",
+			containerID:       "container-123",
+			expectedHostname:  "original-hostname",
+		},
 		"containerd with GCP cloud provider": {
 			isRunInContainerd: true,
 			cloudProvider:     "gcp",
