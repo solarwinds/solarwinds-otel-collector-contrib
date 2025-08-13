@@ -22,16 +22,16 @@ type ProcessesCount struct {
 }
 
 type provider struct {
-	Wrapper
+	ProcessCounter
 }
 
 var _ providers.Provider[ProcessesCount] = (*provider)(nil)
 
 func Create(
-	w Wrapper,
+	w ProcessCounter,
 ) providers.Provider[ProcessesCount] {
 	return &provider{
-		Wrapper: w,
+		ProcessCounter: w,
 	}
 }
 
@@ -44,7 +44,7 @@ func (p *provider) Provide() <-chan ProcessesCount {
 func (p *provider) provideInternal(ch chan ProcessesCount) {
 	defer close(ch)
 
-	count, err := p.Wrapper.GetCount()
+	count, err := p.ProcessCounter.GetCount()
 	d := ProcessesCount{
 		Count: count,
 		Error: err,

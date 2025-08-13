@@ -14,40 +14,38 @@
 
 package processescount
 
-type succeedingWrapper struct {
+type succeedingCounter struct {
 	value int64
 }
 
-var _ Wrapper = (*succeedingWrapper)(nil)
+var _ ProcessCounter = (*succeedingCounter)(nil)
 
-func CreateSucceedingWrapper(
+func CreateSucceedingCounter(
 	value int64,
-) Wrapper {
-	return &succeedingWrapper{
+) ProcessCounter {
+	return &succeedingCounter{
 		value: value,
 	}
 }
 
-// GetCount implements Wrapper.
-func (w *succeedingWrapper) GetCount() (int64, error) {
+func (w *succeedingCounter) GetCount() (int64, error) {
 	return w.value, nil
 }
 
-type failingWrapper struct {
+type failingCounter struct {
 	err error
 }
 
-var _ Wrapper = (*failingWrapper)(nil)
+var _ ProcessCounter = (*failingCounter)(nil)
 
-func CreateFailingUptimeWrapper(
+func CreateFailingCounter(
 	err error,
-) Wrapper {
-	return &failingWrapper{
+) ProcessCounter {
+	return &failingCounter{
 		err: err,
 	}
 }
 
-// GetCount implements Wrapper.
-func (w *failingWrapper) GetCount() (int64, error) {
+func (w *failingCounter) GetCount() (int64, error) {
 	return 0, w.err
 }

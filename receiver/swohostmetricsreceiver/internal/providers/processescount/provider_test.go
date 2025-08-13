@@ -24,9 +24,7 @@ import (
 func Test_Functional(t *testing.T) {
 	t.Skip("This test should be run manually")
 
-	sut := Create(
-		CreateWrapper(),
-	)
+	sut := Create(CreateWrapper())
 
 	result := <-sut.Provide()
 
@@ -36,7 +34,7 @@ func Test_Functional(t *testing.T) {
 func Test_Provide_WhenSucceedsReturnsCountAndChannelIsClosedAfterDelivery(t *testing.T) {
 	expected := int64(1701)
 
-	sut := Create(CreateSucceedingWrapper(expected))
+	sut := Create(CreateSucceedingCounter(expected))
 
 	ch := sut.Provide()
 	actualUptime := <-ch
@@ -50,9 +48,7 @@ func Test_Provide_WhenSucceedsReturnsCountAndChannelIsClosedAfterDelivery(t *tes
 func Test_Provide_WhenFailsReturnsZeroCountWithErrorAndChannelIsClosedAfterDelivery(t *testing.T) {
 	expectedError := fmt.Errorf("kokoha happened")
 
-	sut := Create(
-		CreateFailingUptimeWrapper(expectedError),
-	)
+	sut := Create(CreateFailingCounter(expectedError))
 
 	ch := sut.Provide()
 	actualCount := <-ch

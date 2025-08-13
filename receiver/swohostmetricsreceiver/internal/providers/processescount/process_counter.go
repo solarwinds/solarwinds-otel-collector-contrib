@@ -16,15 +16,15 @@ package processescount
 
 import "github.com/shirou/gopsutil/v4/process"
 
-type Wrapper interface {
+type ProcessCounter interface {
 	GetCount() (int64, error)
 }
 
 type wrapper struct{}
 
-var _ Wrapper = (*wrapper)(nil)
+var _ ProcessCounter = (*wrapper)(nil)
 
-func CreateWrapper() Wrapper {
+func CreateWrapper() ProcessCounter {
 	return &wrapper{}
 }
 
