@@ -1,0 +1,19 @@
+type: processes
+
+status:
+  class: scraper
+  stability:
+    development: [metrics]
+
+sem_conv_version: 1.9.0
+
+
+metrics:
+  swo.system.processes.count:
+    enabled: true
+    description: Total number of processes.
+    unit: "{processes}"
+    sum:
+      value_type: int
+      aggregation_temporality: cumulative
+      monotonic: false

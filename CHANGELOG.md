@@ -3,6 +3,8 @@
 ## vNext
 - Updates golang to 1.24.6
 
+- Added `processesscraper` to `swohostmetricsreceiver` providing `swo.system.processes.count` metric
+
 ## v0.131.1
 No changes, issues with previous release.
 

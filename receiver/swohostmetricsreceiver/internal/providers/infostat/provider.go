@@ -49,7 +49,7 @@ func CreateInfoStatProvider(logger *zap.Logger) providers.Provider[InfoStat] {
 	}
 }
 
-// Wrapper for host.Info() implementation.
+// ProcessCounter for host.Info() implementation.
 type infoStatExecutor interface {
 	Getinfo() (*host.InfoStat, error)
 }
