@@ -23,7 +23,7 @@ func (h *HostAttributes) ApplyAttributes(
 	resourceAttributes pcommon.Map,
 ) {
 
-	_, cloudProviderExists := resourceAttributes.Get(cloudProviderAttribute)
+	cloudProvider, cloudProviderExists := resourceAttributes.Get(cloudProviderAttribute)
 
 	if h.ClientId != "" {
 		// Replace host ID attribute with client ID only for hosts that are not cloud-based.
@@ -42,12 +42,12 @@ func (h *HostAttributes) ApplyAttributes(
 	}
 
 	// Replace host name attribute with container ID only for containerd containers on AWS machines
-	// to match host name reported by UAMS Client and host name reported by OTel plugin.
-	if cloudProviderExists && h.IsRunInContainerd {
+	// to match host name reported by different monitoring components.
+	if cloudProvider.Str() == "aws" && h.IsRunInContainerd {
 		resourceAttributes.PutStr(hostNameAttribute, h.ContainerID)
 	}
 
-	// Unify the os.type values, supported are only Windows and Linux for now.
+	// Unify the os.type values, supported are only Windows and Linux.
 	// Everything what's not Windows should be identified as Linux.
 	if osTypeValue, exists := resourceAttributes.Get(osTypeAttribute); exists {
 		normalizeOsType(osTypeValue)
