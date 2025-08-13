@@ -38,12 +38,15 @@ const (
 
 type ProcessesCountProviderMock struct{}
 
-var _ processescount.Provider = (*ProcessesCountProviderMock)(nil)
+var _ providers.Provider[processescount.ProcessesCount] = (*ProcessesCountProviderMock)(nil)
 
 // GetCount implements count.Provider.
-func (*ProcessesCountProviderMock) Provide() <-chan providers.Data[int64] {
-	ch := make(chan providers.Data[int64], 1)
-	ch <- providers.Data[int64]{Value: count, Error: nil}
+func (*ProcessesCountProviderMock) Provide() <-chan processescount.ProcessesCount {
+	ch := make(chan processescount.ProcessesCount, 1)
+	ch <- processescount.ProcessesCount{
+		Count: count,
+		Error: nil,
+	}
 	close(ch)
 	return ch
 }
