@@ -7,8 +7,7 @@ import (
 	"go.opentelemetry.io/collector/pdata/pcommon"
 )
 
-func TestApplyAttributes_HostIdScenario1_NonCloudHost(t *testing.T) {
-	// Scenario 1: Non-cloud host - hostId should be set to clientId
+func TestApplyAttributes_HostId_NonCloudHostWithClientId(t *testing.T) {
 	pp := HostAttributes{
 		IsRunInContainerd: false,
 		ContainerID:       "",
@@ -16,7 +15,6 @@ func TestApplyAttributes_HostIdScenario1_NonCloudHost(t *testing.T) {
 	}
 
 	attributes := pcommon.NewMap()
-	// No cloud.provider attribute = non-cloud host
 
 	pp.ApplyAttributes(attributes)
 
@@ -25,8 +23,24 @@ func TestApplyAttributes_HostIdScenario1_NonCloudHost(t *testing.T) {
 	require.Equal(t, "test-client-id", hostId.Str())
 }
 
-func TestApplyAttributes_HostIdScenario2_CloudHostWithContainer(t *testing.T) {
-	// Scenario 2: Cloud host with container - hostId should be set to clientId
+func TestApplyAttributes_HostId_NonCloudHostWithoutClientId(t *testing.T) {
+	pp := HostAttributes{
+		IsRunInContainerd: false,
+		ContainerID:       "",
+		ClientId:          "",
+	}
+
+	attributes := pcommon.NewMap()
+	attributes.PutStr(hostIDAttribute, "telemetry-host-id")
+
+	pp.ApplyAttributes(attributes)
+
+	hostId, exists := attributes.Get("host.id")
+	require.True(t, exists)
+	require.Equal(t, "telemetry-host-id", hostId.Str())
+}
+
+func TestApplyAttributes_HostId_CloudHostWithContainer(t *testing.T) {
 	pp := HostAttributes{
 		IsRunInContainerd: false,
 		ContainerID:       "container-123",
@@ -44,7 +58,7 @@ func TestApplyAttributes_HostIdScenario2_CloudHostWithContainer(t *testing.T) {
 	require.Equal(t, "test-client-id", hostId.Str())
 }
 
-func TestApplyAttributes_CloudHostWithoutContainer(t *testing.T) {
+func TestApplyAttributes_HostId_CloudHostWithoutContainer(t *testing.T) {
 	// Cloud host without container - hostId should remain unchanged
 	pp := HostAttributes{
 		IsRunInContainerd: false,
@@ -63,7 +77,7 @@ func TestApplyAttributes_CloudHostWithoutContainer(t *testing.T) {
 	require.Equal(t, "original-host-id", hostId.Str())
 }
 
-func TestApplyAttributes_HostnameScenarios(t *testing.T) {
+func TestApplyAttributes_HostnameScenarios_CombinationsOfCloudProviderAndContainerd(t *testing.T) {
 	testCases := map[string]struct {
 		isRunInContainerd bool
 		containerID       string
@@ -96,6 +110,10 @@ func TestApplyAttributes_HostnameScenarios(t *testing.T) {
 		},
 		"no special hostname handling": {
 			// Should not modify hostname
+			isRunInContainerd: false,
+			cloudProvider:     "",
+			containerID:       "container-123",
+			expectedHostname:  "",
 		},
 	}
 
@@ -123,7 +141,7 @@ func TestApplyAttributes_HostnameScenarios(t *testing.T) {
 	}
 }
 
-func TestApplyAttributes_OsTypeNormalization(t *testing.T) {
+func TestApplyAttributes_OsType_IsNormalized(t *testing.T) {
 	pp := HostAttributes{
 		IsRunInContainerd: false,
 		ContainerID:       "",
@@ -147,43 +165,6 @@ func TestApplyAttributes_OsTypeNormalization(t *testing.T) {
 			osType, exists := attributes.Get("os.type")
 			require.True(t, exists)
 			require.Equal(t, expected, osType.Str())
-		})
-	}
-}
-
-func Test_OsTypeIsNormalized(t *testing.T) {
-	testCases := map[string]struct {
-		Input    pcommon.Value
-		Expected string
-	}{
-		"windows is Windows": {
-			Input:    pcommon.NewValueStr("windows"),
-			Expected: "Windows",
-		},
-		"linux is Linux": {
-			Input:    pcommon.NewValueStr("linux"),
-			Expected: "Linux",
-		},
-		"unix is Linux": {
-			Input:    pcommon.NewValueStr("unix"),
-			Expected: "Linux",
-		},
-		"other string value is Linux": {
-			Input:    pcommon.NewValueStr("something completely different"),
-			Expected: "Linux",
-		},
-		"non-string value is Linux": {
-			Input:    pcommon.NewValueInt(42),
-			Expected: "Linux",
-		},
-	}
-
-	for name, testCase := range testCases {
-		t.Run(name, func(t *testing.T) {
-			osTypeValue := testCase.Input
-			normalizeOsType(osTypeValue)
-
-			require.Equal(t, testCase.Expected, osTypeValue.Str())
 		})
 	}
 }
