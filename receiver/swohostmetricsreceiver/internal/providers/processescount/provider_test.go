@@ -17,10 +17,48 @@ package processescount
 import (
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_Functional(t *testing.T) {
 	t.Skip("This test should be run manually")
 
-	fmt.Printf("Result: %+v\n", <-Create().Provide())
+	sut := Create(
+		CreateWrapper(),
+	)
+
+	result := <-sut.Provide()
+
+	fmt.Printf("Result: %+v\n", result)
+}
+
+func Test_Provide_WhenSucceedsReturnsCountAndChannelIsClosedAfterDelivery(t *testing.T) {
+	expected := int64(1701)
+
+	sut := Create(CreateSucceedingWrapper(expected))
+
+	ch := sut.Provide()
+	actualUptime := <-ch
+	_, open := <-ch // secondary receive
+
+	assert.Equal(t, expected, actualUptime.Count)
+	assert.Nil(t, actualUptime.Error)
+	assert.False(t, open, "channel must be closed")
+}
+
+func Test_Provide_WhenFailsReturnsZeroCountWithErrorAndChannelIsClosedAfterDelivery(t *testing.T) {
+	expectedError := fmt.Errorf("kokoha happened")
+
+	sut := Create(
+		CreateFailingUptimeWrapper(expectedError),
+	)
+
+	ch := sut.Provide()
+	actualCount := <-ch
+	_, open := <-ch // secondary receive
+
+	assert.Equal(t, expectedError, actualCount.Error)
+	assert.Zero(t, actualCount.Count)
+	assert.False(t, open, "channel must be closed")
 }

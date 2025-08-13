@@ -12,10 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package providers
+package processescount
 
-// Provider is a general interface for most of the data providers.
-type Provider[T any] interface {
-	// Provide returns a channel through which the data are provided.
-	Provide() <-chan T
+import "github.com/shirou/gopsutil/v4/process"
+
+type Wrapper interface {
+	GetCount() (int64, error)
+}
+
+type wrapper struct{}
+
+var _ Wrapper = (*wrapper)(nil)
+
+func CreateWrapper() Wrapper {
+	return &wrapper{}
+}
+
+func (*wrapper) GetCount() (int64, error) {
+	ps, err := process.Processes()
+	return int64(len(ps)), err
 }

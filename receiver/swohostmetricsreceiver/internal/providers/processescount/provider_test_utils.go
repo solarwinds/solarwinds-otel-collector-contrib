@@ -12,12 +12,42 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package providers
+package processescount
 
-func CreateSucceedingProvideFunc(value int64) ProviderFunc[int64] {
-	return func() (int64, error) { return value, nil }
+type succeedingWrapper struct {
+	value int64
 }
 
-func CreateFailingProvideFunc(err error) ProviderFunc[int64] {
-	return func() (int64, error) { return 0, err }
+var _ Wrapper = (*succeedingWrapper)(nil)
+
+func CreateSucceedingWrapper(
+	value int64,
+) Wrapper {
+	return &succeedingWrapper{
+		value: value,
+	}
+}
+
+// GetCount implements Wrapper.
+func (w *succeedingWrapper) GetCount() (int64, error) {
+	return w.value, nil
+}
+
+type failingWrapper struct {
+	err error
+}
+
+var _ Wrapper = (*failingWrapper)(nil)
+
+func CreateFailingUptimeWrapper(
+	err error,
+) Wrapper {
+	return &failingWrapper{
+		err: err,
+	}
+}
+
+// GetCount implements Wrapper.
+func (w *failingWrapper) GetCount() (int64, error) {
+	return 0, w.err
 }
