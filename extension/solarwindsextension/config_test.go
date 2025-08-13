@@ -17,6 +17,7 @@ package solarwindsextension
 import (
 	"testing"
 
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/config/configgrpc"
@@ -24,8 +25,6 @@ import (
 	"go.opentelemetry.io/collector/config/configtls"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil"
-
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension/internal"
 )
 
 // TestConfigUnmarshalFull tries to parse a configuration file
@@ -43,7 +42,7 @@ func TestConfigUnmarshalFull(t *testing.T) {
 	attributeMap["att2"] = "custom_attribute_value_2"
 
 	// Verify the values.
-	assert.Equal(t, &internal.Config{
+	assert.Equal(t, &config.Config{
 		DataCenter:          "na-01",
 		EndpointURLOverride: "127.0.0.1:1234",
 		IngestionToken:      "TOKEN",
@@ -65,7 +64,7 @@ func TestConfigValidateOK(t *testing.T) {
 	require.NoError(t, cfgFile.Unmarshal(&cfg))
 
 	// Try to validate it.
-	assert.NoError(t, cfg.(*internal.Config).Validate())
+	assert.NoError(t, cfg.(*config.Config).Validate())
 }
 
 // TestConfigValidateMissingToken verifies that
@@ -81,7 +80,7 @@ func TestConfigValidateMissingToken(t *testing.T) {
 
 	assert.ErrorContains(
 		t,
-		cfg.(*internal.Config).Validate(),
+		cfg.(*config.Config).Validate(),
 		"'token' must be set",
 	)
 }
@@ -99,7 +98,7 @@ func TestConfigValidateMissingDataCenter(t *testing.T) {
 
 	assert.ErrorContains(
 		t,
-		cfg.(*internal.Config).Validate(),
+		cfg.(*config.Config).Validate(),
 		"'data_center' must be set",
 	)
 }
@@ -117,7 +116,7 @@ func TestConfigValidateMissingCollectorName(t *testing.T) {
 
 	assert.ErrorContains(
 		t,
-		cfg.(*internal.Config).Validate(),
+		cfg.(*config.Config).Validate(),
 		"'collector_name' must be set",
 	)
 }
@@ -125,7 +124,7 @@ func TestConfigValidateMissingCollectorName(t *testing.T) {
 // TestConfigTokenRedacted checks that the configuration
 // type doesn't leak its secret token unless it is accessed explicitly.
 func TestConfigTokenRedacted(t *testing.T) {
-	cfg := &internal.Config{
+	cfg := &config.Config{
 		DataCenter:     "eu-01",
 		IngestionToken: "SECRET",
 	}
@@ -148,7 +147,7 @@ func TestConfigOTLPWithOverride(t *testing.T) {
 	require.NoError(t, cfgFile.Unmarshal(&cfg))
 
 	// Convert it to the OTLP Exporter configuration.
-	otlpCfg, err := cfg.(*internal.Config).OTLPConfig()
+	otlpCfg, err := cfg.(*config.Config).OTLPConfig()
 	require.NoError(t, err)
 
 	// Verify that both the token and overridden URL were propagated
@@ -172,12 +171,12 @@ func TestConfigUnmarshalWithGrpc(t *testing.T) {
 	// Verify the values.
 	assert.Equal(
 		t,
-		&internal.Config{
+		&config.Config{
 			CollectorName:       "test-collector",
 			EndpointURLOverride: "",
 			Resource:            nil,
 			WithoutEntity:       true,
-			GRPCConfig: internal.GRPCConfig{
+			GRPCConfig: config.GRPCConfig{
 				ClientConfig: configgrpc.ClientConfig{
 					Endpoint: "url",
 					TLSSetting: configtls.ClientConfig{
@@ -204,7 +203,7 @@ func TestConfigOTLPDataCenterOverridenByGrpc(t *testing.T) {
 	require.NoError(t, cfgFile.Unmarshal(&cfg))
 
 	// Convert it to the OTLP Exporter configuration.
-	otlpCfg, err := cfg.(*internal.Config).OTLPConfig()
+	otlpCfg, err := cfg.(*config.Config).OTLPConfig()
 	require.NoError(t, err)
 
 	// Verify that the gRPC configuration was propagated correctly.
@@ -220,7 +219,7 @@ func TestConfig_UrlOverridendByGrpc(t *testing.T) {
 	require.NoError(t, cfgFile.Unmarshal(&cfg))
 
 	// Convert it to the OTLP Exporter configuration.
-	otlpCfg, err := cfg.(*internal.Config).OTLPConfig()
+	otlpCfg, err := cfg.(*config.Config).OTLPConfig()
 	require.NoError(t, err)
 
 	// Verify that the gRPC configuration was propagated correctly.
@@ -236,7 +235,7 @@ func TestConfig_TokenOverridendByGrpc(t *testing.T) {
 	require.NoError(t, cfgFile.Unmarshal(&cfg))
 
 	// Convert it to the OTLP Exporter configuration.
-	otlpCfg, err := cfg.(*internal.Config).OTLPConfig()
+	otlpCfg, err := cfg.(*config.Config).OTLPConfig()
 	require.NoError(t, err)
 
 	// Verify that the gRPC configuration was propagated correctly.

@@ -16,10 +16,12 @@ package internal
 
 import (
 	"context"
-	"go.opentelemetry.io/collector/component"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension/config"
+	"go.opentelemetry.io/collector/component"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -76,7 +78,7 @@ func TestHeartbeatEmittingMetrics(t *testing.T) {
 	mockExp := newMockExporter()
 	hb := newHeartbeatWithExporter(
 		extensiontest.NewNopSettings(extensiontest.NopType),
-		&Config{},
+		&config.Config{},
 		mockExp,
 	)
 	// Adjust the heartbeat interval to shave off some time.

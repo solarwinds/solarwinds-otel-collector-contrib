@@ -18,23 +18,23 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension/config"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/extension"
 
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension/internal"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension/internal/metadata"
 )
 
 func NewFactory() extension.Factory {
 	return extension.NewFactory(
 		metadata.Type,
-		internal.NewDefaultConfig,
+		config.NewDefaultConfig,
 		createExtension,
 		metadata.ExtensionStability)
 }
 
 func createExtension(ctx context.Context, set extension.Settings, cfg component.Config) (extension.Extension, error) {
-	extCfg, ok := cfg.(*internal.Config)
+	extCfg, ok := cfg.(*config.Config)
 	if !ok {
 		return nil, fmt.Errorf("unexpected config type: %T", cfg)
 	}
