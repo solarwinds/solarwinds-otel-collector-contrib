@@ -2,6 +2,8 @@
 
 ## vNext
 
+- `solarwindsexporter` has been removed as announced
+
 ## v0.131.2
 - Updates golang to 1.24.6
 - Added `processesscraper` to `swohostmetricsreceiver` providing `swo.system.processes.count` metric
