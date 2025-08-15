@@ -39,6 +39,7 @@ const (
 type emitter struct {
 	metricName       string
 	cpuStatsProvider providers.Provider[cpustats.Container]
+	metric.InitFunc
 }
 
 var _ metric.Emitter = (*emitter)(nil)
@@ -64,10 +65,6 @@ func (e *emitter) Emit() *metric.Result {
 
 	ms, err := e.constructMetricSlice(data)
 	return &metric.Result{Data: ms, Error: err}
-}
-
-func (e *emitter) Init() error {
-	return nil
 }
 
 func (e *emitter) Name() string {

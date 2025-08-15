@@ -21,6 +21,7 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config/configgrpc"
 	"go.opentelemetry.io/collector/config/configopaque"
+	"go.opentelemetry.io/collector/config/configoptional"
 	"go.opentelemetry.io/collector/config/configretry"
 	"go.opentelemetry.io/collector/config/configtls"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
@@ -36,8 +37,8 @@ type Config struct {
 	// See [configretry.BackOffConfig] documentation.
 	BackoffSettings configretry.BackOffConfig `mapstructure:"retry_on_failure"`
 	// QueueSettings defines configuration for queueing batches in the OTLP Exporter.
-	// See [exporterhelper.QueueConfig] documentation.
-	QueueSettings exporterhelper.QueueConfig `mapstructure:"sending_queue"`
+	// See [exporterhelper.QueueBatchConfig] documentation.
+	QueueSettings exporterhelper.QueueBatchConfig `mapstructure:"sending_queue"`
 	// Timeout configures timeout in the underlying OTLP exporter.
 	Timeout exporterhelper.TimeoutConfig `mapstructure:"timeout,squash"`
 
@@ -111,8 +112,8 @@ func (cfg *Config) OTLPConfig() (*otlpexporter.Config, error) {
 
 	// gRPC client configuration.
 	clientCfg := configgrpc.ClientConfig{
-		TLSSetting:   configtls.NewDefaultClientConfig(),
-		Keepalive:    configgrpc.NewDefaultKeepaliveClientConfig(),
+		TLS:          configtls.NewDefaultClientConfig(),
+		Keepalive:    configoptional.Some(configgrpc.NewDefaultKeepaliveClientConfig()),
 		BalancerName: configgrpc.BalancerName(),
 		Headers:      headers,
 		Endpoint:     cfg.endpointURL,
