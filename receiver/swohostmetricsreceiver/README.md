@@ -38,12 +38,14 @@ swohostmetrics:
 
 ## Available Scrapers
 
-| Scraper      | Supported OSs                | Description                                                 |
-| ------------ | ---------------------------- | ----------------------------------------------------------- |
-| [hostinfo]   | Linux & Windows              | Provides information about host entity itself               |
-| [asset]      | Linux & Windows              | Provides information about installed software and features  |
+| Scraper     | Supported OSs                | Description                                                |
+|-------------| ---------------------------- |------------------------------------------------------------|
+| [hostinfo]  | Linux & Windows              | Provides information about host entity itself              |
+| [asset]     | Linux & Windows              | Provides information about installed software and features |
+| [processes] | Linux & Windows              | Provides information about processes                       |
 
 [development]: https://github.com/open-telemetry/opentelemetry-collector#development
 [opentelemetry-collector-contrib]: https://github.com/open-telemetry/opentelemetry-collector-contrib
 [hostinfo]: ./internal/scraper/hostinfoscraper/documentation.md
 [asset]: ./internal/scraper/assetscraper/documentation.md
+[processes]: ./internal/scraper/processesscraper/documentation.md

@@ -14,7 +14,7 @@
 
 package uptime
 
-import "github.com/shirou/gopsutil/v3/host"
+import "github.com/shirou/gopsutil/v4/host"
 
 type Wrapper interface {
 	GetUptime() (uint64, error)

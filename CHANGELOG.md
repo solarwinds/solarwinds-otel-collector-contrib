@@ -4,6 +4,24 @@
 
 - Fixed metadata and all component status tables are now generated from it.
 
+## v0.131.2
+- Updates golang to 1.24.6
+- Added `processesscraper` to `swohostmetricsreceiver` providing `swo.system.processes.count` metric
+
+## v0.131.1
+No changes, issues with previous release.
+
+## v0.131.0
+- Updated OpenTelemetry modules to [v1.37.0/v0.131.0](https://github.com/open-telemetry/opentelemetry-collector/releases/tag/v0.131.0)
+- Updated TLS configuration in extensions and exporters (`TLSSetting` → `TLS`)
+- Wrapped Keepalive configurations with `configoptional.Some()`
+- Replaced deprecated `exporterhelper.QueueConfig` with `exporterhelper.QueueBatchConfig`
+- Components affected: `solarwindsextension`, `solarwindsexporter`
+
+## v0.127.9
+- Chores without impact (excluded internal tools from CodeQL analysis, added dependency review action with GHAS)
+- Fix CVE-2025-54388: Moby firewall reload could expose localhost-only containers to external access
+
 ## v0.127.8
 - Updates golang to 1.24.5
 - Chores without impact (version bumps, refactors and build pipeline improvements)
