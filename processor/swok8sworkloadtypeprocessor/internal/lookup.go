@@ -28,14 +28,19 @@ import (
 )
 
 const (
-	ServiceKind             = "Service"
-	PodKind                 = "Pod"
-	ReplicaSetKind          = "ReplicaSet"
-	serviceTypeShort        = "svc"
-	podTypeShort            = "pod"
-	PodsWorkloadType        = "pods"
-	ServicesWorkloadType    = "services"
-	ReplicaSetsWorkloadType = "replicasets"
+	ServiceKind              = "Service"
+	PodKind                  = "Pod"
+	ReplicaSetKind           = "ReplicaSet"
+	serviceTypeShort         = "svc"
+	podTypeShort             = "pod"
+	PodsWorkloadType         = "pods"
+	ServicesWorkloadType     = "services"
+	ReplicaSetsWorkloadType  = "replicasets"
+	DeploymentsWorkloadType  = "deployments"
+	StatefulSetsWorkloadType = "statefulsets"
+	DaemonSetsWorkloadType   = "daemonsets"
+	JobsWorkloadType         = "jobs"
+	CronJobsWorkloadType     = "cronjobs"
 )
 
 type LookupResult struct {
