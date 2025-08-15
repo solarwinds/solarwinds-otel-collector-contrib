@@ -2,7 +2,7 @@
 
 ## vNext
 
-- Fixed metadata and all component status tables are now generated from it.
+- Metadata has been fixed, and all component status tables are now generated from it.
 
 ## v0.131.2
 - Updates golang to 1.24.6
