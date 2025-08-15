@@ -18,37 +18,26 @@ import (
 	"context"
 
 	fscraper "github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/scraper"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/types"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/hardwareinventoryscraper/internal/metadata"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/scraper"
 )
 
-type factory struct{}
-
-var _ types.MetricsScraperFactory = (*factory)(nil)
-
-func NewFactory() types.MetricsScraperFactory {
-	return new(factory)
-}
-
-// Type implements types.MetricsScraperFactory.
-func (f *factory) Type() component.Type {
-	return scraperType
-}
-
-// CreateDefaultConfig implements types.ScraperFactory.
-func (*factory) CreateDefaultConfig() component.Config {
-	return CreateDefaultConfig()
+func NewFactory() scraper.Factory {
+	return scraper.NewFactory(
+		metadata.Type,
+		CreateDefaultConfig,
+		scraper.WithMetrics(createMetrics, metadata.MetricsStability))
 }
 
 // CreateScraper implements types.ScraperFactory.
-func (*factory) CreateMetrics(
+func createMetrics(
 	_ context.Context,
 	set scraper.Settings,
 	cfg component.Config,
 ) (scraper.Metrics, error) {
 	return fscraper.CreateScraper[Config, Scraper](
-		ScraperType(),
+		metadata.Type,
 		cfg,
 		NewHardwareInventoryScraper,
 		set.Logger,

@@ -15,7 +15,7 @@
 package hardwareinventoryscraper
 
 import (
-	"go.opentelemetry.io/collector/component"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/hardwareinventoryscraper/internal/metadata"
 	"go.uber.org/zap"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/metric"
@@ -27,13 +27,6 @@ import (
 const (
 	cpuScopeName = "otelcol/swohostmetricsreceiver/hardwareinventory/cpu"
 )
-
-//nolint:gochecknoglobals // Private, read-only.
-var scraperType component.Type = component.MustNewType("hardwareinventory")
-
-func ScraperType() component.Type {
-	return scraperType
-}
 
 type Scraper struct {
 	scraper.Manager
@@ -47,7 +40,7 @@ func NewHardwareInventoryScraper(
 	logger *zap.Logger,
 ) (*Scraper, error) {
 	descriptor := &scraper.Descriptor{
-		Type: ScraperType(),
+		Type: metadata.Type,
 		ScopeDescriptors: map[string]scope.Descriptor{
 			cpuScopeName: {
 				ScopeName: cpuScopeName,

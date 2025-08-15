@@ -24,7 +24,6 @@ import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/hardwareinventoryscraper"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/hostinfoscraper"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/processesscraper"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/types"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/receiver"
@@ -47,13 +46,24 @@ func ComponentType() component.Type {
 	return componentType
 }
 
-func scraperFactories() map[string]types.MetricsScraperFactory {
-	return map[string]types.MetricsScraperFactory{
-		assetscraper.ScraperType().String():             assetscraper.NewFactory(),
-		hardwareinventoryscraper.ScraperType().String(): hardwareinventoryscraper.NewFactory(),
-		hostinfoscraper.ScraperType().String():          hostinfoscraper.NewFactory(),
-		processesscraper.NewFactory().Type().String():   processesscraper.NewFactory(),
+func scraperFactories() map[component.Type]scraper.Factory {
+	return mustMakeFactories(
+		assetscraper.NewFactory(),
+		hardwareinventoryscraper.NewFactory(),
+		hostinfoscraper.NewFactory(),
+		processesscraper.NewFactory(),
+	)
+}
+
+func mustMakeFactories(factories ...scraper.Factory) map[component.Type]scraper.Factory {
+	fMap := map[component.Type]scraper.Factory{}
+	for _, f := range factories {
+		if _, ok := fMap[f.Type()]; ok {
+			panic(fmt.Errorf("duplicate scraper factory %q", f.Type()))
+		}
+		fMap[f.Type()] = f
 	}
+	return fMap
 }
 
 // Creates factory capable of creating swohostmetrics receiver.
@@ -66,16 +76,15 @@ func NewFactory() receiver.Factory {
 }
 
 func createDefaultConfig() component.Config {
+	scrapers := make(map[string]component.Config)
+	for typ, factory := range scraperFactories() {
+		scrapers[typ.String()] = factory.CreateDefaultConfig()
+	}
 	return &ReceiverConfig{
 		ControllerConfig: scraperhelper.ControllerConfig{
 			CollectionInterval: 30 * time.Second,
 		},
-		Scrapers: map[string]component.Config{
-			hostinfoscraper.ScraperType().String():          hostinfoscraper.CreateDefaultConfig(),
-			assetscraper.ScraperType().String():             assetscraper.CreateDefaultConfig(),
-			hardwareinventoryscraper.ScraperType().String(): hardwareinventoryscraper.CreateDefaultConfig(),
-			processesscraper.NewFactory().Type().String():   processesscraper.NewFactory().CreateDefaultConfig(),
-		},
+		Scrapers: scrapers,
 	}
 }
 
@@ -117,7 +126,7 @@ func createScraperControllerOptions(
 	for scraperName, scraperFactory := range scraperFactories {
 		// when config is not available it is not utilized in receiver
 		// => skip it
-		scraperConfig, found := receiverConfig.Scrapers[scraperName]
+		scraperConfig, found := receiverConfig.Scrapers[scraperName.String()]
 		if !found {
 			continue
 		}
@@ -135,12 +144,7 @@ func createScraperControllerOptions(
 			return nil, fmt.Errorf("creating scraper %s failed: %w", scraperName, err)
 		}
 
-		ct, err := component.NewType(scraperName)
-		if err != nil {
-			return nil, fmt.Errorf("invalid scraper key name: %s : %w", scraperName, err)
-		}
-
-		scraperControllerOptions = append(scraperControllerOptions, scraperhelper.AddScraper(ct, scraper))
+		scraperControllerOptions = append(scraperControllerOptions, scraperhelper.AddScraper(scraperName, scraper))
 	}
 
 	return scraperControllerOptions, nil
@@ -148,7 +152,7 @@ func createScraperControllerOptions(
 
 // returns scraper factory for its creation or error if no such scraper can be
 // provided.
-func GetScraperFactory(scraperName string) (types.MetricsScraperFactory, error) {
+func GetScraperFactory(scraperName component.Type) (scraper.Factory, error) {
 	scraperFactory, found := scraperFactories()[scraperName]
 	if !found {
 		message := fmt.Sprintf("Scraper [%s] is unknown", scraperName)
