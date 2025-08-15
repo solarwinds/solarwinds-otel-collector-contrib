@@ -215,7 +215,20 @@ func (cp *swok8sworkloadtypeProcessor) lookupWorkloadTypeByAddressAttrWithResour
 			zap.String("hostname", host),
 			zap.String("namespace", namespace),
 			zap.String("namespaceAttr", workloadMapping.NamespaceAttr))
-		return internal.LookupWorkloadKindByHostname(host, namespace, workloadMapping.ExpectedTypes, cp.logger, cp.informers, workloadMapping.PreferOwnerForPods)
+
+		// If namespace attribute is configured but not provided in the data,
+		// and the hostname doesn't contain namespace information, require namespace
+		if workloadMapping.NamespaceAttr != "" && namespace == "" {
+			// Check if the hostname contains structured namespace info
+			_, namespaceFromHostname, _ := internal.ExtractNameAndNamespaceAndType(host)
+			if namespaceFromHostname == "" {
+				// No namespace in hostname and no namespace in attributes, but namespace is required
+				return internal.EmptyLookupResult
+			}
+		}
+
+		// Use enhanced OTEL instrumentation address lookup that can handle service names
+		return internal.LookupWorkloadByOtelInstrumentationAddress(addr, namespace, workloadMapping.ExpectedTypes, cp.logger, cp.informers, workloadMapping.PreferOwnerForPods)
 	}
 }
 
