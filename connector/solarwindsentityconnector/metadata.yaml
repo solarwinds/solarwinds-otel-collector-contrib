@@ -1,4 +1,5 @@
 type: solarwindsentity
+github_project: solarwinds/solarwinds-otel-collector-contrib
 
 status:
   class: connector
