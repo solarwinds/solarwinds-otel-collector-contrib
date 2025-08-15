@@ -12,6 +12,20 @@ import (
 	conventions "go.opentelemetry.io/otel/semconv/v1.9.0"
 )
 
+var MetricsInfo = metricsInfo{
+	SwoHardwareinventoryCPU: metricInfo{
+		Name: "swo.hardwareinventory.cpu",
+	},
+}
+
+type metricsInfo struct {
+	SwoHardwareinventoryCPU metricInfo
+}
+
+type metricInfo struct {
+	Name string
+}
+
 type metricSwoHardwareinventoryCPU struct {
 	data     pmetric.Metric // data buffer for generated metric.
 	config   MetricConfig   // metric config provided by user.
@@ -167,7 +181,7 @@ func (mb *MetricsBuilder) EmitForResource(options ...ResourceMetricsOption) {
 	rm := pmetric.NewResourceMetrics()
 	rm.SetSchemaUrl(conventions.SchemaURL)
 	ils := rm.ScopeMetrics().AppendEmpty()
-	ils.Scope().SetName("github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/hardwareinventoryscraper")
+	ils.Scope().SetName(ScopeName)
 	ils.Scope().SetVersion(mb.buildInfo.Version)
 	ils.Metrics().EnsureCapacity(mb.metricsCapacity)
 	mb.metricSwoHardwareinventoryCPU.emit(ils.Metrics())
