@@ -5,6 +5,7 @@ status:
   stability:
     development: [metrics_to_logs, logs_to_logs]
   distributions: [verified, playground, k8s]
+  disable_codecov_badge: true
   codeowners:
     active: [orgs/solarwinds/teams/eng-otel-team]
 

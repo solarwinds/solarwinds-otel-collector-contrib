@@ -9,6 +9,7 @@ status:
       date: "2025-07-30"
       migration: "For full parity with `solarwinds` exporter use combination of `solarwinds` processor and `otlp` exporter. See [solarwinds processor readme](../../processor/solarwindsprocessor/README.md) for more information."
   distributions: [verified, playground, k8s]
+  disable_codecov_badge: true
   codeowners:
     active: [orgs/solarwinds/teams/eng-otel-team]
 
