@@ -2,6 +2,8 @@
 
 ## vNext
 
+- Metadata has been fixed, and all component status tables are now generated from it.
+
 ## v0.131.2
 - Updates golang to 1.24.6
 - Added `processesscraper` to `swohostmetricsreceiver` providing `swo.system.processes.count` metric

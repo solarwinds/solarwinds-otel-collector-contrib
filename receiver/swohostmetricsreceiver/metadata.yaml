@@ -4,4 +4,6 @@ github_project: solarwinds/solarwinds-otel-collector-contrib
 status:
   class: receiver
   stability:
-    development: [ metrics ]
+    development: [metrics]
+  distributions: [verified, playground, k8s]
+  disable_codecov_badge: true

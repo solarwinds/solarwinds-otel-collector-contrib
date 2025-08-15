@@ -4,7 +4,9 @@ github_project: solarwinds/solarwinds-otel-collector-contrib
 status:
   class: extension
   stability:
-    development: [ extension ]
+    development: [extension]
+  distributions: [verified, playground, k8s]
+  disable_codecov_badge: true
 
 tests:
   config:

@@ -1,11 +1,12 @@
 type: solarwinds
-
 github_project: solarwinds/solarwinds-otel-collector-contrib
 
 status:
   class: processor
   stability:
-    development: [ metrics, logs, traces ]
+    development: [metrics, logs, traces]
+  distributions: [verified, playground, k8s]
+  disable_codecov_badge: true
 
 resource_attributes:
   sw.otelcol.collector.name:
@@ -23,4 +24,3 @@ tests:
     extension: solarwindsextension
   # Skipped because the exporter requires solarwindsextension to run.
   skip_lifecycle: true
-
