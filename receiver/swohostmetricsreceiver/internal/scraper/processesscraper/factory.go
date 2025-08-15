@@ -19,11 +19,9 @@ import (
 	"fmt"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/processesscraper/internal/metadata"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/types"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/scraper"
-	"go.uber.org/zap"
-
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/types"
 )
 
 type factory struct{}
@@ -46,8 +44,7 @@ func (f *factory) CreateDefaultConfig() component.Config {
 func (f *factory) CreateMetrics(
 	_ context.Context,
 	set scraper.Settings,
-	cfg component.Config,
-	_ *zap.Logger) (scraper.Metrics, error) {
+	cfg component.Config) (scraper.Metrics, error) {
 
 	sc, err := NewScraper(*cfg.(*metadata.MetricsBuilderConfig), set)
 	if err != nil {

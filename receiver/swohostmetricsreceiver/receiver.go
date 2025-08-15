@@ -130,7 +130,6 @@ func createScraperControllerOptions(
 				BuildInfo:         settings.BuildInfo,
 			},
 			scraperConfig,
-			settings.Logger,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("creating scraper %s failed: %w", scraperName, err)
