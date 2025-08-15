@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/metadata"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/assetscraper"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/hardwareinventoryscraper"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/hostinfoscraper"
@@ -30,21 +31,6 @@ import (
 	"go.opentelemetry.io/collector/scraper"
 	"go.opentelemetry.io/collector/scraper/scraperhelper"
 )
-
-const (
-	stability = component.StabilityLevelDevelopment
-)
-
-//nolint:gochecknoglobals // Private, read-only.
-var componentType component.Type
-
-func init() {
-	componentType = component.MustNewType("swohostmetrics")
-}
-
-func ComponentType() component.Type {
-	return componentType
-}
 
 func scraperFactories() map[component.Type]scraper.Factory {
 	return mustMakeFactories(
@@ -69,9 +55,9 @@ func mustMakeFactories(factories ...scraper.Factory) map[component.Type]scraper.
 // Creates factory capable of creating swohostmetrics receiver.
 func NewFactory() receiver.Factory {
 	return receiver.NewFactory(
-		ComponentType(),
+		metadata.Type,
 		createDefaultConfig,
-		receiver.WithMetrics(createMetricsReceiver, stability),
+		receiver.WithMetrics(createMetricsReceiver, metadata.MetricsStability),
 	)
 }
 
