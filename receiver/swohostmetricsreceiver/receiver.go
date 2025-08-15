@@ -32,14 +32,12 @@ import (
 	"go.opentelemetry.io/collector/scraper/scraperhelper"
 )
 
-func scraperFactories() map[component.Type]scraper.Factory {
-	return mustMakeFactories(
-		assetscraper.NewFactory(),
-		hardwareinventoryscraper.NewFactory(),
-		hostinfoscraper.NewFactory(),
-		processesscraper.NewFactory(),
-	)
-}
+var scraperFactories = mustMakeFactories(
+	assetscraper.NewFactory(),
+	hardwareinventoryscraper.NewFactory(),
+	hostinfoscraper.NewFactory(),
+	processesscraper.NewFactory(),
+)
 
 func mustMakeFactories(factories ...scraper.Factory) map[component.Type]scraper.Factory {
 	fMap := map[component.Type]scraper.Factory{}
@@ -63,7 +61,7 @@ func NewFactory() receiver.Factory {
 
 func createDefaultConfig() component.Config {
 	scrapers := make(map[string]component.Config)
-	for typ, factory := range scraperFactories() {
+	for typ, factory := range scraperFactories {
 		scrapers[typ.String()] = factory.CreateDefaultConfig()
 	}
 	return &ReceiverConfig{
@@ -106,7 +104,6 @@ func createScraperControllerOptions(
 	receiverConfig *ReceiverConfig,
 	settings receiver.Settings,
 ) ([]scraperhelper.ControllerOption, error) {
-	scraperFactories := scraperFactories()
 	scraperControllerOptions := make([]scraperhelper.ControllerOption, 0, len(scraperFactories))
 
 	for scraperName, scraperFactory := range scraperFactories {
@@ -139,7 +136,7 @@ func createScraperControllerOptions(
 // returns scraper factory for its creation or error if no such scraper can be
 // provided.
 func GetScraperFactory(scraperName component.Type) (scraper.Factory, error) {
-	scraperFactory, found := scraperFactories()[scraperName]
+	scraperFactory, found := scraperFactories[scraperName]
 	if !found {
 		message := fmt.Sprintf("Scraper [%s] is unknown", scraperName)
 		return nil, errors.New(message)
