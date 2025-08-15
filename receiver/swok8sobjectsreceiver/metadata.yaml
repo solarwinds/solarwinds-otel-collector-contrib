@@ -7,8 +7,6 @@ status:
     development: [logs]
   distributions: [verified, playground, k8s]
   disable_codecov_badge: true
-  codeowners:
-    active: [orgs/solarwinds/teams/eng-pub-swi-kube]
 
 tests:
   skip_lifecycle: true
