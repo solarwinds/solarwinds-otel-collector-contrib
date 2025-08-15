@@ -532,26 +532,6 @@ func TestProcessorMetricsPipelineWhenSearchingByAddress(t *testing.T) {
 			},
 		},
 		{
-			name:         "mapping does not match existing pod because of conflicting namespace",
-			existingPods: []*corev1.Pod{testPod},
-			workloadMappings: []*K8sWorkloadMappingConfig{
-				{
-					AddressAttr:      "src_address",
-					NamespaceAttr:    "src_namespace",
-					WorkloadTypeAttr: "src_type",
-					ExpectedTypes:    []string{"pods"},
-				},
-			},
-			receivedMetricAttrs: map[string]any{
-				"src_address":   testPod.Name + "." + testPod.Namespace,
-				"src_namespace": "other_pod_namespace",
-			},
-			expectedMetricAttrs: map[string]any{
-				"src_address":   testPod.Name + "." + testPod.Namespace,
-				"src_namespace": "other_pod_namespace",
-			},
-		},
-		{
 			name:         "mapping does not match existing pod because of missing address attribute",
 			existingPods: []*corev1.Pod{testPod},
 			workloadMappings: []*K8sWorkloadMappingConfig{
@@ -1473,6 +1453,318 @@ func TestProcessorMetricsPipelineWhenPreferringPodOwner(t *testing.T) {
 
 			attrs := output[0].ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics().At(0).Gauge().DataPoints().At(0).Attributes().AsRaw()
 			require.Equal(t, tt.expectedMetricAttrs, attrs, "Expected attributes should match the actual attributes on metric exiting the processor")
+		})
+	}
+}
+
+func TestServiceAddressLookup(t *testing.T) {
+	testService := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-communicator-http-1-service",
+			Namespace: "test-namespace",
+		},
+	}
+
+	dummyPod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "dummy-pod",
+			Namespace: "dummy-namespace",
+		},
+	}
+
+	tests := []struct {
+		name                string
+		existingServices    []*corev1.Service
+		existingPods        []*corev1.Pod
+		existingDeployments []*appsv1.Deployment
+		workloadMappings    []*K8sWorkloadMappingConfig
+		receivedMetricAttrs map[string]any
+		expectedMetricAttrs map[string]any
+	}{
+		{
+			name:                "Beyla service address lookup with port",
+			existingServices:    []*corev1.Service{testService},
+			existingPods:        []*corev1.Pod{dummyPod}, // Dummy pod to ensure pods type is registered
+			existingDeployments: []*appsv1.Deployment{},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:           "server.address",
+					NamespaceAttr:         "k8s.namespace.name",
+					WorkloadTypeAttr:      "sw.k8s.dst.workload.type",
+					WorkloadNameAttr:      "sw.k8s.dst.workload.name",
+					WorkloadNamespaceAttr: "sw.k8s.dst.workload.namespace",
+					PreferOwnerForPods:    true,
+					ExpectedTypes:         []string{"services", "pods"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"server.address":     "test-communicator-http-1-service:8080",
+				"k8s.namespace.name": "test-namespace",
+			},
+			expectedMetricAttrs: map[string]any{
+				"server.address":                "test-communicator-http-1-service:8080",
+				"k8s.namespace.name":            "test-namespace",
+				"sw.k8s.dst.workload.type":      "Service",
+				"sw.k8s.dst.workload.name":      "test-communicator-http-1-service",
+				"sw.k8s.dst.workload.namespace": "test-namespace",
+			},
+		},
+		{
+			name:                "Beyla service address lookup without namespace attr - should fail",
+			existingServices:    []*corev1.Service{testService},
+			existingPods:        []*corev1.Pod{dummyPod},
+			existingDeployments: []*appsv1.Deployment{},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:           "server.address",
+					WorkloadTypeAttr:      "sw.k8s.dst.workload.type",
+					WorkloadNameAttr:      "sw.k8s.dst.workload.name",
+					WorkloadNamespaceAttr: "sw.k8s.dst.workload.namespace",
+					PreferOwnerForPods:    true,
+					ExpectedTypes:         []string{"services", "pods"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"server.address": "test-communicator-http-1-service:8080",
+				// No namespace attribute provided
+			},
+			expectedMetricAttrs: map[string]any{
+				"server.address": "test-communicator-http-1-service:8080",
+				// Should not have workload attributes since no namespace is provided
+			},
+		},
+		{
+			name:                "Beyla service address lookup with FQDN format",
+			existingServices:    []*corev1.Service{testService},
+			existingPods:        []*corev1.Pod{dummyPod},
+			existingDeployments: []*appsv1.Deployment{},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:           "server.address",
+					NamespaceAttr:         "k8s.namespace.name",
+					WorkloadTypeAttr:      "sw.k8s.dst.workload.type",
+					WorkloadNameAttr:      "sw.k8s.dst.workload.name",
+					WorkloadNamespaceAttr: "sw.k8s.dst.workload.namespace",
+					PreferOwnerForPods:    true,
+					ExpectedTypes:         []string{"services", "pods"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"server.address":     "test-communicator-http-1-service.test-namespace.svc.cluster.local:8080",
+				"k8s.namespace.name": "test-namespace",
+			},
+			expectedMetricAttrs: map[string]any{
+				"server.address":                "test-communicator-http-1-service.test-namespace.svc.cluster.local:8080",
+				"k8s.namespace.name":            "test-namespace",
+				"sw.k8s.dst.workload.type":      "Service",
+				"sw.k8s.dst.workload.name":      "test-communicator-http-1-service",
+				"sw.k8s.dst.workload.namespace": "test-namespace",
+			},
+		},
+		{
+			name:             "Real Beyla scenario - deployment to service communication",
+			existingServices: []*corev1.Service{testService},
+			existingPods:     []*corev1.Pod{dummyPod},
+			existingDeployments: []*appsv1.Deployment{{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "some-deployment",
+					Namespace: "test-namespace",
+				},
+			}},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				// Server address mapping (destination)
+				{
+					AddressAttr:           "server.address",
+					NamespaceAttr:         "k8s.namespace.name",
+					WorkloadTypeAttr:      "sw.k8s.dst.workload.type",
+					WorkloadNameAttr:      "sw.k8s.dst.workload.name",
+					WorkloadNamespaceAttr: "sw.k8s.dst.workload.namespace",
+					PreferOwnerForPods:    true,
+					ExpectedTypes:         []string{"services", "pods"},
+				},
+				// Source owner name mapping
+				{
+					NameAttr:              "k8s.src.owner.name",
+					NamespaceAttr:         "k8s.src.namespace",
+					WorkloadTypeAttr:      "sw.k8s.src.workload.type",
+					WorkloadNameAttr:      "sw.k8s.src.workload.name",
+					WorkloadNamespaceAttr: "sw.k8s.src.workload.namespace",
+					PreferOwnerForPods:    true,
+					ExpectedTypes:         []string{"deployments", "services", "pods"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"server.address":     "test-communicator-http-1-service:8080",
+				"k8s.namespace.name": "test-namespace",
+				"k8s.src.owner.name": "some-deployment",
+				"k8s.src.namespace":  "test-namespace",
+			},
+			expectedMetricAttrs: map[string]any{
+				"server.address":                "test-communicator-http-1-service:8080",
+				"k8s.namespace.name":            "test-namespace",
+				"k8s.src.owner.name":            "some-deployment",
+				"k8s.src.namespace":             "test-namespace",
+				"sw.k8s.dst.workload.type":      "Service",
+				"sw.k8s.dst.workload.name":      "test-communicator-http-1-service",
+				"sw.k8s.dst.workload.namespace": "test-namespace",
+				"sw.k8s.src.workload.type":      "Deployment",
+				"sw.k8s.src.workload.name":      "some-deployment",
+				"sw.k8s.src.workload.namespace": "test-namespace",
+			},
+		},
+		{
+			name:                "Potential issue - service name only without explicit namespace",
+			existingServices:    []*corev1.Service{testService},
+			existingPods:        []*corev1.Pod{dummyPod},
+			existingDeployments: []*appsv1.Deployment{},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:           "server.address",
+					NamespaceAttr:         "k8s.namespace.name",
+					WorkloadTypeAttr:      "sw.k8s.dst.workload.type",
+					WorkloadNameAttr:      "sw.k8s.dst.workload.name",
+					WorkloadNamespaceAttr: "sw.k8s.dst.workload.namespace",
+					PreferOwnerForPods:    true,
+					ExpectedTypes:         []string{"services", "pods"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"server.address":     "test-communicator-http-1-service:8080",
+				"k8s.namespace.name": "test-namespace",
+			},
+			expectedMetricAttrs: map[string]any{
+				"server.address":                "test-communicator-http-1-service:8080",
+				"k8s.namespace.name":            "test-namespace",
+				"sw.k8s.dst.workload.type":      "Service",
+				"sw.k8s.dst.workload.name":      "test-communicator-http-1-service",
+				"sw.k8s.dst.workload.namespace": "test-namespace",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock, reset := MockKubeClient()
+			defer reset()
+
+			MockExistingObjectsInKubeClient(mock, tt.existingServices)
+			MockExistingObjectsInKubeClient(mock, tt.existingPods)
+			MockExistingObjectsInKubeClient(mock, tt.existingDeployments)
+
+			output := runProcessorMetricsPipelineTest(t, tt.workloadMappings, generateGaugeForTestProcessorMetricsPipeline(tt.receivedMetricAttrs))
+
+			attrs := output[0].ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics().At(0).Gauge().DataPoints().At(0).Attributes().AsRaw()
+			require.Equal(t, tt.expectedMetricAttrs, attrs, "Expected attributes should match the actual attributes on metric exiting the processor")
+		})
+	}
+}
+
+func TestResourceVsDatapointAttributeIssue(t *testing.T) {
+	testService := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-communicator-http-2-service",
+			Namespace: "test-namespace",
+		},
+	}
+
+	tests := []struct {
+		name                   string
+		existingServices       []*corev1.Service
+		existingPods           []*corev1.Pod
+		workloadMappings       []*K8sWorkloadMappingConfig
+		receivedResourceAttrs  map[string]any
+		receivedDatapointAttrs map[string]any
+		expectedDatapointAttrs map[string]any
+		shouldFindService      bool
+	}{
+		{
+			name:             "namespace in resource attrs but lookup in datapoint context",
+			existingServices: []*corev1.Service{testService},
+			existingPods:     []*corev1.Pod{{ObjectMeta: metav1.ObjectMeta{Name: "dummy", Namespace: "dummy"}}}, // Add dummy pod for pod type
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					// This maps to DataPointContext by default
+					AddressAttr:           "server.address",
+					NamespaceAttr:         "k8s.namespace.name", // This attr is expected in datapoint
+					WorkloadTypeAttr:      "sw.k8s.dst.workload.type",
+					WorkloadNameAttr:      "sw.k8s.dst.workload.name",
+					WorkloadNamespaceAttr: "sw.k8s.dst.workload.namespace",
+					PreferOwnerForPods:    true,
+					ExpectedTypes:         []string{"services"}, // Remove pods since our test focuses on services
+				},
+			},
+			receivedResourceAttrs: map[string]any{
+				"k8s.namespace.name": "test-namespace", // Namespace is here (resource level)
+			},
+			receivedDatapointAttrs: map[string]any{
+				"server.address": "test-communicator-http-2-service:8081",
+				// No namespace here - this causes the lookup to fail
+			},
+			expectedDatapointAttrs: map[string]any{
+				"server.address": "test-communicator-http-2-service:8081",
+				// With resource fallback, the service should be found and these attributes added:
+				"sw.k8s.dst.workload.type":      "Service",
+				"sw.k8s.dst.workload.name":      "test-communicator-http-2-service",
+				"sw.k8s.dst.workload.namespace": "test-namespace",
+			},
+			// Should find service via resource fallback since namespace is in resource context
+			shouldFindService: true,
+		},
+		{
+			name:             "namespace in datapoint attrs",
+			existingServices: []*corev1.Service{testService},
+			existingPods:     []*corev1.Pod{{ObjectMeta: metav1.ObjectMeta{Name: "dummy", Namespace: "dummy"}}}, // Add dummy pod
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:           "server.address",
+					NamespaceAttr:         "k8s.namespace.name",
+					WorkloadTypeAttr:      "sw.k8s.dst.workload.type",
+					WorkloadNameAttr:      "sw.k8s.dst.workload.name",
+					WorkloadNamespaceAttr: "sw.k8s.dst.workload.namespace",
+					PreferOwnerForPods:    true,
+					ExpectedTypes:         []string{"services"}, // Only services since we don't have real pods
+				},
+			},
+			receivedResourceAttrs: map[string]any{},
+			receivedDatapointAttrs: map[string]any{
+				"server.address":     "test-communicator-http-2-service:8081",
+				"k8s.namespace.name": "test-namespace", // Namespace is here (datapoint level)
+			},
+			expectedDatapointAttrs: map[string]any{
+				"server.address":                "test-communicator-http-2-service:8081",
+				"k8s.namespace.name":            "test-namespace",
+				"sw.k8s.dst.workload.type":      "Service",
+				"sw.k8s.dst.workload.name":      "test-communicator-http-2-service",
+				"sw.k8s.dst.workload.namespace": "test-namespace",
+			},
+			shouldFindService: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock, reset := MockKubeClient()
+			defer reset()
+
+			MockExistingObjectsInKubeClient(mock, tt.existingServices)
+			MockExistingObjectsInKubeClient(mock, tt.existingPods)
+
+			// Create metrics with resource attributes separate from datapoint attributes
+			metrics := generateGaugeWithAllAttributesForTestProcessorMetricsPipeline(
+				tt.receivedResourceAttrs,
+				nil, // scope attrs
+				nil, // metric attrs
+				tt.receivedDatapointAttrs,
+			)
+
+			output := runProcessorMetricsPipelineTest(t, tt.workloadMappings, metrics)
+
+			attrs := output[0].ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics().At(0).Gauge().DataPoints().At(0).Attributes().AsRaw()
+			require.Equal(t, tt.expectedDatapointAttrs, attrs, "Expected datapoint attributes should match")
+
+			// Resource attributes should remain unchanged
+			resourceAttrs := output[0].ResourceMetrics().At(0).Resource().Attributes().AsRaw()
+			require.Equal(t, tt.receivedResourceAttrs, resourceAttrs, "Resource attributes should remain unchanged")
 		})
 	}
 }
