@@ -43,5 +43,8 @@ updates:
         update-types:
           - "patch"
           - "minor"
+      k8s-io:
+        patterns:
+          - "*k8s.io*"
     commit-message:
       prefix: "chore: "
