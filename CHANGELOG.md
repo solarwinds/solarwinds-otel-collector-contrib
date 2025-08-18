@@ -2,6 +2,7 @@
 
 ## vNext
 
+- Metadata has been fixed, and all component status tables are now generated from it.
 - `solarwindsexporter` has been removed as announced
 
 ## v0.131.2
