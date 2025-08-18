@@ -4,9 +4,9 @@ go 1.24.6
 
 require (
 	github.com/openshift/client-go v0.0.0-20250513150353-9ea84fa6431b
-	k8s.io/api v0.33.3
-	k8s.io/apimachinery v0.33.3
-	k8s.io/client-go v0.33.3
+	k8s.io/api v0.33.4
+	k8s.io/apimachinery v0.33.4
+	k8s.io/client-go v0.33.4
 )
 
 require (
