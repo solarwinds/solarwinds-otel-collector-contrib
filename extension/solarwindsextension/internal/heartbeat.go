@@ -22,6 +22,7 @@ import (
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version"
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/exporter"
 	"go.opentelemetry.io/collector/extension"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
@@ -36,12 +37,6 @@ const (
 	EntityCreationValue       = "on"
 )
 
-type MetricsExporter interface {
-	start(context.Context, component.Host) error
-	shutdown(context.Context) error
-	push(context.Context, pmetric.Metrics) error
-}
-
 type Heartbeat struct {
 	logger *zap.Logger
 
@@ -49,7 +44,7 @@ type Heartbeat struct {
 	startShutdownMtx sync.Mutex
 
 	metric        *UptimeMetric
-	exporter      MetricsExporter
+	exporter      exporter.Metrics
 	collectorName string
 	withoutEntity bool
 
@@ -73,7 +68,7 @@ func NewHeartbeat(ctx context.Context, set extension.Settings, cfg *Config) (*He
 func newHeartbeatWithExporter(
 	set extension.Settings,
 	cfg *Config,
-	exporter MetricsExporter,
+	exporter exporter.Metrics,
 ) *Heartbeat {
 	return &Heartbeat{
 		logger:        set.Logger,
@@ -95,7 +90,7 @@ func (h *Heartbeat) Start(ctx context.Context, host component.Host) error {
 		return ErrAlreadyRunning
 	}
 
-	err := h.exporter.start(ctx, host)
+	err := h.exporter.Start(ctx, host)
 	if err != nil {
 		return err
 	}
@@ -117,7 +112,7 @@ func (h *Heartbeat) Shutdown(ctx context.Context) error {
 	}
 	h.cancel()
 	h.cancel = nil
-	return h.exporter.shutdown(ctx)
+	return h.exporter.Shutdown(ctx)
 }
 
 func (h *Heartbeat) loop(ctx context.Context) {
@@ -157,7 +152,7 @@ func (h *Heartbeat) generate(ctx context.Context) error {
 		}
 	}
 
-	return h.exporter.push(ctx, md)
+	return h.exporter.ConsumeMetrics(ctx, md)
 }
 
 func (h *Heartbeat) decorateResourceAttributes(resource pcommon.Resource) error {
