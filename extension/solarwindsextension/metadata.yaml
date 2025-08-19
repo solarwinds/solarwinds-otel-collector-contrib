@@ -10,6 +10,7 @@ status:
 
 tests:
   config:
-    data_center: "na-01"
-    token: "THIS-IS-A-TEST"
     collector_name: "test-name"
+    grpc:
+      endpoint: "test-endpoint:0"
+      headers: {Authorization: "Bearer test-token"}
