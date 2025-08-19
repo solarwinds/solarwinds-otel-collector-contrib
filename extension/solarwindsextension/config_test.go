@@ -17,7 +17,6 @@ package solarwindsextension
 import (
 	"testing"
 
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension/internal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/config/configgrpc"
@@ -25,6 +24,8 @@ import (
 	"go.opentelemetry.io/collector/config/configtls"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil"
+
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension/internal"
 )
 
 // TestConfigUnmarshalFull tries to parse a configuration file

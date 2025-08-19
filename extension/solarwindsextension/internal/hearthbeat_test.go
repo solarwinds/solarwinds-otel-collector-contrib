@@ -16,11 +16,10 @@ package internal
 
 import (
 	"context"
+	"go.opentelemetry.io/collector/component"
 	"sync"
 	"testing"
 	"time"
-
-	"go.opentelemetry.io/collector/component"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

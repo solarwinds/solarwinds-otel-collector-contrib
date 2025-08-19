@@ -14,9 +14,7 @@
 
 package attributesdecorator
 
-import (
-	"go.opentelemetry.io/collector/pdata/pcommon"
-)
+import "go.opentelemetry.io/collector/pdata/pcommon"
 
 type Resource interface {
 	Resource() pcommon.Resource
