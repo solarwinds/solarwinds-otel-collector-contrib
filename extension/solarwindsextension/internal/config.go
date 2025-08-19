@@ -26,7 +26,7 @@ import (
 
 var (
 	endpointMustBeSetError        = errors.New("invalid configuration: 'endpoint' must be set")
-	notValidAuthorizationFoundErr = errors.New("invalid configuration: not valid 'Authorization' found in 'headers', use 'headers: {\"Authorization\": \"Bearer ${YOUR_TOKEN}\"}'")
+	notValidAuthorizationFoundErr = errors.New("invalid configuration: no valid 'Authorization' found in 'headers', use 'headers: {\"Authorization\": \"Bearer ${YOUR_TOKEN}\"}'")
 	collectorNameMustBeSetErr     = errors.New("invalid configuration: 'collector_name' must be set")
 )
 
