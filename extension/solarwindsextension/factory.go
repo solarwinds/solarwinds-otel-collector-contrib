@@ -18,10 +18,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension/internal"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/extension"
 
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension/internal"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension/internal/metadata"
 )
 
