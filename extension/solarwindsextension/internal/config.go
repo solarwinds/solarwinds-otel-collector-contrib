@@ -43,10 +43,6 @@ func NewDefaultConfig() component.Config {
 
 // Validate checks the configuration for its validity.
 func (cfg *Config) Validate() error {
-	if cfg.Grpc.Endpoint == "" {
-		return endpointMustBeSetError
-	}
-
 	if val, found := cfg.Grpc.Headers["Authorization"]; !found || val == "" {
 		return notValidAuthorizationFoundErr
 	}
