@@ -28,9 +28,13 @@ type Config struct {
 	// When maximum size is set to zero, no limit check is performed.
 	MaxSizeMib int `mapstructure:"max_size_mib,omitempty"`
 	// Resource attributes to be added to the processed signals.
-	ResourceAttributes    map[string]string `mapstructure:"resource,omitempty"`
-	HostAttributesEnabled bool              `mapstructure:"host_enabled,omitempty"`
-	ClientId              string            `mapstructure:"client_id,omitempty"`
+	ResourceAttributes       map[string]string `mapstructure:"resource,omitempty"`
+	HostAttributesDecoration HostDecoration    `mapstructure:"host,omitempty"`
+}
+
+type HostDecoration struct {
+	Enabled  bool   `mapstructure:"enabled"`
+	ClientId string `mapstructure:"client_id,omitempty"`
 }
 
 func (c *Config) Validate() error {
@@ -40,5 +44,11 @@ func (c *Config) Validate() error {
 	if c.MaxSizeMib < 0 {
 		return fmt.Errorf("%s: %d", "invalid configuration: 'max_size_mib' must be greater than or equal to zero", c.MaxSizeMib)
 	}
+	if c.HostAttributesDecoration.Enabled {
+		if c.HostAttributesDecoration.ClientId == "" {
+			return fmt.Errorf("%s", "invalid configuration: 'host.client_id' must be set when 'host.enabled' is true")
+		}
+	}
+
 	return nil
 }
