@@ -2,6 +2,7 @@ package solarwindsprocessor
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension"
@@ -20,7 +21,7 @@ type mockHost struct {
 	component.Host
 }
 
-// Container provider mock
+// ContainerProvider mock for successful scenarios
 type mockContainerProvider struct{}
 
 func (mock mockContainerProvider) ReadContainerInstanceID() (string, error) {
@@ -31,6 +32,18 @@ func (mock mockContainerProvider) IsRunInContainerd() bool {
 	return true
 }
 
+// ContainerProvider mock for error scenarios
+type mockContainerProviderError struct {
+}
+
+func (mock mockContainerProviderError) ReadContainerInstanceID() (string, error) {
+	return "", fmt.Errorf("mock ReadContainerInstanceID error")
+}
+func (mock mockContainerProviderError) IsRunInContainerd() bool {
+	return false
+}
+
+// ExtensionProvider mock
 type mockExtensionProvider struct{}
 
 func (m mockExtensionProvider) SetExtension(*zap.Logger, string, component.Host) (*solarwindsextension.SolarwindsExtension, error) {
@@ -118,6 +131,21 @@ func TestProcessorDoesNotFailWhenHostDecorationDisabled(t *testing.T) {
 	assert.NoError(t, err, "processor failed when host decoration disabled")
 }
 
+func TestProcessorDoesNotFailOnStartWhenHostDecorationDisabled(t *testing.T) {
+	cfg := &Config{
+		ExtensionName:      "test",
+		ResourceAttributes: map[string]string{},
+		HostAttributesDecoration: HostDecoration{
+			Enabled:  false,
+			ClientId: "",
+		},
+	}
+
+	p := newTestProcessor(t, cfg)
+	err := p.start(context.Background(), &mockHost{})
+	assert.NoError(t, err, "processor start failed when host decoration disabled")
+}
+
 func TestProcessorFailsWhenHostDecorationEnabledWithoutClientId(t *testing.T) {
 	cfg := &Config{
 		ExtensionName:      "test",
@@ -146,6 +174,28 @@ func TestProcessorStartPollsHostAttributesWhenEnabled(t *testing.T) {
 
 	assert.NoError(t, err, "processor start failed")
 	assert.Equal(t, "client-id-xyz", p.hostAttributes.ClientId, "hostAttributes not set correctly")
+}
+
+func TestProcessorFailsDuringFetchOfContainerProperties(t *testing.T) {
+	cfg := &Config{
+		ExtensionName:      "test",
+		ResourceAttributes: map[string]string{},
+		HostAttributesDecoration: HostDecoration{
+			Enabled:  true,
+			ClientId: "client-id-xyz",
+		},
+	}
+
+	p := &solarwindsprocessor{
+		logger:            zaptest.NewLogger(t),
+		cfg:               cfg,
+		containerProvider: mockContainerProviderError{},
+		extensionProvider: mockExtensionProvider{},
+	}
+
+	err := p.start(context.Background(), &mockHost{})
+	assert.Error(t, err, "mock ReadContainerInstanceID error should cause processor start to fail")
+	assert.Contains(t, err.Error(), "mock ReadContainerInstanceID error", "expected error message not found")
 }
 
 func TestHostDecorationInAllSignalTypes(t *testing.T) {
