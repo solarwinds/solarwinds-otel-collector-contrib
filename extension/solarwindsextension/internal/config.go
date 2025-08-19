@@ -19,8 +19,6 @@ import (
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config/configgrpc"
-	"go.opentelemetry.io/collector/config/configoptional"
-	"go.opentelemetry.io/collector/config/configtls"
 	"go.opentelemetry.io/collector/exporter/otlpexporter"
 )
 
@@ -33,27 +31,23 @@ var (
 // Config represents a Solarwinds Extension configuration.
 type Config struct {
 	// CollectorName name of the collector passed in the heartbeat metric
-	CollectorName           string            `mapstructure:"collector_name"`
-	Resource                map[string]string `mapstructure:"resource"`
-	WithoutEntity           bool              `mapstructure:"without_entity"`
-	configgrpc.ClientConfig `mapstructure:"grpc"`
+	CollectorName string                  `mapstructure:"collector_name"`
+	Resource      map[string]string       `mapstructure:"resource"`
+	WithoutEntity bool                    `mapstructure:"without_entity"`
+	Grpc          configgrpc.ClientConfig `mapstructure:"grpc"`
 }
 
-// NewDefaultConfig creates a new default configuration.
-//
-// Warning: it doesn't define mandatory `Token` and `DataCenter`
-// fields that need to be explicitly provided.
 func NewDefaultConfig() component.Config {
-	return &Config{}
+	return &Config{Grpc: configgrpc.NewDefaultClientConfig()}
 }
 
 // Validate checks the configuration for its validity.
 func (cfg *Config) Validate() error {
-	if cfg.Endpoint == "" {
+	if cfg.Grpc.Endpoint == "" {
 		return endpointMustBeSetError
 	}
 
-	if val, found := cfg.Headers["Authorization"]; !found || val == "" {
+	if val, found := cfg.Grpc.Headers["Authorization"]; !found || val == "" {
 		return notValidAuthorizationFoundErr
 	}
 
@@ -71,15 +65,7 @@ func (cfg *Config) OTLPConfig() (*otlpexporter.Config, error) {
 	}
 
 	// gRPC client configuration.
-	otlpConfig := &otlpexporter.Config{
-		ClientConfig: configgrpc.ClientConfig{
-			TLS:          configtls.NewDefaultClientConfig(),
-			Keepalive:    configoptional.Some(configgrpc.NewDefaultKeepaliveClientConfig()),
-			BalancerName: configgrpc.BalancerName(),
-			Headers:      cfg.Headers,
-			Endpoint:     cfg.Endpoint,
-		},
-	}
+	otlpConfig := &otlpexporter.Config{ClientConfig: cfg.Grpc}
 
 	if err := otlpConfig.Validate(); err != nil {
 		return nil, err

@@ -150,7 +150,7 @@ func TestConfigUnmarshalWithGrpc(t *testing.T) {
 			CollectorName: "test-collector",
 			Resource:      nil,
 			WithoutEntity: true,
-			ClientConfig: configgrpc.ClientConfig{
+			Grpc: configgrpc.ClientConfig{
 				Endpoint: "url",
 				TLS:      configtls.ClientConfig{Insecure: false},
 				Headers:  map[string]configopaque.String{"Authorization": "token"},
