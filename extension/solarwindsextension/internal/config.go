@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package config
+package internal
 
 import (
 	"fmt"
@@ -154,7 +154,7 @@ func (cfg *Config) EndpointUrl() (string, error) {
 	if cfg.EndpointURLOverride != "" {
 		return cfg.EndpointURLOverride, nil
 	}
-	return LookupDataCenterURL(cfg.DataCenter)
+	return lookupDataCenterURL(cfg.DataCenter)
 }
 
 // dataCenterToURLMapping maps a data center ID to
@@ -166,10 +166,10 @@ var dataCenterToURLMapping = map[string]string{
 	"ap-01": "otel.collector.ap-01.cloud.solarwinds.com:443",
 }
 
-// LookupDataCenterURL returns the OTLP endpoint URL
+// lookupDataCenterURL returns the OTLP endpoint URL
 // for a `dc` data center ID. Matching is case-insensitive.
 // It fails with an error if `dc` doesn't identify a data center.
-func LookupDataCenterURL(dc string) (string, error) {
+func lookupDataCenterURL(dc string) (string, error) {
 	dcLowercase := strings.ToLower(dc)
 
 	url, ok := dataCenterToURLMapping[dcLowercase]

@@ -17,7 +17,6 @@ package internal
 import (
 	"testing"
 
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -42,7 +41,7 @@ func TestConfigValidateDataCenters(t *testing.T) {
 
 	for _, tc := range tests {
 		// Try to find a dataCenter URL for its ID.
-		url, err := config.LookupDataCenterURL(tc.dataCenter)
+		url, err := lookupDataCenterURL(tc.dataCenter)
 
 		if tc.ok { // A URL should be returned.
 			require.NoError(t, err)

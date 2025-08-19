@@ -17,7 +17,6 @@ package solarwindsextension
 import (
 	"context"
 
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension/config"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/extension"
 	"go.uber.org/zap"
@@ -33,11 +32,11 @@ const EntityCreationValue = internal.EntityCreationValue
 
 type SolarwindsExtension struct {
 	logger    *zap.Logger
-	config    *config.Config
+	config    *internal.Config
 	heartbeat *internal.Heartbeat
 }
 
-func NewExtension(ctx context.Context, set extension.Settings, cfg *config.Config) (*SolarwindsExtension, error) {
+func NewExtension(ctx context.Context, set extension.Settings, cfg *internal.Config) (*SolarwindsExtension, error) {
 	set.Logger.Info("Creating Solarwinds Extension")
 	set.Logger.Info("Config", zap.Any("config", cfg))
 

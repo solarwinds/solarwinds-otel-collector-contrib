@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension/config"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/exporter"
 	"go.opentelemetry.io/collector/exporter/otlpexporter"
@@ -32,7 +31,7 @@ type Exporter struct {
 	exporter exporter.Metrics
 }
 
-func newExporter(ctx context.Context, set extension.Settings, cfg *config.Config) (*Exporter, error) {
+func newExporter(ctx context.Context, set extension.Settings, cfg *Config) (*Exporter, error) {
 	set.Logger.Debug("Creating Exporter")
 	oCfg, err := cfg.OTLPConfig()
 	if err != nil {

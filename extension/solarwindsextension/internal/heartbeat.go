@@ -20,7 +20,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension/config"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/extension"
@@ -60,7 +59,7 @@ type Heartbeat struct {
 
 var ErrAlreadyRunning = errors.New("heartbeat already running")
 
-func NewHeartbeat(ctx context.Context, set extension.Settings, cfg *config.Config) (*Heartbeat, error) {
+func NewHeartbeat(ctx context.Context, set extension.Settings, cfg *Config) (*Heartbeat, error) {
 	set.Logger.Debug("Creating Heartbeat")
 
 	exp, err := newExporter(ctx, set, cfg)
@@ -73,7 +72,7 @@ func NewHeartbeat(ctx context.Context, set extension.Settings, cfg *config.Confi
 
 func newHeartbeatWithExporter(
 	set extension.Settings,
-	cfg *config.Config,
+	cfg *Config,
 	exporter MetricsExporter,
 ) *Heartbeat {
 	return &Heartbeat{

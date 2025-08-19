@@ -15,7 +15,7 @@
 package solarwindsextension
 
 import (
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension/config"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension/internal"
 	"go.opentelemetry.io/collector/config/configopaque"
 )
 
@@ -26,11 +26,11 @@ type CommonConfig interface {
 	WithoutEntity() bool
 }
 
-type commonConfig struct{ cfg *config.Config }
+type commonConfig struct{ cfg *internal.Config }
 
 var _ CommonConfig = (*commonConfig)(nil)
 
-func newCommonConfig(cfg *config.Config) *commonConfig {
+func newCommonConfig(cfg *internal.Config) *commonConfig {
 	return &commonConfig{cfg: cfg}
 }
 
