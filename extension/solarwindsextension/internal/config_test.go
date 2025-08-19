@@ -41,12 +41,9 @@ func TestConfigUnmarshalFull(t *testing.T) {
 
 	// Verify the values.
 	assert.Equal(t, &Config{
-		DataCenter:          "na-01",
-		EndpointURLOverride: "127.0.0.1:1234",
-		IngestionToken:      "TOKEN",
-		CollectorName:       "test-collector",
-		Resource:            attributeMap,
-		WithoutEntity:       true,
+		CollectorName: "test-collector",
+		Resource:      attributeMap,
+		WithoutEntity: true,
 	}, cfg)
 }
 
@@ -115,20 +112,6 @@ func TestConfigValidateMissingCollectorName(t *testing.T) {
 	)
 }
 
-// TestConfigTokenRedacted checks that the configuration
-// type doesn't leak its secret token unless it is accessed explicitly.
-func TestConfigTokenRedacted(t *testing.T) {
-	cfg := &Config{
-		DataCenter:     "eu-01",
-		IngestionToken: "SECRET",
-	}
-	// This is the only way of accessing the actual token.
-	require.Equal(t, "SECRET", string(cfg.IngestionToken))
-
-	// It is redacted when printed.
-	assert.Equal(t, "[REDACTED]", cfg.IngestionToken.String())
-}
-
 // TestConfigOTLPWithOverride converts configuration to
 // OTLP gRPC Exporter configuration and verifies that overridden
 // endpoint and token propagate correctly.
@@ -164,23 +147,14 @@ func TestConfigUnmarshalWithGrpc(t *testing.T) {
 	assert.Equal(
 		t,
 		&Config{
-			CollectorName:       "test-collector",
-			EndpointURLOverride: "",
-			Resource:            nil,
-			WithoutEntity:       true,
-			GRPCConfig: GRPCConfig{
-				ClientConfig: configgrpc.ClientConfig{
-					Endpoint: "url",
-					TLS: configtls.ClientConfig{
-						Insecure: false,
-					},
-					Headers: map[string]configopaque.String{
-						"Authorization": "token",
-					},
-				},
+			CollectorName: "test-collector",
+			Resource:      nil,
+			WithoutEntity: true,
+			ClientConfig: configgrpc.ClientConfig{
+				Endpoint: "url",
+				TLS:      configtls.ClientConfig{Insecure: false},
+				Headers:  map[string]configopaque.String{"Authorization": "token"},
 			},
-			DataCenter:     "",
-			IngestionToken: "",
 		},
 		cfg,
 	)
