@@ -7,6 +7,7 @@ import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/solarwindsprocessor/internal"
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/pdata/ptrace"
@@ -156,7 +157,7 @@ func TestProcessorStartPollsHostAttributesWhenEnabled(t *testing.T) {
 	}
 }
 
-func TestHostDecorationInProcessMetrics(t *testing.T) {
+func TestHostDecorationInAllSignalTypes(t *testing.T) {
 	cfg := &Config{
 		ExtensionName:      "test",
 		ResourceAttributes: map[string]string{},
@@ -172,75 +173,75 @@ func TestHostDecorationInProcessMetrics(t *testing.T) {
 		ClientId:          "client-id-xyz",
 	}
 
-	metrics := pmetric.NewMetrics()
-	rm := metrics.ResourceMetrics().AppendEmpty()
-	attrs := rm.Resource().Attributes()
-	attrs.PutStr("host.id", "original-host-id")
-	attrs.PutStr("host.name", "original-host-name")
-	attrs.PutStr("os.type", "linux")
-
-	out, err := proc.processMetrics(context.Background(), metrics)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	// Helper to set initial attributes
+	setInitialAttributes := func(attrs pcommon.Map) {
+		attrs.PutStr("host.id", "original-host-id")
+		attrs.PutStr("host.name", "original-host-name")
+		attrs.PutStr("os.type", "linux")
 	}
 
-	outAttrs := out.ResourceMetrics().At(0).Resource().Attributes()
-	if val, _ := outAttrs.Get("host.id"); val.Str() != "client-id-xyz" {
-		t.Errorf("host.id not decorated by host attributes, got: %s", val.Str())
+	// Helper to assert attributes
+	assertAttributes := func(t *testing.T, attrs pcommon.Map, signalType string) {
+		if val, _ := attrs.Get("host.id"); val.Str() != "client-id-xyz" {
+			t.Errorf("host.id not decorated in %s, got: %s", signalType, val.Str())
+		}
+		if val, _ := attrs.Get("host.name"); val.Str() != "original-host-name" {
+			t.Errorf("host.name should not be overridden in %s when not in AWS cloud, got: %s", signalType, val.Str())
+		}
+		if val, _ := attrs.Get("os.type"); val.Str() != "Linux" {
+			t.Errorf("os.type not normalized in %s, got: %s", signalType, val.Str())
+		}
 	}
-	if val, _ := outAttrs.Get("host.name"); val.Str() != "original-host-name" {
-		t.Errorf("host.name should not be overriden when not in AWS cloud, got: %s", val.Str())
-	}
-	if val, _ := outAttrs.Get("os.type"); val.Str() != "Linux" {
-		t.Errorf("os.type not normalized, got: %s", val.Str())
-	}
-}
 
-func TestHostDecorationInProcessLogsAndTraces(t *testing.T) {
-	cfg := &Config{
-		ExtensionName:      "test",
-		ResourceAttributes: map[string]string{},
-		HostAttributesDecoration: HostDecoration{
-			Enabled:  true,
-			ClientId: "client-id-xyz",
+	testCases := []struct {
+		name     string
+		testFunc func(t *testing.T)
+	}{
+		{
+			name: "metrics",
+			testFunc: func(t *testing.T) {
+				metrics := pmetric.NewMetrics()
+				rm := metrics.ResourceMetrics().AppendEmpty()
+				setInitialAttributes(rm.Resource().Attributes())
+
+				out, err := proc.processMetrics(context.Background(), metrics)
+				if err != nil {
+					t.Fatalf("unexpected error: %v", err)
+				}
+				assertAttributes(t, out.ResourceMetrics().At(0).Resource().Attributes(), "metrics")
+			},
+		},
+		{
+			name: "logs",
+			testFunc: func(t *testing.T) {
+				logs := plog.NewLogs()
+				rl := logs.ResourceLogs().AppendEmpty()
+				setInitialAttributes(rl.Resource().Attributes())
+
+				out, err := proc.processLogs(context.Background(), logs)
+				if err != nil {
+					t.Fatalf("unexpected error: %v", err)
+				}
+				assertAttributes(t, out.ResourceLogs().At(0).Resource().Attributes(), "logs")
+			},
+		},
+		{
+			name: "traces",
+			testFunc: func(t *testing.T) {
+				traces := ptrace.NewTraces()
+				rs := traces.ResourceSpans().AppendEmpty()
+				setInitialAttributes(rs.Resource().Attributes())
+
+				out, err := proc.processTraces(context.Background(), traces)
+				if err != nil {
+					t.Fatalf("unexpected error: %v", err)
+				}
+				assertAttributes(t, out.ResourceSpans().At(0).Resource().Attributes(), "traces")
+			},
 		},
 	}
-	proc := newTestProcessor(t, cfg)
-	proc.hostAttributes = internal.HostAttributes{
-		ContainerID:       "container-xyz",
-		IsRunInContainerd: true,
-		ClientId:          "client-id-xyz",
-	}
 
-	// Logs
-	logs := plog.NewLogs()
-	rl := logs.ResourceLogs().AppendEmpty()
-	attrs := rl.Resource().Attributes()
-	attrs.PutStr("host.id", "original-host-id")
-	attrs.PutStr("host.name", "original-host-name")
-	attrs.PutStr("os.type", "linux")
-	outLogs, err := proc.processLogs(context.Background(), logs)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	outAttrs := outLogs.ResourceLogs().At(0).Resource().Attributes()
-	if val, _ := outAttrs.Get("host.id"); val.Str() != "client-id-xyz" {
-		t.Errorf("host.id not decorated in logs, got: %s", val.Str())
-	}
-
-	// Traces
-	traces := ptrace.NewTraces()
-	rs := traces.ResourceSpans().AppendEmpty()
-	attrs2 := rs.Resource().Attributes()
-	attrs2.PutStr("host.id", "original-host-id")
-	attrs2.PutStr("host.name", "original-host-name")
-	attrs2.PutStr("os.type", "linux")
-	outTraces, err := proc.processTraces(context.Background(), traces)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	outAttrs2 := outTraces.ResourceSpans().At(0).Resource().Attributes()
-	if val, _ := outAttrs2.Get("host.id"); val.Str() != "client-id-xyz" {
-		t.Errorf("host.id not decorated in traces, got: %s", val.Str())
+	for _, tc := range testCases {
+		t.Run(tc.name, tc.testFunc)
 	}
 }
