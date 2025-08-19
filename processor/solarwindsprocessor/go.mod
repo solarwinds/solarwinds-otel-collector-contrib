@@ -100,6 +100,7 @@ require (
 
 replace (
 	github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension => ../../extension/solarwindsextension
+	github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension/config => ../../extension/solarwindsextension/config
 	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/attributesdecorator => ../../pkg/attributesdecorator
 	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/container => ../../pkg/container
 	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/extensionfinder => ../../pkg/extensionfinder
