@@ -6,6 +6,7 @@ import (
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/solarwindsprocessor/internal"
+	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
@@ -87,19 +88,17 @@ func TestResourceAttributesPrecedenceOverHostAttributes(t *testing.T) {
 	attrs.PutStr("os.type", "windows")
 
 	out, err := proc.processMetrics(context.Background(), metrics)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	assert.NoError(t, err)
+
 	outAttrs := out.ResourceMetrics().At(0).Resource().Attributes()
-	if val, _ := outAttrs.Get("host.id"); val.Str() != "resource-host-id" {
-		t.Errorf("resource attribute 'host.id' did not take precedence, got: %s", val.Str())
-	}
-	if val, _ := outAttrs.Get("host.name"); val.Str() != "resource-host-name" {
-		t.Errorf("resource attribute 'host.name' did not take precedence, got: %s", val.Str())
-	}
-	if val, _ := outAttrs.Get("os.type"); val.Str() != "windows" {
-		t.Errorf("resource attribute 'os.type' did not take precedence, got: %s", val.Str())
-	}
+	val, _ := outAttrs.Get("host.id")
+	assert.Equal(t, "resource-host-id", val.Str(), "resource attribute 'host.id' did not take precedence")
+
+	val, _ = outAttrs.Get("host.name")
+	assert.Equal(t, "resource-host-name", val.Str(), "resource attribute 'host.name' did not take precedence")
+
+	val, _ = outAttrs.Get("os.type")
+	assert.Equal(t, "windows", val.Str(), "resource attribute 'os.type' did not take precedence")
 }
 
 func TestProcessorDoesNotFailWhenHostDecorationDisabled(t *testing.T) {
@@ -116,9 +115,7 @@ func TestProcessorDoesNotFailWhenHostDecorationDisabled(t *testing.T) {
 	metrics := pmetric.NewMetrics()
 	metrics.ResourceMetrics().AppendEmpty()
 	_, err := p.processMetrics(context.Background(), metrics)
-	if err != nil {
-		t.Errorf("processor failed when host decoration disabled: %v", err)
-	}
+	assert.NoError(t, err, "processor failed when host decoration disabled")
 }
 
 func TestProcessorFailsWhenHostDecorationEnabledWithoutClientId(t *testing.T) {
@@ -131,9 +128,7 @@ func TestProcessorFailsWhenHostDecorationEnabledWithoutClientId(t *testing.T) {
 		},
 	}
 	err := cfg.Validate()
-	if err == nil {
-		t.Error("expected error when host decoration enabled without client id, got nil")
-	}
+	assert.Error(t, err, "expected error when host decoration enabled without client id")
 }
 
 func TestProcessorStartPollsHostAttributesWhenEnabled(t *testing.T) {
@@ -149,12 +144,8 @@ func TestProcessorStartPollsHostAttributesWhenEnabled(t *testing.T) {
 	p := newTestProcessor(t, cfg)
 	err := p.start(context.Background(), &mockHost{})
 
-	if err != nil {
-		t.Errorf("processor start failed: %v", err)
-	}
-	if p.hostAttributes.ClientId != "client-id-xyz" {
-		t.Errorf("hostAttributes not set correctly, got: %s", p.hostAttributes.ClientId)
-	}
+	assert.NoError(t, err, "processor start failed")
+	assert.Equal(t, "client-id-xyz", p.hostAttributes.ClientId, "hostAttributes not set correctly")
 }
 
 func TestHostDecorationInAllSignalTypes(t *testing.T) {
@@ -182,15 +173,14 @@ func TestHostDecorationInAllSignalTypes(t *testing.T) {
 
 	// Helper to assert attributes
 	assertAttributes := func(t *testing.T, attrs pcommon.Map, signalType string) {
-		if val, _ := attrs.Get("host.id"); val.Str() != "client-id-xyz" {
-			t.Errorf("host.id not decorated in %s, got: %s", signalType, val.Str())
-		}
-		if val, _ := attrs.Get("host.name"); val.Str() != "original-host-name" {
-			t.Errorf("host.name should not be overridden in %s when not in AWS cloud, got: %s", signalType, val.Str())
-		}
-		if val, _ := attrs.Get("os.type"); val.Str() != "Linux" {
-			t.Errorf("os.type not normalized in %s, got: %s", signalType, val.Str())
-		}
+		val, _ := attrs.Get("host.id")
+		assert.Equal(t, "client-id-xyz", val.Str(), "host.id not decorated in %s", signalType)
+
+		val, _ = attrs.Get("host.name")
+		assert.Equal(t, "original-host-name", val.Str(), "host.name should not be overridden in %s when not in AWS cloud", signalType)
+
+		val, _ = attrs.Get("os.type")
+		assert.Equal(t, "Linux", val.Str(), "os.type not normalized in %s", signalType)
 	}
 
 	testCases := []struct {
@@ -205,9 +195,7 @@ func TestHostDecorationInAllSignalTypes(t *testing.T) {
 				setInitialAttributes(rm.Resource().Attributes())
 
 				out, err := proc.processMetrics(context.Background(), metrics)
-				if err != nil {
-					t.Fatalf("unexpected error: %v", err)
-				}
+				assert.NoError(t, err)
 				assertAttributes(t, out.ResourceMetrics().At(0).Resource().Attributes(), "metrics")
 			},
 		},
@@ -219,9 +207,7 @@ func TestHostDecorationInAllSignalTypes(t *testing.T) {
 				setInitialAttributes(rl.Resource().Attributes())
 
 				out, err := proc.processLogs(context.Background(), logs)
-				if err != nil {
-					t.Fatalf("unexpected error: %v", err)
-				}
+				assert.NoError(t, err)
 				assertAttributes(t, out.ResourceLogs().At(0).Resource().Attributes(), "logs")
 			},
 		},
@@ -233,9 +219,7 @@ func TestHostDecorationInAllSignalTypes(t *testing.T) {
 				setInitialAttributes(rs.Resource().Attributes())
 
 				out, err := proc.processTraces(context.Background(), traces)
-				if err != nil {
-					t.Fatalf("unexpected error: %v", err)
-				}
+				assert.NoError(t, err)
 				assertAttributes(t, out.ResourceSpans().At(0).Resource().Attributes(), "traces")
 			},
 		},
