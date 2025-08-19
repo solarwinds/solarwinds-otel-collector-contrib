@@ -20,11 +20,10 @@
 
 The SolarWinds Extension offers capabilities related to the SolarWinds Observability SaaS platform and it is required for the [SolarWinds Processor](../../processor/solarwindsprocessor) to function properly.
 
-Also if gRPC setup is configured with anchor (called `grpc_settings`) it can be used for smaller configuration of standard `otlp` exporter, which is now preferred solution (for details see [Getting Started... configuration](#getting-started)).
+Also if gRPC setup is configured with anchor (called `grpc_settings`) it can be used for smaller configuration of standard `otlp` exporter (for details see [Getting Started... configuration](#getting-started)).
 
 It provides these features:
 
-- Endpoint configuration for the Solarwinds Exporters
 - Heartbeat signal
   - It's a standard metric: `sw.otecol.uptime`
     - The value is a time from the start of the collector in seconds
@@ -39,37 +38,28 @@ You just need to include the SolarWinds Extension in your extension definitions 
 ```yaml
 extensions:
   solarwinds:
-    # DEPRECATED - will be removed by 2025-07-30
-    token: "YOUR-INGESTION-TOKEN"
-    # DEPRECATED - will be removed by 2025-07-30
-    data_center: "na-01"
-    collector_name: "Collector Display Name"
+    collector_name: "Collector Name"
     grpc:
       endpoint: "otel.collector.na-01.cloud.solarwinds.com:443"
       tls:
         insecure: false
-      headers: {"Authorization": "Bearer ${SOLARWINDS_TOKEN}"}
+      headers: {"Authorization": "Bearer ${env:SOLARWINDS_TOKEN}"}
     resource:
         custom_attribute_1: "some optional value 1"
         custom_attribute_2: "some optional value 2"
 ```
-> [!WARNING]
-> `token` property is deprecated and will be removed by July 30 2025.
-- `token` (~~mandatory~~ can be overridden by `headers {"Authorization": "Bearer ..."}` in gRPC configuration) - You can generate your token in your SolarWinds Observability SaaS account under _Settings / API Tokens / Create API Token_. The type is "Ingestion". You can find the complete documentation [here](https://documentation.solarwinds.com/en/success_center/observability/content/settings/api-tokens.htm).
-> [!WARNING]
-> `data_center` property is deprecated and will be removed by July 30 2025.
-- `data_center` (~~mandatory~~ can be overridden by `endpoint` in gRPC configuration) - Data center is the region you picked during the sign-up process. You can easily see in URLs after logging in to SolarWinds Observability SaaS - it's either `na-01`, `na-02`, `ap-01` or `eu-01`. Please refer to the [documentation](https://documentation.solarwinds.com/en/success_center/observability/content/system_requirements/endpoints.htm#Find) for details.
-- `collector_name` (mandatory) - The collector name passed in the heartbeat metric (as `sw.otelcol.collector.name` resource attribute) to identify the collector. Doesn't have to be unique.
+
+- `collector_name` (mandatory) - The collector name passed in the heartbeat metric (as `sw.otelcol.collector.name` resource attribute) to identify the collector.
 - `resource` (optional) - You can specify additional attributes to be added to the `sw.otecol.uptime` metric. 
 - `without_entity` (optional) - You can disable Collector entity creation in SolarWinds Observability by setting it to `true`. If not configured, entity creation is enabled by default.
-- `grpc` (mandatory preferable over `data_center` and `token`) - Provides connection configuration for the extension and if anchor is used (for details see [gRPC Anchoring](#grpc-anchoring)), it can be applied to `otlp` exporter without any further setup.
+- `grpc` (mandatory) - Provides connection configuration for the extension and if anchor is used (for details see [gRPC Anchoring](#grpc-anchoring)), it can be applied to `otlp` exporter without any further setup.
   - `endpoint` is ingestion endpoint url. Regarding [documentation](https://documentation.solarwinds.com/en/success_center/observability/content/system_requirements/endpoints.htm#Find) we recognize following urls:
     -  for `na-01` environment: `otel.collector.na-01.cloud.solarwinds.com:443`
     -  for `na-02` environment: `otel.collector.na-02.cloud.solarwinds.com:443`
     -  for `eu-01` environment: `otel.collector.eu-01.cloud.solarwinds.com:443`
     -  for `ap-01` environment: `otel.collector.ap-01.cloud.solarwinds.com:443`
   - `tls` contains general TLS setup, but it is required to have at least configured secured way: `insecure: false`
-  - `headers` contains API token in a form `headers: {"Authorization": "Bearer ${SOLARWINDS_TOKEN}"}`. You can generate your token in your SolarWinds Observability SaaS account under _Settings / API Tokens / Create API Token_. The type is "Ingestion". You can find the complete documentation [here](https://documentation.solarwinds.com/en/success_center/observability/content/settings/api-tokens.htm).
+  - `headers` contains API token in a form `headers: {"Authorization": "Bearer ${env:SOLARWINDS_TOKEN}"}`. You can generate your token in your SolarWinds Observability SaaS account under _Settings / API Tokens / Create API Token_. The type is "Ingestion". You can find the complete documentation [here](https://documentation.solarwinds.com/en/success_center/observability/content/settings/api-tokens.htm).
 ### gRPC Anchoring
 Proposed compact solution how to easily re-use gRPC configuration from `solarwinds` extension in `otlp` exporter. Such combination is currently preferred solution for SolarWinds OTEL Collector.
 ```
@@ -80,7 +70,7 @@ extensions:
       endpoint: "otel-url-endpoint"
       tls:
         insecure: false
-      headers: {"Authorization": "Bearer ${SOLARWINDS_TOKEN}"}
+      headers: {"Authorization": "Bearer ${env:SOLARWINDS_TOKEN}"}
 
 exporters:
   otlp:
