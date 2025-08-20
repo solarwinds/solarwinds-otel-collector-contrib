@@ -1,8 +1,10 @@
-token: "TOKEN"
-data_center: "na-01"
-collector_name: "test-collector"
-endpoint_url_override: "127.0.0.1:1234"
+collector_name: "test-name"
 resource:
-  att1: "custom_attribute_value_1"
-  att2: "custom_attribute_value_2"
+  att: "custom_attribute_value"
 without_entity: true
+grpc:
+  endpoint: "test-url:0"
+  tls:
+    insecure: true
+  headers:
+    Authorization: "Bearer test-token"

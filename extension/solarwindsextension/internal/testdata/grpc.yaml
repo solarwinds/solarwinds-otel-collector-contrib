@@ -1,8 +1,0 @@
-collector_name: "test-collector"
-without_entity: true
-grpc:
-  endpoint: "url"
-  tls:
-    insecure: false
-  headers:
-    Authorization: "token"

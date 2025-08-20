@@ -1,0 +1,3 @@
+collector_name: "test-name"
+grpc:
+  endpoint: "test-url:0"

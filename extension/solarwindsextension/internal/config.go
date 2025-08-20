@@ -16,6 +16,7 @@ package internal
 
 import (
 	"errors"
+	"strings"
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config/configgrpc"
@@ -23,9 +24,10 @@ import (
 )
 
 var (
-	endpointMustBeSetError        = errors.New("invalid configuration: 'endpoint' must be set")
-	notValidAuthorizationFoundErr = errors.New("invalid configuration: no valid 'Authorization' found in 'headers', use 'headers: {\"Authorization\": \"Bearer ${YOUR_TOKEN}\"}'")
-	collectorNameMustBeSetErr     = errors.New("invalid configuration: 'collector_name' must be set")
+	endpointMustBeSetErr      = errors.New("invalid configuration: 'endpoint' must be set")
+	authorizationMustBeSetErr = errors.New("invalid configuration: 'Authorization' header must be set, use 'headers: {\"Authorization\": \"Bearer ${YOUR_TOKEN}\"}'")
+	authorizationNotValidErr  = errors.New("invalid configuration: the 'Authorization' header is invalid, use 'headers: {\"Authorization\": \"Bearer ${YOUR_TOKEN}\"}'")
+	collectorNameMustBeSetErr = errors.New("invalid configuration: 'collector_name' must be set")
 )
 
 // Config represents a Solarwinds Extension configuration.
@@ -41,17 +43,24 @@ func NewDefaultConfig() component.Config {
 	return &Config{Grpc: configgrpc.NewDefaultClientConfig()}
 }
 
-// Validate checks the configuration for its validity.
 func (cfg *Config) Validate() error {
-	if val, found := cfg.Grpc.Headers["Authorization"]; !found || val == "" {
-		return notValidAuthorizationFoundErr
+	var errs error
+
+	if cfg.Grpc.Endpoint == "" {
+		errs = errors.Join(errs, endpointMustBeSetErr)
+	}
+
+	if val, found := cfg.Grpc.Headers["Authorization"]; !found {
+		errs = errors.Join(errs, authorizationMustBeSetErr)
+	} else if !strings.HasPrefix(string(val), "Bearer ") {
+		errs = errors.Join(errs, authorizationNotValidErr)
 	}
 
 	if cfg.CollectorName == "" {
-		return collectorNameMustBeSetErr
+		errs = errors.Join(errs, collectorNameMustBeSetErr)
 	}
 
-	return nil
+	return errs
 }
 
 // OTLPConfig generates a full OTLP Exporter configuration from the configuration.
