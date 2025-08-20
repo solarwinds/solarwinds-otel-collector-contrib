@@ -1,6 +1,7 @@
 # Changelog
 
 ## vNext
+- `solarwindsprocessor` Add decoration of host resource attributes
 
 ## v0.127.9
 - Chores without impact (excluded internal tools from CodeQL analysis, added dependency review action with GHAS)
