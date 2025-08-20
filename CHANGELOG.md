@@ -5,6 +5,8 @@
 ## v0.131.3
 - Updates golang to 1.25.0
 - Metadata has been fixed, and all component status tables are now generated from it.
+- Adding OtelInstrumentation specific lookups.
+- Fixing resolution of kubernetes Services in swok8sworkloadtypes.
 
 ## v0.131.2
 - Updates golang to 1.24.6
