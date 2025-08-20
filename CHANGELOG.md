@@ -9,6 +9,7 @@
 - Adding OtelInstrumentation specific lookups into `swok8sworkloadtypeprocessor`.
 - Fixing resolution of kubernetes Services in swok8sworkloadtypes in `swok8sworkloadtypeprocessor`.
 - `solarwindsexporter` has been removed as announced
+- `solarwindsextension` deprecated config options (related to the `solarwindsexporter`) removed
 
 ## v0.131.2
 - Updates golang to 1.24.6
