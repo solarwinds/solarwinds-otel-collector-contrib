@@ -1,6 +1,8 @@
 # Changelog
 
 ## vNext
+
+## v0.131.3
 - Updates golang to 1.25.0
 - Metadata has been fixed, and all component status tables are now generated from it.
 
