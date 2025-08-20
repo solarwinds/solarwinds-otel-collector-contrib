@@ -1,8 +1,13 @@
 # Changelog
 
 ## vNext
+
+## v0.131.3
 - Updates golang to 1.25.0
 - Metadata has been fixed, and all component status tables are now generated from it.
+  - Components affected: `solarwindsextension`, `solarwindsprocessor`, `solarwindsentityconnector`, `k8seventgenerationprocessor`, `swok8sworkloadtypeprocessor`, `swohostmetricsreceiver`, `swok8sobjectsreceiver`
+- Adding OtelInstrumentation specific lookups into `swok8sworkloadtypeprocessor`.
+- Fixing resolution of kubernetes Services in swok8sworkloadtypes in `swok8sworkloadtypeprocessor`.
 - `solarwindsexporter` has been removed as announced
 
 ## v0.131.2
