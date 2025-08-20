@@ -30,9 +30,7 @@ var (
 	collectorNameMustBeSetErr = errors.New("invalid configuration: 'collector_name' must be set")
 )
 
-// Config represents a Solarwinds Extension configuration.
 type Config struct {
-	// CollectorName name of the collector passed in the heartbeat metric
 	CollectorName string                  `mapstructure:"collector_name"`
 	Resource      map[string]string       `mapstructure:"resource"`
 	WithoutEntity bool                    `mapstructure:"without_entity"`
@@ -63,13 +61,11 @@ func (cfg *Config) Validate() error {
 	return errs
 }
 
-// OTLPConfig generates a full OTLP Exporter configuration from the configuration.
 func (cfg *Config) OTLPConfig() (*otlpexporter.Config, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
 
-	// gRPC client configuration.
 	otlpConfig := &otlpexporter.Config{ClientConfig: cfg.Grpc}
 
 	if err := otlpConfig.Validate(); err != nil {
