@@ -10,7 +10,7 @@ import (
 )
 
 type ExtensionProvider interface {
-	SetExtension(logger *zap.Logger, extensionName string, host component.Host) (*solarwindsextension.SolarwindsExtension, error)
+	Init(logger *zap.Logger, extensionName string, host component.Host) (*solarwindsextension.SolarwindsExtension, error)
 	SetAttributes(resourceAttributes *map[string]string) error
 }
 
@@ -25,7 +25,7 @@ func NewExtensionProvider() ExtensionProvider {
 	return &extensionProvider{}
 }
 
-func (ep *extensionProvider) SetExtension(logger *zap.Logger, extensionName string, host component.Host) (*solarwindsextension.SolarwindsExtension, error) {
+func (ep *extensionProvider) Init(logger *zap.Logger, extensionName string, host component.Host) (*solarwindsextension.SolarwindsExtension, error) {
 	if ep.extension == nil {
 		swiExtension, err := extensionfinder.FindExtension[*solarwindsextension.SolarwindsExtension](
 			logger,

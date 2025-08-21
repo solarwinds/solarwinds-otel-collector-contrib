@@ -46,7 +46,7 @@ func (mock mockContainerProviderError) IsRunInContainerd() bool {
 // ExtensionProvider mock
 type mockExtensionProvider struct{}
 
-func (m mockExtensionProvider) SetExtension(*zap.Logger, string, component.Host) (*solarwindsextension.SolarwindsExtension, error) {
+func (m mockExtensionProvider) Init(*zap.Logger, string, component.Host) (*solarwindsextension.SolarwindsExtension, error) {
 	return nil, nil
 }
 
