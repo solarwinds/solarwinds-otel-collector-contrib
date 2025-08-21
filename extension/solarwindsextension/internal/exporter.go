@@ -22,16 +22,39 @@ import (
 	"go.opentelemetry.io/collector/exporter"
 	"go.opentelemetry.io/collector/exporter/otlpexporter"
 	"go.opentelemetry.io/collector/extension"
+	"go.opentelemetry.io/collector/pdata/pmetric"
+	"go.uber.org/zap"
 )
 
-func newExporter(ctx context.Context, set extension.Settings, cfg *Config) (exporter.Metrics, error) {
-	set.Logger.Debug("Creating OTLP Exporter")
+type Exporter struct {
+	logger   *zap.Logger
+	exporter exporter.Metrics
+}
+
+func newExporter(ctx context.Context, set extension.Settings, cfg *Config) (*Exporter, error) {
+	set.Logger.Debug("Creating Exporter")
 	oCfg, err := cfg.OTLPConfig()
 	if err != nil {
 		return nil, err
 	}
 	expSet := toExporterSettings(set)
-	return otlpexporter.NewFactory().CreateMetrics(ctx, expSet, oCfg)
+
+	exp := &Exporter{logger: set.Logger}
+	exp.exporter, err = otlpexporter.NewFactory().CreateMetrics(ctx, expSet, oCfg)
+	if err != nil {
+		return nil, err
+	}
+	return exp, nil
+}
+
+func (e *Exporter) start(ctx context.Context, host component.Host) error {
+	e.logger.Debug("Starting exporter")
+	return e.exporter.Start(ctx, host)
+}
+
+func (e *Exporter) shutdown(ctx context.Context) error {
+	e.logger.Debug("Shutting down exporter")
+	return e.exporter.Shutdown(ctx)
 }
 
 func toExporterSettings(set extension.Settings) exporter.Settings {
@@ -40,4 +63,8 @@ func toExporterSettings(set extension.Settings) exporter.Settings {
 		TelemetrySettings: set.TelemetrySettings,
 		BuildInfo:         set.BuildInfo,
 	}
+}
+
+func (e *Exporter) push(ctx context.Context, md pmetric.Metrics) error {
+	return e.exporter.ConsumeMetrics(ctx, md)
 }

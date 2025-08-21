@@ -16,11 +16,7 @@ package internal
 
 import (
 	"context"
-
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/consumer"
-	"go.opentelemetry.io/collector/exporter"
-
 	"sync"
 	"testing"
 	"time"
@@ -44,21 +40,15 @@ func newMockExporter() *mockExporter {
 	}
 }
 
-var _ exporter.Metrics = (*mockExporter)(nil)
-
-func (m *mockExporter) Capabilities() consumer.Capabilities {
-	return consumer.Capabilities{}
-}
-
-func (m *mockExporter) Start(_ context.Context, _ component.Host) error {
+func (m *mockExporter) start(_ context.Context, _ component.Host) error {
 	return nil
 }
 
-func (m *mockExporter) Shutdown(_ context.Context) error {
+func (m *mockExporter) shutdown(_ context.Context) error {
 	return nil
 }
 
-func (m *mockExporter) ConsumeMetrics(_ context.Context, metrics pmetric.Metrics) error {
+func (m *mockExporter) push(_ context.Context, metrics pmetric.Metrics) error {
 	defer m.mPushed.Unlock()
 
 	m.mPushed.Lock()
