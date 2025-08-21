@@ -1,6 +1,6 @@
 module github.com/solarwinds/solarwinds-otel-collector-contrib/processor/swok8sworkloadstatusprocessor
 
-go 1.24.6
+go 1.25.0
 
 require (
 	github.com/stretchr/testify v1.10.0
@@ -14,6 +14,8 @@ require (
 	go.opentelemetry.io/collector/processor/xprocessor v0.131.0
 	go.uber.org/goleak v1.3.0
 	go.uber.org/zap v1.27.0
+	k8s.io/api v0.33.4
+	k8s.io/apimachinery v0.33.4
 )
 
 require (
@@ -37,8 +39,6 @@ require (
 	golang.org/x/time v0.11.0 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	k8s.io/api v0.33.4 // indirect
-	k8s.io/apimachinery v0.33.4 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff // indirect
 	k8s.io/utils v0.0.0-20250502105355-0f33e8f1c979 // indirect
@@ -62,7 +62,7 @@ require (
 	github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfig v0.131.2
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/collector/component/componentstatus v0.131.0 // indirect
-	go.opentelemetry.io/collector/component/componenttest v0.131.0 // indirect
+	go.opentelemetry.io/collector/component/componenttest v0.131.0
 	go.opentelemetry.io/collector/consumer/xconsumer v0.131.0 // indirect
 	go.opentelemetry.io/collector/featuregate v1.37.0 // indirect
 	go.opentelemetry.io/collector/internal/telemetry v0.131.0 // indirect
