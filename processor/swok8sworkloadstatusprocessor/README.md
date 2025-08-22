@@ -1,21 +1,41 @@
 # SolarWinds Kubernetes Workload Status Processor
 
-| Status | |
-|--------|--|
-| Stability | development: logs |
-| Distributions | k8s, playground, verified |
+[verified]: https://github.com/solarwinds/solarwinds-otel-collector-releases#verified
+[playground]: https://github.com/solarwinds/solarwinds-otel-collector-releases#playground
+[k8s]: https://github.com/solarwinds/solarwinds-otel-collector-releases#k8s
 
-This processor caches pod -> owner workload mapping information extracted from log data (Pod manifests or enriched log attributes). It currently:
+| Status        |           |
+| ------------- |-----------|
+| Stability     | [development]: logs   |
+| Distributions | [k8s], [playground], [verified] |
+| Issues        | [![Open issues](https://img.shields.io/github/issues-search/solarwinds/solarwinds-otel-collector-contrib?query=is%3Aissue%20is%3Aopen%20label%3Aprocessor%2Fswok8sworkloadstatus%20&label=open&color=orange&logo=opentelemetry)](https://github.com/solarwinds/solarwinds-otel-collector-contrib/issues?q=is%3Aopen+is%3Aissue+label%3Aprocessor%2Fswok8sworkloadstatus) [![Closed issues](https://img.shields.io/github/issues-search/solarwinds/solarwinds-otel-collector-contrib?query=is%3Aissue%20is%3Aclosed%20label%3Aprocessor%2Fswok8sworkloadstatus%20&label=closed&color=blue&logo=opentelemetry)](https://github.com/solarwinds/solarwinds-otel-collector-contrib/issues?q=is%3Aclosed+is%3Aissue+label%3Aprocessor%2Fswok8sworkloadstatus) |
 
-- Listens to log records
-- Detects Pod related entries (k8s.object.kind == Pod)
-- Stores mapping of pod name/namespace to its owner (k8s.owner.kind / k8s.owner.name) when those attributes are present
+[development]: https://github.com/open-telemetry/opentelemetry-collector/blob/main/docs/component-stability.md#development
+[k8s]: https://github.com/open-telemetry/opentelemetry-collector-releases/tree/main/distributions/otelcol-k8s
+[playground]: 
+[verified]: 
 
-At this stage, it only builds an internal cache; future enhancements may enrich subsequent logs with workload owner data.
+The SolarWinds Kubernetes Workload Status Processor derives and annotates Kubernetes workload status information on log records based on:
+- Direct inspection of Deployment manifest JSON contained in the log `body`
+- Aggregated phase of Pods belonging to a DaemonSet or StatefulSet
 
-Configuration: no custom configuration currently required.
+Depending on the workload kind the following attributes may be added when a status is computed:
+- `sw.k8s.deployment.status`:
+  - **AVAILABLE**: `Available=True` AND `Progressing=True`, 
+  - **OUTDATED**: `Available=True` AND `Progressing!=True`
+  - **UNAVAILABLE**: `Available!=True`
+  - **OTHER**:  Fallback
+- `sw.k8s.daemonset.status` and `sw.k8s.statefulset.status`:
+  - **RUNNING**: (Running pods + Succeeded pods) == Total pods
+  - **FAILED**: (Failed pods + Unknown pods) == Total pods
+  - *Empty Status*: No pods
+  - **PENDING**: Fallback
 
-Example:
+## Configuration
+
+### Example
+
+No custom configuration is needed. You can simply use:
 ```yaml
 processors:
   swok8sworkloadstatus: {}
