@@ -1,6 +1,9 @@
 # Changelog
 
 ## vNext
+- `solarwindsexporter` has been removed as announced
+- `solarwindsextension` deprecated config options (related to the `solarwindsexporter`) removed
+
 
 ## v0.131.3
 - Updates golang to 1.25.0
@@ -8,9 +11,6 @@
   - Components affected: `solarwindsextension`, `solarwindsprocessor`, `solarwindsentityconnector`, `k8seventgenerationprocessor`, `swok8sworkloadtypeprocessor`, `swohostmetricsreceiver`, `swok8sobjectsreceiver`
 - Adding OtelInstrumentation specific lookups into `swok8sworkloadtypeprocessor`.
 - Fixing resolution of kubernetes Services in swok8sworkloadtypes in `swok8sworkloadtypeprocessor`.
-- `solarwindsexporter` has been removed as announced
-- `solarwindsextension` deprecated config options (related to the `solarwindsexporter`) removed
-
 ## v0.131.2
 - Updates golang to 1.24.6
 - Added `processesscraper` to `swohostmetricsreceiver` providing `swo.system.processes.count` metric
