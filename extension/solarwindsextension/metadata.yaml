@@ -12,5 +12,6 @@ tests:
   config:
     collector_name: "test-name"
     grpc:
+      # Do not enter a hostname here, as the tests may hang on certain syscalls when trying to resolve it
       endpoint: "127.0.0.1:0"
       headers: {Authorization: "Bearer test-token"}
