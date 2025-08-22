@@ -12,5 +12,5 @@ tests:
   config:
     collector_name: "test-name"
     grpc:
-      endpoint: "test-endpoint:0"
+      endpoint: "127.0.0.1:0"
       headers: {Authorization: "Bearer test-token"}
