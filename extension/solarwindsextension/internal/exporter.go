@@ -26,12 +26,14 @@ import (
 
 func newExporter(ctx context.Context, set extension.Settings, cfg *Config) (exporter.Metrics, error) {
 	set.Logger.Debug("Creating OTLP Exporter")
-	oCfg, err := cfg.OTLPConfig()
+
+	factory := otlpexporter.NewFactory()
+	eCfg, err := cfg.ApplyGrpcConfig(factory.CreateDefaultConfig().(*otlpexporter.Config))
 	if err != nil {
 		return nil, err
 	}
 	expSet := toExporterSettings(set)
-	return otlpexporter.NewFactory().CreateMetrics(ctx, expSet, oCfg)
+	return factory.CreateMetrics(ctx, expSet, eCfg)
 }
 
 func toExporterSettings(set extension.Settings) exporter.Settings {

@@ -61,12 +61,12 @@ func (cfg *Config) Validate() error {
 	return errs
 }
 
-func (cfg *Config) OTLPConfig() (*otlpexporter.Config, error) {
+func (cfg *Config) ApplyGrpcConfig(otlpConfig *otlpexporter.Config) (*otlpexporter.Config, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
 
-	otlpConfig := &otlpexporter.Config{ClientConfig: cfg.Grpc}
+	otlpConfig.ClientConfig = cfg.Grpc
 
 	if err := otlpConfig.Validate(); err != nil {
 		return nil, err

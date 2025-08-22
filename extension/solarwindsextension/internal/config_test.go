@@ -23,6 +23,7 @@ import (
 	"go.opentelemetry.io/collector/config/configgrpc"
 	"go.opentelemetry.io/collector/config/configopaque"
 	"go.opentelemetry.io/collector/config/configtls"
+	"go.opentelemetry.io/collector/exporter/otlpexporter"
 )
 
 func TestConfigUnmarshalFull(t *testing.T) {
@@ -88,13 +89,13 @@ func TestConfigValidateMissingCollectorName(t *testing.T) {
 	assert.ErrorContains(t, cfg.(*Config).Validate(), "'collector_name' must be set")
 }
 
-func TestConfigOTLPOk(t *testing.T) {
+func TestConfigApplyGrpcConfigOk(t *testing.T) {
 	cfgFile := testutil.LoadConfigTestdata(t, "full")
 
 	cfg := &Config{}
 	require.NoError(t, cfgFile.Unmarshal(&cfg))
 
-	otlpCfg, err := cfg.OTLPConfig()
+	otlpCfg, err := cfg.ApplyGrpcConfig(&otlpexporter.Config{})
 	require.NoError(t, err)
 
 	assert.Equal(t, "test-url:0", otlpCfg.ClientConfig.Endpoint)
@@ -103,4 +104,5 @@ func TestConfigOTLPOk(t *testing.T) {
 		map[string]configopaque.String{"Authorization": "Bearer test-token"},
 		otlpCfg.ClientConfig.Headers,
 	)
+	assert.True(t, otlpCfg.ClientConfig.TLS.Insecure)
 }
