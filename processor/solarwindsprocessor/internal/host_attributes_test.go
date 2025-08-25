@@ -271,3 +271,94 @@ func TestApplyAttributes_OsType_IsNormalized(t *testing.T) {
 		})
 	}
 }
+
+func TestApplyAttributes_HostId_GcpScenarios(t *testing.T) {
+	testCases := map[string]struct {
+		cloudAccountID        string
+		cloudAvailabilityZone string
+		instanceID            string
+		fallbackHostID        string
+		expectedHostId        string
+		shouldHaveHostId      bool
+		description           string
+	}{
+		"gcp with all required attributes": {
+			cloudAccountID:        "my-project-123",
+			cloudAvailabilityZone: "us-central1-a",
+			instanceID:            "instance-456",
+			fallbackHostID:        "fallback-id",
+			expectedHostId:        "my-project-123:us-central1-a:instance-456",
+			shouldHaveHostId:      true,
+			description:           "Should create GCP host ID from project:zone:instance when all attributes are present",
+		},
+		"gcp missing project id": {
+			cloudAccountID:        "",
+			cloudAvailabilityZone: "us-central1-a",
+			instanceID:            "instance-456",
+			fallbackHostID:        "fallback-id",
+			expectedHostId:        "",
+			shouldHaveHostId:      false,
+			description:           "Should remove host ID when project ID is missing",
+		},
+		"gcp missing availability zone": {
+			cloudAccountID:        "my-project-123",
+			cloudAvailabilityZone: "",
+			instanceID:            "instance-456",
+			fallbackHostID:        "fallback-id",
+			expectedHostId:        "",
+			shouldHaveHostId:      false,
+			description:           "Should remove host ID when availability zone is missing",
+		},
+		"gcp missing instance id": {
+			cloudAccountID:        "my-project-123",
+			cloudAvailabilityZone: "us-central1-a",
+			instanceID:            "",
+			fallbackHostID:        "fallback-id",
+			expectedHostId:        "",
+			shouldHaveHostId:      false,
+			description:           "Should remove host ID when instance ID is missing",
+		},
+		"gcp with all attributes missing": {
+			cloudAccountID:        "",
+			cloudAvailabilityZone: "",
+			instanceID:            "",
+			fallbackHostID:        "fallback-id",
+			expectedHostId:        "",
+			shouldHaveHostId:      false,
+			description:           "Should remove host ID when all GCP attributes are missing",
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			pp := HostAttributes{
+				IsRunInContainerd: false,
+				ContainerID:       "",
+				FallbackHostID:    tc.fallbackHostID,
+			}
+
+			attributes := pcommon.NewMap()
+			attributes.PutStr("cloud.provider", "gcp")
+
+			if tc.cloudAccountID != "" {
+				attributes.PutStr("cloud.account.id", tc.cloudAccountID)
+			}
+			if tc.cloudAvailabilityZone != "" {
+				attributes.PutStr("cloud.availability_zone", tc.cloudAvailabilityZone)
+			}
+			if tc.instanceID != "" {
+				attributes.PutStr("host.id", tc.instanceID)
+			}
+
+			pp.ApplyAttributes(attributes)
+
+			hostId, exists := attributes.Get("host.id")
+			if tc.shouldHaveHostId {
+				require.True(t, exists, tc.description)
+				require.Equal(t, tc.expectedHostId, hostId.Str(), tc.description)
+			} else {
+				require.False(t, exists, tc.description)
+			}
+		})
+	}
+}

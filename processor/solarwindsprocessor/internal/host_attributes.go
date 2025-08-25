@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/container"
+	"go.uber.org/zap"
 
 	"go.opentelemetry.io/collector/pdata/pcommon"
 )
@@ -20,6 +21,10 @@ const (
 	hostBiosUuid           = "host.bios-uuid"
 	hostNameAttribute      = "host.name"
 	osTypeAttribute        = "os.type"
+
+	// Google Cloud Platform attributes.
+	cloudAccountID        = "cloud.account.id"
+	cloudAvailabilityZone = "cloud.availability_zone"
 )
 
 func NewHostAttributes(hd HostDecoration) (*HostAttributes, error) {
@@ -73,6 +78,19 @@ func (h *HostAttributes) ApplyAttributes(
 		resourceAttributes.PutStr(hostNameAttribute, h.ContainerID)
 	}
 
+	// If the cloud provider is GPC, we need to set the host ID attribute to a combination of
+	// cloud account ID, availability zone, and instance ID to make sure all GCP hosts have unique host IDs.
+	if cloudProvider.Str() == "gcp" {
+		hostID := getGcpHostID(resourceAttributes)
+		if hostID != "" {
+			resourceAttributes.PutStr(hostIDAttribute, hostID)
+		} else {
+			instanceID, _ := resourceAttributes.Get(hostIDAttribute)
+			zap.L().Warn("could not determine GCP host ID", zap.String("instance_id", instanceID.Str()))
+			resourceAttributes.Remove(hostIDAttribute)
+		}
+	}
+
 	// Unify the os.type values, supported are only Windows and Linux.
 	// Everything what's not Windows should be identified as Linux.
 	if osTypeValue, exists := resourceAttributes.Get(osTypeAttribute); exists {
@@ -87,4 +105,16 @@ func normalizeOsType(osTypeValue pcommon.Value) {
 	} else {
 		osTypeValue.SetStr("Linux")
 	}
+}
+
+func getGcpHostID(attributes pcommon.Map) string {
+	projectID, _ := attributes.Get(cloudAccountID)
+	zoneID, _ := attributes.Get(cloudAvailabilityZone)
+	instanceID, _ := attributes.Get(hostIDAttribute)
+
+	if projectID.Str() != "" && zoneID.Str() != "" && instanceID.Str() != "" {
+		return projectID.Str() + ":" + zoneID.Str() + ":" + instanceID.Str()
+	}
+
+	return ""
 }
