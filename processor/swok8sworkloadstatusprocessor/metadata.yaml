@@ -1,0 +1,9 @@
+type: swok8sworkloadstatus
+github_project: solarwinds/solarwinds-otel-collector-contrib
+
+status:
+  class: processor
+  stability:
+    development: [logs]
+  distributions: [verified, playground, k8s]
+  disable_codecov_badge: true
