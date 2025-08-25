@@ -1,6 +1,7 @@
 # Changelog
 
 ## vNext
+- `solarwindsprocessor` Add decoration of host resource attributes
 - Adds [SolarWinds Kubernetes Workload Status Processor](./processor/swok8sworkloadstatusprocessor/README.md) for calculating workload statuses from logs.
 
 ## v0.131.3
