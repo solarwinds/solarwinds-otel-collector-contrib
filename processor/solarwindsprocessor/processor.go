@@ -180,7 +180,7 @@ func newProcessor(logger *zap.Logger, cfg *Config) (*solarwindsprocessor, error)
 	var hostAttributes *internal.HostAttributes
 	var err error
 	if cfg.HostAttributesDecoration.Enabled == true {
-		hostAttributes, err = internal.NewHostAttributes(cfg.HostAttributesDecoration)
+		hostAttributes, err = internal.NewHostAttributes(cfg.HostAttributesDecoration, logger)
 	}
 
 	return &solarwindsprocessor{

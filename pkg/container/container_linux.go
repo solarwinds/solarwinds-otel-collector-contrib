@@ -12,10 +12,14 @@ import (
 	"go.uber.org/zap"
 )
 
-type containerInfo struct{}
+type containerInfo struct {
+	logger *zap.Logger
+}
 
-func newProvider() Provider {
-	return &containerInfo{}
+func NewProvider(logger *zap.Logger) Provider {
+	return &containerInfo{
+		logger: logger,
+	}
 }
 
 func (c *containerInfo) ReadContainerInstanceID() (string, error) {
@@ -122,7 +126,7 @@ func (c *containerInfo) readDockerInstanceID() (string, error) {
 func (c *containerInfo) readNonDockerContainerID() (string, error) { //nolint:funlen
 	data, err := os.ReadFile("/proc/self/cpuset")
 	if err != nil {
-		zap.L().Info("error reading cpuset")
+		c.logger.Info("error reading cpuset")
 	}
 
 	// Attempt to read the Containerd instance name using the default way on cgroups V1
@@ -159,7 +163,7 @@ func (c *containerInfo) readNonDockerContainerID() (string, error) { //nolint:fu
 	// Attempt to read the Podman container name using the default way on cgroups V2
 	data, err = os.ReadFile("/proc/self/mountinfo")
 	if err != nil {
-		zap.L().Info("error reading mountinfo")
+		c.logger.Info("error reading mountinfo")
 	}
 
 	if strings.Contains(string(data), "containers") {
@@ -184,7 +188,7 @@ func (c *containerInfo) readNonDockerContainerID() (string, error) { //nolint:fu
 
 	data, err = os.ReadFile("/proc/self/cgroup")
 	if err != nil {
-		zap.L().Error("error reading cgroup")
+		c.logger.Error("error reading cgroup")
 	}
 
 	lines := strings.Split(string(data), "\n")

@@ -27,8 +27,8 @@ const (
 	cloudAvailabilityZone = "cloud.availability_zone"
 )
 
-func NewHostAttributes(hd HostDecoration) (*HostAttributes, error) {
-	cp := container.NewProvider()
+func NewHostAttributes(hd HostDecoration, logger *zap.Logger) (*HostAttributes, error) {
+	cp := container.NewProvider(logger)
 
 	instanceId, err := cp.ReadContainerInstanceID()
 	if err != nil {
