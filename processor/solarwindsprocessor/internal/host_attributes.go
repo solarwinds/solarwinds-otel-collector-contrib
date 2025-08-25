@@ -11,12 +11,13 @@ import (
 type HostAttributes struct {
 	ContainerID       string
 	IsRunInContainerd bool
-	ClientId          string
+	FallbackHostID    string
 }
 
 const (
 	cloudProviderAttribute = "cloud.provider"
 	hostIDAttribute        = "host.id"
+	hostBiosUuid           = "host.bios-uuid"
 	hostNameAttribute      = "host.name"
 	osTypeAttribute        = "os.type"
 )
@@ -32,7 +33,7 @@ func NewHostAttributes(hd HostDecoration) (*HostAttributes, error) {
 	return &HostAttributes{
 		ContainerID:       instanceId,
 		IsRunInContainerd: cp.IsRunInContainerd(),
-		ClientId:          hd.ClientId,
+		FallbackHostID:    hd.FallbackHostID,
 	}, nil
 }
 
@@ -44,21 +45,26 @@ func (h *HostAttributes) ApplyAttributes(
 	}
 
 	cloudProvider, cloudProviderExists := resourceAttributes.Get(cloudProviderAttribute)
+	var hostId string
+	biosUuid, biosUuidExists := resourceAttributes.Get(hostBiosUuid)
+	if biosUuidExists && biosUuid.Str() != "" {
+		hostId = biosUuid.Str()
+	} else {
+		hostId = h.FallbackHostID
+	}
 
-	if h.ClientId != "" {
-		// Replace host ID attribute with client ID only for hosts that are not cloud-based.
-		// Cloud-based hosts have unique cloud instance host ID that is historically used
-		// in the system.
-		if !cloudProviderExists {
-			resourceAttributes.PutStr(hostIDAttribute, h.ClientId)
-		}
+	// Replace host ID attribute with client ID only for hosts that are not cloud-based.
+	// Cloud-based hosts have unique cloud instance host ID that is historically used
+	// in the system.
+	if !cloudProviderExists {
+		resourceAttributes.PutStr(hostIDAttribute, hostId)
+	}
 
-		// Replace host ID attribute with client ID if the OTel plugin is running inside a container.
-		// Some containers running on cloud-based hosts can have the same host ID leading to problems
-		// with differentiation of watched containers, so it has to be replaced with client ID which is unique.
-		if cloudProviderExists && h.ContainerID != "" {
-			resourceAttributes.PutStr(hostIDAttribute, h.ClientId)
-		}
+	// Replace host ID attribute with client ID if the OTel plugin is running inside a container.
+	// Some containers running on cloud-based hosts can have the same host ID leading to problems
+	// with differentiation of watched containers, so it has to be replaced with client ID which is unique.
+	if cloudProviderExists && h.ContainerID != "" {
+		resourceAttributes.PutStr(hostIDAttribute, hostId)
 	}
 
 	// Replace host name attribute with container ID only for containerd containers on AWS machines

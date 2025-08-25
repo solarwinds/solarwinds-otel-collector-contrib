@@ -82,15 +82,15 @@ func TestResourceAttributesPrecedenceOverHostAttributes(t *testing.T) {
 			"os.type":   "windows",
 		},
 		HostAttributesDecoration: internal.HostDecoration{
-			Enabled:  true,
-			ClientId: "client-id-123",
+			Enabled:        true,
+			FallbackHostID: "client-id-123",
 		},
 	}
 
 	hostAttrs := &internal.HostAttributes{
 		ContainerID:       "container-abc",
 		IsRunInContainerd: true,
-		ClientId:          "client-id-123",
+		FallbackHostID:    "client-id-123",
 	}
 
 	proc := newTestProcessorWithHostAttributes(t, cfg, hostAttrs)
@@ -121,8 +121,8 @@ func TestProcessorDoesNotFailWhenHostDecorationDisabled(t *testing.T) {
 		ExtensionName:      "test",
 		ResourceAttributes: map[string]string{},
 		HostAttributesDecoration: internal.HostDecoration{
-			Enabled:  false,
-			ClientId: "",
+			Enabled:        false,
+			FallbackHostID: "",
 		},
 	}
 
@@ -138,47 +138,14 @@ func TestProcessorDoesNotFailOnStartWhenHostDecorationDisabled(t *testing.T) {
 		ExtensionName:      "test",
 		ResourceAttributes: map[string]string{},
 		HostAttributesDecoration: internal.HostDecoration{
-			Enabled:  false,
-			ClientId: "",
+			Enabled:        false,
+			FallbackHostID: "",
 		},
 	}
 
 	p := newTestProcessor(t, cfg, nil)
 	err := p.start(context.Background(), &mockHost{})
 	assert.NoError(t, err, "processor start failed when host decoration disabled")
-}
-
-func TestProcessorFailsWhenHostDecorationEnabledWithoutClientId(t *testing.T) {
-	cfg := &Config{
-		ExtensionName:      "test",
-		ResourceAttributes: map[string]string{},
-		HostAttributesDecoration: internal.HostDecoration{
-			Enabled:  true,
-			ClientId: "",
-		},
-	}
-	err := cfg.Validate()
-	assert.Error(t, err, "expected error when host decoration enabled without client id")
-}
-
-func TestProcessorCreationFailsWhenContainerProviderFails(t *testing.T) {
-	cfg := &Config{
-		ExtensionName:      "test",
-		ResourceAttributes: map[string]string{},
-		HostAttributesDecoration: internal.HostDecoration{
-			Enabled:  true,
-			ClientId: "client-id-xyz",
-		},
-	}
-
-	// This test would need mocking of the container provider
-	// Since the current implementation creates the provider inside NewHostAttributes,
-	// we need to test this through integration or by making the provider injectable
-
-	// For now, we test the error handling path by testing with invalid config
-	cfg.HostAttributesDecoration.ClientId = ""
-	err := cfg.Validate()
-	assert.Error(t, err, "expected error when client_id is empty")
 }
 
 func TestProcessorStartWithExtensionProviderError(t *testing.T) {
@@ -207,15 +174,15 @@ func TestHostDecorationInAllSignalTypes(t *testing.T) {
 		ExtensionName:      "test",
 		ResourceAttributes: map[string]string{},
 		HostAttributesDecoration: internal.HostDecoration{
-			Enabled:  true,
-			ClientId: "client-id-xyz",
+			Enabled:        true,
+			FallbackHostID: "client-id-xyz",
 		},
 	}
 
 	hostAttrs := &internal.HostAttributes{
 		ContainerID:       "container-xyz",
 		IsRunInContainerd: true,
-		ClientId:          "client-id-xyz",
+		FallbackHostID:    "client-id-xyz",
 	}
 
 	proc := newTestProcessorWithHostAttributes(t, cfg, hostAttrs)

@@ -41,11 +41,6 @@ func (c *Config) Validate() error {
 	if c.MaxSizeMib < 0 {
 		return fmt.Errorf("%s: %d", "invalid configuration: 'max_size_mib' must be greater than or equal to zero", c.MaxSizeMib)
 	}
-	if c.HostAttributesDecoration.Enabled {
-		if c.HostAttributesDecoration.ClientId == "" {
-			return fmt.Errorf("%s", "invalid configuration: 'host.client_id' must be set when 'host.enabled' is true")
-		}
-	}
 
 	return nil
 }
