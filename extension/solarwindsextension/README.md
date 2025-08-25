@@ -58,7 +58,7 @@ extensions:
     -  for `na-02` environment: `otel.collector.na-02.cloud.solarwinds.com:443`
     -  for `eu-01` environment: `otel.collector.eu-01.cloud.solarwinds.com:443`
     -  for `ap-01` environment: `otel.collector.ap-01.cloud.solarwinds.com:443`
-  - `tls` contains general TLS setup, but to connect to SolarWinds Observability is required to have at least configured secured way: `insecure: false`
+  - The `tls` section includes general TLS configuration options; however, connecting to SolarWinds Observability requires that a secure connection is enforced by setting `insecure: false`.
   - `headers` contains API token in a form `headers: {"Authorization": "Bearer ${env:SOLARWINDS_TOKEN}"}`. You can generate your token in your SolarWinds Observability SaaS account under _Settings / API Tokens / Create API Token_. The type is "Ingestion". You can find the complete documentation [here](https://documentation.solarwinds.com/en/success_center/observability/content/settings/api-tokens.htm).
 ### gRPC Anchoring
 Proposed compact solution how to easily re-use gRPC configuration from `solarwinds` extension in `otlp` exporter. Such combination is currently preferred solution for SolarWinds OTEL Collector.
