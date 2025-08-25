@@ -32,8 +32,7 @@ func (c *containerInfo) ReadContainerInstanceID() (string, error) {
 	case c.isInNonDockerContainer():
 		containerID, err = c.readNonDockerContainerID()
 	case c.isContainerInKubernetes():
-		hostnameEnv, _ := os.LookupEnv("HOSTNAME")
-		containerID = hostnameEnv
+		containerID = c.readKubernetesContainerID()
 	default:
 		containerID, err = "", errors.New("it is not a container instance")
 	}
@@ -43,6 +42,11 @@ func (c *containerInfo) ReadContainerInstanceID() (string, error) {
 	}
 
 	return containerID, err
+}
+
+func (c *containerInfo) readKubernetesContainerID() string {
+	hostnameEnv, _ := os.LookupEnv("HOSTNAME")
+	return hostnameEnv
 }
 
 func (c *containerInfo) IsRunInContainerd() bool {
