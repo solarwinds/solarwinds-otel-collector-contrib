@@ -23,6 +23,10 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
+const (
+	WorkloadOwnerIndex = "workloadOwnerIndex"
+)
+
 func PodTransformFunc(logger *zap.Logger) cache.TransformFunc {
 	return func(obj any) (any, error) {
 		pod, ok := obj.(*corev1.Pod)
@@ -60,4 +64,23 @@ func copyOwnerReferences(workload metav1.Object) []metav1.OwnerReference {
 		}
 	}
 	return copiedRefs
+}
+
+func WorkloadOwnerIndexer(logger *zap.Logger) cache.Indexers {
+	return cache.Indexers{
+		WorkloadOwnerIndex: func(obj any) ([]string, error) {
+			pod, ok := obj.(*corev1.Pod)
+			if !ok {
+				logger.Error("Received an unexpected workload object type for workloadOwnerIndex", zap.String("workloadObjectType", fmt.Sprintf("%T", obj)))
+				return nil, nil
+			}
+
+			var keys []string
+			for _, owner := range pod.OwnerReferences {
+				key := fmt.Sprintf("%s/%s/%s", pod.Namespace, owner.Kind, owner.Name)
+				keys = append(keys, key)
+			}
+			return keys, nil
+		},
+	}
 }

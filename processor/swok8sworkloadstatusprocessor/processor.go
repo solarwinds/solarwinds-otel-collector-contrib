@@ -54,6 +54,7 @@ func (p *swok8sworkloadstatusprocessor) Start(_ context.Context, _ component.Hos
 
 	p.podInformer = p.factory.Core().V1().Pods().Informer()
 	p.podInformer.SetTransform(internal.PodTransformFunc(p.logger))
+	p.podInformer.AddIndexers(internal.WorkloadOwnerIndexer(p.logger))
 
 	p.logger.Info("Starting pod informer")
 
@@ -82,13 +83,9 @@ func (p *swok8sworkloadstatusprocessor) Shutdown(_ context.Context) error {
 // processLogs iterates logs, extracts pod and owner info from k8s manifests contained in log bodies
 // or from already enriched attributes.
 func (p *swok8sworkloadstatusprocessor) processLogs(_ context.Context, ld plog.Logs) (plog.Logs, error) {
-	for i := 0; i < ld.ResourceLogs().Len(); i++ {
-		rl := ld.ResourceLogs().At(i)
-		for j := 0; j < rl.ScopeLogs().Len(); j++ {
-			sl := rl.ScopeLogs().At(j)
-			lrs := sl.LogRecords()
-			for k := 0; k < lrs.Len(); k++ {
-				lr := lrs.At(k)
+	for _, rl := range ld.ResourceLogs().All() {
+		for _, sl := range rl.ScopeLogs().All() {
+			for _, lr := range sl.LogRecords().All() {
 				attrs := lr.Attributes()
 				kindAttr, ok := attrs.Get("k8s.object.kind")
 				if !ok {
@@ -220,19 +217,20 @@ func (p *swok8sworkloadstatusprocessor) getPodsForWorkload(workloadName, namespa
 		return pods
 	}
 
-	for _, obj := range p.podInformer.GetStore().List() {
-		pod, ok := obj.(*corev1.Pod)
-		if !ok {
-			continue
-		}
-		if pod.Namespace != namespace {
-			continue
-		}
-		for _, owner := range pod.OwnerReferences {
-			if owner.Kind == kind && owner.Name == workloadName {
-				pods = append(pods, pod)
-				break
-			}
+	indexKey := fmt.Sprintf("%s/%s/%s", namespace, kind, workloadName)
+	objs, err := p.podInformer.GetIndexer().ByIndex(internal.WorkloadOwnerIndex, indexKey)
+	if err != nil {
+		p.logger.Error("Failed to lookup pods by workload owner index",
+			zap.Error(err),
+			zap.String("workloadName", workloadName),
+			zap.String("namespace", namespace),
+			zap.String("kind", kind))
+		return pods
+	}
+
+	for _, obj := range objs {
+		if pod, ok := obj.(*corev1.Pod); ok {
+			pods = append(pods, pod)
 		}
 	}
 	return pods
