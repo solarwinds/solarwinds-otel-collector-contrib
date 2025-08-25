@@ -1,6 +1,7 @@
 # Changelog
 
 ## vNext
+- Adds [SolarWinds Kubernetes Workload Status Processor](./processor/swok8sworkloadstatusprocessor/README.md) for calculating workload statuses from logs.
 
 ## v0.131.3
 - Updates golang to 1.25.0
