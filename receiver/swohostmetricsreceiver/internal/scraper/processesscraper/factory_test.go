@@ -45,7 +45,7 @@ func Test_ScraperIsSuccessfullyCreated(t *testing.T) {
 	}
 
 	sut := NewFactory()
-	_, err := sut.CreateMetrics(context.TODO(), sConfig, config, nil)
+	_, err := sut.CreateMetrics(context.TODO(), sConfig, config)
 
 	require.NoErrorf(t, err, "Scraper should be created without any error")
 }
