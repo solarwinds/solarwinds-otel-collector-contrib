@@ -20,7 +20,6 @@ import (
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/attributesdecorator"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/container"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/solarwindsprocessor/internal"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/plog"
@@ -35,8 +34,7 @@ import (
 type solarwindsprocessor struct {
 	logger            *zap.Logger
 	cfg               *Config
-	hostAttributes    internal.HostAttributes
-	containerProvider container.Provider
+	hostAttributes    *internal.HostAttributes
 	extensionProvider ExtensionProvider
 }
 
@@ -49,21 +47,6 @@ func (p *solarwindsprocessor) start(ctx context.Context, host component.Host) er
 	err = p.extensionProvider.SetAttributes(&p.cfg.ResourceAttributes)
 	if err != nil {
 		return fmt.Errorf("failed to decor resource attributes by extension properties: %w", err)
-	}
-
-	// Fetch additional properties for host detection if enabled.
-	if p.cfg.HostAttributesDecoration.Enabled == true {
-		containerId, err := p.containerProvider.ReadContainerInstanceID()
-		if err != nil {
-			return fmt.Errorf("failed to read container instance ID: %w", err)
-		}
-		isInContainerd := p.containerProvider.IsRunInContainerd()
-
-		p.hostAttributes = internal.HostAttributes{
-			ContainerID:       containerId,
-			IsRunInContainerd: isInContainerd,
-			ClientId:          p.cfg.HostAttributesDecoration.ClientId,
-		}
 	}
 
 	return nil
@@ -179,7 +162,7 @@ func createProcessor(logger *zap.Logger, cfg component.Config) (*solarwindsproce
 	if err != nil {
 		return nil, err
 	}
-	return newProcessor(logger, c), nil
+	return newProcessor(logger, c)
 }
 
 func checkConfig(cfg component.Config) (*Config, error) {
@@ -193,11 +176,17 @@ func checkConfig(cfg component.Config) (*Config, error) {
 	return c, nil
 }
 
-func newProcessor(logger *zap.Logger, cfg *Config) *solarwindsprocessor {
+func newProcessor(logger *zap.Logger, cfg *Config) (*solarwindsprocessor, error) {
+	var hostAttributes *internal.HostAttributes
+	var err error
+	if cfg.HostAttributesDecoration.Enabled == true {
+		hostAttributes, err = internal.NewHostAttributes(cfg.HostAttributesDecoration)
+	}
+
 	return &solarwindsprocessor{
 		logger:            logger,
 		cfg:               cfg,
-		containerProvider: container.NewProvider(),
+		hostAttributes:    hostAttributes,
 		extensionProvider: NewExtensionProvider(),
-	}
+	}, err
 }

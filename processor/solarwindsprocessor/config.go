@@ -16,6 +16,8 @@ package solarwindsprocessor
 
 import (
 	"fmt"
+
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/solarwindsprocessor/internal"
 )
 
 type Config struct {
@@ -28,13 +30,8 @@ type Config struct {
 	// When maximum size is set to zero, no limit check is performed.
 	MaxSizeMib int `mapstructure:"max_size_mib,omitempty"`
 	// Resource attributes to be added to the processed signals.
-	ResourceAttributes       map[string]string `mapstructure:"resource,omitempty"`
-	HostAttributesDecoration HostDecoration    `mapstructure:"host,omitempty"`
-}
-
-type HostDecoration struct {
-	Enabled  bool   `mapstructure:"enabled"`
-	ClientId string `mapstructure:"client_id,omitempty"`
+	ResourceAttributes       map[string]string       `mapstructure:"resource,omitempty"`
+	HostAttributesDecoration internal.HostDecoration `mapstructure:"host,omitempty"`
 }
 
 func (c *Config) Validate() error {

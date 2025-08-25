@@ -3,6 +3,8 @@ package internal
 import (
 	"strings"
 
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/container"
+
 	"go.opentelemetry.io/collector/pdata/pcommon"
 )
 
@@ -19,9 +21,27 @@ const (
 	osTypeAttribute        = "os.type"
 )
 
+func NewHostAttributes(hd HostDecoration) (*HostAttributes, error) {
+	cp := container.NewProvider()
+
+	instanceId, err := cp.ReadContainerInstanceID()
+	if err != nil {
+		return nil, err
+	}
+
+	return &HostAttributes{
+		ContainerID:       instanceId,
+		IsRunInContainerd: cp.IsRunInContainerd(),
+		ClientId:          hd.ClientId,
+	}, nil
+}
+
 func (h *HostAttributes) ApplyAttributes(
 	resourceAttributes pcommon.Map,
 ) {
+	if h == nil {
+		return
+	}
 
 	cloudProvider, cloudProviderExists := resourceAttributes.Get(cloudProviderAttribute)
 
