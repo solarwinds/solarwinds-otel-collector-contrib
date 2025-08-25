@@ -12,6 +12,28 @@ import (
 	conventions "go.opentelemetry.io/otel/semconv/v1.9.0"
 )
 
+var MetricsInfo = metricsInfo{
+	SwoHostinfoFirewall: metricInfo{
+		Name: "swo.hostinfo.firewall",
+	},
+	SwoHostinfoUptime: metricInfo{
+		Name: "swo.hostinfo.uptime",
+	},
+	SwoHostinfoUserLastLogged: metricInfo{
+		Name: "swo.hostinfo.user.lastLogged",
+	},
+}
+
+type metricsInfo struct {
+	SwoHostinfoFirewall       metricInfo
+	SwoHostinfoUptime         metricInfo
+	SwoHostinfoUserLastLogged metricInfo
+}
+
+type metricInfo struct {
+	Name string
+}
+
 type metricSwoHostinfoFirewall struct {
 	data     pmetric.Metric // data buffer for generated metric.
 	config   MetricConfig   // metric config provided by user.
@@ -292,7 +314,7 @@ func (mb *MetricsBuilder) EmitForResource(options ...ResourceMetricsOption) {
 	rm := pmetric.NewResourceMetrics()
 	rm.SetSchemaUrl(conventions.SchemaURL)
 	ils := rm.ScopeMetrics().AppendEmpty()
-	ils.Scope().SetName("github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/hostinfoscraper")
+	ils.Scope().SetName(ScopeName)
 	ils.Scope().SetVersion(mb.buildInfo.Version)
 	ils.Metrics().EnsureCapacity(mb.metricsCapacity)
 	mb.metricSwoHostinfoFirewall.emit(ils.Metrics())

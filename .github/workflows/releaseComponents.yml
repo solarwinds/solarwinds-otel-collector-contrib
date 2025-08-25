@@ -18,7 +18,7 @@ jobs:
       version: ${{ steps.get-version.outputs.version }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: true
       - name: Get Current Version
@@ -29,6 +29,24 @@ jobs:
           # for gh cli
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: make validate-release-uniqueness tag=v${{ steps.get-version.outputs.version }}
+        
+  govulncheck-modules: 
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          submodules: true
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: false
+      - name: Go vulnerabilities check
+        run: |
+          make ci-vulncheck-modules 2>&1
 
   build_and_test:
     name: Build and Test
@@ -43,7 +61,7 @@ jobs:
       - build_and_test
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: true
           fetch-depth: 0

@@ -63,6 +63,20 @@ func TestInvalidConfig(t *testing.T) {
 		},
 		{
 			id: component.NewIDWithName(metadata.Type, "unsupported_workload_type_when_using_address_attribute"),
+			expected: &Config{
+				APIConfig: k8sconfig.APIConfig{
+					AuthType: k8sconfig.AuthTypeServiceAccount,
+				},
+				WatchSyncPeriod: time.Minute * 5,
+				WorkloadMappings: []*K8sWorkloadMappingConfig{
+					{
+						AddressAttr:      "source_address",
+						NamespaceAttr:    "source_workload_namespace",
+						WorkloadTypeAttr: "source_workload_type",
+						ExpectedTypes:    []string{"deployments"},
+					},
+				},
+			},
 		},
 		{
 			id: component.NewIDWithName(metadata.Type, "using_neither_name_nor_addr_attributes"),

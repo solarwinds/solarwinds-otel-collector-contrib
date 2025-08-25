@@ -1,12 +1,12 @@
 module github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfig
 
-go 1.24.5
+go 1.25.0
 
 require (
 	github.com/openshift/client-go v0.0.0-20250513150353-9ea84fa6431b
-	k8s.io/api v0.33.3
-	k8s.io/apimachinery v0.33.3
-	k8s.io/client-go v0.33.3
+	k8s.io/api v0.33.4
+	k8s.io/apimachinery v0.33.4
+	k8s.io/client-go v0.33.4
 )
 
 require (
@@ -51,7 +51,7 @@ require (
 )
 
 // openshift removed all tags from their repo, use the pseudoversion from the release-3.9 branch HEAD
-replace github.com/openshift/api v3.9.0+incompatible => github.com/openshift/api v0.0.0-20180801171038-322a19404e37
+replace github.com/openshift/api v3.9.0+incompatible => github.com/openshift/api v0.0.0-20200618202633-7192180f496a
 
 retract (
 	v0.76.2
