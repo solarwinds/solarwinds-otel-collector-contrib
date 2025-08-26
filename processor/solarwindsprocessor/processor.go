@@ -34,7 +34,7 @@ import (
 type solarwindsprocessor struct {
 	logger            *zap.Logger
 	cfg               *Config
-	hostAttributes    *internal.HostAttributes
+	hostAttributes    *internal.HostAttributesDecorator
 	extensionProvider ExtensionProvider
 }
 
@@ -177,7 +177,7 @@ func checkConfig(cfg component.Config) (*Config, error) {
 }
 
 func newProcessor(logger *zap.Logger, cfg *Config) (*solarwindsprocessor, error) {
-	var hostAttributes *internal.HostAttributes
+	var hostAttributes *internal.HostAttributesDecorator
 	var err error
 	if cfg.HostAttributesDecoration.Enabled == true {
 		hostAttributes, err = internal.NewHostAttributes(cfg.HostAttributesDecoration, logger)

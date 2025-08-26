@@ -23,7 +23,7 @@ import (
 	"go.opentelemetry.io/collector/pdata/pcommon"
 )
 
-type HostAttributes struct {
+type HostAttributesDecorator struct {
 	ContainerID       string
 	IsRunInContainerd bool
 	FallbackHostID    string
@@ -41,7 +41,7 @@ const (
 	cloudAvailabilityZone = "cloud.availability_zone"
 )
 
-func NewHostAttributes(hd HostDecoration, logger *zap.Logger) (*HostAttributes, error) {
+func NewHostAttributes(hd HostDecoration, logger *zap.Logger) (*HostAttributesDecorator, error) {
 	cp := container.NewProvider(logger)
 
 	instanceId, err := cp.ReadContainerInstanceID()
@@ -49,14 +49,14 @@ func NewHostAttributes(hd HostDecoration, logger *zap.Logger) (*HostAttributes, 
 		return nil, err
 	}
 
-	return &HostAttributes{
+	return &HostAttributesDecorator{
 		ContainerID:       instanceId,
 		IsRunInContainerd: cp.IsRunInContainerd(),
 		FallbackHostID:    hd.FallbackHostID,
 	}, nil
 }
 
-func (h *HostAttributes) ApplyAttributes(
+func (h *HostAttributesDecorator) ApplyAttributes(
 	resourceAttributes pcommon.Map,
 ) {
 	if h == nil {
@@ -92,7 +92,7 @@ func (h *HostAttributes) ApplyAttributes(
 		resourceAttributes.PutStr(hostNameAttribute, h.ContainerID)
 	}
 
-	// If the cloud provider is GPC, we need to set the host ID attribute to a combination of
+	// If the cloud provider is GCP, we need to set the host ID attribute to a combination of
 	// cloud account ID, availability zone, and instance ID to make sure all GCP hosts have unique host IDs.
 	if cloudProvider.Str() == "gcp" {
 		hostID := getGcpHostID(resourceAttributes)

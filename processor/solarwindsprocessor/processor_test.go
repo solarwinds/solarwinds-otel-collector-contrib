@@ -69,7 +69,7 @@ func (m mockExtensionProviderInitError) SetAttributes(resourceAttributes *map[st
 
 var _ ExtensionProvider = (*mockExtensionProviderInitError)(nil)
 
-func newTestProcessor(t *testing.T, cfg *Config, ha *internal.HostAttributes) *solarwindsprocessor {
+func newTestProcessor(t *testing.T, cfg *Config, ha *internal.HostAttributesDecorator) *solarwindsprocessor {
 	return &solarwindsprocessor{
 		logger:            zaptest.NewLogger(t),
 		cfg:               cfg,
@@ -78,7 +78,7 @@ func newTestProcessor(t *testing.T, cfg *Config, ha *internal.HostAttributes) *s
 	}
 }
 
-func newTestProcessorWithHostAttributes(t *testing.T, cfg *Config, hostAttrs *internal.HostAttributes) *solarwindsprocessor {
+func newTestProcessorWithHostAttributes(t *testing.T, cfg *Config, hostAttrs *internal.HostAttributesDecorator) *solarwindsprocessor {
 	return &solarwindsprocessor{
 		logger:            zaptest.NewLogger(t),
 		cfg:               cfg,
@@ -101,7 +101,7 @@ func TestResourceAttributesPrecedenceOverHostAttributes(t *testing.T) {
 		},
 	}
 
-	hostAttrs := &internal.HostAttributes{
+	hostAttrs := &internal.HostAttributesDecorator{
 		ContainerID:       "container-abc",
 		IsRunInContainerd: true,
 		FallbackHostID:    "client-id-123",
@@ -193,7 +193,7 @@ func TestHostDecorationInAllSignalTypes(t *testing.T) {
 		},
 	}
 
-	hostAttrs := &internal.HostAttributes{
+	hostAttrs := &internal.HostAttributesDecorator{
 		ContainerID:       "container-xyz",
 		IsRunInContainerd: true,
 		FallbackHostID:    "client-id-xyz",

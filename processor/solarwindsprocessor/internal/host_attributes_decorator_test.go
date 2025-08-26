@@ -22,7 +22,7 @@ import (
 )
 
 func TestApplyAttributes_HostId_NonCloudHostWithFallbackHostId(t *testing.T) {
-	pp := HostAttributes{
+	pp := HostAttributesDecorator{
 		IsRunInContainerd: false,
 		ContainerID:       "",
 		FallbackHostID:    "test-fallback-host-id",
@@ -38,7 +38,7 @@ func TestApplyAttributes_HostId_NonCloudHostWithFallbackHostId(t *testing.T) {
 }
 
 func TestApplyAttributes_HostId_NonCloudHostWithoutFallbackHostId(t *testing.T) {
-	pp := HostAttributes{
+	pp := HostAttributesDecorator{
 		IsRunInContainerd: false,
 		ContainerID:       "",
 		FallbackHostID:    "",
@@ -55,7 +55,7 @@ func TestApplyAttributes_HostId_NonCloudHostWithoutFallbackHostId(t *testing.T) 
 }
 
 func TestApplyAttributes_HostId_CloudHostWithContainer(t *testing.T) {
-	pp := HostAttributes{
+	pp := HostAttributesDecorator{
 		IsRunInContainerd: false,
 		ContainerID:       "container-123",
 		FallbackHostID:    "test-fallback-host-id",
@@ -74,7 +74,7 @@ func TestApplyAttributes_HostId_CloudHostWithContainer(t *testing.T) {
 
 func TestApplyAttributes_HostId_CloudHostWithoutContainer(t *testing.T) {
 	// Cloud host without container - hostId should remain unchanged
-	pp := HostAttributes{
+	pp := HostAttributesDecorator{
 		IsRunInContainerd: false,
 		ContainerID:       "", // No container
 		FallbackHostID:    "test-fallback-host-id",
@@ -159,7 +159,7 @@ func TestApplyAttributes_HostId_BiosUuidVsFallbackHostIdScenarios(t *testing.T) 
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			pp := HostAttributes{
+			pp := HostAttributesDecorator{
 				IsRunInContainerd: false,
 				ContainerID:       tc.containerID,
 				FallbackHostID:    tc.fallbackHostID,
@@ -242,7 +242,7 @@ func TestApplyAttributes_HostnameScenarios_CombinationsOfCloudProviderAndContain
 			}
 			attributes.PutStr("host.name", tc.originalHostname)
 
-			pp := HostAttributes{
+			pp := HostAttributesDecorator{
 				IsRunInContainerd: tc.isRunInContainerd,
 				ContainerID:       tc.containerID,
 				FallbackHostID:    "test-client-id",
@@ -259,7 +259,7 @@ func TestApplyAttributes_HostnameScenarios_CombinationsOfCloudProviderAndContain
 }
 
 func TestApplyAttributes_OsType_IsNormalized(t *testing.T) {
-	pp := HostAttributes{
+	pp := HostAttributesDecorator{
 		IsRunInContainerd: false,
 		ContainerID:       "",
 		FallbackHostID:    "test-fallback-host-id",
@@ -345,7 +345,7 @@ func TestApplyAttributes_HostId_GcpScenarios(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			pp := HostAttributes{
+			pp := HostAttributesDecorator{
 				IsRunInContainerd: false,
 				ContainerID:       "",
 				FallbackHostID:    tc.fallbackHostID,
