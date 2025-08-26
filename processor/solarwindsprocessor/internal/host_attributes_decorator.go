@@ -43,12 +43,11 @@ const (
 	cloudAvailabilityZone = "cloud.availability_zone"
 )
 
-func NewHostAttributes(hd HostDecoration, logger *zap.Logger) (*HostAttributesDecorator, error) {
-	cp := container.NewProvider(logger)
-
+func NewHostAttributes(hd HostDecoration, cp container.Provider, logger *zap.Logger) *HostAttributesDecorator {
 	instanceId, err := cp.ReadContainerInstanceID()
 	if err != nil {
-		return nil, err
+		logger.Error("Failed to read container instance ID", zap.Error(err))
+		instanceId = ""
 	}
 
 	return &HostAttributesDecorator{
@@ -56,7 +55,7 @@ func NewHostAttributes(hd HostDecoration, logger *zap.Logger) (*HostAttributesDe
 		IsRunInContainerd: cp.IsRunInContainerd(),
 		OnPremOverrideId:  hd.OnPremOverrideID,
 		logger:            logger,
-	}, nil
+	}
 }
 
 func (h *HostAttributesDecorator) ApplyAttributes(
@@ -92,7 +91,11 @@ func (h *HostAttributesDecorator) ApplyAttributes(
 	// Replace host name attribute with container ID only for containerd containers on AWS machines
 	// to match host name reported by different monitoring components.
 	if cloudProvider.Str() == "aws" && h.IsRunInContainerd {
-		resourceAttributes.PutStr(hostNameAttribute, h.ContainerID)
+		if h.ContainerID == "" {
+			h.logger.Error("failed to obtain container ID for host.name replacement")
+		} else {
+			resourceAttributes.PutStr(hostNameAttribute, h.ContainerID)
+		}
 	}
 
 	// If the cloud provider is GCP, we need to set the host ID attribute to a combination of

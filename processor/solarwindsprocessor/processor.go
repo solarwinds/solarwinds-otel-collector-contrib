@@ -20,6 +20,7 @@ import (
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/attributesdecorator"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/container"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/solarwindsprocessor/internal"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/plog"
@@ -179,11 +180,7 @@ func checkConfig(cfg component.Config) (*Config, error) {
 func newProcessor(logger *zap.Logger, cfg *Config) *solarwindsprocessor {
 	var hostAttributes *internal.HostAttributesDecorator
 	if cfg.HostAttributesDecoration.Enabled == true {
-		var err error
-		hostAttributes, err = internal.NewHostAttributes(cfg.HostAttributesDecoration, logger)
-		if err != nil {
-			logger.Info("failed to initialize host attributes decorator", zap.Error(err))
-		}
+		hostAttributes = internal.NewHostAttributes(cfg.HostAttributesDecoration, container.NewProvider(logger), logger)
 	}
 
 	return &solarwindsprocessor{

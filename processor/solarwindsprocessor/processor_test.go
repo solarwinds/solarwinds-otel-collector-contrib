@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/container"
+
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/solarwindsprocessor/internal"
 	"github.com/stretchr/testify/assert"
@@ -68,6 +70,26 @@ func (m mockExtensionProviderInitError) SetAttributes(resourceAttributes *map[st
 }
 
 var _ ExtensionProvider = (*mockExtensionProviderInitError)(nil)
+
+// Container Provider mock
+type mockContainerProvider struct {
+	willFail          bool
+	isRunInContainerd bool
+}
+
+func (p *mockContainerProvider) ReadContainerInstanceID() (string, error) {
+	if p.willFail {
+		return "", fmt.Errorf("mock container fetch error")
+	}
+
+	return "mock-container-id", nil
+}
+
+func (p *mockContainerProvider) IsRunInContainerd() bool {
+	return p.isRunInContainerd
+}
+
+var _ container.Provider = (*mockContainerProvider)(nil)
 
 func newTestProcessor(t *testing.T, cfg *Config, ha *internal.HostAttributesDecorator) *solarwindsprocessor {
 	return &solarwindsprocessor{
@@ -293,4 +315,67 @@ func TestProcessorWithNilHostAttributes(t *testing.T) {
 
 	val, _ = outAttrs.Get("original.attr")
 	assert.Equal(t, "original-value", val.Str(), "original attribute should be preserved")
+}
+
+func TestProcessorHostDecorationWhenContainerFetchFail(t *testing.T) {
+	hostDecoration := internal.HostDecoration{
+		Enabled: true,
+	}
+	cfg := &Config{
+		ExtensionName:            "test",
+		ResourceAttributes:       map[string]string{"custom.attr": "value"},
+		HostAttributesDecoration: hostDecoration,
+	}
+
+	containerProvider := &mockContainerProvider{willFail: true, isRunInContainerd: false}
+	hostDecorator := internal.NewHostAttributes(hostDecoration, containerProvider, zaptest.NewLogger(t))
+	proc := newTestProcessorWithHostAttributes(t, cfg, hostDecorator)
+
+	metrics := pmetric.NewMetrics()
+	rm := metrics.ResourceMetrics().AppendEmpty()
+	attrs := rm.Resource().Attributes()
+	attrs.PutStr("os.type", "linux")
+
+	result, err := proc.processMetrics(context.Background(), metrics)
+
+	assert.NoError(t, err, "processor should not fail even if container fetch fails")
+	resourceAttrs := result.ResourceMetrics().At(0).Resource().Attributes()
+	val, _ := resourceAttrs.Get("os.type")
+	assert.Equal(t, "Linux", val.Str(), "os.type should be normalized to 'Linux'")
+}
+
+func TestProcessorHostDecorationWhenContainerFetchSucceed(t *testing.T) {
+	hostDecoration := internal.HostDecoration{
+		Enabled:          true,
+		OnPremOverrideID: "client-id-456",
+	}
+	cfg := &Config{
+		ExtensionName:            "test",
+		ResourceAttributes:       map[string]string{"custom.attr": "value"},
+		HostAttributesDecoration: hostDecoration,
+	}
+
+	containerProvider := &mockContainerProvider{willFail: false, isRunInContainerd: true}
+	hostDecorator := internal.NewHostAttributes(hostDecoration, containerProvider, zaptest.NewLogger(t))
+	proc := newTestProcessorWithHostAttributes(t, cfg, hostDecorator)
+
+	metrics := pmetric.NewMetrics()
+	rm := metrics.ResourceMetrics().AppendEmpty()
+	attrs := rm.Resource().Attributes()
+	attrs.PutStr("os.type", "windows")
+	attrs.PutStr("cloud.provider", "aws")
+
+	result, err := proc.processMetrics(context.Background(), metrics)
+
+	assert.NoError(t, err, "processor should not fail when container fetch succeeds")
+	resourceAttrs := result.ResourceMetrics().At(0).Resource().Attributes()
+
+	val, _ := resourceAttrs.Get("host.id")
+	assert.Equal(t, "client-id-456", val.Str(), "host.id should be set from OnPremOverrideID")
+
+	val, _ = resourceAttrs.Get("host.name")
+	assert.Equal(t, "mock-container-id", val.Str(), "container.id should be set from container provider")
+
+	val, _ = resourceAttrs.Get("os.type")
+	assert.Equal(t, "Windows", val.Str(), "os.type should be normalized to 'Linux'")
 }
