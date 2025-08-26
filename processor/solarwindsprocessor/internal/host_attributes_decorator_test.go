@@ -26,7 +26,7 @@ func TestApplyAttributes_HostId_NonCloudHostWithFallbackHostId(t *testing.T) {
 	pp := HostAttributesDecorator{
 		IsRunInContainerd: false,
 		ContainerID:       "",
-		FallbackHostID:    "test-fallback-host-id",
+		OnPremOverrideId:  "test-fallback-host-id",
 		logger:            zap.NewNop(),
 	}
 
@@ -43,7 +43,7 @@ func TestApplyAttributes_HostId_NonCloudHostWithoutFallbackHostId(t *testing.T) 
 	pp := HostAttributesDecorator{
 		IsRunInContainerd: false,
 		ContainerID:       "",
-		FallbackHostID:    "",
+		OnPremOverrideId:  "",
 		logger:            zap.NewNop(),
 	}
 
@@ -54,14 +54,14 @@ func TestApplyAttributes_HostId_NonCloudHostWithoutFallbackHostId(t *testing.T) 
 
 	hostId, exists := attributes.Get("host.id")
 	require.True(t, exists)
-	require.Equal(t, "telemetry-host-id", hostId.Str()) // Should be empty string from FallbackHostID, not original
+	require.Equal(t, "telemetry-host-id", hostId.Str()) // Should be empty string from OnPremOverrideID, not original
 }
 
 func TestApplyAttributes_HostId_CloudHostWithContainer(t *testing.T) {
 	pp := HostAttributesDecorator{
 		IsRunInContainerd: false,
 		ContainerID:       "container-123",
-		FallbackHostID:    "test-fallback-host-id",
+		OnPremOverrideId:  "test-fallback-host-id",
 		logger:            zap.NewNop(),
 	}
 
@@ -81,7 +81,7 @@ func TestApplyAttributes_HostId_CloudHostWithoutContainer(t *testing.T) {
 	pp := HostAttributesDecorator{
 		IsRunInContainerd: false,
 		ContainerID:       "", // No container
-		FallbackHostID:    "test-fallback-host-id",
+		OnPremOverrideId:  "test-fallback-host-id",
 		logger:            zap.NewNop(),
 	}
 
@@ -176,7 +176,7 @@ func TestApplyAttributes_HostId_BiosUuidVsFallbackHostIdScenarios(t *testing.T) 
 			pp := HostAttributesDecorator{
 				IsRunInContainerd: false,
 				ContainerID:       tc.containerID,
-				FallbackHostID:    tc.fallbackHostID,
+				OnPremOverrideId:  tc.fallbackHostID,
 				logger:            zap.NewNop(),
 			}
 
@@ -260,7 +260,7 @@ func TestApplyAttributes_HostnameScenarios_CombinationsOfCloudProviderAndContain
 			pp := HostAttributesDecorator{
 				IsRunInContainerd: tc.isRunInContainerd,
 				ContainerID:       tc.containerID,
-				FallbackHostID:    "test-client-id",
+				OnPremOverrideId:  "test-client-id",
 				logger:            zap.NewNop(),
 			}
 			pp.ApplyAttributes(attributes)
@@ -278,7 +278,7 @@ func TestApplyAttributes_OsType_IsNormalized(t *testing.T) {
 	pp := HostAttributesDecorator{
 		IsRunInContainerd: false,
 		ContainerID:       "",
-		FallbackHostID:    "test-fallback-host-id",
+		OnPremOverrideId:  "test-fallback-host-id",
 		logger:            zap.NewNop(),
 	}
 
@@ -365,7 +365,7 @@ func TestApplyAttributes_HostId_GcpScenarios(t *testing.T) {
 			pp := HostAttributesDecorator{
 				IsRunInContainerd: false,
 				ContainerID:       "",
-				FallbackHostID:    tc.fallbackHostID,
+				OnPremOverrideId:  tc.fallbackHostID,
 				logger:            zap.NewNop(),
 			}
 

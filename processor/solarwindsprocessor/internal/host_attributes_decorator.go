@@ -26,7 +26,7 @@ import (
 type HostAttributesDecorator struct {
 	ContainerID       string
 	IsRunInContainerd bool
-	FallbackHostID    string
+	OnPremOverrideId  string
 
 	logger *zap.Logger
 }
@@ -54,7 +54,7 @@ func NewHostAttributes(hd HostDecoration, logger *zap.Logger) (*HostAttributesDe
 	return &HostAttributesDecorator{
 		ContainerID:       instanceId,
 		IsRunInContainerd: cp.IsRunInContainerd(),
-		FallbackHostID:    hd.FallbackHostID,
+		OnPremOverrideId:  hd.OnPremOverrideID,
 		logger:            logger,
 	}, nil
 }
@@ -116,12 +116,12 @@ func (h *HostAttributesDecorator) ApplyAttributes(
 }
 
 // getHostId determines the host ID to be used based on the following precedence:
-// 1. FallbackHostID if set (e.g., UAMS Client ID).
+// 1. OnPremOverrideId if set (e.g., UAMS Client ID).
 // 2. BIOS UUID if available.
 // 3. Existing host.id attribute if available.
 func (h *HostAttributesDecorator) getHostId(resourceAttributes pcommon.Map) string {
-	if h.FallbackHostID != "" {
-		return h.FallbackHostID
+	if h.OnPremOverrideId != "" {
+		return h.OnPremOverrideId
 	}
 
 	biosUuid, biosUuidExists := resourceAttributes.Get(hostBiosUuid)

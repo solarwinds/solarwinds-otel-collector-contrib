@@ -33,8 +33,9 @@ Processor detects host information and decorates telemetry with appropriate host
 
 ### Host ID Priority
 1. Cloud-specific handling (AWS, GCP)
-2. BIOS UUID from incoming telemetry (`host.bios-uuid`)
-3. Configured fallback host ID
+2. Configured `on_prem_override_id`
+3. BIOS UUID from incoming telemetry (`host.bios-uuid`)
+4. `host.id` from incoming telemetry
 
 ### Supported Environments
 - Container detection (Docker, Containerd, Podman, Kubernetes)
@@ -58,7 +59,7 @@ processors:
     extension: solarwinds/sample
     host_attributes_decoration:
       enabled: true
-      fallback_host_id: "my-host-id"
+      on_prem_override_id: "my-host-id"
 ```
 
 ### Full Configuration
@@ -69,7 +70,7 @@ processors:
     max_size_mib: 3
     host_attributes_decoration:
       enabled: true
-      fallback_host_id: "custom-host-id"
+      on_prem_override_id: "custom-host-id"
     resource:
       custom.attribute: "value"
 ```

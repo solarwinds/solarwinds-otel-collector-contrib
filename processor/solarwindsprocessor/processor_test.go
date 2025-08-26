@@ -96,15 +96,15 @@ func TestResourceAttributesPrecedenceOverHostAttributes(t *testing.T) {
 			"os.type":   "windows",
 		},
 		HostAttributesDecoration: internal.HostDecoration{
-			Enabled:        true,
-			FallbackHostID: "client-id-123",
+			Enabled:          true,
+			OnPremOverrideID: "client-id-123",
 		},
 	}
 
 	hostAttrs := &internal.HostAttributesDecorator{
 		ContainerID:       "container-abc",
 		IsRunInContainerd: true,
-		FallbackHostID:    "client-id-123",
+		OnPremOverrideId:  "client-id-123",
 	}
 
 	proc := newTestProcessorWithHostAttributes(t, cfg, hostAttrs)
@@ -135,8 +135,8 @@ func TestProcessorDoesNotFailWhenHostDecorationDisabled(t *testing.T) {
 		ExtensionName:      "test",
 		ResourceAttributes: map[string]string{},
 		HostAttributesDecoration: internal.HostDecoration{
-			Enabled:        false,
-			FallbackHostID: "",
+			Enabled:          false,
+			OnPremOverrideID: "",
 		},
 	}
 
@@ -152,8 +152,8 @@ func TestProcessorDoesNotFailOnStartWhenHostDecorationDisabled(t *testing.T) {
 		ExtensionName:      "test",
 		ResourceAttributes: map[string]string{},
 		HostAttributesDecoration: internal.HostDecoration{
-			Enabled:        false,
-			FallbackHostID: "",
+			Enabled:          false,
+			OnPremOverrideID: "",
 		},
 	}
 
@@ -188,15 +188,15 @@ func TestHostDecorationInAllSignalTypes(t *testing.T) {
 		ExtensionName:      "test",
 		ResourceAttributes: map[string]string{},
 		HostAttributesDecoration: internal.HostDecoration{
-			Enabled:        true,
-			FallbackHostID: "client-id-xyz",
+			Enabled:          true,
+			OnPremOverrideID: "client-id-xyz",
 		},
 	}
 
 	hostAttrs := &internal.HostAttributesDecorator{
 		ContainerID:       "container-xyz",
 		IsRunInContainerd: true,
-		FallbackHostID:    "client-id-xyz",
+		OnPremOverrideId:  "client-id-xyz",
 	}
 
 	proc := newTestProcessorWithHostAttributes(t, cfg, hostAttrs)
