@@ -1,0 +1,10 @@
+collector_name: "test-name"
+resource:
+  att: "custom_attribute_value"
+without_entity: true
+grpc:
+  endpoint: "test-url:0"
+  tls:
+    insecure: true
+  headers:
+    Authorization: "Bearer test-token"
