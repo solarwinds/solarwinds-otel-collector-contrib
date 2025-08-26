@@ -1,0 +1,4 @@
+collector_name: "test-name"
+grpc:
+  headers:
+    Authorization: "Bearer test-token"

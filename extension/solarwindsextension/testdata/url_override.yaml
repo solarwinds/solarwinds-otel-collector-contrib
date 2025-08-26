@@ -1,4 +1,0 @@
-token: "YOUR-INGESTION-TOKEN"
-data_center: "na-01"
-collector_name: "mycol"
-endpoint_url_override: "127.0.0.1:1234"
