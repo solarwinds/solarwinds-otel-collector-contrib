@@ -19,6 +19,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.uber.org/zap"
 )
 
 func TestApplyAttributes_HostId_NonCloudHostWithFallbackHostId(t *testing.T) {
@@ -26,6 +27,7 @@ func TestApplyAttributes_HostId_NonCloudHostWithFallbackHostId(t *testing.T) {
 		IsRunInContainerd: false,
 		ContainerID:       "",
 		FallbackHostID:    "test-fallback-host-id",
+		logger:            zap.NewNop(),
 	}
 
 	attributes := pcommon.NewMap()
@@ -42,6 +44,7 @@ func TestApplyAttributes_HostId_NonCloudHostWithoutFallbackHostId(t *testing.T) 
 		IsRunInContainerd: false,
 		ContainerID:       "",
 		FallbackHostID:    "",
+		logger:            zap.NewNop(),
 	}
 
 	attributes := pcommon.NewMap()
@@ -51,7 +54,7 @@ func TestApplyAttributes_HostId_NonCloudHostWithoutFallbackHostId(t *testing.T) 
 
 	hostId, exists := attributes.Get("host.id")
 	require.True(t, exists)
-	require.Equal(t, "", hostId.Str()) // Should be empty string from FallbackHostID, not original
+	require.Equal(t, "telemetry-host-id", hostId.Str()) // Should be empty string from FallbackHostID, not original
 }
 
 func TestApplyAttributes_HostId_CloudHostWithContainer(t *testing.T) {
@@ -59,6 +62,7 @@ func TestApplyAttributes_HostId_CloudHostWithContainer(t *testing.T) {
 		IsRunInContainerd: false,
 		ContainerID:       "container-123",
 		FallbackHostID:    "test-fallback-host-id",
+		logger:            zap.NewNop(),
 	}
 
 	attributes := pcommon.NewMap()
@@ -78,6 +82,7 @@ func TestApplyAttributes_HostId_CloudHostWithoutContainer(t *testing.T) {
 		IsRunInContainerd: false,
 		ContainerID:       "", // No container
 		FallbackHostID:    "test-fallback-host-id",
+		logger:            zap.NewNop(),
 	}
 
 	attributes := pcommon.NewMap()
@@ -107,8 +112,8 @@ func TestApplyAttributes_HostId_BiosUuidVsFallbackHostIdScenarios(t *testing.T) 
 			fallbackHostID: "fallback-id-from-config",
 			cloudProvider:  "",
 			containerID:    "",
-			expectedHostId: "12345678-1234-1234-1234-123456789abc",
-			description:    "Should use BIOS UUID from telemetry when available on non-cloud host",
+			expectedHostId: "fallback-id-from-config",
+			description:    "Should use fallback host ID from config when both BIOS UUID and fallback host ID are available on non-cloud host",
 		},
 		"bios uuid from telemetry exists but empty - non cloud": {
 			biosUuid:       "",
@@ -143,8 +148,8 @@ func TestApplyAttributes_HostId_BiosUuidVsFallbackHostIdScenarios(t *testing.T) 
 			fallbackHostID: "fallback-id-from-config",
 			cloudProvider:  "aws",
 			containerID:    "container-123",
-			expectedHostId: "12345678-1234-1234-1234-123456789abc",
-			description:    "Should use BIOS UUID from telemetry on cloud host with container",
+			expectedHostId: "fallback-id-from-config",
+			description:    "Should use fallback host ID from config on cloud host with container (fallback host ID has precedence over BIOS UUID)",
 		},
 		"no bios uuid from telemetry - cloud host with container": {
 			biosUuid:       "",
@@ -155,6 +160,15 @@ func TestApplyAttributes_HostId_BiosUuidVsFallbackHostIdScenarios(t *testing.T) 
 			expectedHostId: "fallback-id-from-config",
 			description:    "Should use fallback host ID from config on cloud host with container when no BIOS UUID in telemetry",
 		},
+		"no fallback host id but bios uuid exists - non cloud": {
+			biosUuid:       "12345678-1234-1234-1234-123456789abc",
+			biosUuidExists: true,
+			fallbackHostID: "",
+			cloudProvider:  "",
+			containerID:    "",
+			expectedHostId: "12345678-1234-1234-1234-123456789abc",
+			description:    "Should use BIOS UUID from telemetry when fallback host ID is not configured on non-cloud host",
+		},
 	}
 
 	for name, tc := range testCases {
@@ -163,6 +177,7 @@ func TestApplyAttributes_HostId_BiosUuidVsFallbackHostIdScenarios(t *testing.T) 
 				IsRunInContainerd: false,
 				ContainerID:       tc.containerID,
 				FallbackHostID:    tc.fallbackHostID,
+				logger:            zap.NewNop(),
 			}
 
 			attributes := pcommon.NewMap()
@@ -246,6 +261,7 @@ func TestApplyAttributes_HostnameScenarios_CombinationsOfCloudProviderAndContain
 				IsRunInContainerd: tc.isRunInContainerd,
 				ContainerID:       tc.containerID,
 				FallbackHostID:    "test-client-id",
+				logger:            zap.NewNop(),
 			}
 			pp.ApplyAttributes(attributes)
 
@@ -263,6 +279,7 @@ func TestApplyAttributes_OsType_IsNormalized(t *testing.T) {
 		IsRunInContainerd: false,
 		ContainerID:       "",
 		FallbackHostID:    "test-fallback-host-id",
+		logger:            zap.NewNop(),
 	}
 
 	testCases := map[string]string{
@@ -349,6 +366,7 @@ func TestApplyAttributes_HostId_GcpScenarios(t *testing.T) {
 				IsRunInContainerd: false,
 				ContainerID:       "",
 				FallbackHostID:    tc.fallbackHostID,
+				logger:            zap.NewNop(),
 			}
 
 			attributes := pcommon.NewMap()

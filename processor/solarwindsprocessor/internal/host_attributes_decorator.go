@@ -27,6 +27,8 @@ type HostAttributesDecorator struct {
 	ContainerID       string
 	IsRunInContainerd bool
 	FallbackHostID    string
+
+	logger *zap.Logger
 }
 
 const (
@@ -53,6 +55,7 @@ func NewHostAttributes(hd HostDecoration, logger *zap.Logger) (*HostAttributesDe
 		ContainerID:       instanceId,
 		IsRunInContainerd: cp.IsRunInContainerd(),
 		FallbackHostID:    hd.FallbackHostID,
+		logger:            logger,
 	}, nil
 }
 
@@ -64,12 +67,12 @@ func (h *HostAttributesDecorator) ApplyAttributes(
 	}
 
 	cloudProvider, cloudProviderExists := resourceAttributes.Get(cloudProviderAttribute)
-	var hostId string
-	biosUuid, biosUuidExists := resourceAttributes.Get(hostBiosUuid)
-	if biosUuidExists && biosUuid.Str() != "" {
-		hostId = biosUuid.Str()
-	} else {
-		hostId = h.FallbackHostID
+
+	hostId := h.getHostId(resourceAttributes)
+
+	// Log error if we cannot determine host ID.
+	if hostId == "" {
+		h.logger.Error("failed to obtain `host.id` attribute")
 	}
 
 	// Replace host ID attribute with client ID only for hosts that are not cloud-based.
@@ -110,6 +113,28 @@ func (h *HostAttributesDecorator) ApplyAttributes(
 	if osTypeValue, exists := resourceAttributes.Get(osTypeAttribute); exists {
 		normalizeOsType(osTypeValue)
 	}
+}
+
+// getHostId determines the host ID to be used based on the following precedence:
+// 1. FallbackHostID if set (e.g., UAMS Client ID).
+// 2. BIOS UUID if available.
+// 3. Existing host.id attribute if available.
+func (h *HostAttributesDecorator) getHostId(resourceAttributes pcommon.Map) string {
+	if h.FallbackHostID != "" {
+		return h.FallbackHostID
+	}
+
+	biosUuid, biosUuidExists := resourceAttributes.Get(hostBiosUuid)
+	if biosUuidExists && biosUuid.Str() != "" {
+		return biosUuid.Str()
+	}
+
+	receivedHostId, receiverHostIdExists := resourceAttributes.Get(hostIDAttribute)
+	if receiverHostIdExists && receivedHostId.Str() != "" {
+		return receivedHostId.Str()
+	}
+
+	return ""
 }
 
 func normalizeOsType(osTypeValue pcommon.Value) {
