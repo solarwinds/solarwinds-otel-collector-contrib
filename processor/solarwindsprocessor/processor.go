@@ -162,7 +162,7 @@ func createProcessor(logger *zap.Logger, cfg component.Config) (*solarwindsproce
 	if err != nil {
 		return nil, err
 	}
-	return newProcessor(logger, c)
+	return newProcessor(logger, c), nil
 }
 
 func checkConfig(cfg component.Config) (*Config, error) {
@@ -176,11 +176,14 @@ func checkConfig(cfg component.Config) (*Config, error) {
 	return c, nil
 }
 
-func newProcessor(logger *zap.Logger, cfg *Config) (*solarwindsprocessor, error) {
+func newProcessor(logger *zap.Logger, cfg *Config) *solarwindsprocessor {
 	var hostAttributes *internal.HostAttributesDecorator
-	var err error
 	if cfg.HostAttributesDecoration.Enabled == true {
+		var err error
 		hostAttributes, err = internal.NewHostAttributes(cfg.HostAttributesDecoration, logger)
+		if err != nil {
+			logger.Info("failed to initialize host attributes decorator", zap.Error(err))
+		}
 	}
 
 	return &solarwindsprocessor{
@@ -188,5 +191,5 @@ func newProcessor(logger *zap.Logger, cfg *Config) (*solarwindsprocessor, error)
 		cfg:               cfg,
 		hostAttributes:    hostAttributes,
 		extensionProvider: NewExtensionProvider(),
-	}, err
+	}
 }
