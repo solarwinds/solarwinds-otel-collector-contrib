@@ -74,7 +74,12 @@ func (receiverConfig *ReceiverConfig) Unmarshal(rawConfig *confmap.Conf) error {
 	scraperMap := scrapersSectionConfigMap.ToStringMap()
 	receiverConfig.Scrapers = make(map[string]component.Config, len(scraperMap))
 	for scraperName := range scraperMap {
-		scraperFactory, err := GetScraperFactory(scraperName)
+		scraperId, err := component.NewType(scraperName)
+		if err != nil {
+			return fmt.Errorf("invalid scraper key name: %s", scraperId)
+		}
+		
+		scraperFactory, err := GetScraperFactory(scraperId)
 		if err != nil {
 			return fmt.Errorf("scraper factory for scraper %s was not found: %w", scraperName, err)
 		}

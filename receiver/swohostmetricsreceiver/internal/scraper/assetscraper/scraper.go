@@ -15,6 +15,7 @@
 package assetscraper
 
 import (
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/assetscraper/internal/metadata"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/assetscraper/metrics/installedsoftware"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/assetscraper/metrics/installedupdates"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/metric"
@@ -39,7 +40,7 @@ func NewAssetScraper(
 	logger *zap.Logger,
 ) (*AssetScraper, error) {
 	descriptor := &scraper.Descriptor{
-		Type: ScraperType(),
+		Type: metadata.Type,
 		ScopeDescriptors: map[string]scope.Descriptor{
 			scopeMetricsName: {
 				ScopeName: scopeMetricsName,
