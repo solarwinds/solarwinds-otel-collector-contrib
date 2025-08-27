@@ -22,7 +22,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func TestApplyAttributes_HostId_NonCloudHostWithoverrideHostId(t *testing.T) {
+func TestApplyAttributes_HostId_NonCloudHostWithOverrideHostId(t *testing.T) {
 	pp := HostAttributesDecorator{
 		IsRunInContainerd: false,
 		ContainerID:       "",
