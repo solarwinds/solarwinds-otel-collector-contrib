@@ -14,7 +14,11 @@
 
 package solarwindsprocessor
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/solarwindsprocessor/internal"
+)
 
 type Config struct {
 	// Extension identifies a Solarwinds Extension to
@@ -26,7 +30,8 @@ type Config struct {
 	// When maximum size is set to zero, no limit check is performed.
 	MaxSizeMib int `mapstructure:"max_size_mib,omitempty"`
 	// Resource attributes to be added to the processed signals.
-	ResourceAttributes map[string]string `mapstructure:"resource,omitempty"`
+	ResourceAttributes       map[string]string       `mapstructure:"resource,omitempty"`
+	HostAttributesDecoration internal.HostDecoration `mapstructure:"host_attributes_decoration,omitempty"`
 }
 
 func (c *Config) Validate() error {
@@ -36,5 +41,6 @@ func (c *Config) Validate() error {
 	if c.MaxSizeMib < 0 {
 		return fmt.Errorf("%s: %d", "invalid configuration: 'max_size_mib' must be greater than or equal to zero", c.MaxSizeMib)
 	}
+
 	return nil
 }

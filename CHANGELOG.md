@@ -1,6 +1,7 @@
 # Changelog
 
 ## vNext
+- `solarwindsprocessor` Add decoration of host resource attributes
 
 ## v0.131.4
 - `solarwindsexporter` has been removed as announced
