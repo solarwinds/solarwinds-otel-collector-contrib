@@ -96,7 +96,7 @@ func TestApplyAttributes_HostId_CloudHostWithoutContainer(t *testing.T) {
 	require.Equal(t, "original-host-id", hostId.Str())
 }
 
-func TestApplyAttributes_HostId_BiosUuidVsoverrideHostIdScenarios(t *testing.T) {
+func TestApplyAttributes_HostId_BiosUuidVsOverrideHostIdScenarios(t *testing.T) {
 	testCases := map[string]struct {
 		biosUuid         string
 		biosUuidExists   bool
