@@ -22,11 +22,11 @@ import (
 	"go.uber.org/zap"
 )
 
-func TestApplyAttributes_HostId_NonCloudHostWithFallbackHostId(t *testing.T) {
+func TestApplyAttributes_HostId_NonCloudHostWithoverrideHostId(t *testing.T) {
 	pp := HostAttributesDecorator{
 		IsRunInContainerd: false,
 		ContainerID:       "",
-		OnPremOverrideId:  "test-fallback-host-id",
+		OnPremOverrideId:  "test-override-host-id",
 		logger:            zap.NewNop(),
 	}
 
@@ -36,10 +36,10 @@ func TestApplyAttributes_HostId_NonCloudHostWithFallbackHostId(t *testing.T) {
 
 	hostId, exists := attributes.Get("host.id")
 	require.True(t, exists)
-	require.Equal(t, "test-fallback-host-id", hostId.Str())
+	require.Equal(t, "test-override-host-id", hostId.Str())
 }
 
-func TestApplyAttributes_HostId_NonCloudHostWithoutFallbackHostId(t *testing.T) {
+func TestApplyAttributes_HostId_NonCloudHostWithoutoverrideHostId(t *testing.T) {
 	pp := HostAttributesDecorator{
 		IsRunInContainerd: false,
 		ContainerID:       "",
@@ -61,7 +61,7 @@ func TestApplyAttributes_HostId_CloudHostWithContainer(t *testing.T) {
 	pp := HostAttributesDecorator{
 		IsRunInContainerd: false,
 		ContainerID:       "container-123",
-		OnPremOverrideId:  "test-fallback-host-id",
+		OnPremOverrideId:  "test-override-host-id",
 		logger:            zap.NewNop(),
 	}
 
@@ -73,7 +73,7 @@ func TestApplyAttributes_HostId_CloudHostWithContainer(t *testing.T) {
 
 	hostId, exists := attributes.Get("host.id")
 	require.True(t, exists)
-	require.Equal(t, "test-fallback-host-id", hostId.Str())
+	require.Equal(t, "test-override-host-id", hostId.Str())
 }
 
 func TestApplyAttributes_HostId_CloudHostWithoutContainer(t *testing.T) {
@@ -81,7 +81,7 @@ func TestApplyAttributes_HostId_CloudHostWithoutContainer(t *testing.T) {
 	pp := HostAttributesDecorator{
 		IsRunInContainerd: false,
 		ContainerID:       "", // No container
-		OnPremOverrideId:  "test-fallback-host-id",
+		OnPremOverrideId:  "test-override-host-id",
 		logger:            zap.NewNop(),
 	}
 
@@ -96,78 +96,78 @@ func TestApplyAttributes_HostId_CloudHostWithoutContainer(t *testing.T) {
 	require.Equal(t, "original-host-id", hostId.Str())
 }
 
-func TestApplyAttributes_HostId_BiosUuidVsFallbackHostIdScenarios(t *testing.T) {
+func TestApplyAttributes_HostId_BiosUuidVsoverrideHostIdScenarios(t *testing.T) {
 	testCases := map[string]struct {
-		biosUuid       string
-		biosUuidExists bool
-		fallbackHostID string
-		cloudProvider  string
-		containerID    string
-		expectedHostId string
-		description    string
+		biosUuid         string
+		biosUuidExists   bool
+		onPremOverrideID string
+		cloudProvider    string
+		containerID      string
+		expectedHostId   string
+		description      string
 	}{
 		"bios uuid from telemetry exists and not empty - non cloud": {
-			biosUuid:       "12345678-1234-1234-1234-123456789abc",
-			biosUuidExists: true,
-			fallbackHostID: "fallback-id-from-config",
-			cloudProvider:  "",
-			containerID:    "",
-			expectedHostId: "fallback-id-from-config",
-			description:    "Should use fallback host ID from config when both BIOS UUID and fallback host ID are available on non-cloud host",
+			biosUuid:         "12345678-1234-1234-1234-123456789abc",
+			biosUuidExists:   true,
+			onPremOverrideID: "override-id-from-config",
+			cloudProvider:    "",
+			containerID:      "",
+			expectedHostId:   "override-id-from-config",
+			description:      "Should use override host ID from config when both BIOS UUID and override host ID are available on non-cloud host",
 		},
 		"bios uuid from telemetry exists but empty - non cloud": {
-			biosUuid:       "",
-			biosUuidExists: true,
-			fallbackHostID: "fallback-id-from-config",
-			cloudProvider:  "",
-			containerID:    "",
-			expectedHostId: "fallback-id-from-config",
-			description:    "Should use fallback host ID from config when BIOS UUID from telemetry is empty on non-cloud host",
+			biosUuid:         "",
+			biosUuidExists:   true,
+			onPremOverrideID: "override-id-from-config",
+			cloudProvider:    "",
+			containerID:      "",
+			expectedHostId:   "override-id-from-config",
+			description:      "Should use override host ID from config when BIOS UUID from telemetry is empty on non-cloud host",
 		},
 		"bios uuid from telemetry does not exist - non cloud": {
-			biosUuid:       "",
-			biosUuidExists: false,
-			fallbackHostID: "fallback-id-from-config",
-			cloudProvider:  "",
-			containerID:    "",
-			expectedHostId: "fallback-id-from-config",
-			description:    "Should use fallback host ID from config when BIOS UUID doesn't exist in telemetry on non-cloud host",
+			biosUuid:         "",
+			biosUuidExists:   false,
+			onPremOverrideID: "override-id-from-config",
+			cloudProvider:    "",
+			containerID:      "",
+			expectedHostId:   "override-id-from-config",
+			description:      "Should use override host ID from config when BIOS UUID doesn't exist in telemetry on non-cloud host",
 		},
 		"bios uuid from telemetry exists - cloud host without container": {
-			biosUuid:       "12345678-1234-1234-1234-123456789abc",
-			biosUuidExists: true,
-			fallbackHostID: "fallback-id-from-config",
-			cloudProvider:  "aws",
-			containerID:    "",
-			expectedHostId: "original-cloud-host-id",
-			description:    "Should preserve original host ID on cloud host without container, ignoring both BIOS UUID and fallback host ID",
+			biosUuid:         "12345678-1234-1234-1234-123456789abc",
+			biosUuidExists:   true,
+			onPremOverrideID: "override-id-from-config",
+			cloudProvider:    "aws",
+			containerID:      "",
+			expectedHostId:   "original-cloud-host-id",
+			description:      "Should preserve original host ID on cloud host without container, ignoring both BIOS UUID and override host ID",
 		},
 		"bios uuid from telemetry exists - cloud host with container": {
-			biosUuid:       "12345678-1234-1234-1234-123456789abc",
-			biosUuidExists: true,
-			fallbackHostID: "fallback-id-from-config",
-			cloudProvider:  "aws",
-			containerID:    "container-123",
-			expectedHostId: "fallback-id-from-config",
-			description:    "Should use fallback host ID from config on cloud host with container (fallback host ID has precedence over BIOS UUID)",
+			biosUuid:         "12345678-1234-1234-1234-123456789abc",
+			biosUuidExists:   true,
+			onPremOverrideID: "override-id-from-config",
+			cloudProvider:    "aws",
+			containerID:      "container-123",
+			expectedHostId:   "override-id-from-config",
+			description:      "Should use override host ID from config on cloud host with container (override host ID has precedence over BIOS UUID)",
 		},
 		"no bios uuid from telemetry - cloud host with container": {
-			biosUuid:       "",
-			biosUuidExists: false,
-			fallbackHostID: "fallback-id-from-config",
-			cloudProvider:  "aws",
-			containerID:    "container-123",
-			expectedHostId: "fallback-id-from-config",
-			description:    "Should use fallback host ID from config on cloud host with container when no BIOS UUID in telemetry",
+			biosUuid:         "",
+			biosUuidExists:   false,
+			onPremOverrideID: "override-id-from-config",
+			cloudProvider:    "aws",
+			containerID:      "container-123",
+			expectedHostId:   "override-id-from-config",
+			description:      "Should use override host ID from config on cloud host with container when no BIOS UUID in telemetry",
 		},
-		"no fallback host id but bios uuid exists - non cloud": {
-			biosUuid:       "12345678-1234-1234-1234-123456789abc",
-			biosUuidExists: true,
-			fallbackHostID: "",
-			cloudProvider:  "",
-			containerID:    "",
-			expectedHostId: "12345678-1234-1234-1234-123456789abc",
-			description:    "Should use BIOS UUID from telemetry when fallback host ID is not configured on non-cloud host",
+		"no override host id but bios uuid exists - non cloud": {
+			biosUuid:         "12345678-1234-1234-1234-123456789abc",
+			biosUuidExists:   true,
+			onPremOverrideID: "",
+			cloudProvider:    "",
+			containerID:      "",
+			expectedHostId:   "12345678-1234-1234-1234-123456789abc",
+			description:      "Should use BIOS UUID from telemetry when override host ID is not configured on non-cloud host",
 		},
 	}
 
@@ -176,7 +176,7 @@ func TestApplyAttributes_HostId_BiosUuidVsFallbackHostIdScenarios(t *testing.T) 
 			pp := HostAttributesDecorator{
 				IsRunInContainerd: false,
 				ContainerID:       tc.containerID,
-				OnPremOverrideId:  tc.fallbackHostID,
+				OnPremOverrideId:  tc.onPremOverrideID,
 				logger:            zap.NewNop(),
 			}
 
@@ -278,7 +278,7 @@ func TestApplyAttributes_OsType_IsNormalized(t *testing.T) {
 	pp := HostAttributesDecorator{
 		IsRunInContainerd: false,
 		ContainerID:       "",
-		OnPremOverrideId:  "test-fallback-host-id",
+		OnPremOverrideId:  "test-override-host-id",
 		logger:            zap.NewNop(),
 	}
 
@@ -308,7 +308,7 @@ func TestApplyAttributes_HostId_GcpScenarios(t *testing.T) {
 		cloudAccountID        string
 		cloudAvailabilityZone string
 		instanceID            string
-		fallbackHostID        string
+		onPremOverrideID      string
 		expectedHostId        string
 		shouldHaveHostId      bool
 		description           string
@@ -317,7 +317,7 @@ func TestApplyAttributes_HostId_GcpScenarios(t *testing.T) {
 			cloudAccountID:        "my-project-123",
 			cloudAvailabilityZone: "us-central1-a",
 			instanceID:            "instance-456",
-			fallbackHostID:        "fallback-id",
+			onPremOverrideID:      "override-id",
 			expectedHostId:        "my-project-123:us-central1-a:instance-456",
 			shouldHaveHostId:      true,
 			description:           "Should create GCP host ID from project:zone:instance when all attributes are present",
@@ -326,7 +326,7 @@ func TestApplyAttributes_HostId_GcpScenarios(t *testing.T) {
 			cloudAccountID:        "",
 			cloudAvailabilityZone: "us-central1-a",
 			instanceID:            "instance-456",
-			fallbackHostID:        "fallback-id",
+			onPremOverrideID:      "override-id",
 			expectedHostId:        "",
 			shouldHaveHostId:      false,
 			description:           "Should remove host ID when project ID is missing",
@@ -335,7 +335,7 @@ func TestApplyAttributes_HostId_GcpScenarios(t *testing.T) {
 			cloudAccountID:        "my-project-123",
 			cloudAvailabilityZone: "",
 			instanceID:            "instance-456",
-			fallbackHostID:        "fallback-id",
+			onPremOverrideID:      "override-id",
 			expectedHostId:        "",
 			shouldHaveHostId:      false,
 			description:           "Should remove host ID when availability zone is missing",
@@ -344,7 +344,7 @@ func TestApplyAttributes_HostId_GcpScenarios(t *testing.T) {
 			cloudAccountID:        "my-project-123",
 			cloudAvailabilityZone: "us-central1-a",
 			instanceID:            "",
-			fallbackHostID:        "fallback-id",
+			onPremOverrideID:      "override-id",
 			expectedHostId:        "",
 			shouldHaveHostId:      false,
 			description:           "Should remove host ID when instance ID is missing",
@@ -353,7 +353,7 @@ func TestApplyAttributes_HostId_GcpScenarios(t *testing.T) {
 			cloudAccountID:        "",
 			cloudAvailabilityZone: "",
 			instanceID:            "",
-			fallbackHostID:        "fallback-id",
+			onPremOverrideID:      "override-id",
 			expectedHostId:        "",
 			shouldHaveHostId:      false,
 			description:           "Should remove host ID when all GCP attributes are missing",
@@ -365,7 +365,7 @@ func TestApplyAttributes_HostId_GcpScenarios(t *testing.T) {
 			pp := HostAttributesDecorator{
 				IsRunInContainerd: false,
 				ContainerID:       "",
-				OnPremOverrideId:  tc.fallbackHostID,
+				OnPremOverrideId:  tc.onPremOverrideID,
 				logger:            zap.NewNop(),
 			}
 
