@@ -39,7 +39,7 @@ func TestApplyAttributes_HostId_NonCloudHostWithOverrideHostId(t *testing.T) {
 	require.Equal(t, "test-override-host-id", hostId.Str())
 }
 
-func TestApplyAttributes_HostId_NonCloudHostWithoutoverrideHostId(t *testing.T) {
+func TestApplyAttributes_HostId_NonCloudHostWithoutOverrideHostId(t *testing.T) {
 	pp := HostAttributesDecorator{
 		IsRunInContainerd: false,
 		ContainerID:       "",
