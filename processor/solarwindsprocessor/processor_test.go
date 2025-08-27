@@ -374,8 +374,8 @@ func TestProcessorHostDecorationWhenContainerFetchSucceed(t *testing.T) {
 	assert.Equal(t, "client-id-456", val.Str(), "host.id should be set from OnPremOverrideID")
 
 	val, _ = resourceAttrs.Get("host.name")
-	assert.Equal(t, "mock-container-id", val.Str(), "container.id should be set from container provider")
+	assert.Equal(t, "mock-container-id", val.Str(), "host.name should be set from container provider")
 
 	val, _ = resourceAttrs.Get("os.type")
-	assert.Equal(t, "Windows", val.Str(), "os.type should be normalized to 'Linux'")
+	assert.Equal(t, "Windows", val.Str(), "os.type should be normalized to 'Windows'")
 }
