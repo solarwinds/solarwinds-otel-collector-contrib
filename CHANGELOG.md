@@ -1,6 +1,8 @@
 # Changelog
 
 ## vNext
+
+## v0.131.4
 - `solarwindsexporter` has been removed as announced
 - `solarwindsextension` deprecated config options (related to the `solarwindsexporter`) removed
 - Adds [SolarWinds Kubernetes Workload Status Processor](./processor/swok8sworkloadstatusprocessor/README.md) for calculating workload statuses from logs.
