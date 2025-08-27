@@ -299,7 +299,6 @@ func TestProcessorWithNilHostAttributes(t *testing.T) {
 	}
 
 	proc := newTestProcessor(t, cfg, nil)
-	// hostAttributes should be nil when decoration is disabled
 
 	metrics := pmetric.NewMetrics()
 	rm := metrics.ResourceMetrics().AppendEmpty()
@@ -378,4 +377,54 @@ func TestProcessorHostDecorationWhenContainerFetchSucceed(t *testing.T) {
 
 	val, _ = resourceAttrs.Get("os.type")
 	assert.Equal(t, "Windows", val.Str(), "os.type should be normalized to 'Windows'")
+}
+
+func TestProcessorInstantiationWithHostAttributesDecorationDisabled(t *testing.T) {
+	cfg := &Config{
+		ExtensionName:      "test",
+		ResourceAttributes: map[string]string{},
+		HostAttributesDecoration: internal.HostDecoration{
+			Enabled:          false,
+			OnPremOverrideID: "",
+		},
+	}
+
+	proc, err := createProcessor(zaptest.NewLogger(t), cfg)
+	assert.NoError(t, err, "error when creating processor")
+	assert.NotNil(t, proc, "processor is nil")
+
+	metrics := pmetric.NewMetrics()
+	metrics.ResourceMetrics().AppendEmpty()
+	_, err = proc.processMetrics(context.Background(), metrics)
+	assert.NoError(t, err, "processor failed when processing metrics with host decoration disabled")
+}
+
+func TestProcessorInstantiationWithHostAttributesDecorationEnabled(t *testing.T) {
+	cfg := &Config{
+		ExtensionName:      "test",
+		ResourceAttributes: map[string]string{},
+		HostAttributesDecoration: internal.HostDecoration{
+			Enabled:          true,
+			OnPremOverrideID: "override-id-789",
+		},
+	}
+
+	proc, err := createProcessor(zaptest.NewLogger(t), cfg)
+	assert.NoError(t, err, "error when creating processor")
+	assert.NotNil(t, proc, "processor is nil")
+
+	metrics := pmetric.NewMetrics()
+	rm := metrics.ResourceMetrics().AppendEmpty()
+	attrs := rm.Resource().Attributes()
+	attrs.PutStr("os.type", "unix")
+
+	result, err := proc.processMetrics(context.Background(), metrics)
+	assert.NoError(t, err, "processor failed when processing metrics with host decoration enabled")
+
+	resourceAttrs := result.ResourceMetrics().At(0).Resource().Attributes()
+	val, _ := resourceAttrs.Get("host.id")
+	assert.Equal(t, "override-id-789", val.Str(), "host.id should be set from OnPremOverrideID")
+
+	val, _ = resourceAttrs.Get("os.type")
+	assert.Equal(t, "Linux", val.Str(), "os.type should be normalized to 'Linux'")
 }
