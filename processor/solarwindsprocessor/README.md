@@ -52,7 +52,7 @@ Where:
 1. Cloud-specific handling (AWS, GCP)
 2. Configured `on_prem_override_id`
 3. BIOS UUID from incoming telemetry (`host.bios-uuid`)
-4. `host.id` from incoming telemetrys
+4. `host.id` from incoming telemetry
 
 
 ## Resource Attributes
