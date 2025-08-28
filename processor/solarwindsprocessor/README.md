@@ -64,7 +64,7 @@ resource:
 ```
 
 ## Signal Size Monitoring
-Processor monitors the size of incoming signals and logs a warning if any signal exceeds the configured maximum size.
+Processor monitors the size of incoming signals, and logs a warning if any signal exceeds the configured maximum size.
 
 ```yaml
 max_size_mib: 3
