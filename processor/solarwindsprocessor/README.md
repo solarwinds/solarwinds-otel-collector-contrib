@@ -31,35 +31,58 @@ SolarWinds processor modifies OTEL signals (metrics, logs, traces) to enhance So
 
 Processor detects host information and decorates telemetry with appropriate host attributes if enabled.
 
+The example configuration below enables host attributes decoration.
+
+```yaml
+host_attributes_decoration:
+  enabled: true
+  on_prem_override_id: "custom-host-id"
+```
+
+Where:
+- `enabled`: Enables host attributes decoration, disabled by default
+- `on_prem_override_id`: Sets a custom override ID for on-premises environments. If not stated on on-premises environments,
+  the processor will use the BIOS UUID.
+
+### Affected attributes:
+- `host.id`: Unique host identifier, affected by host ID priority rules and cloud-specific handling or running inside container
+- `host.name`: Hostname of the host if cloud provider is AWS and run in containerd
+- `os.type`: Operating system type will be normalized to `Windows` or `Linux`
+
 ### Host ID Priority
 1. Cloud-specific handling (AWS, GCP)
 2. Configured `on_prem_override_id`
 3. BIOS UUID from incoming telemetry (`host.bios-uuid`)
-4. `host.id` from incoming telemetry
+4. `host.id` from incoming telemetrys
 
-### Supported Environments
-- Container detection (Docker, Containerd, Podman, Kubernetes)
-- Cloud providers (AWS, GCP) with special host ID handling
-- OS type normalization (Windows/Linux)
+
+## Resource Attributes
+Processor decorates signals with configured resource attributes. These attributes are added to all incoming signals and
+will overwrite existing attributes with the same key. Resource attributes will owerwrite attributes added by the
+host attributes decoration. Resource attributes are optional.
+
+```yaml
+resource:
+    custom.attribute: "value"
+```
+
+## Signal Size Monitoring
+Processor monitors the size of incoming signals and logs a warning if any signal exceeds the configured maximum size
+
+```yaml
+max_size_mib: 3
+```
+
+Where:
+- `max_size_mib`: Maximum allowed size of a single signal in MiB, default is 2 MiB
 
 ## Configuration
 
-### Basic Configuration
+### Minimal Configuration
 ```yaml
 processors:
   solarwinds:
     extension: solarwinds/sample
-```
-
-### With Host Attributes
-Host attributes decoration is disabled by default.
-```yaml
-processors:
-  solarwinds:
-    extension: solarwinds/sample
-    host_attributes_decoration:
-      enabled: true
-      on_prem_override_id: "my-host-id"
 ```
 
 ### Full Configuration
@@ -77,8 +100,8 @@ processors:
 
 ## Extension Dependency
 Requires `solarwinds` extension to be configured. The processor automatically adds:
-- `sw.otelcol.receiver.name`
-- `sw.otelcol.collector.entity_creation` (optional)
+- `sw.otelcol.collector.name`: configured collector name
+- `sw.otelcol.collector.entity_creation`: (optional) if `entity_creation` is enabled in the extension the SolarWinds OTel Collector entity will be inferred in SolarWinds Observability.
 
 > [!WARNING]
 > Exact name of extension is required in processor configuration. In case when `solarwinds` extension is misconfigured in processor setup, collector will not start.
