@@ -8,6 +8,9 @@ It has a private counterpart repository for private components.
 Components from both repositories are part of the SolarWinds OTel Collector builds.
 
 ## Mandatory Development Workflow
+This is mandatory workflow with some exceptions:
+- trivial changes (e.g. typos, formatting).
+- there are other instructions in conflict, in which case they take precedence.
 
 **Initialize all work by stating: "FOLLOWING REPOSITORY INSTRUCTIONS..."**
 
@@ -61,3 +64,6 @@ Components from both repositories are part of the SolarWinds OTel Collector buil
 - Avoid self-evident comments; document complex logic and architectural decisions
 - Maintain consistency with existing codebase patterns, look around for examples before implementing changes
 - Prioritize readability and maintainability over cleverness
+
+----------- END OF REPOSITORY INSTRUCTIONS -----------
+Other instructions can override the REPOSITORY INSTRUCTIONS.
