@@ -42,3 +42,49 @@ func Test_Example_HowToFillScopeMetrics(t *testing.T) {
 	assert.Equal(t, 2, rm.ScopeMetrics().At(0).Metrics().At(0).Sum().DataPoints().Len(), "Number of data points must fit")
 	assert.Equal(t, int64(1701), rm.ScopeMetrics().At(0).Metrics().At(0).Sum().DataPoints().At(0).IntValue(), "Value must be the same")
 }
+
+func Test_ScopeEmitter_EmptyMetrics_ReturnsEmptyScope(t *testing.T) {
+	// Create an empty scope metrics slice
+	emptyScopeData := pmetric.NewScopeMetricsSlice()
+
+	// Create scope emitter mock that returns empty data
+	scopeEmitter := CreateEmitterMock(
+		&Result{
+			Data:  emptyScopeData,
+			Error: nil,
+		},
+		nil,
+		"test.scope",
+	)
+
+	// Initialize and emit
+	err := scopeEmitter.Init()
+	assert.NoError(t, err, "scope emitter initialization should succeed")
+
+	result := scopeEmitter.Emit()
+	assert.NoError(t, result.Error, "scope emitter should not return error for empty metrics")
+	assert.Equal(t, 0, result.Data.Len(), "scope metrics slice should be empty")
+}
+
+func Test_ScopeEmitter_AllEmptyMetrics_ReturnsEmptyScope(t *testing.T) {
+	// Create an empty scope metrics slice
+	emptyScopeData := pmetric.NewScopeMetricsSlice()
+
+	// Create scope emitter mock that returns empty data
+	scopeEmitter := CreateEmitterMock(
+		&Result{
+			Data:  emptyScopeData,
+			Error: nil,
+		},
+		nil,
+		"test.scope.all.empty",
+	)
+
+	// Initialize and emit
+	err := scopeEmitter.Init()
+	assert.NoError(t, err, "scope emitter initialization should succeed")
+
+	result := scopeEmitter.Emit()
+	assert.NoError(t, result.Error, "scope emitter should not return error when all metrics are empty")
+	assert.Equal(t, 0, result.Data.Len(), "scope metrics slice should be empty when all metrics are empty")
+}

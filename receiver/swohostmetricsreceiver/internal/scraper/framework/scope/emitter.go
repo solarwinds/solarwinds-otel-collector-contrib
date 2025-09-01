@@ -181,7 +181,17 @@ func (s *emitter) assemblyScopeMetricSlice(
 
 	// Setup metrics into scope metric slice.
 	for _, m := range ms {
-		m.MoveAndAppendTo(sm.Metrics())
+		if m.Len() != 0 {
+			m.MoveAndAppendTo(sm.Metrics())
+		}
+	}
+
+	if sm.Metrics().Len() == 0 {
+		s.logger.Debug(
+			"no metrics available for scope after filtering metric slices, returning empty scope metrics slice",
+			zap.String("scope_name", s.scopeName),
+		)
+		return pmetric.NewScopeMetricsSlice(), nil
 	}
 
 	s.logger.Debug(
