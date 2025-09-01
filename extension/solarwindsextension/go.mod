@@ -1,18 +1,18 @@
 module github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension
 
-go 1.24.6
+go 1.25.0
 
 require (
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil v0.131.2
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.131.2
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil v0.131.4
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.131.4
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/collector/component v1.37.0
 	go.opentelemetry.io/collector/component/componenttest v0.131.0
 	go.opentelemetry.io/collector/config/configgrpc v0.131.0
 	go.opentelemetry.io/collector/config/configopaque v1.37.0
-	go.opentelemetry.io/collector/config/configoptional v0.131.0
 	go.opentelemetry.io/collector/config/configtls v1.37.0
 	go.opentelemetry.io/collector/confmap v1.37.0
+	go.opentelemetry.io/collector/consumer v1.37.0
 	go.opentelemetry.io/collector/exporter v0.131.0
 	go.opentelemetry.io/collector/exporter/otlpexporter v0.131.0
 	go.opentelemetry.io/collector/extension v1.37.0
@@ -54,8 +54,8 @@ require (
 	go.opentelemetry.io/collector/config/configcompression v1.37.0 // indirect
 	go.opentelemetry.io/collector/config/configmiddleware v0.131.0 // indirect
 	go.opentelemetry.io/collector/config/confignet v1.37.0 // indirect
+	go.opentelemetry.io/collector/config/configoptional v0.131.0 // indirect
 	go.opentelemetry.io/collector/config/configretry v1.37.0 // indirect
-	go.opentelemetry.io/collector/consumer v1.37.0 // indirect
 	go.opentelemetry.io/collector/consumer/consumererror v0.131.0 // indirect
 	go.opentelemetry.io/collector/consumer/consumererror/xconsumererror v0.131.0 // indirect
 	go.opentelemetry.io/collector/consumer/xconsumer v0.131.0 // indirect

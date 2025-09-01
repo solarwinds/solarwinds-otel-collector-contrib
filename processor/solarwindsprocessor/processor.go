@@ -20,7 +20,8 @@ import (
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/attributesdecorator"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/extensionfinder"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/container"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/solarwindsprocessor/internal"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/pdata/plog/plogotlp"
@@ -32,24 +33,22 @@ import (
 )
 
 type solarwindsprocessor struct {
-	logger *zap.Logger
-	cfg    *Config
+	logger            *zap.Logger
+	cfg               *Config
+	hostAttributes    *internal.HostAttributesDecorator
+	extensionProvider ExtensionProvider
 }
 
 func (p *solarwindsprocessor) start(ctx context.Context, host component.Host) error {
-	swiExtension, err := extensionfinder.FindExtension[*solarwindsextension.SolarwindsExtension](
-		p.logger,
-		p.cfg.ExtensionName,
-		host,
-	)
+	_, err := p.extensionProvider.Init(p.logger, p.cfg.ExtensionName, host)
 	if err != nil {
-		msg := fmt.Sprintf("failed to find Solarwinds Extension %q", p.cfg.ExtensionName)
-		p.logger.Error(msg, zap.Error(err))
-		return fmt.Errorf("%s: %w", msg, err)
+		return fmt.Errorf("failed to get Solarwinds extension %q: %w", p.cfg.ExtensionName, err)
 	}
 
-	// Adjust configuration by fetching values from the extension.
-	p.adjustConfigurationByExtension(swiExtension)
+	err = p.extensionProvider.SetAttributes(&p.cfg.ResourceAttributes)
+	if err != nil {
+		return fmt.Errorf("failed to decor resource attributes by extension properties: %w", err)
+	}
 
 	return nil
 }
@@ -115,7 +114,9 @@ func (p *solarwindsprocessor) processLogs(
 	ctx context.Context,
 	logs plog.Logs,
 ) (plog.Logs, error) {
+	attributesdecorator.DecorateResourceAttributesByFunction(logs.ResourceLogs(), p.hostAttributes.ApplyAttributes)
 	attributesdecorator.DecorateResourceAttributes(logs.ResourceLogs(), p.cfg.ResourceAttributes)
+
 	err := notifySignalSizeLimitExceeded(logs, p.cfg.MaxSizeMib, p.logger)
 	if err != nil {
 		msg := "failed to notify logs size limit exceeded"
@@ -129,7 +130,9 @@ func (p *solarwindsprocessor) processMetrics(
 	ctx context.Context,
 	metrics pmetric.Metrics,
 ) (pmetric.Metrics, error) {
+	attributesdecorator.DecorateResourceAttributesByFunction(metrics.ResourceMetrics(), p.hostAttributes.ApplyAttributes)
 	attributesdecorator.DecorateResourceAttributes(metrics.ResourceMetrics(), p.cfg.ResourceAttributes)
+
 	err := notifySignalSizeLimitExceeded(metrics, p.cfg.MaxSizeMib, p.logger)
 	if err != nil {
 		msg := "failed to notify metrics size limit exceeded"
@@ -143,7 +146,9 @@ func (p *solarwindsprocessor) processTraces(
 	ctx context.Context,
 	traces ptrace.Traces,
 ) (ptrace.Traces, error) {
+	attributesdecorator.DecorateResourceAttributesByFunction(traces.ResourceSpans(), p.hostAttributes.ApplyAttributes)
 	attributesdecorator.DecorateResourceAttributes(traces.ResourceSpans(), p.cfg.ResourceAttributes)
+
 	err := notifySignalSizeLimitExceeded(traces, p.cfg.MaxSizeMib, p.logger)
 	if err != nil {
 		msg := "failed to notify traces size limit exceeded"
@@ -173,8 +178,15 @@ func checkConfig(cfg component.Config) (*Config, error) {
 }
 
 func newProcessor(logger *zap.Logger, cfg *Config) *solarwindsprocessor {
+	var hostAttributes *internal.HostAttributesDecorator
+	if cfg.HostAttributesDecoration.Enabled == true {
+		hostAttributes = internal.NewHostAttributes(cfg.HostAttributesDecoration, container.NewProvider(logger), logger)
+	}
+
 	return &solarwindsprocessor{
-		logger: logger,
-		cfg:    cfg,
+		logger:            logger,
+		cfg:               cfg,
+		hostAttributes:    hostAttributes,
+		extensionProvider: NewExtensionProvider(),
 	}
 }

@@ -1,12 +1,13 @@
 module github.com/solarwinds/solarwinds-otel-collector-contrib/processor/solarwindsprocessor
 
-go 1.24.6
+go 1.25.0
 
 require (
 	github.com/google/go-cmp v0.7.0
-	github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension v0.131.2
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/attributesdecorator v0.131.2
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/extensionfinder v0.131.2
+	github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension v0.131.4
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/attributesdecorator v0.131.4
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/container v0.131.4
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/extensionfinder v0.131.4
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/collector/component v1.37.0
 	go.opentelemetry.io/collector/component/componenttest v0.131.0
@@ -46,7 +47,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
 	github.com/mostynb/go-grpc-compression v1.2.3 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.131.2 // indirect
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.131.4 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/collector v0.131.0 // indirect
 	go.opentelemetry.io/collector/client v1.37.0 // indirect
@@ -91,7 +92,7 @@ require (
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/crypto v0.39.0 // indirect
 	golang.org/x/net v0.41.0 // indirect
-	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/sys v0.35.0 // indirect
 	golang.org/x/text v0.26.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250603155806-513f23925822 // indirect
 	google.golang.org/grpc v1.74.2 // indirect
@@ -102,6 +103,7 @@ require (
 replace (
 	github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension => ../../extension/solarwindsextension
 	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/attributesdecorator => ../../pkg/attributesdecorator
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/container => ../../pkg/container
 	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/extensionfinder => ../../pkg/extensionfinder
 	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil => ../../pkg/testutil
 	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version => ../../pkg/version

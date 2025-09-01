@@ -1,8 +1,19 @@
 # Changelog
 
 ## vNext
+- `solarwindsprocessor` Add decoration of host resource attributes
 
+## v0.131.4
+- `solarwindsexporter` has been removed as announced
+- `solarwindsextension` deprecated config options (related to the `solarwindsexporter`) removed
+- Adds [SolarWinds Kubernetes Workload Status Processor](./processor/swok8sworkloadstatusprocessor/README.md) for calculating workload statuses from logs.
+
+## v0.131.3
+- Updates golang to 1.25.0
 - Metadata has been fixed, and all component status tables are now generated from it.
+  - Components affected: `solarwindsextension`, `solarwindsprocessor`, `solarwindsentityconnector`, `k8seventgenerationprocessor`, `swok8sworkloadtypeprocessor`, `swohostmetricsreceiver`, `swok8sobjectsreceiver`
+- Adding OtelInstrumentation specific lookups into `swok8sworkloadtypeprocessor`.
+- Fixing resolution of kubernetes Services in swok8sworkloadtypes in `swok8sworkloadtypeprocessor`.
 
 ## v0.131.2
 - Updates golang to 1.24.6

@@ -1,0 +1,4 @@
+grpc:
+  endpoint: "test-url:0"
+  headers:
+    Authorization: "Bearer test-token"

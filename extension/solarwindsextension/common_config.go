@@ -15,14 +15,10 @@
 package solarwindsextension
 
 import (
-	"go.opentelemetry.io/collector/config/configopaque"
-
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension/internal"
 )
 
 type CommonConfig interface {
-	Url() (string, error)
-	Token() configopaque.String
 	CollectorName() string
 	WithoutEntity() bool
 }
@@ -33,14 +29,6 @@ var _ CommonConfig = (*commonConfig)(nil)
 
 func newCommonConfig(cfg *internal.Config) *commonConfig {
 	return &commonConfig{cfg: cfg}
-}
-
-func (c *commonConfig) Url() (string, error) {
-	return c.cfg.EndpointUrl()
-}
-
-func (c *commonConfig) Token() configopaque.String {
-	return c.cfg.IngestionToken
 }
 
 func (c *commonConfig) CollectorName() string {
