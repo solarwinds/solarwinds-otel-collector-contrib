@@ -34,39 +34,59 @@ func Test_Initialize_NotFailing(t *testing.T) {
 }
 
 type cpuProviderMock struct {
-	err error
+	err             error
+	emptyProcessors bool
 }
 
 func (p *cpuProviderMock) Provide() <-chan cpu.Container {
-	ch := make(chan cpu.Container, 3)
-	ch <- cpu.Container{
-		Processors: []cpu.Processor{
-			{
-				Name:         "Processor 1",
-				Manufacturer: "Manufacturer 1",
-				Speed:        123,
-				Cores:        4,
-				Threads:      12,
-				Model:        "78",
-				Stepping:     "2",
+	ch := make(chan cpu.Container, 1)
+
+	if p.emptyProcessors {
+		ch <- cpu.Container{
+			Processors: []cpu.Processor{}, // Empty processors slice
+			Error:      p.err,
+		}
+	} else {
+		ch <- cpu.Container{
+			Processors: []cpu.Processor{
+				{
+					Name:         "Processor 1",
+					Manufacturer: "Manufacturer 1",
+					Speed:        123,
+					Cores:        4,
+					Threads:      12,
+					Model:        "78",
+					Stepping:     "2",
+				},
+				{
+					Name:         "Processor 2",
+					Manufacturer: "Manufacturer 2",
+					Speed:        456,
+					Cores:        1,
+					Threads:      2,
+					Model:        "76",
+					Stepping:     "1",
+				},
 			},
-			{
-				Name:         "Processor 2",
-				Manufacturer: "Manufacturer 2",
-				Speed:        456,
-				Cores:        1,
-				Threads:      2,
-				Model:        "76",
-				Stepping:     "1",
-			},
-		},
-		Error: p.err,
+			Error: p.err,
+		}
 	}
 	close(ch)
 	return ch
 }
 
 var _ providers.Provider[cpu.Container] = (*cpuProviderMock)(nil)
+
+func TestEmitter_EmptyProcessors_ReturnsEmptySlice(t *testing.T) {
+	cpuProvider := &cpuProviderMock{
+		emptyProcessors: true,
+	}
+	sut := createCPUEmitter(cpuProvider)
+
+	res := sut.Emit()
+	assert.NoError(t, res.Error, "emit should not return error for empty processors")
+	assert.Equal(t, 0, res.Data.Len(), "metric slice should be empty when no processors are available")
+}
 
 func TestEmitter_GetEmittingFunction_ReturnsEmptySliceAndErrorWhenEmitFails(t *testing.T) {
 	cpuProvider := &cpuProviderMock{

@@ -73,6 +73,12 @@ func (*emitter) Name() string {
 }
 
 func (e *emitter) constructMetricSlice(processors []cpuProvider.Processor) (pmetric.MetricSlice, error) {
+
+	// If there are no processors, return an empty metric slice
+	if len(processors) == 0 {
+		return pmetric.NewMetricSlice(), nil
+	}
+
 	ms := pmetric.NewMetricSlice()
 	ms.EnsureCapacity(1)
 

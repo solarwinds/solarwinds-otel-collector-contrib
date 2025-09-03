@@ -86,6 +86,12 @@ func (*emitter) Name() string {
 }
 
 func (e *emitter) constructMetricSlice(users []loggedusers.User) (pmetric.MetricSlice, error) {
+
+	// If there are no users, return an empty metric slice
+	if len(users) == 0 {
+		return pmetric.NewMetricSlice(), nil
+	}
+
 	ms := pmetric.NewMetricSlice()
 	ms.EnsureCapacity(1)
 
@@ -112,7 +118,7 @@ func (e *emitter) constructMetricSlice(users []loggedusers.User) (pmetric.Metric
 		if err != nil {
 			return pmetric.NewMetricSlice(),
 				fmt.Errorf(
-					"storing attributes into %v dapapoint failed: %w",
+					"storing attributes into %v datapoint failed: %w",
 					attrs,
 					err,
 				)

@@ -112,6 +112,21 @@ func Test_GetEmittingFunction_emit_WhenReceivedErrorEmitsEmptyMetricAndError(t *
 	assert.Equal(t, expectedError, er.Error, "Emitter must fail with %+v", expectedError)
 }
 
+func Test_GetEmittingFunction_emit_WhenNoUsersLoggedInEmitsEmptyMetric(t *testing.T) {
+	usersProvider := &usersProviderMock{
+		Data: loggedusers.Data{
+			Users: []loggedusers.User{}, // Empty users slice - no one logged in
+			Error: nil,
+		},
+	}
+
+	sut := createMetricEmitter(usersProvider)
+
+	er := sut.Emit()
+	assert.NoError(t, er.Error, "should not return error when no users are logged in")
+	assert.Equal(t, 0, er.Data.Len(), "metric slice should be empty when no users are logged in")
+}
+
 type usersProviderMock struct {
 	Data loggedusers.Data
 }
