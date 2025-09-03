@@ -3,6 +3,7 @@
 ## vNext
 
 ## v0.131.6
+- `pkg/container` Fix module name in go.mod
 
 ## v0.131.5
 - `swohostmetricsreceiver` Add handling for empty metrics in scope emitter
