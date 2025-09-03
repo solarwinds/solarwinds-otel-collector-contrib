@@ -1,6 +1,9 @@
 # Changelog
 
 ## vNext
+
+## v0.131.5
+- `swohostmetricsreceiver` Add handling for empty metrics in scope emitter
 - `solarwindsprocessor` Add decoration of host resource attributes
 
 ## v0.131.4
