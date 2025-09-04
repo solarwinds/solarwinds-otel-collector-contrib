@@ -17,6 +17,18 @@ resource_attributes:
     enabled: false
     description: "Defines if collector entity should be created from signal. Value is taken from `solarwinds` extension."
     type: string
+  host.id:
+    enabled: false
+    description: "Unique host identifier. Resolution follows the priority rules below and may also be adjusted based on cloud environment and containerization."
+    type: string
+  host.name:
+    enabled: false
+    description: "Host name. On AWS when running in containerd, replaced with the container ID to align with other monitoring components."
+    type: string
+  os.type:
+    enabled: false
+    description: "Operating system type. Normalized to `Windows` or `Linux` (anything not equal to Windows becomes `Linux`)."
+    type: string
 
 tests:
   config:
