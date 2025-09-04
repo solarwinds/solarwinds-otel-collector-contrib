@@ -31,9 +31,9 @@ type Config struct {
 	// When maximum size is set to zero, no limit check is performed.
 	MaxSizeMib int `mapstructure:"max_size_mib,omitempty"`
 	// Resource attributes to be added to the processed signals.
-	ResourceAttributes            map[string]string            `mapstructure:"resource,omitempty"`
-	CollectorAttributesDecoration internal.CollectorDecoration `mapstructure:"collector_attributes_decoration,omitempty"`
-	HostAttributesDecoration      internal.HostDecoration      `mapstructure:"host_attributes_decoration,omitempty"`
+	ResourceAttributes            map[string]string       `mapstructure:"resource,omitempty"`
+	CollectorAttributesDecoration CollectorDecoration     `mapstructure:"collector_attributes_decoration,omitempty"`
+	HostAttributesDecoration      internal.HostDecoration `mapstructure:"host_attributes_decoration,omitempty"`
 }
 
 func (c *Config) Validate() error {
