@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/attributesdecorator"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/container"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/solarwindsprocessor/internal"
@@ -52,20 +51,6 @@ func (p *solarwindsprocessor) start(ctx context.Context, host component.Host) er
 	}
 
 	return nil
-}
-
-func (p *solarwindsprocessor) adjustConfigurationByExtension(
-	swiExtension *solarwindsextension.SolarwindsExtension,
-) {
-	extCfg := swiExtension.GetCommonConfig()
-
-	// Without entity flag.
-	if !extCfg.WithoutEntity() {
-		p.cfg.ResourceAttributes[solarwindsextension.EntityCreation] = solarwindsextension.EntityCreationValue
-	}
-
-	// Collector name.
-	p.cfg.ResourceAttributes[solarwindsextension.CollectorNameAttribute] = extCfg.CollectorName()
 }
 
 func notifySignalSizeLimitExceeded(signal any, limit int, logger *zap.Logger) error {
