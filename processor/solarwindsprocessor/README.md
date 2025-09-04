@@ -28,6 +28,31 @@ SolarWinds processor adjusts OTel signals (metrics, logs, traces) to improve Sol
 - Resource attributes: adds configured attributes to all signals
 - Signal size monitoring: logs a warning when signals exceed configured size
 
+## Configuration
+
+### Minimal Configuration
+```yaml
+processors:
+  solarwinds:
+    collector_attributes_decoration:
+      extension: solarwinds/sample
+```
+
+### Full Configuration
+```yaml
+processors:
+  solarwinds:
+    max_size_mib: 3
+    collector_attributes_decoration:
+      enabled: true
+      extension: solarwinds/sample
+    host_attributes_decoration:
+      enabled: true
+      on_prem_override_id: "custom-host-id"
+    resource:
+      custom.attribute: "value"
+```
+
 ## Collector Attributes Decoration
 
 Processor provides collector-specific decorations and manages SolarWinds extension integration when enabled.
@@ -96,28 +121,3 @@ max_size_mib: 3
 
 Where:
 - `max_size_mib`: Maximum allowed size of a single signal in MiB (default: 2 MiB)
-
-## Configuration
-
-### Minimal Configuration
-```yaml
-processors:
-  solarwinds:
-    collector_attributes_decoration:
-      extension: solarwinds/sample
-```
-
-### Full Configuration
-```yaml
-processors:
-  solarwinds:
-    max_size_mib: 3
-    collector_attributes_decoration:
-      enabled: true
-      extension: solarwinds/sample
-    host_attributes_decoration:
-      enabled: true
-      on_prem_override_id: "custom-host-id"
-    resource:
-      custom.attribute: "value"
-```
