@@ -39,6 +39,10 @@ type solarwindsprocessor struct {
 }
 
 func (p *solarwindsprocessor) start(ctx context.Context, host component.Host) error {
+	if p.extensionProvider == nil {
+		return nil
+	}
+
 	extensionName := p.cfg.GetExtensionName()
 	_, err := p.extensionProvider.Init(p.logger, extensionName, host)
 	if err != nil {
@@ -165,14 +169,18 @@ func checkConfig(cfg component.Config) (*Config, error) {
 
 func newProcessor(logger *zap.Logger, cfg *Config) *solarwindsprocessor {
 	var hostAttributes *internal.HostAttributesDecorator
-	if cfg.HostAttributesDecoration.Enabled == true {
+	if cfg.HostAttributesDecoration.Enabled {
 		hostAttributes = internal.NewHostAttributes(cfg.HostAttributesDecoration, container.NewProvider(logger), logger)
+	}
+	var extensionProvider ExtensionProvider
+	if cfg.CollectorAttributesDecoration.Enabled {
+		extensionProvider = NewExtensionProvider()
 	}
 
 	return &solarwindsprocessor{
 		logger:            logger,
 		cfg:               cfg,
 		hostAttributes:    hostAttributes,
-		extensionProvider: NewExtensionProvider(),
+		extensionProvider: extensionProvider,
 	}
 }
