@@ -32,7 +32,5 @@ resource_attributes:
 
 tests:
   config:
-    # This additional setup needs to be available to pass component tests.
-    extension: solarwindsextension
-  # Skipped because the exporter requires solarwindsextension to run.
-  skip_lifecycle: true
+    collector_attributes_decoration:
+      enabled: false
