@@ -38,7 +38,7 @@ type Config struct {
 
 func (c *Config) Validate() error {
 	// TODO: Move the validation to CollectorDecoration.Validate() when the deprecated field removed.
-	if c.GetExtensionName() == "" {
+	if c.CollectorAttributesDecoration.Enabled && c.GetExtensionName() == "" {
 		return fmt.Errorf("invalid configuration: 'extension' must be set either in 'collector_attributes_decoration' or in root config")
 	}
 
