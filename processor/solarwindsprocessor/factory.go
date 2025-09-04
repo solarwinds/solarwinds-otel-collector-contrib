@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/solarwindsprocessor/internal"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/solarwindsprocessor/internal/metadata"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
@@ -37,8 +38,9 @@ func NewFactory() processor.Factory {
 
 func createDefaultConfig() component.Config {
 	return &Config{
-		MaxSizeMib:         6,
-		ResourceAttributes: make(map[string]string),
+		MaxSizeMib:                    6,
+		ResourceAttributes:            make(map[string]string),
+		CollectorAttributesDecoration: internal.CollectorDecoration{Enabled: true},
 	}
 }
 

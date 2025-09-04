@@ -40,9 +40,10 @@ type solarwindsprocessor struct {
 }
 
 func (p *solarwindsprocessor) start(ctx context.Context, host component.Host) error {
-	_, err := p.extensionProvider.Init(p.logger, p.cfg.ExtensionName, host)
+	extensionName := p.cfg.GetExtensionName()
+	_, err := p.extensionProvider.Init(p.logger, extensionName, host)
 	if err != nil {
-		return fmt.Errorf("failed to get Solarwinds extension %q: %w", p.cfg.ExtensionName, err)
+		return fmt.Errorf("failed to get Solarwinds extension %q: %w", extensionName, err)
 	}
 
 	err = p.extensionProvider.SetAttributes(&p.cfg.ResourceAttributes)
