@@ -24,8 +24,23 @@ SolarWinds processor adjusts OTel signals (metrics, logs, traces) to improve Sol
 
 ## Features
 - Host attributes decoration: determines and applies host identifiers and related attributes for proper entity creation in SolarWinds Observability SaaS platform
+- Collector attributes decoration: configures collector-specific attributes and SolarWinds extension integration
 - Resource attributes: adds configured attributes to all signals
 - Signal size monitoring: logs a warning when signals exceed configured size
+
+## Collector Attributes Decoration
+
+Processor provides collector-specific decorations and manages SolarWinds extension integration when enabled.
+
+```yaml
+collector_attributes_decoration:
+  enabled: true
+  extension: solarwinds/sample
+```
+
+Where:
+- `enabled`: Enables collector attributes decoration (enabled by default)
+- `extension`: Identifies a SolarWinds Extension to use for obtaining required configuration
 
 ## Host Attributes Decoration
 
@@ -79,15 +94,18 @@ Where:
 ```yaml
 processors:
   solarwinds:
-    extension: solarwinds/sample
+    collector_attributes_decoration:
+      extension: solarwinds/sample
 ```
 
 ### Full Configuration
 ```yaml
 processors:
   solarwinds:
-    extension: solarwinds/sample
     max_size_mib: 3
+    collector_attributes_decoration:
+      enabled: true
+      extension: solarwinds/sample
     host_attributes_decoration:
       enabled: true
       on_prem_override_id: "custom-host-id"
@@ -96,7 +114,8 @@ processors:
 ```
 
 ## Extension Dependency
-Requires `solarwinds` extension to be configured. The processor automatically adds:
+Requires `solarwinds` extension to be configured in `collector_attributes_decoration.extension` by default. Can be disabled by setting `collector_attributes_decoration.enabled` to `false`.
+The processor automatically adds:
 - `sw.otelcol.collector.name`: configured collector name
 - `sw.otelcol.collector.entity_creation`: (optional) when entity inference is enabled in the extension, the SolarWinds OTel Collector entity will be inferred in SolarWinds Observability.
 
