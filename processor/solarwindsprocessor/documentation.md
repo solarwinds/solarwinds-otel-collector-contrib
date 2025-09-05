@@ -6,5 +6,8 @@
 
 | Name | Description | Values | Enabled |
 | ---- | ----------- | ------ | ------- |
+| host.id | Unique host identifier. Resolution follows the priority rules below and may also be adjusted based on cloud environment and containerization. | Any Str | false |
+| host.name | Host name. On AWS when running in containerd, replaced with the container ID to align with other monitoring components. | Any Str | false |
+| os.type | Operating system type. Normalized to `Windows` or `Linux` (anything not equal to Windows becomes `Linux`). | Any Str | false |
 | sw.otelcol.collector.entity_creation | Defines if collector entity should be created from signal. Value is taken from `solarwinds` extension. | Any Str | false |
 | sw.otelcol.collector.name | SolarWinds OTEL Collector name. Value is taken from `solarwinds` extension. | Any Str | true |

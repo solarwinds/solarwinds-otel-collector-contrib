@@ -21,6 +21,27 @@ func NewResourceBuilder(rac ResourceAttributesConfig) *ResourceBuilder {
 	}
 }
 
+// SetHostID sets provided value as "host.id" attribute.
+func (rb *ResourceBuilder) SetHostID(val string) {
+	if rb.config.HostID.Enabled {
+		rb.res.Attributes().PutStr("host.id", val)
+	}
+}
+
+// SetHostName sets provided value as "host.name" attribute.
+func (rb *ResourceBuilder) SetHostName(val string) {
+	if rb.config.HostName.Enabled {
+		rb.res.Attributes().PutStr("host.name", val)
+	}
+}
+
+// SetOsType sets provided value as "os.type" attribute.
+func (rb *ResourceBuilder) SetOsType(val string) {
+	if rb.config.OsType.Enabled {
+		rb.res.Attributes().PutStr("os.type", val)
+	}
+}
+
 // SetSwOtelcolCollectorEntityCreation sets provided value as "sw.otelcol.collector.entity_creation" attribute.
 func (rb *ResourceBuilder) SetSwOtelcolCollectorEntityCreation(val string) {
 	if rb.config.SwOtelcolCollectorEntityCreation.Enabled {

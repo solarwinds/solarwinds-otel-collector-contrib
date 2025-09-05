@@ -27,12 +27,24 @@ func (rac *ResourceAttributeConfig) Unmarshal(parser *confmap.Conf) error {
 
 // ResourceAttributesConfig provides config for solarwinds resource attributes.
 type ResourceAttributesConfig struct {
+	HostID                           ResourceAttributeConfig `mapstructure:"host.id"`
+	HostName                         ResourceAttributeConfig `mapstructure:"host.name"`
+	OsType                           ResourceAttributeConfig `mapstructure:"os.type"`
 	SwOtelcolCollectorEntityCreation ResourceAttributeConfig `mapstructure:"sw.otelcol.collector.entity_creation"`
 	SwOtelcolCollectorName           ResourceAttributeConfig `mapstructure:"sw.otelcol.collector.name"`
 }
 
 func DefaultResourceAttributesConfig() ResourceAttributesConfig {
 	return ResourceAttributesConfig{
+		HostID: ResourceAttributeConfig{
+			Enabled: false,
+		},
+		HostName: ResourceAttributeConfig{
+			Enabled: false,
+		},
+		OsType: ResourceAttributeConfig{
+			Enabled: false,
+		},
 		SwOtelcolCollectorEntityCreation: ResourceAttributeConfig{
 			Enabled: false,
 		},

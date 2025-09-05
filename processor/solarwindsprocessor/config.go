@@ -23,6 +23,7 @@ import (
 type Config struct {
 	// Extension identifies a Solarwinds Extension to
 	// use for obtaining required configuration.
+	// Deprecated: Use CollectorAttributesDecoration.ExtensionName instead.
 	ExtensionName string `mapstructure:"extension"`
 	// Limit for maximum size (in MiB) of the serialized signal payload.
 	// When maximum size is set greater to zero, limit check on serialized content is
@@ -30,17 +31,30 @@ type Config struct {
 	// When maximum size is set to zero, no limit check is performed.
 	MaxSizeMib int `mapstructure:"max_size_mib,omitempty"`
 	// Resource attributes to be added to the processed signals.
-	ResourceAttributes       map[string]string       `mapstructure:"resource,omitempty"`
-	HostAttributesDecoration internal.HostDecoration `mapstructure:"host_attributes_decoration,omitempty"`
+	ResourceAttributes            map[string]string       `mapstructure:"resource,omitempty"`
+	CollectorAttributesDecoration CollectorDecoration     `mapstructure:"collector_attributes_decoration,omitempty"`
+	HostAttributesDecoration      internal.HostDecoration `mapstructure:"host_attributes_decoration,omitempty"`
 }
 
 func (c *Config) Validate() error {
-	if c.ExtensionName == "" {
-		return fmt.Errorf("%s", "invalid configuration: 'extension' must be set")
+	// TODO: Move the validation to CollectorDecoration.Validate() when the deprecated field removed.
+	if c.CollectorAttributesDecoration.Enabled && c.GetExtensionName() == "" {
+		return fmt.Errorf("invalid configuration: 'extension' must be set either in 'collector_attributes_decoration' or in root config")
 	}
+
 	if c.MaxSizeMib < 0 {
 		return fmt.Errorf("%s: %d", "invalid configuration: 'max_size_mib' must be greater than or equal to zero", c.MaxSizeMib)
 	}
 
 	return nil
+}
+
+// GetExtensionName returns the extension name from either
+// the CollectorAttributesDecoration or the deprecated field.
+// TODO: Remove this method when the deprecated field is removed.
+func (c *Config) GetExtensionName() string {
+	if c.CollectorAttributesDecoration.ExtensionName != "" {
+		return c.CollectorAttributesDecoration.ExtensionName
+	}
+	return c.ExtensionName
 }
