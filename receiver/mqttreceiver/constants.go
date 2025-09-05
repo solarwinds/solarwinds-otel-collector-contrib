@@ -1,0 +1,69 @@
+package mqttreceiver
+
+import "time"
+
+// MQTT configuration constants
+const (
+	// QoSLevel defines the MQTT Quality of Service level
+	QoSLevel = 1
+
+	// PingTopic is the topic used for health check pings
+	PingTopic = "ping"
+
+	// PingInterval defines how often to send ping messages
+	PingInterval = 10 * time.Second
+)
+
+// Status constants for broker connection states
+const (
+	StatusOK               = "OK"
+	StatusConnectionFailed = "Connection Failed"
+	StatusRoundtripFailed  = "Roundtrip Failed"
+	StatusSubscribeFailed  = "Subscribe Failed"
+)
+
+// BrokerMetrics contains all predefined metric definitions
+var brokerMetrics = []*Metric{
+	{
+		Topic: "$SYS/broker/clients/connected",
+		Name:  "ClientsConnected",
+		Unit:  "count",
+		Desc:  "Clients Connected",
+		Type:  "int",
+	},
+	{
+		Topic: "$SYS/broker/subscriptions/count",
+		Name:  "ActiveSubscriptions",
+		Unit:  "count",
+		Desc:  "Active Subscriptions",
+		Type:  "int",
+	},
+	{
+		Topic: "$SYS/broker/load/bytes/received/1min",
+		Name:  "BytesReceivedPerMinute",
+		Unit:  "bytesperminute",
+		Desc:  "Bytes received per minute",
+		Type:  "float",
+	},
+	{
+		Topic: "$SYS/broker/load/bytes/sent/1min",
+		Name:  "BytesSentPerMinute",
+		Unit:  "bytesperminute",
+		Desc:  "Bytes sent per minute",
+		Type:  "float",
+	},
+	{
+		Topic: "$SYS/broker/load/messages/received/1min",
+		Name:  "MessagesReceivedPerMinute",
+		Unit:  "messagesperminute",
+		Desc:  "Messages received per minute",
+		Type:  "float",
+	},
+	{
+		Topic: "$SYS/broker/load/messages/sent/1min",
+		Name:  "MessagesSentPerMinute",
+		Unit:  "messagesperminute",
+		Desc:  "Messages sent per minute",
+		Type:  "float",
+	},
+}
