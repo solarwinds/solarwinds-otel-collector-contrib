@@ -1659,6 +1659,353 @@ func TestServiceAddressLookup(t *testing.T) {
 	}
 }
 
+func TestProcessorMetricsPipelineWhenSearchingByAddressWithOtelLabels(t *testing.T) {
+
+	testPodWithLabels := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test_pod",
+			Namespace: "test_pod_namespace",
+			Labels: map[string]string{
+				"app.kubernetes.io/name":    "test_pod-label-name",
+				"app.kubernetes.io/part-of": "test_pod-label-namespace",
+			},
+		},
+	}
+	testPodWithAnnotations := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test_pod",
+			Namespace: "test_pod_namespace",
+			Annotations: map[string]string{
+				"resource.opentelemetry.io/service.name":      "test_pod-annotation-name",
+				"resource.opentelemetry.io/service.namespace": "test_pod-annotation-namespace",
+			},
+		},
+	}
+
+	tests := []struct {
+		name                string
+		existingPods        []*corev1.Pod
+		workloadMappings    []*K8sWorkloadMappingConfig
+		receivedMetricAttrs map[string]any
+		expectedMetricAttrs map[string]any
+	}{
+		{
+			name:         "mapping matches existing service by labels - <servicenamefromlabel.namespacefromlabel> only",
+			existingPods: []*corev1.Pod{testPodWithLabels},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:           "src_address",
+					WorkloadTypeAttr:      "src_workload_type",
+					WorkloadNameAttr:      "src_workload_name",
+					WorkloadNamespaceAttr: "src_workload_namespace",
+					ExpectedTypes:         []string{"pods"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address": testPodWithLabels.Labels["app.kubernetes.io/name"] + "." + testPodWithLabels.Labels["app.kubernetes.io/part-of"],
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address":            testPodWithLabels.Labels["app.kubernetes.io/name"] + "." + testPodWithLabels.Labels["app.kubernetes.io/part-of"],
+				"src_workload_name":      testPodWithLabels.Name,
+				"src_workload_namespace": testPodWithLabels.Namespace,
+				"src_workload_type":      "Pod",
+			},
+		},
+		{
+			name:         "mapping matches existing pod by annotations - <podnamefromannotation.namespacefromannotation> only",
+			existingPods: []*corev1.Pod{testPodWithAnnotations},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:           "src_address",
+					WorkloadTypeAttr:      "src_workload_type",
+					WorkloadNameAttr:      "src_workload_name",
+					WorkloadNamespaceAttr: "src_workload_namespace",
+					ExpectedTypes:         []string{"pods"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address": testPodWithAnnotations.Annotations["resource.opentelemetry.io/service.name"] + "." + testPodWithAnnotations.Annotations["resource.opentelemetry.io/service.namespace"],
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address":            testPodWithAnnotations.Annotations["resource.opentelemetry.io/service.name"] + "." + testPodWithAnnotations.Annotations["resource.opentelemetry.io/service.namespace"],
+				"src_workload_name":      testPodWithAnnotations.Name,
+				"src_workload_namespace": testPodWithAnnotations.Namespace,
+				"src_workload_type":      "Pod",
+			},
+		},
+		{
+			name:         "mapping matches existing pod by labels - <http://podnamefromlabel.namespacefromlabel:8080> only",
+			existingPods: []*corev1.Pod{testPodWithLabels},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:           "src_address",
+					WorkloadTypeAttr:      "src_workload_type",
+					WorkloadNameAttr:      "src_workload_name",
+					WorkloadNamespaceAttr: "src_workload_namespace",
+					ExpectedTypes:         []string{"pods"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address": "http://" + testPodWithLabels.Labels["app.kubernetes.io/name"] + "." + testPodWithLabels.Labels["app.kubernetes.io/part-of"] + ":8080",
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address":            "http://" + testPodWithLabels.Labels["app.kubernetes.io/name"] + "." + testPodWithLabels.Labels["app.kubernetes.io/part-of"] + ":8080",
+				"src_workload_name":      testPodWithLabels.Name,
+				"src_workload_namespace": testPodWithLabels.Namespace,
+				"src_workload_type":      "Pod",
+			},
+		},
+		{
+			name:         "mapping matches existing pod by annotations - <http://podnamefromannotation.namespacefromannotation:8080> only",
+			existingPods: []*corev1.Pod{testPodWithAnnotations},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:           "src_address",
+					WorkloadTypeAttr:      "src_workload_type",
+					WorkloadNameAttr:      "src_workload_name",
+					WorkloadNamespaceAttr: "src_workload_namespace",
+					ExpectedTypes:         []string{"pods"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address": "http://" + testPodWithAnnotations.Annotations["resource.opentelemetry.io/service.name"] + "." + testPodWithAnnotations.Annotations["resource.opentelemetry.io/service.namespace"] + ":8080",
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address":            "http://" + testPodWithAnnotations.Annotations["resource.opentelemetry.io/service.name"] + "." + testPodWithAnnotations.Annotations["resource.opentelemetry.io/service.namespace"] + ":8080",
+				"src_workload_name":      testPodWithAnnotations.Name,
+				"src_workload_namespace": testPodWithAnnotations.Namespace,
+				"src_workload_type":      "Pod",
+			},
+		},
+		{
+			name:         "mapping matches existing pod by labels - <podnamefromlabel> only",
+			existingPods: []*corev1.Pod{testPodWithLabels},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:           "src_address",
+					NamespaceAttr:         "src_namespace",
+					WorkloadTypeAttr:      "src_workload_type",
+					WorkloadNameAttr:      "src_workload_name",
+					WorkloadNamespaceAttr: "src_workload_namespace",
+					ExpectedTypes:         []string{"pods"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address":   testPodWithLabels.Labels["app.kubernetes.io/name"],
+				"src_namespace": testPodWithLabels.Namespace,
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address":            testPodWithLabels.Labels["app.kubernetes.io/name"],
+				"src_namespace":          testPodWithLabels.Namespace,
+				"src_workload_name":      testPodWithLabels.Name,
+				"src_workload_namespace": testPodWithLabels.Namespace,
+				"src_workload_type":      "Pod",
+			},
+		},
+		{
+			name:         "mapping matches existing pod by annotations - <podnamefromannotation> only",
+			existingPods: []*corev1.Pod{testPodWithAnnotations},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:           "src_address",
+					NamespaceAttr:         "src_namespace",
+					WorkloadTypeAttr:      "src_workload_type",
+					WorkloadNameAttr:      "src_workload_name",
+					WorkloadNamespaceAttr: "src_workload_namespace",
+					ExpectedTypes:         []string{"pods"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address":   testPodWithAnnotations.Annotations["resource.opentelemetry.io/service.name"],
+				"src_namespace": testPodWithAnnotations.Namespace,
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address":            testPodWithAnnotations.Annotations["resource.opentelemetry.io/service.name"],
+				"src_namespace":          testPodWithAnnotations.Namespace,
+				"src_workload_name":      testPodWithAnnotations.Name,
+				"src_workload_namespace": testPodWithAnnotations.Namespace,
+				"src_workload_type":      "Pod",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock, reset := MockKubeClient()
+			defer reset()
+
+			MockExistingObjectsInKubeClient(mock, tt.existingPods)
+
+			output := runProcessorMetricsPipelineTest(t, tt.workloadMappings, generateGaugeForTestProcessorMetricsPipeline(tt.receivedMetricAttrs))
+
+			attrs := output[0].ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics().At(0).Gauge().DataPoints().At(0).Attributes().AsRaw()
+			require.Equal(t, tt.expectedMetricAttrs, attrs, "Expected attributes should match the actual attributes on metric exiting the processor")
+		})
+	}
+}
+
+func TestMultipleWorkloadsWithSameServiceName(t *testing.T) {
+
+	testPod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test_pod",
+			Namespace: "test_namespace",
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					Kind: "ReplicaSet",
+					Name: "test_replicaset",
+				},
+			},
+			Labels: map[string]string{
+				"app.kubernetes.io/name":    "test_pod-label-name",
+				"app.kubernetes.io/part-of": "test_pod_namespace-label-namespace",
+			},
+		},
+	}
+	testPod2 := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test_pod_2",
+			Namespace: "test_namespace",
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					Kind: "ReplicaSet",
+					Name: "test_replicaset",
+				},
+			},
+			Labels: map[string]string{
+				"app.kubernetes.io/name":    "test_pod-label-name",
+				"app.kubernetes.io/part-of": "test_pod_namespace-label-namespace",
+			},
+		},
+	}
+	testPod_with_same_labels_but_different_parent := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test_pod_different_parent",
+			Namespace: "test_namespace",
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					Kind: "ReplicaSet",
+					Name: "test_replicaset_2",
+				},
+			},
+			Labels: map[string]string{
+				"app.kubernetes.io/name":    "test_pod-label-name",
+				"app.kubernetes.io/part-of": "test_pod_namespace-label-namespace",
+			},
+		},
+	}
+	testDeployment := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test_deployment",
+			Namespace: "test_namespace",
+		},
+	}
+	testDeployment2 := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test_deployment_2",
+			Namespace: "test_namespace",
+		},
+	}
+	testReplicaSet := &appsv1.ReplicaSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test_replicaset",
+			Namespace: "test_namespace",
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					Kind: "Deployment",
+					Name: "test_deployment",
+				},
+			},
+		},
+	}
+	testReplicaSet2 := &appsv1.ReplicaSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test_replicaset_2",
+			Namespace: "test_namespace",
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					Kind: "Deployment",
+					Name: "test_deployment_2",
+				},
+			},
+		},
+	}
+
+	tests := []struct {
+		name                string
+		existingPods        []*corev1.Pod
+		existingDeployments []*appsv1.Deployment
+		existingReplicaSets []*appsv1.ReplicaSet
+		workloadMappings    []*K8sWorkloadMappingConfig
+		receivedMetricAttrs map[string]any
+		expectedMetricAttrs map[string]any
+	}{
+		{
+			name:                "multiple pods with same parent",
+			existingPods:        []*corev1.Pod{testPod, testPod2},
+			existingDeployments: []*appsv1.Deployment{testDeployment, testDeployment2},
+			existingReplicaSets: []*appsv1.ReplicaSet{testReplicaSet, testReplicaSet2},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:           "src_address",
+					WorkloadTypeAttr:      "src_workload_type",
+					WorkloadNameAttr:      "src_workload_name",
+					WorkloadNamespaceAttr: "src_workload_namespace",
+					ExpectedTypes:         []string{"pods"},
+					PreferOwnerForPods:    true,
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address": testPod.Labels["app.kubernetes.io/name"] + "." + testPod.Labels["app.kubernetes.io/part-of"],
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address":            testPod.Labels["app.kubernetes.io/name"] + "." + testPod.Labels["app.kubernetes.io/part-of"],
+				"src_workload_name":      testDeployment.Name,
+				"src_workload_namespace": testDeployment.Namespace,
+				"src_workload_type":      "Deployment",
+			},
+		},
+		{
+			name:                "multiple pods with different parents should not resolve",
+			existingPods:        []*corev1.Pod{testPod, testPod2, testPod_with_same_labels_but_different_parent},
+			existingDeployments: []*appsv1.Deployment{testDeployment, testDeployment2},
+			existingReplicaSets: []*appsv1.ReplicaSet{testReplicaSet, testReplicaSet2},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:           "src_address",
+					WorkloadTypeAttr:      "src_workload_type",
+					WorkloadNameAttr:      "src_workload_name",
+					WorkloadNamespaceAttr: "src_workload_namespace",
+					ExpectedTypes:         []string{"pods"},
+					PreferOwnerForPods:    true,
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address": testPod.Labels["app.kubernetes.io/name"] + "." + testPod.Labels["app.kubernetes.io/part-of"],
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address": testPod.Labels["app.kubernetes.io/name"] + "." + testPod.Labels["app.kubernetes.io/part-of"],
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock, reset := MockKubeClient()
+			defer reset()
+
+			MockExistingObjectsInKubeClient(mock, tt.existingPods)
+			MockExistingObjectsInKubeClient(mock, tt.existingReplicaSets)
+			MockExistingObjectsInKubeClient(mock, tt.existingDeployments)
+
+			output := runProcessorMetricsPipelineTest(t, tt.workloadMappings, generateGaugeForTestProcessorMetricsPipeline(tt.receivedMetricAttrs))
+
+			attrs := output[0].ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics().At(0).Gauge().DataPoints().At(0).Attributes().AsRaw()
+			require.Equal(t, tt.expectedMetricAttrs, attrs, "Expected attributes should match the actual attributes on metric exiting the processor")
+		})
+	}
+}
+
 func TestResourceVsDatapointAttributeIssue(t *testing.T) {
 	testService := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{

@@ -16,6 +16,7 @@ package internal // import "github.com/solarwinds/solarwinds-otel-collector-cont
 
 import (
 	"fmt"
+	"slices"
 
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -45,6 +46,8 @@ func PodTransformFunc(logger *zap.Logger, keepOwnerReferences bool) cache.Transf
 				Name:            pod.Name,
 				Namespace:       pod.Namespace,
 				OwnerReferences: ownerRefs,
+				Labels:          filterMap(pod.Labels, []string{KubernetesAppNameLabel, KubernetesAppPartofLabel}),
+				Annotations:     filterMap(pod.Annotations, []string{OtelServiceNameAnnotation, OtelServiceNamespaceAnnotation}),
 			},
 			Spec: corev1.PodSpec{
 				HostNetwork: pod.Spec.HostNetwork,
@@ -120,8 +123,10 @@ func copyOwnerReferences(workload metav1.Object) []metav1.OwnerReference {
 }
 
 const (
-	PodIpIndex     = "podIpIndex"
-	ServiceIpIndex = "serviceIpIndex"
+	PodIpIndex                        = "podIpIndex"
+	ServiceIpIndex                    = "serviceIpIndex"
+	ServiceNameFromPodLabelIndex      = "serviceNameFromPodLabelIndex"
+	ServiceNameFromPodAnnotationIndex = "serviceNameFromPodAnnotationIndex"
 )
 
 func PodIpIndexer(logger *zap.Logger) cache.Indexers {
@@ -167,4 +172,53 @@ func ServiceIpIndexer(logger *zap.Logger) cache.Indexers {
 			return ips, nil
 		},
 	}
+}
+
+func ServiceNameFromPodIndexers(logger *zap.Logger) cache.Indexers {
+	return cache.Indexers{
+		ServiceNameFromPodLabelIndex: func(obj any) ([]string, error) {
+			pod, ok := obj.(*corev1.Pod)
+			if !ok {
+				logger.Error("Received an unexpected workload object type for serviceNameFromPodLabelIndex", zap.String("workloadObjectType", fmt.Sprintf("%T", obj)))
+				return nil, nil
+			}
+
+			var serviceName string
+			if labels := pod.GetLabels(); labels != nil {
+				if name, ok := labels[KubernetesAppNameLabel]; ok {
+					serviceName = name
+				}
+			}
+			return []string{serviceName}, nil
+		},
+		ServiceNameFromPodAnnotationIndex: func(obj any) ([]string, error) {
+			pod, ok := obj.(*corev1.Pod)
+			if !ok {
+				logger.Error("Received an unexpected workload object type for serviceNameFromPodAnnotationIndex", zap.String("workloadObjectType", fmt.Sprintf("%T", obj)))
+				return nil, nil
+			}
+
+			var serviceName string
+			if annotations := pod.GetAnnotations(); annotations != nil {
+				if name, ok := annotations[OtelServiceNameAnnotation]; ok {
+					serviceName = name
+				}
+			}
+			return []string{serviceName}, nil
+		},
+	}
+}
+
+func filterMap[TKey comparable, TValue any](input map[TKey]TValue, keysToKeep []TKey) map[TKey]TValue {
+	if input == nil || len(keysToKeep) == 0 {
+		return nil
+	}
+
+	filtered := make(map[TKey]TValue, len(keysToKeep))
+	for key, value := range input {
+		if slices.Contains(keysToKeep, key) {
+			filtered[key] = value
+		}
+	}
+	return filtered
 }
