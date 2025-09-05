@@ -17,49 +17,28 @@ package assetscraper
 import (
 	"context"
 
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/assetscraper/internal/metadata"
+	fscraper "github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/scraper"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/scraper"
-	"go.uber.org/zap"
-
-	fscraper "github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/scraper"
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/types"
 )
 
-//nolint:gochecknoglobals // Private, read-only.
-var scraperType component.Type = component.MustNewType("asset")
-
-func ScraperType() component.Type {
-	return scraperType
+func NewFactory() scraper.Factory {
+	return scraper.NewFactory(
+		metadata.Type,
+		CreateDefaultConfig,
+		scraper.WithMetrics(createMetrics, metadata.MetricsStability))
 }
 
-type factory struct{}
-
-var _ types.MetricsScraperFactory = (*factory)(nil)
-
-func NewFactory() types.MetricsScraperFactory {
-	return new(factory)
-}
-
-func (f *factory) Type() component.Type {
-	return scraperType
-}
-
-// CreateDefaultConfig implements types.ScraperFactory.
-func (f *factory) CreateDefaultConfig() component.Config {
-	return CreateDefaultConfig()
-}
-
-// CreateMetrics implements types.ScraperFactory.
-func (*factory) CreateMetrics(
+func createMetrics(
 	_ context.Context,
-	_ scraper.Settings,
+	set scraper.Settings,
 	cfg component.Config,
-	logger *zap.Logger,
 ) (scraper.Metrics, error) {
 	return fscraper.CreateScraper[Config, AssetScraper](
-		ScraperType(),
+		metadata.Type,
 		cfg,
 		NewAssetScraper,
-		logger,
+		set.Logger,
 	)
 }
