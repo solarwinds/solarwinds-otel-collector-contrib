@@ -87,7 +87,7 @@ func extractWorkloadKind(workload any, logger *zap.Logger, informers map[string]
 	}
 
 	if preferPodOwner && kind == PodKind {
-		ownerKind := lookupOwnerKindForWorkload(workload, logger, informers)
+		ownerKind := lookupOwnerForWorkload(workload, logger, informers)
 		if ownerKind != EmptyLookupResult {
 			return ownerKind
 		}
@@ -110,10 +110,10 @@ func extractWorkloadKind(workload any, logger *zap.Logger, informers map[string]
 	}
 }
 
-// lookupOwnerKindForWorkload returns the kind of a workload's owner.
+// lookupOwnerForWorkload returns the workload's owner.
 // If the owner is a ReplicaSet, it recursively looks up the owner of the ReplicaSet.
 // If the workload has no owners, it returns an empty result.
-func lookupOwnerKindForWorkload(workload any, logger *zap.Logger, informers map[string]cache.SharedIndexInformer) LookupResult {
+func lookupOwnerForWorkload(workload any, logger *zap.Logger, informers map[string]cache.SharedIndexInformer) LookupResult {
 	workloadMeta, ok := workload.(metav1.Object)
 	if !ok {
 		logger.Error("Unexpected workload object type in cache", zap.String("workloadObjectType", fmt.Sprintf("%T", workload)))
@@ -127,7 +127,7 @@ func lookupOwnerKindForWorkload(workload any, logger *zap.Logger, informers map[
 			}
 		}
 		if owner.Kind != "" {
-			// Take the first non-empty kind from the owner references
+			// Take the first non-empty item from the owner references
 			return LookupResult{
 				Name:      owner.Name,
 				Namespace: workloadMeta.GetNamespace(),
@@ -244,7 +244,7 @@ func lookupOwnerKindByNameAndNamespace(name string, namespace string, workloadTy
 	if workload == nil {
 		return EmptyLookupResult
 	} else {
-		return lookupOwnerKindForWorkload(workload, logger, informers)
+		return lookupOwnerForWorkload(workload, logger, informers)
 	}
 }
 
@@ -327,15 +327,15 @@ func ExtractNameAndNamespaceAndType(host string) (name string, namespace string,
 
 // LookupWorkloadKindByHostname looks up the workload kind by hostname.
 // It extracts the name and namespace from the hostname and uses them to look up the workload type.
-// If namespace is not found in hostname, it can be provided via the namespace parameter.
+// The namespaceFromAttr is used to validate the namespace extracted from the hostname.
 // The expectedTypes are used to determine which workload types to check.
-// It returns the kind of the workload if found, or an empty result if not found.
+// It returns the kind of the workload if found, or an empty result if not found or if there is a mismatch in namespaces.
 // If the hostname is in an unknown format, it returns an empty result.
 // It has a special handling for well-known DNS formats for Pods and Services.
-func LookupWorkloadKindByHostname(hostname string, namespace string, expectedTypes []string, logger *zap.Logger, informers map[string]cache.SharedIndexInformer, preferPodOwner bool) LookupResult {
+func LookupWorkloadKindByHostname(hostname string, namespaceFromAttr string, expectedTypes []string, logger *zap.Logger, informers map[string]cache.SharedIndexInformer, preferPodOwner bool) LookupResult {
 	logger.Debug("LookupWorkloadKindByHostname called",
 		zap.String("hostname", hostname),
-		zap.String("namespace", namespace),
+		zap.String("namespace", namespaceFromAttr),
 		zap.Strings("expectedTypes", expectedTypes),
 		zap.Bool("preferPodOwner", preferPodOwner))
 
@@ -353,19 +353,16 @@ func LookupWorkloadKindByHostname(hostname string, namespace string, expectedTyp
 		return EmptyLookupResult
 	}
 
-	// Use namespace from hostname if available, otherwise use provided namespace
-	effectiveNamespace := namespaceFromHostname
-	if effectiveNamespace == "" {
-		effectiveNamespace = namespace
-	}
-
 	switch workloadTypeShort {
 	case podTypeShort:
-		logger.Debug("Hostname indicates pod type", zap.String("hostname", hostname))
+		if namespaceFromAttr != "" && namespaceFromHostname != namespaceFromAttr {
+			// The namespace in the address does not match the one in the attributes. This is suspicious.
+			logger.Warn("Namespace mismatch", zap.String("namespaceInAddress", namespaceFromHostname), zap.String("namespaceInAttributes", namespaceFromAttr))
+			return EmptyLookupResult
+		}
 
 		if preferPodOwner {
-			logger.Debug("Attempting to find pod owner", zap.String("podName", nameFromHostname), zap.String("namespace", effectiveNamespace))
-			ownerKind := lookupOwnerKindByNameAndNamespace(nameFromHostname, effectiveNamespace, PodsWorkloadType, logger, informers)
+			ownerKind := lookupOwnerKindByNameAndNamespace(nameFromHostname, namespaceFromHostname, PodsWorkloadType, logger, informers)
 			if ownerKind != EmptyLookupResult {
 				logger.Debug("Found pod owner", zap.String("ownerKind", ownerKind.Kind), zap.String("ownerName", ownerKind.Name))
 				return ownerKind
@@ -375,22 +372,31 @@ func LookupWorkloadKindByHostname(hostname string, namespace string, expectedTyp
 
 		return LookupResult{
 			Name:      nameFromHostname,
-			Namespace: effectiveNamespace,
+			Namespace: namespaceFromHostname,
 			Kind:      PodKind,
 		}
 	case serviceTypeShort:
-		logger.Debug("Hostname indicates service type", zap.String("hostname", hostname))
+		if namespaceFromAttr != "" && namespaceFromHostname != namespaceFromAttr {
+			// The namespace in the address does not match the one in the attributes. This is suspicious.
+			logger.Warn("Namespace mismatch", zap.String("namespaceInAddress", namespaceFromHostname), zap.String("namespaceInAttributes", namespaceFromAttr))
+			return EmptyLookupResult
+		}
+
 		return LookupResult{
 			Name:      nameFromHostname,
-			Namespace: effectiveNamespace,
+			Namespace: namespaceFromHostname,
 			Kind:      ServiceKind,
 		}
 	default:
-		logger.Debug("Hostname type unknown, using fallback lookup", zap.String("hostname", hostname))
+		if namespaceFromAttr != "" && namespaceFromHostname != "" && namespaceFromHostname != namespaceFromAttr {
+			// The namespace in the address does not match the one in the attributes. It's unclear what the address is, so we can't determine the workload kind.
+			return EmptyLookupResult
+		}
+		ns := namespaceFromHostname
+		if ns == "" {
+			ns = namespaceFromAttr
+		}
 
-		logger.Debug("Using fallback lookup by name and namespace",
-			zap.String("name", nameFromHostname),
-			zap.String("namespace", effectiveNamespace))
-		return LookupWorkloadKindByNameAndNamespace(nameFromHostname, effectiveNamespace, expectedTypes, logger, informers, preferPodOwner)
+		return LookupWorkloadKindByNameAndNamespace(nameFromHostname, ns, expectedTypes, logger, informers, preferPodOwner)
 	}
 }

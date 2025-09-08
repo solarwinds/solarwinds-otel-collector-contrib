@@ -60,6 +60,7 @@ func TestOtelInstrumentationAddressMapping(t *testing.T) {
 			workloadMappings: []*K8sWorkloadMappingConfig{
 				{
 					AddressAttr:           "server.address",
+					NamespaceAttr:         "server.namespace",
 					WorkloadTypeAttr:      "server.workload.type",
 					WorkloadNameAttr:      "server.workload.name",
 					WorkloadNamespaceAttr: "server.workload.namespace",
@@ -68,12 +69,14 @@ func TestOtelInstrumentationAddressMapping(t *testing.T) {
 				},
 			},
 			receivedMetricAttrs: map[string]any{
-				"client.address": "external-client",
-				"server.address": "test_service",
+				"client.address":   "external-client",
+				"server.address":   "test_service",
+				"server.namespace": "default",
 			},
 			expectedMetricAttrs: map[string]any{
 				"client.address":            "external-client",
 				"server.address":            "test_service",
+				"server.namespace":          "default",
 				"server.workload.type":      "Pod",
 				"server.workload.name":      "test_service",
 				"server.workload.namespace": "default",

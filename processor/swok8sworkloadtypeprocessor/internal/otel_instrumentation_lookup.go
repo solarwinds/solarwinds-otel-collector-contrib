@@ -15,7 +15,7 @@
 package internal // import "github.com/solarwinds/solarwinds-otel-collector-contrib/processor/swok8sworkloadtypeprocessor/internal"
 
 import (
-	"net"
+	"fmt"
 	"slices"
 
 	"go.uber.org/zap"
@@ -23,126 +23,116 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
+const (
+	OtelServiceNameAnnotation      = "resource.opentelemetry.io/service.name"
+	OtelServiceNamespaceAnnotation = "resource.opentelemetry.io/service.namespace"
+	KubernetesAppNameLabel         = "app.kubernetes.io/name"
+	KubernetesAppPartofLabel       = "app.kubernetes.io/part-of"
+)
+
 // LookupWorkloadByOtelInstrumentationServiceName performs workload discovery using OpenTelemetry
-// instrumentation conventions for service name resolution. This follows the standard priority order
-// used by OTEL-based instrumentation tools for service discovery.
+// instrumentation conventions for service name resolution.
 //
 // Priority order (following OTEL instrumentation patterns):
-// 1. Direct workload name lookup (deployments, statefulsets, etc.)
-// 2. Pod annotation-based lookup (resource.opentelemetry.io/service.name)
-// 3. Pod label-based lookup (app.kubernetes.io/name)
-// 4. Pod name lookup
-func LookupWorkloadByOtelInstrumentationServiceName(serviceName string, namespace string, expectedTypes []string, logger *zap.Logger, informers map[string]cache.SharedIndexInformer, preferPodOwner bool) LookupResult {
-	// Try direct workload name lookups first (priority 1)
-	for _, workloadType := range expectedTypes {
-		result := LookupWorkloadKindByNameAndNamespace(serviceName, namespace, []string{workloadType}, logger, informers, preferPodOwner)
-		if result != EmptyLookupResult {
-			logger.Debug("Found workload by direct name lookup",
-				zap.String("serviceName", serviceName),
-				zap.String("workloadType", workloadType))
-			return result
-		}
+// 1. Service name and namespace set via Pod env variables
+// 2. Service name and namespace set set via Pod annotations
+// 3. Service name and namespace set set via Pod labels
+// 4. Service name set to a Pod's parent workload's name
+// 5. Service name set to a Pod's name
+// 6. Service name set to a Container's name
+// 7. Service name set to a process's name
+// 8. Service name set to a domain name or IP address
+//
+// Options 1., 6. and 7. are not currently implemented.
+// Options 4., 5. and 8. are already handled by [LookupWorkloadKindByHostname] and [LookupWorkloadKindByIp].
+// Options 2. and 3. are handled by this function.
+func LookupWorkloadByOtelInstrumentationServiceName(serviceName string, namespaceFromAttr string, expectedTypes []string, logger *zap.Logger, informers map[string]cache.SharedIndexInformer, preferPodOwner bool) LookupResult {
+	nameFromHostname, namespaceFromHostname, _ := ExtractNameAndNamespaceAndType(serviceName)
+	if nameFromHostname == "" {
+		// It's unclear what the address is, so we can't determine the workload kind
+		return EmptyLookupResult
 	}
 
-	// If direct lookup fails, try pod-based lookups (priorities 2-4)
-	if slices.Contains(expectedTypes, PodsWorkloadType) {
-		// First check if we have a pod informer
-		podInformer, exists := informers[PodsWorkloadType]
-		if !exists {
-			return EmptyLookupResult
+	podInformer, exists := informers[PodsWorkloadType]
+	if !exists || !slices.Contains(expectedTypes, PodsWorkloadType) {
+		return EmptyLookupResult
+	}
+
+	lookupByIndex := func(indexName string, getNamespaceFromLabelsOrAnnotations func(pod metav1.Object) string) LookupResult {
+		pods, err := podInformer.GetIndexer().ByIndex(indexName, nameFromHostname)
+		if err != nil {
+			logger.Error("Error getting pods from cache", zap.Error(err))
 		}
 
-		// Search through all pods to find matches based on Beyla's priority order
-		pods := podInformer.GetStore().List()
-		for _, podObj := range pods {
-			pod, ok := podObj.(metav1.Object)
-			if !ok {
-				continue
-			}
+		foundPods := slices.Collect(func(yield func(metav1.Object) bool) {
+			for _, podObj := range pods {
+				pod, ok := podObj.(metav1.Object)
+				if !ok {
+					logger.Error("Unexpected workload object type in cache", zap.String("workloadObjectType", fmt.Sprintf("%T", podObj)))
+					continue
+				}
 
-			// Skip pods not in the target namespace (if specified)
-			if namespace != "" && pod.GetNamespace() != namespace {
-				continue
-			}
-
-			// Priority 2: Check resource.opentelemetry.io/service.name annotation
-			if annotations := pod.GetAnnotations(); annotations != nil {
-				if annotationValue := annotations["resource.opentelemetry.io/service.name"]; annotationValue == serviceName {
-					result := extractWorkloadKind(podObj, logger, informers, preferPodOwner)
-					if result != EmptyLookupResult {
-						logger.Debug("Found workload by OTEL service name annotation",
-							zap.String("serviceName", serviceName),
-							zap.String("podName", pod.GetName()))
-						return result
+				if namespaceFromHostname == "" || (getNamespaceFromLabelsOrAnnotations(pod) == namespaceFromHostname || namespaceFromAttr == namespaceFromHostname) {
+					if !yield(pod) {
+						return
 					}
 				}
 			}
+		})
 
-			// Priority 3: Check app.kubernetes.io/name label
-			if labels := pod.GetLabels(); labels != nil {
-				if labelValue := labels["app.kubernetes.io/name"]; labelValue == serviceName {
-					result := extractWorkloadKind(podObj, logger, informers, preferPodOwner)
-					if result != EmptyLookupResult {
-						logger.Debug("Found workload by app.kubernetes.io/name label",
-							zap.String("serviceName", serviceName),
-							zap.String("podName", pod.GetName()))
-						return result
+		switch len(foundPods) {
+		case 0:
+			// No Pod found for the given Service name
+		case 1:
+			return extractWorkloadKind(foundPods[0], logger, informers, preferPodOwner)
+		default:
+			// If multiple Pods are found, we need to check they have the same owner
+			if !preferPodOwner {
+				// Multiple pods found for the same Service name
+			} else {
+				owners := make(map[LookupResult]bool)
+				for _, pod := range foundPods {
+					owner := lookupOwnerForWorkload(pod, logger, informers)
+					if owner != EmptyLookupResult {
+						owners[owner] = true
 					}
 				}
-			}
 
-			// Priority 4: Check pod name
-			if pod.GetName() == serviceName {
-				result := extractWorkloadKind(podObj, logger, informers, preferPodOwner)
-				if result != EmptyLookupResult {
-					logger.Debug("Found workload by pod name",
-						zap.String("serviceName", serviceName),
-						zap.String("podName", pod.GetName()))
-					return result
+				switch len(owners) {
+				case 0:
+					// Multiple pods with no parents found for the same Service name
+				case 1:
+					// If all pods have the same owner, return it
+					for owner := range owners {
+						return owner
+					}
+				default:
+					// Multiple workloads found for the same Service name
 				}
 			}
 		}
+
+		return EmptyLookupResult
+	}
+
+	// Service name and namespace set set via Pod labels
+	resultByLabel := lookupByIndex(ServiceNameFromPodLabelIndex, func(pod metav1.Object) string {
+		return pod.GetLabels()[KubernetesAppPartofLabel]
+	})
+
+	if resultByLabel != EmptyLookupResult {
+		return resultByLabel
+	}
+
+	// Service name and namespace set set via Pod annotations
+	resultByAnnotation := lookupByIndex(ServiceNameFromPodAnnotationIndex, func(pod metav1.Object) string {
+		return pod.GetAnnotations()[OtelServiceNamespaceAnnotation]
+	})
+
+	if resultByAnnotation != EmptyLookupResult {
+		return resultByAnnotation
 	}
 
 	logger.Debug("No workload found for OTEL instrumentation service name", zap.String("serviceName", serviceName))
 	return EmptyLookupResult
-}
-
-// LookupWorkloadByOtelInstrumentationAddress extends the existing address lookup to handle OTEL
-// instrumentation-style service identification. It first tries the existing hostname/IP lookup,
-// and if that fails, it falls back to OTEL instrumentation service name mapping.
-func LookupWorkloadByOtelInstrumentationAddress(address string, namespace string, expectedTypes []string, logger *zap.Logger, informers map[string]cache.SharedIndexInformer, preferPodOwner bool) LookupResult {
-	// Extract host from address (removes protocol, port, etc.)
-	host := ExtractHostFromAddress(address)
-
-	// First try existing IP-based lookup
-	if isValidIP(host) {
-		result := LookupWorkloadKindByIp(host, expectedTypes, logger, informers, preferPodOwner)
-		if result != EmptyLookupResult {
-			return result
-		}
-	}
-
-	// Then try existing hostname-based lookup
-	result := LookupWorkloadKindByHostname(host, namespace, expectedTypes, logger, informers, preferPodOwner)
-	if result != EmptyLookupResult {
-		return result
-	}
-
-	// Finally, try OTEL instrumentation service name mapping
-	// The host could be a service name extracted by OTEL instrumentation
-	result = LookupWorkloadByOtelInstrumentationServiceName(host, namespace, expectedTypes, logger, informers, preferPodOwner)
-	if result != EmptyLookupResult {
-		return result
-	}
-
-	logger.Debug("No workload found for OTEL instrumentation address", zap.String("address", address))
-	return EmptyLookupResult
-	return EmptyLookupResult
-}
-
-// isValidIP checks if the given string is a valid IP address
-func isValidIP(host string) bool {
-	// Use net.ParseIP for accurate IP validation
-	return net.ParseIP(host) != nil
 }
