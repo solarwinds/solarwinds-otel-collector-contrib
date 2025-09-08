@@ -22,3 +22,6 @@ Before any code is written contact us providing the following information:
 * Who's the sponsor for your component. A sponsor is an approver or maintainer who will be the official reviewer of the code and a code owner for the component.
 * Some information about your component, such as the reasoning behind it, use-cases, telemetry data types supported, and anything else you think is relevant for us.
 * The configuration options your component will accept. This will give us a better understanding of what it does, and how it may be implemented.
+
+### Register Telemetry Names
+If your component introduces new metrics, you must register them. For details on the registration process, please contact us directly.
