@@ -48,6 +48,19 @@ func (cp *swok8sworkloadtypeProcessor) getAttribute(attributes pcommon.Map, attr
 	return ""
 }
 
+func (cp *swok8sworkloadtypeProcessor) getAttributeWithResourceFallback(attributes pcommon.Map, resourceAttributes pcommon.Map, attrName string) string {
+	namespace := cp.getAttribute(attributes, attrName)
+	if namespace == "" {
+		namespace = cp.getAttribute(resourceAttributes, attrName)
+		if namespace != "" {
+			cp.logger.Debug("Using namespace from resource attributes as fallback",
+				zap.String("namespaceAttr", attrName),
+				zap.String("namespace", namespace))
+		}
+	}
+	return namespace
+}
+
 type dataPointSlice[DP dataPoint] interface{ All() iter.Seq2[int, DP] }
 type dataPoint interface{ Attributes() pcommon.Map }
 
@@ -142,10 +155,6 @@ func processAttributesWithResourceFallback(cp *swok8sworkloadtypeProcessor, attr
 	}
 }
 
-func (cp *swok8sworkloadtypeProcessor) lookupWorkloadTypeByNameAttr(workloadMapping *K8sWorkloadMappingConfig, attributes pcommon.Map) internal.LookupResult {
-	return cp.lookupWorkloadTypeByNameAttrWithResourceFallback(workloadMapping, attributes, pcommon.NewMap())
-}
-
 func (cp *swok8sworkloadtypeProcessor) lookupWorkloadTypeByNameAttrWithResourceFallback(workloadMapping *K8sWorkloadMappingConfig, attributes pcommon.Map, resourceAttributes pcommon.Map) internal.LookupResult {
 	name := cp.getAttribute(attributes, workloadMapping.NameAttr)
 	if name == "" {
@@ -155,15 +164,7 @@ func (cp *swok8sworkloadtypeProcessor) lookupWorkloadTypeByNameAttrWithResourceF
 	}
 
 	// Try to get namespace from attributes first, then fallback to resource attributes
-	namespace := cp.getAttribute(attributes, workloadMapping.NamespaceAttr)
-	if namespace == "" && workloadMapping.NamespaceAttr != "" {
-		namespace = cp.getAttribute(resourceAttributes, workloadMapping.NamespaceAttr)
-		if namespace != "" {
-			cp.logger.Debug("Using namespace from resource attributes as fallback",
-				zap.String("namespaceAttr", workloadMapping.NamespaceAttr),
-				zap.String("namespace", namespace))
-		}
-	}
+	namespace := cp.getAttributeWithResourceFallback(attributes, resourceAttributes, workloadMapping.NamespaceAttr)
 
 	cp.logger.Debug("Looking up workload by name and namespace",
 		zap.String("name", name),
@@ -174,10 +175,6 @@ func (cp *swok8sworkloadtypeProcessor) lookupWorkloadTypeByNameAttrWithResourceF
 		zap.Bool("preferOwnerForPods", workloadMapping.PreferOwnerForPods))
 
 	return internal.LookupWorkloadKindByNameAndNamespace(name, namespace, workloadMapping.ExpectedTypes, cp.logger, cp.informers, workloadMapping.PreferOwnerForPods)
-}
-
-func (cp *swok8sworkloadtypeProcessor) lookupWorkloadTypeByAddressAttr(workloadMapping *K8sWorkloadMappingConfig, attributes pcommon.Map) internal.LookupResult {
-	return cp.lookupWorkloadTypeByAddressAttrWithResourceFallback(workloadMapping, attributes, pcommon.NewMap())
 }
 
 func (cp *swok8sworkloadtypeProcessor) lookupWorkloadTypeByAddressAttrWithResourceFallback(workloadMapping *K8sWorkloadMappingConfig, attributes pcommon.Map, resourceAttributes pcommon.Map) internal.LookupResult {
@@ -201,15 +198,7 @@ func (cp *swok8sworkloadtypeProcessor) lookupWorkloadTypeByAddressAttrWithResour
 		return internal.LookupWorkloadKindByIp(host, workloadMapping.ExpectedTypes, cp.logger, cp.informers, workloadMapping.PreferOwnerForPods)
 	} else {
 		// Try to get namespace from attributes first, then fallback to resource attributes
-		namespace := cp.getAttribute(attributes, workloadMapping.NamespaceAttr)
-		if namespace == "" && workloadMapping.NamespaceAttr != "" {
-			namespace = cp.getAttribute(resourceAttributes, workloadMapping.NamespaceAttr)
-			if namespace != "" {
-				cp.logger.Debug("Using namespace from resource attributes as fallback for address lookup",
-					zap.String("namespaceAttr", workloadMapping.NamespaceAttr),
-					zap.String("namespace", namespace))
-			}
-		}
+		namespace := cp.getAttributeWithResourceFallback(attributes, resourceAttributes, workloadMapping.NamespaceAttr)
 
 		cp.logger.Debug("Host is a hostname, looking up by hostname",
 			zap.String("hostname", host),
@@ -227,8 +216,15 @@ func (cp *swok8sworkloadtypeProcessor) lookupWorkloadTypeByAddressAttrWithResour
 			}
 		}
 
-		// Use enhanced OTEL instrumentation address lookup that can handle service names
-		return internal.LookupWorkloadByOtelInstrumentationAddress(addr, namespace, workloadMapping.ExpectedTypes, cp.logger, cp.informers, workloadMapping.PreferOwnerForPods)
+		// Try hostname-based lookup
+		result := internal.LookupWorkloadKindByHostname(host, namespace, workloadMapping.ExpectedTypes, cp.logger, cp.informers, workloadMapping.PreferOwnerForPods)
+		if result != internal.EmptyLookupResult {
+			return result
+		}
+
+		// Try OTEL instrumentation Service name mapping
+		// The host could be a Service name extracted by OTEL instrumentation
+		return internal.LookupWorkloadByOtelInstrumentationServiceName(host, namespace, workloadMapping.ExpectedTypes, cp.logger, cp.informers, workloadMapping.PreferOwnerForPods)
 	}
 }
 
@@ -286,15 +282,17 @@ func (cp *swok8sworkloadtypeProcessor) Start(ctx context.Context, _ component.Ho
 		}
 		cp.informers[workloadType] = informer.Informer()
 
-		if mappedWorkloadType.kind == internal.PodKind {
+		switch mappedWorkloadType.kind {
+		case internal.PodKind:
 			cp.informers[workloadType].SetTransform(internal.PodTransformFunc(cp.logger, copyOwners))
 			cp.informers[workloadType].AddIndexers(internal.PodIpIndexer(cp.logger))
-		} else if mappedWorkloadType.kind == internal.ServiceKind {
+			cp.informers[workloadType].AddIndexers(internal.ServiceNameFromPodIndexers(cp.logger))
+		case internal.ServiceKind:
 			cp.informers[workloadType].SetTransform(internal.ServiceTransformFunc(cp.logger))
 			cp.informers[workloadType].AddIndexers(internal.ServiceIpIndexer(cp.logger))
-		} else if mappedWorkloadType.kind == internal.ReplicaSetKind {
+		case internal.ReplicaSetKind:
 			cp.informers[workloadType].SetTransform(internal.GenericTransformFunc(cp.logger, mappedWorkloadType.kind, copyOwners))
-		} else {
+		default:
 			cp.informers[workloadType].SetTransform(internal.GenericTransformFunc(cp.logger, mappedWorkloadType.kind, false))
 		}
 	}
