@@ -65,16 +65,16 @@ collector_attributes_decoration:
 
 Where:
 - `enabled`: Enables collector attributes decoration (enabled by default)
-- `extension`: Identifies a SolarWinds Extension to use for obtaining required configuration
+- `extension`: Identifies a SolarWinds Extension by its full name for obtaining required configuration
+
+> [!WARNING]
+> Exact name of the extension is required in processor configuration. If the `solarwinds` extension is misconfigured in the processor setup, the collector will not start.
 
 ### Extension Dependency
 When the `collector_attributes_decoration` is enabled (which it is by default), it requires `solarwinds` extension to be configured.
 The processor automatically adds:
 - `sw.otelcol.collector.name`: configured collector name
 - `sw.otelcol.collector.entity_creation`: (optional) when entity inference is enabled in the extension, the SolarWinds OTel Collector entity will be inferred in SolarWinds Observability.
-
-> [!WARNING]
-> Exact name of the extension is required in processor configuration. If the `solarwinds` extension is misconfigured in the processor setup, the collector will not start.
 
 ## Host Attributes Decoration
 
