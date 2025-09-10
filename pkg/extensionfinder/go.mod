@@ -3,7 +3,7 @@ module github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/extensionfind
 go 1.25.0
 
 require (
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/collector/component v1.37.0
 	go.uber.org/zap v1.27.0
 )

@@ -2,6 +2,11 @@
 
 ## vNext
 
+## v0.131.7
+- `swok8sworkloadtypeprocessor` Fix searching for Pods based on their labels and annotations
+- `swok8sworkloadtypeprocessor` Add support for situation, when one service name is assigned to multiple different workloads
+- `swok8sworkloadtypeprocessor` Restore a more strict error handling when parsing pod/service addresses
+
 ## v0.131.6
 - `pkg/container` Fix module name in go.mod
 
