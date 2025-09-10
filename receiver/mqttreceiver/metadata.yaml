@@ -5,3 +5,5 @@ status:
   class: receiver
   stability:
     development: [ metrics ]
+  distributions: [ verified, playground, k8s ]
+  disable_codecov_badge: true
