@@ -2,6 +2,8 @@
 
 ## vNext
 - `solarwindsprocessor` Refactored collector decoration configuration: introduced `collector_attributes_decoration` section with `enabled` and `extension` fields, deprecated root-level `extension` field for better configuration organization
+
+## v0.131.7
 - `swok8sworkloadtypeprocessor` Fix searching for Pods based on their labels and annotations
 - `swok8sworkloadtypeprocessor` Add support for situation, when one service name is assigned to multiple different workloads
 - `swok8sworkloadtypeprocessor` Restore a more strict error handling when parsing pod/service addresses
