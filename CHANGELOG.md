@@ -2,6 +2,9 @@
 
 ## vNext
 
+## v0.131.8
+- Add `mqttreceiver`
+
 ## v0.131.7
 - `swok8sworkloadtypeprocessor` Fix searching for Pods based on their labels and annotations
 - `swok8sworkloadtypeprocessor` Add support for situation, when one service name is assigned to multiple different workloads
