@@ -23,8 +23,8 @@
 SolarWinds processor adjusts OTel signals (metrics, logs, traces) to improve SolarWinds Observability experience.
 
 ## Features
-- Collector attributes decoration: configures collector-specific attributes `sw.otelcol.collector.name` and `sw.otelcol.collector.entity_creation`
-- Host attributes decoration: determines and applies host identifiers and related attributes for proper entity creation in SolarWinds Observability SaaS platform
+- Collector attributes decoration: configures collector-specific attributes `sw.otelcol.collector.name` and `sw.otelcol.collector.entity_creation`. This ensures collector entity with appropriate name gets created in SolarWinds Observability SaaS platform
+- Host attributes decoration: determines and applies host identifiers and related attributes for proper host entity creation in SolarWinds Observability SaaS platform
 - Resource attributes: adds optional configured attributes to all signals
 - Signal size monitoring: logs a warning when signals exceed configured size
 
