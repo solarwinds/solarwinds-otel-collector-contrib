@@ -24,15 +24,14 @@ type Metric struct {
 }
 
 type Sensor struct {
-	Name     string    `mapstructure:"name"`
-	Category string    `mapstructure:"category"`
-	Metrics  []*Metric `mapstructure:"metrics"`
+	Name    string    `mapstructure:"name"`
+	Metrics []*Metric `mapstructure:"metrics"`
 }
 
 type Broker struct {
 	Name     string    `mapstructure:"name"`
 	Protocol string    `mapstructure:"protocol"`
-	Server   string    `mapstructure:"server"`
+	Host     string    `mapstructure:"host"`
 	Port     int       `mapstructure:"port"`
 	User     string    `mapstructure:"user"`
 	Password string    `mapstructure:"password"`

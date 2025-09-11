@@ -31,9 +31,9 @@ const (
 // Status constants for broker connection states
 const (
 	StatusOK               = "OK"
-	StatusConnectionFailed = "Connection Failed"
-	StatusRoundtripFailed  = "Roundtrip Failed"
-	StatusSubscribeFailed  = "Subscribe Failed"
+	StatusConnectionFailed = "ConnectionFailed"
+	StatusRoundtripFailed  = "RoundtripFailed"
+	StatusSubscribeFailed  = "SubscribeFailed"
 )
 
 // BrokerMetrics contains all predefined metric definitions

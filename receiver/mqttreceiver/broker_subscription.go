@@ -121,7 +121,7 @@ func (sb *brokerSubscription) IsConnected() bool {
 
 func (sb *brokerSubscription) createMQTTClient() (*mqtt.Client, error) {
 	opts := mqtt.NewClientOptions()
-	opts.AddBroker(fmt.Sprintf("%s://%s:%d", sb.broker.Protocol, sb.broker.Server, sb.broker.Port))
+	opts.AddBroker(fmt.Sprintf("%s://%s:%d", sb.broker.Protocol, sb.broker.Host, sb.broker.Port))
 	opts.SetClientID(fmt.Sprintf("otel-mqtt-receiver-%d", time.Now().Unix()))
 	opts.SetUsername(sb.broker.User)
 	opts.SetPassword(sb.broker.Password)
@@ -150,7 +150,7 @@ func (sb *brokerSubscription) connectClient() error {
 
 	sb.logger.Info("Connected to MQTT broker",
 		zap.String("broker", sb.broker.Name),
-		zap.String("server", sb.broker.Server),
+		zap.String("server", sb.broker.Host),
 		zap.Int("port", sb.broker.Port))
 
 	return nil
@@ -351,13 +351,12 @@ func createMetrics(metadata *subscriptionMetadata, status string, value *string)
 
 	attrs := rm.Resource().Attributes()
 	attrs.PutStr("sw.otelcol.IotBroker.name", metadata.broker.Name)
-	attrs.PutStr("sw.otelcol.IotBroker.server", metadata.broker.Server)
+	attrs.PutStr("sw.otelcol.IotBroker.server", metadata.broker.Host)
 	attrs.PutInt("sw.otelcol.IotBroker.port", int64(metadata.broker.Port))
 	attrs.PutStr("sw.otelcol.IotBroker.protocol", metadata.broker.Protocol)
 
 	if metadata.sensor != nil {
 		attrs.PutStr("sw.otelcol.IotSensor.name", metadata.sensor.Name)
-		attrs.PutStr("sw.otelcol.IotSensor.category", metadata.sensor.Category)
 		attrs.PutStr("sw.otelcol.IotBroker.status", status)
 	}
 
