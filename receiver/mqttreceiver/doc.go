@@ -12,6 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package version
+//go:generate mdatagen metadata.yaml
 
-const Version = "0.131.8"
+package mqttreceiver

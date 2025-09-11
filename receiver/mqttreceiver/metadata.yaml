@@ -1,0 +1,9 @@
+type: mqtt
+github_project: solarwinds/solarwinds-otel-collector-releases
+
+status:
+  class: receiver
+  stability:
+    development: [ metrics ]
+  distributions: [ verified, playground, k8s ]
+  disable_codecov_badge: true
