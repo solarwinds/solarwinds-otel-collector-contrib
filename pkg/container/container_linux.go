@@ -50,13 +50,11 @@ func (c *containerInfo) ReadContainerInstanceID() (string, error) {
 		}
 	case c.isContainerInKubernetes():
 		containerID = c.readKubernetesContainerID()
-		if containerID == "" {
-			return "", fmt.Errorf("unable to read Kubernetes pod name from HOSTNAME environment variable")
-		}
 	default:
 		// Not running in a container is a valid scenario, not an error
 		return "", nil
 	}
+	return containerID, nil
 }
 
 func (c *containerInfo) readKubernetesContainerID() string {
