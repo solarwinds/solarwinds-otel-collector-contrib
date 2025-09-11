@@ -16,7 +16,6 @@ package container
 
 import (
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -41,19 +40,21 @@ func (c *containerInfo) ReadContainerInstanceID() (string, error) {
 	switch {
 	case c.isInDocker():
 		containerID, err = c.readDockerInstanceID()
+		if err != nil {
+			return "", err
+		}
 	case c.isInNonDockerContainer():
 		containerID, err = c.readNonDockerContainerID()
+		if err != nil {
+			return "", err
+		}
 	case c.isContainerInKubernetes():
 		containerID = c.readKubernetesContainerID()
 	default:
-		containerID, err = "", errors.New("it is not a container instance")
+		// Not running in a container is a valid scenario, not an error
+		return "", nil
 	}
-
-	if containerID == "" {
-		err = fmt.Errorf("failed to detect container ID: %w", err)
-	}
-
-	return containerID, err
+	return containerID, nil
 }
 
 func (c *containerInfo) readKubernetesContainerID() string {
