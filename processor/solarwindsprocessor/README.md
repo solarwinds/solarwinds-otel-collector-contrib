@@ -29,6 +29,8 @@ SolarWinds processor adjusts OTel signals (metrics, logs, traces) to improve Sol
 - Signal size monitoring: logs a warning when signals exceed configured size
 
 ## Configuration
+> [!WARNING]
+> Exact name of the extension is required in processor configuration. If the `solarwinds` extension is misconfigured in the processor setup, the collector will not start.
 
 ### Minimal Configuration
 ```yaml
@@ -67,9 +69,6 @@ collector_attributes_decoration:
 Where:
 - `enabled`: Enables collector attributes decoration (enabled by default)
 - `extension`: Identifies a SolarWinds Extension by its full name for obtaining required configuration
-
-> [!WARNING]
-> Exact name of the extension is required in processor configuration. If the `solarwinds` extension is misconfigured in the processor setup, the collector will not start.
 
 The processor automatically adds:
 - `sw.otelcol.collector.name`: configured collector name
