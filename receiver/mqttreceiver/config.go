@@ -20,7 +20,7 @@ type Metric struct {
 	Topic        string `mapstructure:"topic"`
 	Unit         string `mapstructure:"unit"`
 	Desc         string `mapstructure:"description"`
-	JsonProperty string `mapstructure:"jsonProperty"`
+	JsonProperty string `mapstructure:"json_property"`
 }
 
 type Sensor struct {

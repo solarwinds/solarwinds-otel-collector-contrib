@@ -34,6 +34,7 @@ mqtt:
               - name: "Temperature"
                 type: "float"
                 topic: "sensor/example/temperature"
+                json_property: "temperature"
                 unit: "degC"
                 description: "This is example configuration"
 ```
