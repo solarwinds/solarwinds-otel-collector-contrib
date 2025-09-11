@@ -37,8 +37,9 @@ func NewFactory() processor.Factory {
 
 func createDefaultConfig() component.Config {
 	return &Config{
-		MaxSizeMib:         6,
-		ResourceAttributes: make(map[string]string),
+		MaxSizeMib:                    6,
+		ResourceAttributes:            make(map[string]string),
+		CollectorAttributesDecoration: CollectorDecoration{Enabled: true},
 	}
 }
 

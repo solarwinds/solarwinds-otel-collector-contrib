@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/attributesdecorator"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/container"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/solarwindsprocessor/internal"
@@ -40,9 +39,14 @@ type solarwindsprocessor struct {
 }
 
 func (p *solarwindsprocessor) start(ctx context.Context, host component.Host) error {
-	_, err := p.extensionProvider.Init(p.logger, p.cfg.ExtensionName, host)
+	if p.extensionProvider == nil {
+		return nil
+	}
+
+	extensionName := p.cfg.GetExtensionName()
+	_, err := p.extensionProvider.Init(p.logger, extensionName, host)
 	if err != nil {
-		return fmt.Errorf("failed to get Solarwinds extension %q: %w", p.cfg.ExtensionName, err)
+		return fmt.Errorf("failed to get Solarwinds extension %q: %w", extensionName, err)
 	}
 
 	err = p.extensionProvider.SetAttributes(&p.cfg.ResourceAttributes)
@@ -51,20 +55,6 @@ func (p *solarwindsprocessor) start(ctx context.Context, host component.Host) er
 	}
 
 	return nil
-}
-
-func (p *solarwindsprocessor) adjustConfigurationByExtension(
-	swiExtension *solarwindsextension.SolarwindsExtension,
-) {
-	extCfg := swiExtension.GetCommonConfig()
-
-	// Without entity flag.
-	if !extCfg.WithoutEntity() {
-		p.cfg.ResourceAttributes[solarwindsextension.EntityCreation] = solarwindsextension.EntityCreationValue
-	}
-
-	// Collector name.
-	p.cfg.ResourceAttributes[solarwindsextension.CollectorNameAttribute] = extCfg.CollectorName()
 }
 
 func notifySignalSizeLimitExceeded(signal any, limit int, logger *zap.Logger) error {
@@ -179,14 +169,18 @@ func checkConfig(cfg component.Config) (*Config, error) {
 
 func newProcessor(logger *zap.Logger, cfg *Config) *solarwindsprocessor {
 	var hostAttributes *internal.HostAttributesDecorator
-	if cfg.HostAttributesDecoration.Enabled == true {
+	if cfg.HostAttributesDecoration.Enabled {
 		hostAttributes = internal.NewHostAttributes(cfg.HostAttributesDecoration, container.NewProvider(logger), logger)
+	}
+	var extensionProvider ExtensionProvider
+	if cfg.CollectorAttributesDecoration.Enabled {
+		extensionProvider = NewExtensionProvider()
 	}
 
 	return &solarwindsprocessor{
 		logger:            logger,
 		cfg:               cfg,
 		hostAttributes:    hostAttributes,
-		extensionProvider: NewExtensionProvider(),
+		extensionProvider: extensionProvider,
 	}
 }
