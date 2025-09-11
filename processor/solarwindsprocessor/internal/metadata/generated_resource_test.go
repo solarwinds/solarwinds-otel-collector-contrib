@@ -13,6 +13,9 @@ func TestResourceBuilder(t *testing.T) {
 		t.Run(tt, func(t *testing.T) {
 			cfg := loadResourceAttributesConfig(t, tt)
 			rb := NewResourceBuilder(cfg)
+			rb.SetHostID("host.id-val")
+			rb.SetHostName("host.name-val")
+			rb.SetOsType("os.type-val")
 			rb.SetSwOtelcolCollectorEntityCreation("sw.otelcol.collector.entity_creation-val")
 			rb.SetSwOtelcolCollectorName("sw.otelcol.collector.name-val")
 
@@ -23,7 +26,7 @@ func TestResourceBuilder(t *testing.T) {
 			case "default":
 				assert.Equal(t, 1, res.Attributes().Len())
 			case "all_set":
-				assert.Equal(t, 2, res.Attributes().Len())
+				assert.Equal(t, 5, res.Attributes().Len())
 			case "none_set":
 				assert.Equal(t, 0, res.Attributes().Len())
 				return
@@ -31,7 +34,22 @@ func TestResourceBuilder(t *testing.T) {
 				assert.Failf(t, "unexpected test case: %s", tt)
 			}
 
-			val, ok := res.Attributes().Get("sw.otelcol.collector.entity_creation")
+			val, ok := res.Attributes().Get("host.id")
+			assert.Equal(t, tt == "all_set", ok)
+			if ok {
+				assert.Equal(t, "host.id-val", val.Str())
+			}
+			val, ok = res.Attributes().Get("host.name")
+			assert.Equal(t, tt == "all_set", ok)
+			if ok {
+				assert.Equal(t, "host.name-val", val.Str())
+			}
+			val, ok = res.Attributes().Get("os.type")
+			assert.Equal(t, tt == "all_set", ok)
+			if ok {
+				assert.Equal(t, "os.type-val", val.Str())
+			}
+			val, ok = res.Attributes().Get("sw.otelcol.collector.entity_creation")
 			assert.Equal(t, tt == "all_set", ok)
 			if ok {
 				assert.Equal(t, "sw.otelcol.collector.entity_creation-val", val.Str())

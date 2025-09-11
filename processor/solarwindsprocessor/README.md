@@ -23,9 +23,56 @@
 SolarWinds processor adjusts OTel signals (metrics, logs, traces) to improve SolarWinds Observability experience.
 
 ## Features
-- Host attributes decoration: determines and applies host identifiers and related attributes for proper entity creation in SolarWinds Observability SaaS platform
-- Resource attributes: adds configured attributes to all signals
+- Collector attributes decoration: configures collector-specific attributes `sw.otelcol.collector.name` and `sw.otelcol.collector.entity_creation`. This ensures collector entity with appropriate name gets created in SolarWinds Observability SaaS platform
+- Host attributes decoration: determines and applies host identifiers and related attributes for proper host entity creation in SolarWinds Observability SaaS platform
+- Resource attributes: adds optional configured attributes to all signals
 - Signal size monitoring: logs a warning when signals exceed configured size
+
+## Configuration
+> [!WARNING]
+> Exact name of the extension is required in processor configuration. If the `solarwinds` extension is misconfigured in the processor setup, the collector will not start.
+
+### Minimal Configuration
+```yaml
+processors:
+  solarwinds:
+    collector_attributes_decoration:
+      extension: solarwinds/sample
+```
+
+### Full Configuration
+```yaml
+processors:
+  solarwinds:
+    max_size_mib: 3
+    collector_attributes_decoration:
+      enabled: true
+      extension: solarwinds/sample
+    host_attributes_decoration:
+      enabled: true
+      on_prem_override_id: "custom-host-id"
+    resource:
+      custom.attribute: "value"
+```
+
+## Collector Attributes Decoration
+
+Processor provides collector-specific decorations leveraging of configured `solarwinds` extension.
+This feature is enabled by default.
+
+```yaml
+collector_attributes_decoration:
+  enabled: true
+  extension: solarwinds/sample
+```
+
+Where:
+- `enabled`: Enables collector attributes decoration (enabled by default)
+- `extension`: Identifies a SolarWinds Extension by its full name for obtaining required configuration
+
+The processor automatically adds:
+- `sw.otelcol.collector.name`: configured collector name
+- `sw.otelcol.collector.entity_creation`: (optional) when entity inference is enabled in the extension, the SolarWinds OTel Collector entity will be inferred in SolarWinds Observability.
 
 ## Host Attributes Decoration
 
@@ -72,33 +119,3 @@ max_size_mib: 3
 
 Where:
 - `max_size_mib`: Maximum allowed size of a single signal in MiB (default: 2 MiB)
-
-## Configuration
-
-### Minimal Configuration
-```yaml
-processors:
-  solarwinds:
-    extension: solarwinds/sample
-```
-
-### Full Configuration
-```yaml
-processors:
-  solarwinds:
-    extension: solarwinds/sample
-    max_size_mib: 3
-    host_attributes_decoration:
-      enabled: true
-      on_prem_override_id: "custom-host-id"
-    resource:
-      custom.attribute: "value"
-```
-
-## Extension Dependency
-Requires `solarwinds` extension to be configured. The processor automatically adds:
-- `sw.otelcol.collector.name`: configured collector name
-- `sw.otelcol.collector.entity_creation`: (optional) when entity inference is enabled in the extension, the SolarWinds OTel Collector entity will be inferred in SolarWinds Observability.
-
-> [!WARNING]
-> Exact name of the extension is required in processor configuration. If the `solarwinds` extension is misconfigured in the processor setup, the collector will not start.
