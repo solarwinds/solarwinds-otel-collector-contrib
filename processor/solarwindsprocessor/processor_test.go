@@ -75,11 +75,17 @@ var _ ExtensionProvider = (*mockExtensionProviderInitError)(nil)
 type mockContainerProvider struct {
 	willFail          bool
 	isRunInContainerd bool
+	isNotInContainer  bool
 }
 
 func (p *mockContainerProvider) ReadContainerInstanceID() (string, error) {
 	if p.willFail {
 		return "", fmt.Errorf("mock container fetch error")
+	}
+
+	if p.isNotInContainer {
+		// Simulate not running in a container (normal scenario)
+		return "", nil
 	}
 
 	return "mock-container-id", nil
@@ -425,6 +431,47 @@ func TestProcessorInstantiationWithHostAttributesDecorationEnabled(t *testing.T)
 	val, _ := resourceAttrs.Get("host.id")
 	assert.Equal(t, "override-id-789", val.Str(), "host.id should be set from OnPremOverrideID")
 
+	val, _ = resourceAttrs.Get("os.type")
+	assert.Equal(t, "Linux", val.Str(), "os.type should be normalized to 'Linux'")
+}
+
+func TestProcessorHostDecorationWhenNotInContainerFallbackToHostId(t *testing.T) {
+	hostDecoration := internal.HostDecoration{
+		Enabled: true,
+		// No OnPremOverrideID provided
+	}
+	cfg := &Config{
+		ExtensionName:            "test",
+		ResourceAttributes:       map[string]string{},
+		HostAttributesDecoration: hostDecoration,
+	}
+
+	// Simulate running on bare metal (not in container)
+	containerProvider := &mockContainerProvider{
+		willFail:          false,
+		isRunInContainerd: false,
+		isNotInContainer:  true,
+	}
+	hostDecorator := internal.NewHostAttributes(hostDecoration, containerProvider, zaptest.NewLogger(t))
+	proc := newTestProcessorWithHostAttributes(t, cfg, hostDecorator)
+
+	metrics := pmetric.NewMetrics()
+	rm := metrics.ResourceMetrics().AppendEmpty()
+	attrs := rm.Resource().Attributes()
+	attrs.PutStr("host.id", "original-host-id")
+	// No host.bios-uuid attribute
+	attrs.PutStr("os.type", "linux")
+
+	result, err := proc.processMetrics(context.Background(), metrics)
+
+	assert.NoError(t, err, "processor should not fail when not in container without override ID")
+	resourceAttrs := result.ResourceMetrics().At(0).Resource().Attributes()
+
+	// Verify host.id falls back to original host.id when no OnPremOverrideID and no BIOS UUID
+	val, _ := resourceAttrs.Get("host.id")
+	assert.Equal(t, "original-host-id", val.Str(), "host.id should fall back to original value when no override and no BIOS UUID")
+
+	// Verify os.type is normalized
 	val, _ = resourceAttrs.Get("os.type")
 	assert.Equal(t, "Linux", val.Str(), "os.type should be normalized to 'Linux'")
 }
