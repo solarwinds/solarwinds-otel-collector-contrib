@@ -46,12 +46,16 @@ func (c *containerInfo) ReadContainerInstanceID() (string, error) {
 	// If it does, we are running in a Windows Container
 	_, _, err = registryKeyControl.GetIntegerValue("ContainerType")
 	if err != nil {
-		return "", err
+		// ContainerType registry value doesn't exist - this means we're not in a Windows container
+		// This is a normal scenario, not an error
+		return "", nil
 	}
 
 	// Check for ComputerName in HKLM\System\CurrentControlSet\Control\ComputerName\ComputerName
 	registryKeyCompName, err := registry.OpenKey(registry.LOCAL_MACHINE, `System\CurrentControlSet\Control\ComputerName\ComputerName`, registry.QUERY_VALUE)
 	if err != nil {
+		// If we're in a container but can't get the computer name, this is a real error
+		c.logger.Error("Failed to open ComputerName registry key while in Windows container", zap.Error(err))
 		return "", err
 	}
 
@@ -64,7 +68,13 @@ func (c *containerInfo) ReadContainerInstanceID() (string, error) {
 	// Retrieve the ComputerName value
 	// Use it as Container Identifier
 	containerID, _, err := registryKeyCompName.GetStringValue("ComputerName")
-	return containerID, err
+	if err != nil {
+		// If we're in a container but can't get the computer name, this is a real error
+		c.logger.Error("Failed to retrieve ComputerName value while in Windows container", zap.Error(err))
+		return "", err
+	}
+
+	return containerID, nil
 }
 
 func (c *containerInfo) IsRunInContainerd() bool {
