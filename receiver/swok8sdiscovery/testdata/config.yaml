@@ -1,0 +1,32 @@
+swok8sdiscovery:
+  image_rules:
+    - database_type: mysql
+      patterns: ["mysql*", "mariadb*"]
+      default_port: 3306      
+    - database_type: postgres
+      patterns: ["postgres*", "postgresql*"]
+      default_port: 5432    
+  domain_rules:
+    - database_type: mysql
+      patterns: ["mysql*", "mariadb*"]
+    - database_type: postgres
+      patterns: ["\\.postgres\\.database\\.azure\\.com$", "\\.rds(?:\\.[a-z]{2}(?:-[a-z]+){1,2}-\\d+)?\\.amazonaws\\.com$"]
+      domain_hints: ["postgres"]
+  
+swok8sdiscovery/missing_domain_rules:
+  image_rules:
+    - database_type: mysql
+      patterns: ["mysql", "mariadb"]
+      default_port: 3306      
+    - database_type: postgres
+      patterns: ["postgres", "postgresql"]
+      default_port: 5432    
+  domain_rules:
+    - database_type: mysql      
+swok8sdiscovery/missing_image_rules:
+  image_rules:
+    - database_type: mysql
+      default_port: 3306          
+  domain_rules:
+    - database_type: mysql      
+      patterns: ["mysql*", "mariadb*"]
