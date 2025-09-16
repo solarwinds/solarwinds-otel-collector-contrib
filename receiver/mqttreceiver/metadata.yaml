@@ -7,3 +7,39 @@ status:
     development: [ metrics ]
   distributions: [ verified, playground, k8s ]
   disable_codecov_badge: true
+
+resource_attributes:
+  sw.otelcol.IotBroker.name:
+    enabled: true
+    description: "Name of the IoT Broker"
+    type: string
+  sw.otelcol.IotBroker.host:
+    enabled: true
+    description: "Host of the IoT Broker"
+    type: string
+  sw.otelcol.IotBroker.port:
+    enabled: true
+    description: "Port of the IoT Broker"
+    type: int
+  sw.otelcol.IotBroker.protocol:
+    enabled: true
+    description: "Protocol used to connect to the IoT Broker"
+    enum: ["mqtt", "mqtts"]
+    type: string
+  sw.otelcol.IotBroker.status:
+    enabled: true
+    description: "Status of the IoT Broker"
+    enum: ["OK", "ConnectionFailed", "SubscribeFailed", "RoundtripFailed"]
+    type: string
+  sw.otelcol.IotSensor.name:
+    enabled: true
+    description: "Name of the IoT Sensor"
+    type: string
+
+metrics:
+  sw.otelcol.IoT.roundtrip:
+    enabled: true
+    description: "Roundtrip time to the Mqtt Broker"
+    unit: "millisecond"
+    gauge:
+      value_type: double

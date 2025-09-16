@@ -4,12 +4,14 @@ go 1.25.0
 
 require (
 	github.com/eclipse/paho.mqtt.golang v1.5.0
+	github.com/google/go-cmp v0.7.0
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/collector/component v1.41.0
 	go.opentelemetry.io/collector/component/componenttest v0.135.0
 	go.opentelemetry.io/collector/confmap v1.41.0
 	go.opentelemetry.io/collector/consumer v1.41.0
 	go.opentelemetry.io/collector/consumer/consumertest v0.135.0
+	go.opentelemetry.io/collector/filter v0.135.0
 	go.opentelemetry.io/collector/pdata v1.41.0
 	go.opentelemetry.io/collector/receiver v1.41.0
 	go.opentelemetry.io/collector/receiver/receivertest v0.135.0

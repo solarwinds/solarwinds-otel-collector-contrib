@@ -30,7 +30,7 @@ func NewFactory() receiver.Factory {
 		createDefaultConfig,
 		receiver.WithMetrics(
 			createMetricsReceiver,
-			component.StabilityLevelStable,
+			component.StabilityLevelDevelopment,
 		),
 	)
 }

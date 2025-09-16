@@ -354,10 +354,10 @@ func createMetrics(metadata *subscriptionMetadata, status string, value *string)
 	attrs.PutStr("sw.otelcol.IotBroker.server", metadata.broker.Host)
 	attrs.PutInt("sw.otelcol.IotBroker.port", int64(metadata.broker.Port))
 	attrs.PutStr("sw.otelcol.IotBroker.protocol", metadata.broker.Protocol)
+	attrs.PutStr("sw.otelcol.IotBroker.status", status)
 
 	if metadata.sensor != nil {
 		attrs.PutStr("sw.otelcol.IotSensor.name", metadata.sensor.Name)
-		attrs.PutStr("sw.otelcol.IotBroker.status", status)
 	}
 
 	if value == nil {
