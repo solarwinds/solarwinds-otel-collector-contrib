@@ -5,11 +5,11 @@ go 1.25.0
 require (
 	github.com/go-ole/go-ole v1.3.0
 	github.com/google/go-cmp v0.7.0
-	github.com/shirou/gopsutil/v4 v4.25.7
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/registry v0.131.7
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil v0.131.7
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.131.7
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/wmi v0.131.7
+	github.com/shirou/gopsutil/v4 v4.25.8
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/registry v0.131.8
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil v0.131.8
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.131.8
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/wmi v0.131.8
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/collector/component v1.37.0
 	go.opentelemetry.io/collector/component/componenttest v0.131.0
@@ -36,7 +36,7 @@ require (
 	go.opentelemetry.io/contrib/bridges/otelzap v0.12.0 // indirect
 	go.opentelemetry.io/otel/log v0.13.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/sys v0.35.0 // indirect
+	golang.org/x/sys v0.36.0 // indirect
 )
 
 require (
