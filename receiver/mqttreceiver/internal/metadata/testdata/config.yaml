@@ -1,0 +1,87 @@
+default:
+all_set:
+  metrics:
+    sw.otelcol.Mqtt.Roundtrip:
+      enabled: true
+  resource_attributes:
+    sw.otelcol.MqttBroker.name:
+      enabled: true
+    sw.otelcol.MqttBroker.port:
+      enabled: true
+    sw.otelcol.MqttBroker.protocol:
+      enabled: true
+    sw.otelcol.MqttBroker.server:
+      enabled: true
+    sw.otelcol.MqttBroker.status:
+      enabled: true
+    sw.otelcol.MqttSensor.name:
+      enabled: true
+none_set:
+  metrics:
+    sw.otelcol.Mqtt.Roundtrip:
+      enabled: false
+  resource_attributes:
+    sw.otelcol.MqttBroker.name:
+      enabled: false
+    sw.otelcol.MqttBroker.port:
+      enabled: false
+    sw.otelcol.MqttBroker.protocol:
+      enabled: false
+    sw.otelcol.MqttBroker.server:
+      enabled: false
+    sw.otelcol.MqttBroker.status:
+      enabled: false
+    sw.otelcol.MqttSensor.name:
+      enabled: false
+filter_set_include:
+  resource_attributes:
+    sw.otelcol.MqttBroker.name:
+      enabled: true
+      metrics_include:
+        - regexp: ".*"
+    sw.otelcol.MqttBroker.port:
+      enabled: true
+      metrics_include:
+        - regexp: ".*"
+    sw.otelcol.MqttBroker.protocol:
+      enabled: true
+      metrics_include:
+        - regexp: ".*"
+    sw.otelcol.MqttBroker.server:
+      enabled: true
+      metrics_include:
+        - regexp: ".*"
+    sw.otelcol.MqttBroker.status:
+      enabled: true
+      metrics_include:
+        - regexp: ".*"
+    sw.otelcol.MqttSensor.name:
+      enabled: true
+      metrics_include:
+        - regexp: ".*"
+filter_set_exclude:
+  resource_attributes:
+    sw.otelcol.MqttBroker.name:
+      enabled: true
+      metrics_exclude:
+        - strict: "sw.otelcol.MqttBroker.name-val"
+    sw.otelcol.MqttBroker.port:
+      enabled: true
+      metrics_exclude:
+        - regexp: ".*"
+    sw.otelcol.MqttBroker.protocol:
+      enabled: true
+      metrics_exclude:
+        - strict: "mqtt"
+    sw.otelcol.MqttBroker.server:
+      enabled: true
+      metrics_exclude:
+        - strict: "sw.otelcol.MqttBroker.server-val"
+    sw.otelcol.MqttBroker.status:
+      enabled: true
+      metrics_exclude:
+        - strict: "OK"
+    sw.otelcol.MqttSensor.name:
+      enabled: true
+      metrics_exclude:
+        - strict: "sw.otelcol.MqttSensor.name-val"
