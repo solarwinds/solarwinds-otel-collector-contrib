@@ -26,7 +26,10 @@ import (
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
+	"go.opentelemetry.io/collector/receiver"
 	"go.uber.org/zap"
+
+	metadata "github.com/solarwinds/solarwinds-otel-collector-releases/receiver/mqttreceiver/internal/metadata"
 )
 
 type subscriptionMetadata struct {
@@ -45,17 +48,19 @@ func newSubscriptionMetadata(broker *Broker, sensor *Sensor, metric *Metric) *su
 
 // brokerSubscription encapsulates MQTT broker connection and subscription management
 type brokerSubscription struct {
-	broker             *Broker
-	client             *mqtt.Client
-	logger             *zap.Logger
-	consumer           consumer.Metrics
-	ctx                context.Context
-	wg                 sync.WaitGroup
-	topicSubscriptions map[string][]*subscriptionMetadata
+	broker                 *Broker
+	client                 *mqtt.Client
+	logger                 *zap.Logger
+	consumer               consumer.Metrics
+	ctx                    context.Context
+	wg                     sync.WaitGroup
+	topicSubscriptions     map[string][]*subscriptionMetadata
+	settings               receiver.Settings
+	roundtripMetricBuilder *metadata.MetricsBuilder
 }
 
 // newBrokerSubscription creates a new subscribed broker instance
-func newBrokerSubscription(broker *Broker, logger *zap.Logger, consumer consumer.Metrics, ctx context.Context) *brokerSubscription {
+func newBrokerSubscription(broker *Broker, settings receiver.Settings, logger *zap.Logger, consumer consumer.Metrics, ctx context.Context) *brokerSubscription {
 	topicSubscriptions := make(map[string][]*subscriptionMetadata)
 
 	for _, sensor := range broker.Sensors {
@@ -74,12 +79,16 @@ func newBrokerSubscription(broker *Broker, logger *zap.Logger, consumer consumer
 		topicSubscriptions[metric.Topic] = append(topicSubscriptions[metric.Topic], newSubscriptionMetadata(broker, nil, metric))
 	}
 
+	mb := metadata.NewMetricsBuilder(metadata.DefaultMetricsBuilderConfig(), settings)
+
 	return &brokerSubscription{
-		broker:             broker,
-		logger:             logger,
-		consumer:           consumer,
-		ctx:                ctx,
-		topicSubscriptions: topicSubscriptions,
+		broker:                 broker,
+		logger:                 logger,
+		consumer:               consumer,
+		ctx:                    ctx,
+		topicSubscriptions:     topicSubscriptions,
+		settings:               settings,
+		roundtripMetricBuilder: mb,
 	}
 }
 
@@ -202,7 +211,7 @@ func (sb *brokerSubscription) handleMessage(message mqtt.Message, metadata *subs
 		return err
 	}
 
-	metrics, err := createMetrics(metadata, StatusOK, &value)
+	metrics, err := sb.createMetrics(metadata, StatusOK, &value)
 	if err != nil {
 		return err
 	}
@@ -302,29 +311,22 @@ func (sb *brokerSubscription) reconnectAndResubscribe(pingHandler mqtt.MessageHa
 	return nil
 }
 
-// createRoundtripMetric creates a roundtrip metric without consuming it
+// createRoundtripMetric creates a roundtrip metric using generated MetricsBuilder
 func (sb *brokerSubscription) createRoundtripMetric(duration time.Duration) pmetric.Metrics {
-
-	metricMetadata := &Metric{
-		Name:         "Roundtrip",
-		Type:         "int",
-		Topic:        "",
-		Unit:         "ms",
-		Desc:         "Time taken to publish and receive a message",
-		JsonProperty: "",
+	sb.roundtripMetricBuilder.RecordSwOtelcolIoTRoundtripDataPoint(pcommon.NewTimestampFromTime(time.Now()), float64(duration.Milliseconds()))
+	rb := metadata.NewResourceBuilder(metadata.DefaultResourceAttributesConfig())
+	rb.SetSwOtelcolIotBrokerName(sb.broker.Name)
+	rb.SetSwOtelcolIotBrokerHost(sb.broker.Host)
+	rb.SetSwOtelcolIotBrokerPort(int64(sb.broker.Port))
+	switch sb.broker.Protocol {
+	case "mqtt":
+		rb.SetSwOtelcolIotBrokerProtocolMqtt()
+	case "mqtts":
+		rb.SetSwOtelcolIotBrokerProtocolMqtts()
 	}
-
-	value := strconv.FormatInt(duration.Milliseconds(), 10)
-	metrics, err := createMetrics(newSubscriptionMetadata(sb.broker, nil, metricMetadata), StatusOK, &value)
-
-	if err != nil {
-		sb.logger.Error("Failed to create roundtrip metric",
-			zap.String("broker", sb.broker.Name),
-			zap.Error(err))
-		return pmetric.Metrics{}
-	}
-
-	return metrics
+	rb.SetSwOtelcolIotBrokerStatusOK()
+	res := rb.Emit()
+	return sb.roundtripMetricBuilder.Emit(metadata.WithResource(res))
 }
 
 // sendRoundtripMetric creates and sends a roundtrip metric
@@ -333,7 +335,7 @@ func (sb *brokerSubscription) sendRoundtripMetric(duration time.Duration) error 
 }
 
 func (sb *brokerSubscription) sendBrokerStatus(status string) {
-	metrics, _ := createMetrics(newSubscriptionMetadata(sb.broker, nil, nil), status, nil)
+	metrics, _ := sb.createMetrics(newSubscriptionMetadata(sb.broker, nil, nil), status, nil)
 
 	if err := sb.consumer.ConsumeMetrics(sb.ctx, metrics); err != nil {
 		sb.logger.Error("Failed to send broker status",
@@ -343,40 +345,66 @@ func (sb *brokerSubscription) sendBrokerStatus(status string) {
 	}
 }
 
-// createMetrics creates and populates resource metrics with broker and sensor metadata
-func createMetrics(metadata *subscriptionMetadata, status string, value *string) (pmetric.Metrics, error) {
-	metrics := pmetric.NewMetrics()
-	rms := metrics.ResourceMetrics()
-	rm := rms.AppendEmpty()
-
-	attrs := rm.Resource().Attributes()
-	attrs.PutStr("sw.otelcol.IotBroker.name", metadata.broker.Name)
-	attrs.PutStr("sw.otelcol.IotBroker.server", metadata.broker.Host)
-	attrs.PutInt("sw.otelcol.IotBroker.port", int64(metadata.broker.Port))
-	attrs.PutStr("sw.otelcol.IotBroker.protocol", metadata.broker.Protocol)
-	attrs.PutStr("sw.otelcol.IotBroker.status", status)
-
-	if metadata.sensor != nil {
-		attrs.PutStr("sw.otelcol.IotSensor.name", metadata.sensor.Name)
+// buildResource constructs a resource using the generated ResourceBuilder based on subscription metadata and status.
+func (sb *brokerSubscription) buildResource(meta *subscriptionMetadata, status string) pcommon.Resource {
+	rb := metadata.NewResourceBuilder(metadata.DefaultResourceAttributesConfig())
+	rb.SetSwOtelcolIotBrokerName(meta.broker.Name)
+	rb.SetSwOtelcolIotBrokerHost(meta.broker.Host)
+	rb.SetSwOtelcolIotBrokerPort(int64(meta.broker.Port))
+	switch meta.broker.Protocol {
+	case "mqtt":
+		rb.SetSwOtelcolIotBrokerProtocolMqtt()
+	case "mqtts":
+		rb.SetSwOtelcolIotBrokerProtocolMqtts()
 	}
+	switch status {
+	case StatusOK:
+		rb.SetSwOtelcolIotBrokerStatusOK()
+	case StatusConnectionFailed:
+		rb.SetSwOtelcolIotBrokerStatusConnectionFailed()
+	case StatusSubscribeFailed:
+		rb.SetSwOtelcolIotBrokerStatusSubscribeFailed()
+	case StatusRoundtripFailed:
+		rb.SetSwOtelcolIotBrokerStatusRoundtripFailed()
+	}
+	if meta.sensor != nil {
+		rb.SetSwOtelcolIotSensorName(meta.sensor.Name)
+	}
+	return rb.Emit()
+}
 
-	if value == nil {
+// newMetricsWithResource returns a pmetric.Metrics initialized with the provided resource and instrumentation scope.
+func (sb *brokerSubscription) newMetricsWithResource(res pcommon.Resource) pmetric.Metrics {
+	metrics := pmetric.NewMetrics()
+	rm := metrics.ResourceMetrics().AppendEmpty()
+	res.CopyTo(rm.Resource())
+	sm := rm.ScopeMetrics().AppendEmpty()
+	sm.Scope().SetName(metadata.ScopeName)
+	sm.Scope().SetVersion(sb.settings.BuildInfo.Version)
+	return metrics
+}
+
+// createMetrics creates metrics for a given metadata element. If value or metric are nil, only resource+status are emitted.
+func (sb *brokerSubscription) createMetrics(meta *subscriptionMetadata, status string, value *string) (pmetric.Metrics, error) {
+	res := sb.buildResource(meta, status)
+	metrics := sb.newMetricsWithResource(res)
+
+	if value == nil || meta.metric == nil { // status-only resource (no metrics)
 		return metrics, nil
 	}
 
-	metric := rm.ScopeMetrics().AppendEmpty().Metrics().AppendEmpty()
-	metric.SetName(fmt.Sprintf("sw.otelcol.IoT.%s", metadata.metric.Name))
-	metric.SetDescription(metadata.metric.Desc)
-	metric.SetUnit(metadata.metric.Unit)
-	metric.SetEmptyGauge()
-
-	dataPoint := metric.Gauge().DataPoints().AppendEmpty()
-	dataPoint.SetTimestamp(pcommon.NewTimestampFromTime(time.Now()))
-
-	if err := setDataPointValue(dataPoint, *value, metadata.metric.Type); err != nil {
+	rm := metrics.ResourceMetrics().At(0)
+	sm := rm.ScopeMetrics().At(0)
+	m := sm.Metrics().AppendEmpty()
+	m.SetName(fmt.Sprintf("sw.otelcol.IoT.%s", meta.metric.Name))
+	m.SetDescription(meta.metric.Desc)
+	m.SetUnit(meta.metric.Unit)
+	m.SetEmptyGauge()
+	dp := m.Gauge().DataPoints().AppendEmpty()
+	dp.SetTimestamp(pcommon.NewTimestampFromTime(time.Now()))
+	if err := setDataPointValue(dp, *value, meta.metric.Type); err != nil {
 		return metrics, err
 	}
-
 	return metrics, nil
 }
 

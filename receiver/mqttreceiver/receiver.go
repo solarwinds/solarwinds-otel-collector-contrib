@@ -54,7 +54,7 @@ func (kr *mqttObjectsReceiver) Start(_ context.Context, _ component.Host) error 
 	kr.subscribedBrokers = make([]*brokerSubscription, 0, len(kr.config.Brokers))
 
 	for _, broker := range kr.config.Brokers {
-		subBroker := newBrokerSubscription(broker, kr.settings.Logger, kr.consumer, kr.ctx)
+		subBroker := newBrokerSubscription(broker, kr.settings, kr.settings.Logger, kr.consumer, kr.ctx)
 		if err := subBroker.Start(); err != nil {
 			kr.settings.Logger.Error("Failed to start broker subscription",
 				zap.String("broker", broker.Name),
