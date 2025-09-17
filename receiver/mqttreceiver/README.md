@@ -5,7 +5,7 @@
 | ------------- |-----------|
 | Stability     | [development]: metrics   |
 | Distributions | [k8s], [playground], [verified] |
-| Issues        | [![Open issues](https://img.shields.io/github/issues-search/solarwinds/solarwinds-otel-collector-releases?query=is%3Aissue%20is%3Aopen%20label%3Areceiver%2Fmqtt%20&label=open&color=orange&logo=opentelemetry)](https://github.com/solarwinds/solarwinds-otel-collector-releases/issues?q=is%3Aopen+is%3Aissue+label%3Areceiver%2Fmqtt) [![Closed issues](https://img.shields.io/github/issues-search/solarwinds/solarwinds-otel-collector-releases?query=is%3Aissue%20is%3Aclosed%20label%3Areceiver%2Fmqtt%20&label=closed&color=blue&logo=opentelemetry)](https://github.com/solarwinds/solarwinds-otel-collector-releases/issues?q=is%3Aclosed+is%3Aissue+label%3Areceiver%2Fmqtt) |
+| Issues        | [![Open issues](https://img.shields.io/github/issues-search/solarwinds/solarwinds-otel-collector-contrib?query=is%3Aissue%20is%3Aopen%20label%3Areceiver%2Fmqtt%20&label=open&color=orange&logo=opentelemetry)](https://github.com/solarwinds/solarwinds-otel-collector-contrib/issues?q=is%3Aopen+is%3Aissue+label%3Areceiver%2Fmqtt) [![Closed issues](https://img.shields.io/github/issues-search/solarwinds/solarwinds-otel-collector-contrib?query=is%3Aissue%20is%3Aclosed%20label%3Areceiver%2Fmqtt%20&label=closed&color=blue&logo=opentelemetry)](https://github.com/solarwinds/solarwinds-otel-collector-contrib/issues?q=is%3Aclosed+is%3Aissue+label%3Areceiver%2Fmqtt) |
 
 [development]: https://github.com/open-telemetry/opentelemetry-collector/blob/main/docs/component-stability.md#development
 [k8s]: https://github.com/open-telemetry/opentelemetry-collector-releases/tree/main/distributions/otelcol-k8s

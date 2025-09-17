@@ -23,13 +23,12 @@ import (
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/mqttreceiver/internal/metadata"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/receiver"
 	"go.uber.org/zap"
-
-	metadata "github.com/solarwinds/solarwinds-otel-collector-releases/receiver/mqttreceiver/internal/metadata"
 )
 
 type subscriptionMetadata struct {

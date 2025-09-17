@@ -8,7 +8,7 @@ import (
 
 var (
 	Type      = component.MustNewType("mqtt")
-	ScopeName = "github.com/solarwinds/solarwinds-otel-collector-releases/receiver/mqttreceiver"
+	ScopeName = "github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/mqttreceiver"
 )
 
 const (
