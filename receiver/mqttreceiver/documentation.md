@@ -12,7 +12,7 @@ metrics:
     enabled: false
 ```
 
-### sw.otelcol.IoT.roundtrip
+### sw.otelcol.Mqtt.Roundtrip
 
 Roundtrip time to the Mqtt Broker
 
@@ -24,9 +24,9 @@ Roundtrip time to the Mqtt Broker
 
 | Name | Description | Values | Enabled |
 | ---- | ----------- | ------ | ------- |
-| sw.otelcol.IotBroker.host | Host of the IoT Broker | Any Str | true |
-| sw.otelcol.IotBroker.name | Name of the IoT Broker | Any Str | true |
-| sw.otelcol.IotBroker.port | Port of the IoT Broker | Any Int | true |
-| sw.otelcol.IotBroker.protocol | Protocol used to connect to the IoT Broker | Str: ``mqtt``, ``mqtts`` | true |
-| sw.otelcol.IotBroker.status | Status of the IoT Broker | Str: ``OK``, ``ConnectionFailed``, ``SubscribeFailed``, ``RoundtripFailed`` | true |
-| sw.otelcol.IotSensor.name | Name of the IoT Sensor | Any Str | true |
+| sw.otelcol.MqttBroker.name | Name of the Mqtt Broker | Any Str | true |
+| sw.otelcol.MqttBroker.port | Port of the Mqtt Broker | Any Int | true |
+| sw.otelcol.MqttBroker.protocol | Protocol used to connect to the Mqtt Broker | Str: ``mqtt``, ``mqtts`` | true |
+| sw.otelcol.MqttBroker.server | Mqtt Broker server address | Any Str | true |
+| sw.otelcol.MqttBroker.status | Status of the Mqtt Broker | Str: ``OK``, ``ConnectionFailed``, ``SubscribeFailed``, ``RoundtripFailed`` | true |
+| sw.otelcol.MqttSensor.name | Name of the Mqtt Sensor | Any Str | true |

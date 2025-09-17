@@ -111,7 +111,7 @@ func TestMetricsBuilder(t *testing.T) {
 					validatedMetrics["swo.hostinfo.uptime"] = true
 					assert.Equal(t, pmetric.MetricTypeSum, ms.At(i).Type())
 					assert.Equal(t, 1, ms.At(i).Sum().DataPoints().Len())
-					assert.Equal(t, "Host uptime in seconds.", ms.At(i).Description())
+					assert.Equal(t, "Server uptime in seconds.", ms.At(i).Description())
 					assert.Equal(t, "s", ms.At(i).Unit())
 					assert.True(t, ms.At(i).Sum().IsMonotonic())
 					assert.Equal(t, pmetric.AggregationTemporalityCumulative, ms.At(i).Sum().AggregationTemporality())
@@ -194,7 +194,7 @@ func TestMetricsBuilder(t *testing.T) {
 					validatedMetrics["swo.hostinfo.user.lastLogged"] = true
 					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
 					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
-					assert.Equal(t, "Host last logged-in user. Supported for Windows and Linux.", ms.At(i).Description())
+					assert.Equal(t, "Server last logged-in user. Supported for Windows and Linux.", ms.At(i).Description())
 					assert.Equal(t, "user", ms.At(i).Unit())
 					dp := ms.At(i).Gauge().DataPoints().At(0)
 					assert.Equal(t, start, dp.StartTimestamp())

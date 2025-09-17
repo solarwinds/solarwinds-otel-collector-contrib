@@ -94,7 +94,7 @@ type metricSwoHostinfoUptime struct {
 // init fills swo.hostinfo.uptime metric with initial data.
 func (m *metricSwoHostinfoUptime) init() {
 	m.data.SetName("swo.hostinfo.uptime")
-	m.data.SetDescription("Host uptime in seconds.")
+	m.data.SetDescription("Server uptime in seconds.")
 	m.data.SetUnit("s")
 	m.data.SetEmptySum()
 	m.data.Sum().SetIsMonotonic(true)
@@ -169,7 +169,7 @@ type metricSwoHostinfoUserLastLogged struct {
 // init fills swo.hostinfo.user.lastLogged metric with initial data.
 func (m *metricSwoHostinfoUserLastLogged) init() {
 	m.data.SetName("swo.hostinfo.user.lastLogged")
-	m.data.SetDescription("Host last logged-in user. Supported for Windows and Linux.")
+	m.data.SetDescription("Server last logged-in user. Supported for Windows and Linux.")
 	m.data.SetUnit("user")
 	m.data.SetEmptyGauge()
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)

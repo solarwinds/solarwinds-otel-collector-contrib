@@ -129,7 +129,7 @@ func (sb *brokerSubscription) IsConnected() bool {
 
 func (sb *brokerSubscription) createMQTTClient() (*mqtt.Client, error) {
 	opts := mqtt.NewClientOptions()
-	opts.AddBroker(fmt.Sprintf("%s://%s:%d", sb.broker.Protocol, sb.broker.Host, sb.broker.Port))
+	opts.AddBroker(fmt.Sprintf("%s://%s:%d", sb.broker.Protocol, sb.broker.Server, sb.broker.Port))
 	opts.SetClientID(fmt.Sprintf("otel-mqtt-receiver-%d", time.Now().Unix()))
 	opts.SetUsername(sb.broker.User)
 	opts.SetPassword(sb.broker.Password)
@@ -158,7 +158,7 @@ func (sb *brokerSubscription) connectClient() error {
 
 	sb.logger.Info("Connected to MQTT broker",
 		zap.String("broker", sb.broker.Name),
-		zap.String("server", sb.broker.Host),
+		zap.String("server", sb.broker.Server),
 		zap.Int("port", sb.broker.Port))
 
 	return nil
@@ -237,7 +237,7 @@ func (sb *brokerSubscription) runHealthCheck() {
 		roundtripCompleted = true
 		duration := time.Since(startTime)
 
-		sb.logger.Debug("Roundtrip completed",
+		sb.logger.Info("Roundtrip completed",
 			zap.String("broker", sb.broker.Name),
 			zap.Duration("duration", duration))
 
@@ -312,11 +312,11 @@ func (sb *brokerSubscription) reconnectAndResubscribe(pingHandler mqtt.MessageHa
 
 // createRoundtripMetric creates a roundtrip metric using generated MetricsBuilder
 func (sb *brokerSubscription) createRoundtripMetric(duration time.Duration) pmetric.Metrics {
-	sb.roundtripMetricBuilder.RecordSwOtelcolIoTRoundtripDataPoint(
+	sb.roundtripMetricBuilder.RecordSwOtelcolMqttRoundtripDataPoint(
 		pcommon.NewTimestampFromTime(time.Now()), float64(duration.Milliseconds()))
 	rb := metadata.NewResourceBuilder(metadata.DefaultResourceAttributesConfig())
 	setBrokerAttributes(rb, sb.broker)
-	rb.SetSwOtelcolIotBrokerStatusOK()
+	rb.SetSwOtelcolMqttBrokerStatusOK()
 	res := rb.Emit()
 	return sb.roundtripMetricBuilder.Emit(metadata.WithResource(res))
 }
@@ -336,7 +336,7 @@ func (sb *brokerSubscription) sendBrokerStatus(status string) {
 	rm := metrics.ResourceMetrics().At(0)
 	sm := rm.ScopeMetrics().At(0)
 	m := sm.Metrics().AppendEmpty()
-	m.SetName("sw.otelcol.IotBroker.Status")
+	m.SetName("sw.otelcol.MqttBroker.Status")
 	m.SetDescription("Broker status")
 	m.SetEmptyGauge()
 	dp := m.Gauge().DataPoints().AppendEmpty()
@@ -381,25 +381,24 @@ func (sb *brokerSubscription) newMetricsWithResource(res pcommon.Resource) pmetr
 // createMetrics creates metrics for a given metadata element. If value or metric are nil, only resource+status are emitted.
 func (sb *brokerSubscription) createMetrics(meta *subscriptionMetadata, value *string) (pmetric.Metrics, error) {
 	rb := metadata.NewResourceBuilder(metadata.DefaultResourceAttributesConfig())
-	rb.SetSwOtelcolIotBrokerName(meta.broker.Name)
-	rb.SetSwOtelcolIotBrokerHost(meta.broker.Host)
-	rb.SetSwOtelcolIotBrokerPort(int64(meta.broker.Port))
+	rb.SetSwOtelcolMqttBrokerName(meta.broker.Name)
+	rb.SetSwOtelcolMqttBrokerServer(meta.broker.Server)
+	rb.SetSwOtelcolMqttBrokerPort(int64(meta.broker.Port))
 	switch meta.broker.Protocol {
 	case "mqtt":
-		rb.SetSwOtelcolIotBrokerProtocolMqtt()
+		rb.SetSwOtelcolMqttBrokerProtocolMqtt()
 	case "mqtts":
-		rb.SetSwOtelcolIotBrokerProtocolMqtts()
+		rb.SetSwOtelcolMqttBrokerProtocolMqtts()
 	}
-	rb.SetSwOtelcolIotBrokerStatusOK()
 	if meta.sensor != nil {
-		rb.SetSwOtelcolIotSensorName(meta.sensor.Name)
+		rb.SetSwOtelcolMqttSensorName(meta.sensor.Name)
 	}
 	res := rb.Emit()
 	metrics := sb.newMetricsWithResource(res)
 	rm := metrics.ResourceMetrics().At(0)
 	sm := rm.ScopeMetrics().At(0)
 	m := sm.Metrics().AppendEmpty()
-	m.SetName(fmt.Sprintf("sw.otelcol.IoT.%s", meta.metric.Name))
+	m.SetName(fmt.Sprintf("sw.otelcol.Mqtt.%s", meta.metric.Name))
 	m.SetDescription(meta.metric.Desc)
 	m.SetUnit(meta.metric.Unit)
 	m.SetEmptyGauge()
@@ -463,26 +462,26 @@ func setDataPointValue(dataPoint pmetric.NumberDataPoint, strValue string, metri
 }
 
 func setBrokerAttributes(rb *metadata.ResourceBuilder, broker *Broker) {
-	rb.SetSwOtelcolIotBrokerName(broker.Name)
-	rb.SetSwOtelcolIotBrokerHost(broker.Host)
-	rb.SetSwOtelcolIotBrokerPort(int64(broker.Port))
+	rb.SetSwOtelcolMqttBrokerName(broker.Name)
+	rb.SetSwOtelcolMqttBrokerServer(broker.Server)
+	rb.SetSwOtelcolMqttBrokerPort(int64(broker.Port))
 	switch broker.Protocol {
 	case "mqtt":
-		rb.SetSwOtelcolIotBrokerProtocolMqtt()
+		rb.SetSwOtelcolMqttBrokerProtocolMqtt()
 	case "mqtts":
-		rb.SetSwOtelcolIotBrokerProtocolMqtts()
+		rb.SetSwOtelcolMqttBrokerProtocolMqtts()
 	}
 }
 
 func setStatus(rb *metadata.ResourceBuilder, status string) {
 	switch status {
 	case StatusOK:
-		rb.SetSwOtelcolIotBrokerStatusOK()
+		rb.SetSwOtelcolMqttBrokerStatusOK()
 	case StatusConnectionFailed:
-		rb.SetSwOtelcolIotBrokerStatusConnectionFailed()
+		rb.SetSwOtelcolMqttBrokerStatusConnectionFailed()
 	case StatusRoundtripFailed:
-		rb.SetSwOtelcolIotBrokerStatusRoundtripFailed()
+		rb.SetSwOtelcolMqttBrokerStatusRoundtripFailed()
 	case StatusSubscribeFailed:
-		rb.SetSwOtelcolIotBrokerStatusSubscribeFailed()
+		rb.SetSwOtelcolMqttBrokerStatusSubscribeFailed()
 	}
 }

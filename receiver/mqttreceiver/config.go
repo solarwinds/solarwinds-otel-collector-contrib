@@ -31,7 +31,7 @@ type Sensor struct {
 type Broker struct {
 	Name     string    `mapstructure:"name"`
 	Protocol string    `mapstructure:"protocol"`
-	Host     string    `mapstructure:"host"`
+	Server   string    `mapstructure:"server"`
 	Port     int       `mapstructure:"port"`
 	User     string    `mapstructure:"user"`
 	Password string    `mapstructure:"password"`

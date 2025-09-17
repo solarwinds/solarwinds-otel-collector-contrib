@@ -9,35 +9,35 @@ status:
   disable_codecov_badge: true
 
 resource_attributes:
-  sw.otelcol.IotBroker.name:
+  sw.otelcol.MqttBroker.name:
     enabled: true
-    description: "Name of the IoT Broker"
+    description: "Name of the Mqtt Broker"
     type: string
-  sw.otelcol.IotBroker.host:
+  sw.otelcol.MqttBroker.server:
     enabled: true
-    description: "Host of the IoT Broker"
+    description: "Mqtt Broker server address"
     type: string
-  sw.otelcol.IotBroker.port:
+  sw.otelcol.MqttBroker.port:
     enabled: true
-    description: "Port of the IoT Broker"
+    description: "Port of the Mqtt Broker"
     type: int
-  sw.otelcol.IotBroker.protocol:
+  sw.otelcol.MqttBroker.protocol:
     enabled: true
-    description: "Protocol used to connect to the IoT Broker"
+    description: "Protocol used to connect to the Mqtt Broker"
     enum: ["mqtt", "mqtts"]
     type: string
-  sw.otelcol.IotBroker.status:
+  sw.otelcol.MqttBroker.status:
     enabled: true
-    description: "Status of the IoT Broker"
+    description: "Status of the Mqtt Broker"
     enum: ["OK", "ConnectionFailed", "SubscribeFailed", "RoundtripFailed"]
     type: string
-  sw.otelcol.IotSensor.name:
+  sw.otelcol.MqttSensor.name:
     enabled: true
-    description: "Name of the IoT Sensor"
+    description: "Name of the Mqtt Sensor"
     type: string
 
 metrics:
-  sw.otelcol.IoT.roundtrip:
+  sw.otelcol.Mqtt.Roundtrip:
     enabled: true
     description: "Roundtrip time to the Mqtt Broker"
     unit: "millisecond"
