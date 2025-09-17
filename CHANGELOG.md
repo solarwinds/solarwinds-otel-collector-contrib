@@ -1,10 +1,10 @@
 # Changelog
 
 ## vNext
+- Add `mqttreceiver`
 
 ## v0.131.8
 - `solarwindsprocessor` Refactored collector decoration configuration: introduced `collector_attributes_decoration` section with `enabled` and `extension` fields, deprecated root-level `extension` field for better configuration organization
-- Add `mqttreceiver`
 
 ## v0.131.7
 - `swok8sworkloadtypeprocessor` Fix searching for Pods based on their labels and annotations
