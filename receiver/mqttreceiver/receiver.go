@@ -16,7 +16,6 @@ package mqttreceiver
 
 import (
 	"context"
-	"fmt"
 	"sync"
 
 	"go.opentelemetry.io/collector/component"
@@ -66,7 +65,7 @@ func (kr *mqttObjectsReceiver) Start(_ context.Context, _ component.Host) error 
 	}
 
 	if len(kr.subscribedBrokers) == 0 {
-		return fmt.Errorf("failed to start any broker subscriptions")
+		kr.settings.Logger.Error("No brokers were successfully started; receiver will not function")
 	}
 
 	return nil
