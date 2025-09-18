@@ -237,7 +237,7 @@ func (sb *brokerSubscription) runHealthCheck() {
 		roundtripCompleted = true
 		duration := time.Since(startTime)
 
-		sb.logger.Info("Roundtrip completed",
+		sb.logger.Debug("Roundtrip completed",
 			zap.String("broker", sb.broker.Name),
 			zap.Duration("duration", duration))
 
