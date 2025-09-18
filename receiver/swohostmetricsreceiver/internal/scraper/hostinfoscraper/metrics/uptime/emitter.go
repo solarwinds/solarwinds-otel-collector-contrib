@@ -41,7 +41,7 @@ import (
 
 const (
 	MetricName        = "swo.hostinfo.uptime"
-	MetricDescription = "Server uptime in seconds"
+	MetricDescription = "Host uptime in seconds"
 	MetricUnit        = "s"
 )
 
