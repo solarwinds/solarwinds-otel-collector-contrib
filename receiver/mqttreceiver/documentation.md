@@ -12,7 +12,55 @@ metrics:
     enabled: false
 ```
 
-### sw.otelcol.Mqtt.Roundtrip
+### sw.otelcol.mqtt.broker.active_subscriptions
+
+Number of active subscriptions on the Mqtt Broker
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| count | Gauge | Int |
+
+### sw.otelcol.mqtt.broker.bytes_received_per_minute
+
+Number of bytes received by the Mqtt Broker per minute
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| bytes per minute | Gauge | Double |
+
+### sw.otelcol.mqtt.broker.bytes_sent_per_minute
+
+Number of bytes sent by the Mqtt Broker per minute
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| bytes per minute | Gauge | Double |
+
+### sw.otelcol.mqtt.broker.clients_connected
+
+Number of clients connected to the Mqtt Broker
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| count | Gauge | Int |
+
+### sw.otelcol.mqtt.broker.messages_received_per_minute
+
+Number of messages received by the Mqtt Broker per minute
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| count per minute | Gauge | Double |
+
+### sw.otelcol.mqtt.broker.messages_sent_per_minute
+
+Number of messages sent by the Mqtt Broker per minute
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| count per minute | Gauge | Double |
+
+### sw.otelcol.mqtt.broker.roundtrip
 
 Roundtrip time to the Mqtt Broker
 
@@ -24,9 +72,9 @@ Roundtrip time to the Mqtt Broker
 
 | Name | Description | Values | Enabled |
 | ---- | ----------- | ------ | ------- |
-| sw.otelcol.MqttBroker.name | Name of the Mqtt Broker | Any Str | true |
-| sw.otelcol.MqttBroker.port | Port of the Mqtt Broker | Any Int | true |
-| sw.otelcol.MqttBroker.protocol | Protocol used to connect to the Mqtt Broker | Str: ``mqtt``, ``mqtts`` | true |
-| sw.otelcol.MqttBroker.server | Mqtt Broker server address | Any Str | true |
-| sw.otelcol.MqttBroker.status | Status of the Mqtt Broker | Str: ``OK``, ``ConnectionFailed``, ``SubscribeFailed``, ``RoundtripFailed`` | true |
-| sw.otelcol.MqttSensor.name | Name of the Mqtt Sensor | Any Str | true |
+| sw.otelcol.mqtt.broker.name | Name of the Mqtt Broker | Any Str | false |
+| sw.otelcol.mqtt.broker.port | Port of the Mqtt Broker | Any Int | true |
+| sw.otelcol.mqtt.broker.protocol | Protocol used to connect to the Mqtt Broker | Str: ``mqtt``, ``mqtts`` | true |
+| sw.otelcol.mqtt.broker.server | Mqtt Broker server address | Any Str | true |
+| sw.otelcol.mqtt.broker.status | Status of the Mqtt Broker | Str: ``OK``, ``ConnectionFailed``, ``SubscribeFailed``, ``RoundtripFailed`` | true |
+| sw.otelcol.mqtt.sensor.name | Name of the Mqtt Sensor | Any Str | true |

@@ -13,19 +13,19 @@ func TestResourceBuilder(t *testing.T) {
 		t.Run(tt, func(t *testing.T) {
 			cfg := loadResourceAttributesConfig(t, tt)
 			rb := NewResourceBuilder(cfg)
-			rb.SetSwOtelcolMqttBrokerName("sw.otelcol.MqttBroker.name-val")
-			rb.SetSwOtelcolMqttBrokerPort(26)
+			rb.SetSwOtelcolMqttBrokerName("sw.otelcol.mqtt.broker.name-val")
+			rb.SetSwOtelcolMqttBrokerPort(27)
 			rb.SetSwOtelcolMqttBrokerProtocolMqtt()
-			rb.SetSwOtelcolMqttBrokerServer("sw.otelcol.MqttBroker.server-val")
+			rb.SetSwOtelcolMqttBrokerServer("sw.otelcol.mqtt.broker.server-val")
 			rb.SetSwOtelcolMqttBrokerStatusOK()
-			rb.SetSwOtelcolMqttSensorName("sw.otelcol.MqttSensor.name-val")
+			rb.SetSwOtelcolMqttSensorName("sw.otelcol.mqtt.sensor.name-val")
 
 			res := rb.Emit()
 			assert.Equal(t, 0, rb.Emit().Attributes().Len()) // Second call should return empty Resource
 
 			switch tt {
 			case "default":
-				assert.Equal(t, 6, res.Attributes().Len())
+				assert.Equal(t, 5, res.Attributes().Len())
 			case "all_set":
 				assert.Equal(t, 6, res.Attributes().Len())
 			case "none_set":
@@ -35,35 +35,35 @@ func TestResourceBuilder(t *testing.T) {
 				assert.Failf(t, "unexpected test case: %s", tt)
 			}
 
-			val, ok := res.Attributes().Get("sw.otelcol.MqttBroker.name")
+			val, ok := res.Attributes().Get("sw.otelcol.mqtt.broker.name")
+			assert.Equal(t, tt == "all_set", ok)
+			if ok {
+				assert.Equal(t, "sw.otelcol.mqtt.broker.name-val", val.Str())
+			}
+			val, ok = res.Attributes().Get("sw.otelcol.mqtt.broker.port")
 			assert.True(t, ok)
 			if ok {
-				assert.Equal(t, "sw.otelcol.MqttBroker.name-val", val.Str())
+				assert.EqualValues(t, 27, val.Int())
 			}
-			val, ok = res.Attributes().Get("sw.otelcol.MqttBroker.port")
-			assert.True(t, ok)
-			if ok {
-				assert.EqualValues(t, 26, val.Int())
-			}
-			val, ok = res.Attributes().Get("sw.otelcol.MqttBroker.protocol")
+			val, ok = res.Attributes().Get("sw.otelcol.mqtt.broker.protocol")
 			assert.True(t, ok)
 			if ok {
 				assert.Equal(t, "mqtt", val.Str())
 			}
-			val, ok = res.Attributes().Get("sw.otelcol.MqttBroker.server")
+			val, ok = res.Attributes().Get("sw.otelcol.mqtt.broker.server")
 			assert.True(t, ok)
 			if ok {
-				assert.Equal(t, "sw.otelcol.MqttBroker.server-val", val.Str())
+				assert.Equal(t, "sw.otelcol.mqtt.broker.server-val", val.Str())
 			}
-			val, ok = res.Attributes().Get("sw.otelcol.MqttBroker.status")
+			val, ok = res.Attributes().Get("sw.otelcol.mqtt.broker.status")
 			assert.True(t, ok)
 			if ok {
 				assert.Equal(t, "OK", val.Str())
 			}
-			val, ok = res.Attributes().Get("sw.otelcol.MqttSensor.name")
+			val, ok = res.Attributes().Get("sw.otelcol.mqtt.sensor.name")
 			assert.True(t, ok)
 			if ok {
-				assert.Equal(t, "sw.otelcol.MqttSensor.name-val", val.Str())
+				assert.Equal(t, "sw.otelcol.mqtt.sensor.name-val", val.Str())
 			}
 		})
 	}

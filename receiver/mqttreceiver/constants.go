@@ -37,47 +37,21 @@ const (
 )
 
 // BrokerMetrics contains all predefined metric definitions
-var brokerMetrics = []*Metric{
-	{
-		Topic: "$SYS/broker/clients/connected",
-		Name:  "ClientsConnected",
-		Unit:  "count",
-		Desc:  "Clients Connected",
-		Type:  "int",
-	},
-	{
-		Topic: "$SYS/broker/subscriptions/count",
-		Name:  "ActiveSubscriptions",
-		Unit:  "count",
-		Desc:  "Active Subscriptions",
-		Type:  "int",
-	},
-	{
-		Topic: "$SYS/broker/load/bytes/received/1min",
-		Name:  "BytesReceivedPerMinute",
-		Unit:  "bytesperminute",
-		Desc:  "Bytes received per minute",
-		Type:  "float",
-	},
-	{
-		Topic: "$SYS/broker/load/bytes/sent/1min",
-		Name:  "BytesSentPerMinute",
-		Unit:  "bytesperminute",
-		Desc:  "Bytes sent per minute",
-		Type:  "float",
-	},
-	{
-		Topic: "$SYS/broker/load/messages/received/1min",
-		Name:  "MessagesReceivedPerMinute",
-		Unit:  "messagesperminute",
-		Desc:  "Messages received per minute",
-		Type:  "float",
-	},
-	{
-		Topic: "$SYS/broker/load/messages/sent/1min",
-		Name:  "MessagesSentPerMinute",
-		Unit:  "messagesperminute",
-		Desc:  "Messages sent per minute",
-		Type:  "float",
-	},
+
+const (
+	TopicClientsConnected         = "$SYS/broker/clients/connected"
+	TopicClientSubscriptionsCount = "$SYS/broker/subscriptions/count"
+	TopicBytesReceived            = "$SYS/broker/load/bytes/received/1min"
+	TopicBytesSent                = "$SYS/broker/load/bytes/sent/1min"
+	TopicMessagesReceived         = "$SYS/broker/load/messages/received/1min"
+	TopicMessagesSent             = "$SYS/broker/load/messages/sent/1min"
+)
+
+var buildInBrokerTopicList = []string{
+	TopicClientsConnected,
+	TopicClientSubscriptionsCount,
+	TopicBytesReceived,
+	TopicBytesSent,
+	TopicMessagesReceived,
+	TopicMessagesSent,
 }

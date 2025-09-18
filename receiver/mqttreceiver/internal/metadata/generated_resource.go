@@ -21,73 +21,73 @@ func NewResourceBuilder(rac ResourceAttributesConfig) *ResourceBuilder {
 	}
 }
 
-// SetSwOtelcolMqttBrokerName sets provided value as "sw.otelcol.MqttBroker.name" attribute.
+// SetSwOtelcolMqttBrokerName sets provided value as "sw.otelcol.mqtt.broker.name" attribute.
 func (rb *ResourceBuilder) SetSwOtelcolMqttBrokerName(val string) {
 	if rb.config.SwOtelcolMqttBrokerName.Enabled {
-		rb.res.Attributes().PutStr("sw.otelcol.MqttBroker.name", val)
+		rb.res.Attributes().PutStr("sw.otelcol.mqtt.broker.name", val)
 	}
 }
 
-// SetSwOtelcolMqttBrokerPort sets provided value as "sw.otelcol.MqttBroker.port" attribute.
+// SetSwOtelcolMqttBrokerPort sets provided value as "sw.otelcol.mqtt.broker.port" attribute.
 func (rb *ResourceBuilder) SetSwOtelcolMqttBrokerPort(val int64) {
 	if rb.config.SwOtelcolMqttBrokerPort.Enabled {
-		rb.res.Attributes().PutInt("sw.otelcol.MqttBroker.port", val)
+		rb.res.Attributes().PutInt("sw.otelcol.mqtt.broker.port", val)
 	}
 }
 
-// SetSwOtelcolMqttBrokerProtocolMqtt sets "sw.otelcol.MqttBroker.protocol=mqtt" attribute.
+// SetSwOtelcolMqttBrokerProtocolMqtt sets "sw.otelcol.mqtt.broker.protocol=mqtt" attribute.
 func (rb *ResourceBuilder) SetSwOtelcolMqttBrokerProtocolMqtt() {
 	if rb.config.SwOtelcolMqttBrokerProtocol.Enabled {
-		rb.res.Attributes().PutStr("sw.otelcol.MqttBroker.protocol", "mqtt")
+		rb.res.Attributes().PutStr("sw.otelcol.mqtt.broker.protocol", "mqtt")
 	}
 }
 
-// SetSwOtelcolMqttBrokerProtocolMqtts sets "sw.otelcol.MqttBroker.protocol=mqtts" attribute.
+// SetSwOtelcolMqttBrokerProtocolMqtts sets "sw.otelcol.mqtt.broker.protocol=mqtts" attribute.
 func (rb *ResourceBuilder) SetSwOtelcolMqttBrokerProtocolMqtts() {
 	if rb.config.SwOtelcolMqttBrokerProtocol.Enabled {
-		rb.res.Attributes().PutStr("sw.otelcol.MqttBroker.protocol", "mqtts")
+		rb.res.Attributes().PutStr("sw.otelcol.mqtt.broker.protocol", "mqtts")
 	}
 }
 
-// SetSwOtelcolMqttBrokerServer sets provided value as "sw.otelcol.MqttBroker.server" attribute.
+// SetSwOtelcolMqttBrokerServer sets provided value as "sw.otelcol.mqtt.broker.server" attribute.
 func (rb *ResourceBuilder) SetSwOtelcolMqttBrokerServer(val string) {
 	if rb.config.SwOtelcolMqttBrokerServer.Enabled {
-		rb.res.Attributes().PutStr("sw.otelcol.MqttBroker.server", val)
+		rb.res.Attributes().PutStr("sw.otelcol.mqtt.broker.server", val)
 	}
 }
 
-// SetSwOtelcolMqttBrokerStatusOK sets "sw.otelcol.MqttBroker.status=OK" attribute.
+// SetSwOtelcolMqttBrokerStatusOK sets "sw.otelcol.mqtt.broker.status=OK" attribute.
 func (rb *ResourceBuilder) SetSwOtelcolMqttBrokerStatusOK() {
 	if rb.config.SwOtelcolMqttBrokerStatus.Enabled {
-		rb.res.Attributes().PutStr("sw.otelcol.MqttBroker.status", "OK")
+		rb.res.Attributes().PutStr("sw.otelcol.mqtt.broker.status", "OK")
 	}
 }
 
-// SetSwOtelcolMqttBrokerStatusConnectionFailed sets "sw.otelcol.MqttBroker.status=ConnectionFailed" attribute.
+// SetSwOtelcolMqttBrokerStatusConnectionFailed sets "sw.otelcol.mqtt.broker.status=ConnectionFailed" attribute.
 func (rb *ResourceBuilder) SetSwOtelcolMqttBrokerStatusConnectionFailed() {
 	if rb.config.SwOtelcolMqttBrokerStatus.Enabled {
-		rb.res.Attributes().PutStr("sw.otelcol.MqttBroker.status", "ConnectionFailed")
+		rb.res.Attributes().PutStr("sw.otelcol.mqtt.broker.status", "ConnectionFailed")
 	}
 }
 
-// SetSwOtelcolMqttBrokerStatusSubscribeFailed sets "sw.otelcol.MqttBroker.status=SubscribeFailed" attribute.
+// SetSwOtelcolMqttBrokerStatusSubscribeFailed sets "sw.otelcol.mqtt.broker.status=SubscribeFailed" attribute.
 func (rb *ResourceBuilder) SetSwOtelcolMqttBrokerStatusSubscribeFailed() {
 	if rb.config.SwOtelcolMqttBrokerStatus.Enabled {
-		rb.res.Attributes().PutStr("sw.otelcol.MqttBroker.status", "SubscribeFailed")
+		rb.res.Attributes().PutStr("sw.otelcol.mqtt.broker.status", "SubscribeFailed")
 	}
 }
 
-// SetSwOtelcolMqttBrokerStatusRoundtripFailed sets "sw.otelcol.MqttBroker.status=RoundtripFailed" attribute.
+// SetSwOtelcolMqttBrokerStatusRoundtripFailed sets "sw.otelcol.mqtt.broker.status=RoundtripFailed" attribute.
 func (rb *ResourceBuilder) SetSwOtelcolMqttBrokerStatusRoundtripFailed() {
 	if rb.config.SwOtelcolMqttBrokerStatus.Enabled {
-		rb.res.Attributes().PutStr("sw.otelcol.MqttBroker.status", "RoundtripFailed")
+		rb.res.Attributes().PutStr("sw.otelcol.mqtt.broker.status", "RoundtripFailed")
 	}
 }
 
-// SetSwOtelcolMqttSensorName sets provided value as "sw.otelcol.MqttSensor.name" attribute.
+// SetSwOtelcolMqttSensorName sets provided value as "sw.otelcol.mqtt.sensor.name" attribute.
 func (rb *ResourceBuilder) SetSwOtelcolMqttSensorName(val string) {
 	if rb.config.SwOtelcolMqttSensorName.Enabled {
-		rb.res.Attributes().PutStr("sw.otelcol.MqttSensor.name", val)
+		rb.res.Attributes().PutStr("sw.otelcol.mqtt.sensor.name", val)
 	}
 }
 

@@ -28,12 +28,36 @@ func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
 
 // MetricsConfig provides config for mqtt metrics.
 type MetricsConfig struct {
-	SwOtelcolMqttRoundtrip MetricConfig `mapstructure:"sw.otelcol.Mqtt.Roundtrip"`
+	SwOtelcolMqttBrokerActiveSubscriptions       MetricConfig `mapstructure:"sw.otelcol.mqtt.broker.active_subscriptions"`
+	SwOtelcolMqttBrokerBytesReceivedPerMinute    MetricConfig `mapstructure:"sw.otelcol.mqtt.broker.bytes_received_per_minute"`
+	SwOtelcolMqttBrokerBytesSentPerMinute        MetricConfig `mapstructure:"sw.otelcol.mqtt.broker.bytes_sent_per_minute"`
+	SwOtelcolMqttBrokerClientsConnected          MetricConfig `mapstructure:"sw.otelcol.mqtt.broker.clients_connected"`
+	SwOtelcolMqttBrokerMessagesReceivedPerMinute MetricConfig `mapstructure:"sw.otelcol.mqtt.broker.messages_received_per_minute"`
+	SwOtelcolMqttBrokerMessagesSentPerMinute     MetricConfig `mapstructure:"sw.otelcol.mqtt.broker.messages_sent_per_minute"`
+	SwOtelcolMqttBrokerRoundtrip                 MetricConfig `mapstructure:"sw.otelcol.mqtt.broker.roundtrip"`
 }
 
 func DefaultMetricsConfig() MetricsConfig {
 	return MetricsConfig{
-		SwOtelcolMqttRoundtrip: MetricConfig{
+		SwOtelcolMqttBrokerActiveSubscriptions: MetricConfig{
+			Enabled: true,
+		},
+		SwOtelcolMqttBrokerBytesReceivedPerMinute: MetricConfig{
+			Enabled: true,
+		},
+		SwOtelcolMqttBrokerBytesSentPerMinute: MetricConfig{
+			Enabled: true,
+		},
+		SwOtelcolMqttBrokerClientsConnected: MetricConfig{
+			Enabled: true,
+		},
+		SwOtelcolMqttBrokerMessagesReceivedPerMinute: MetricConfig{
+			Enabled: true,
+		},
+		SwOtelcolMqttBrokerMessagesSentPerMinute: MetricConfig{
+			Enabled: true,
+		},
+		SwOtelcolMqttBrokerRoundtrip: MetricConfig{
 			Enabled: true,
 		},
 	}
@@ -67,18 +91,18 @@ func (rac *ResourceAttributeConfig) Unmarshal(parser *confmap.Conf) error {
 
 // ResourceAttributesConfig provides config for mqtt resource attributes.
 type ResourceAttributesConfig struct {
-	SwOtelcolMqttBrokerName     ResourceAttributeConfig `mapstructure:"sw.otelcol.MqttBroker.name"`
-	SwOtelcolMqttBrokerPort     ResourceAttributeConfig `mapstructure:"sw.otelcol.MqttBroker.port"`
-	SwOtelcolMqttBrokerProtocol ResourceAttributeConfig `mapstructure:"sw.otelcol.MqttBroker.protocol"`
-	SwOtelcolMqttBrokerServer   ResourceAttributeConfig `mapstructure:"sw.otelcol.MqttBroker.server"`
-	SwOtelcolMqttBrokerStatus   ResourceAttributeConfig `mapstructure:"sw.otelcol.MqttBroker.status"`
-	SwOtelcolMqttSensorName     ResourceAttributeConfig `mapstructure:"sw.otelcol.MqttSensor.name"`
+	SwOtelcolMqttBrokerName     ResourceAttributeConfig `mapstructure:"sw.otelcol.mqtt.broker.name"`
+	SwOtelcolMqttBrokerPort     ResourceAttributeConfig `mapstructure:"sw.otelcol.mqtt.broker.port"`
+	SwOtelcolMqttBrokerProtocol ResourceAttributeConfig `mapstructure:"sw.otelcol.mqtt.broker.protocol"`
+	SwOtelcolMqttBrokerServer   ResourceAttributeConfig `mapstructure:"sw.otelcol.mqtt.broker.server"`
+	SwOtelcolMqttBrokerStatus   ResourceAttributeConfig `mapstructure:"sw.otelcol.mqtt.broker.status"`
+	SwOtelcolMqttSensorName     ResourceAttributeConfig `mapstructure:"sw.otelcol.mqtt.sensor.name"`
 }
 
 func DefaultResourceAttributesConfig() ResourceAttributesConfig {
 	return ResourceAttributesConfig{
 		SwOtelcolMqttBrokerName: ResourceAttributeConfig{
-			Enabled: true,
+			Enabled: false,
 		},
 		SwOtelcolMqttBrokerPort: ResourceAttributeConfig{
 			Enabled: true,

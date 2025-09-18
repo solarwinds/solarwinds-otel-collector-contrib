@@ -70,15 +70,39 @@ func TestMetricsBuilder(t *testing.T) {
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordSwOtelcolMqttRoundtripDataPoint(ts, 1)
+			mb.RecordSwOtelcolMqttBrokerActiveSubscriptionsDataPoint(ts, 1)
+
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordSwOtelcolMqttBrokerBytesReceivedPerMinuteDataPoint(ts, 1)
+
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordSwOtelcolMqttBrokerBytesSentPerMinuteDataPoint(ts, 1)
+
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordSwOtelcolMqttBrokerClientsConnectedDataPoint(ts, 1)
+
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordSwOtelcolMqttBrokerMessagesReceivedPerMinuteDataPoint(ts, 1)
+
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordSwOtelcolMqttBrokerMessagesSentPerMinuteDataPoint(ts, 1)
+
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordSwOtelcolMqttBrokerRoundtripDataPoint(ts, 1)
 
 			rb := mb.NewResourceBuilder()
-			rb.SetSwOtelcolMqttBrokerName("sw.otelcol.MqttBroker.name-val")
-			rb.SetSwOtelcolMqttBrokerPort(26)
+			rb.SetSwOtelcolMqttBrokerName("sw.otelcol.mqtt.broker.name-val")
+			rb.SetSwOtelcolMqttBrokerPort(27)
 			rb.SetSwOtelcolMqttBrokerProtocolMqtt()
-			rb.SetSwOtelcolMqttBrokerServer("sw.otelcol.MqttBroker.server-val")
+			rb.SetSwOtelcolMqttBrokerServer("sw.otelcol.mqtt.broker.server-val")
 			rb.SetSwOtelcolMqttBrokerStatusOK()
-			rb.SetSwOtelcolMqttSensorName("sw.otelcol.MqttSensor.name-val")
+			rb.SetSwOtelcolMqttSensorName("sw.otelcol.mqtt.sensor.name-val")
 			res := rb.Emit()
 			metrics := mb.Emit(WithResource(res))
 
@@ -101,9 +125,81 @@ func TestMetricsBuilder(t *testing.T) {
 			validatedMetrics := make(map[string]bool)
 			for i := 0; i < ms.Len(); i++ {
 				switch ms.At(i).Name() {
-				case "sw.otelcol.Mqtt.Roundtrip":
-					assert.False(t, validatedMetrics["sw.otelcol.Mqtt.Roundtrip"], "Found a duplicate in the metrics slice: sw.otelcol.Mqtt.Roundtrip")
-					validatedMetrics["sw.otelcol.Mqtt.Roundtrip"] = true
+				case "sw.otelcol.mqtt.broker.active_subscriptions":
+					assert.False(t, validatedMetrics["sw.otelcol.mqtt.broker.active_subscriptions"], "Found a duplicate in the metrics slice: sw.otelcol.mqtt.broker.active_subscriptions")
+					validatedMetrics["sw.otelcol.mqtt.broker.active_subscriptions"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
+					assert.Equal(t, "Number of active subscriptions on the Mqtt Broker", ms.At(i).Description())
+					assert.Equal(t, "count", ms.At(i).Unit())
+					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
+				case "sw.otelcol.mqtt.broker.bytes_received_per_minute":
+					assert.False(t, validatedMetrics["sw.otelcol.mqtt.broker.bytes_received_per_minute"], "Found a duplicate in the metrics slice: sw.otelcol.mqtt.broker.bytes_received_per_minute")
+					validatedMetrics["sw.otelcol.mqtt.broker.bytes_received_per_minute"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
+					assert.Equal(t, "Number of bytes received by the Mqtt Broker per minute", ms.At(i).Description())
+					assert.Equal(t, "bytes per minute", ms.At(i).Unit())
+					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeDouble, dp.ValueType())
+					assert.InDelta(t, float64(1), dp.DoubleValue(), 0.01)
+				case "sw.otelcol.mqtt.broker.bytes_sent_per_minute":
+					assert.False(t, validatedMetrics["sw.otelcol.mqtt.broker.bytes_sent_per_minute"], "Found a duplicate in the metrics slice: sw.otelcol.mqtt.broker.bytes_sent_per_minute")
+					validatedMetrics["sw.otelcol.mqtt.broker.bytes_sent_per_minute"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
+					assert.Equal(t, "Number of bytes sent by the Mqtt Broker per minute", ms.At(i).Description())
+					assert.Equal(t, "bytes per minute", ms.At(i).Unit())
+					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeDouble, dp.ValueType())
+					assert.InDelta(t, float64(1), dp.DoubleValue(), 0.01)
+				case "sw.otelcol.mqtt.broker.clients_connected":
+					assert.False(t, validatedMetrics["sw.otelcol.mqtt.broker.clients_connected"], "Found a duplicate in the metrics slice: sw.otelcol.mqtt.broker.clients_connected")
+					validatedMetrics["sw.otelcol.mqtt.broker.clients_connected"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
+					assert.Equal(t, "Number of clients connected to the Mqtt Broker", ms.At(i).Description())
+					assert.Equal(t, "count", ms.At(i).Unit())
+					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
+				case "sw.otelcol.mqtt.broker.messages_received_per_minute":
+					assert.False(t, validatedMetrics["sw.otelcol.mqtt.broker.messages_received_per_minute"], "Found a duplicate in the metrics slice: sw.otelcol.mqtt.broker.messages_received_per_minute")
+					validatedMetrics["sw.otelcol.mqtt.broker.messages_received_per_minute"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
+					assert.Equal(t, "Number of messages received by the Mqtt Broker per minute", ms.At(i).Description())
+					assert.Equal(t, "count per minute", ms.At(i).Unit())
+					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeDouble, dp.ValueType())
+					assert.InDelta(t, float64(1), dp.DoubleValue(), 0.01)
+				case "sw.otelcol.mqtt.broker.messages_sent_per_minute":
+					assert.False(t, validatedMetrics["sw.otelcol.mqtt.broker.messages_sent_per_minute"], "Found a duplicate in the metrics slice: sw.otelcol.mqtt.broker.messages_sent_per_minute")
+					validatedMetrics["sw.otelcol.mqtt.broker.messages_sent_per_minute"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
+					assert.Equal(t, "Number of messages sent by the Mqtt Broker per minute", ms.At(i).Description())
+					assert.Equal(t, "count per minute", ms.At(i).Unit())
+					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeDouble, dp.ValueType())
+					assert.InDelta(t, float64(1), dp.DoubleValue(), 0.01)
+				case "sw.otelcol.mqtt.broker.roundtrip":
+					assert.False(t, validatedMetrics["sw.otelcol.mqtt.broker.roundtrip"], "Found a duplicate in the metrics slice: sw.otelcol.mqtt.broker.roundtrip")
+					validatedMetrics["sw.otelcol.mqtt.broker.roundtrip"] = true
 					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
 					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
 					assert.Equal(t, "Roundtrip time to the Mqtt Broker", ms.At(i).Description())

@@ -13,34 +13,107 @@ import (
 )
 
 var MetricsInfo = metricsInfo{
-	SwOtelcolMqttRoundtrip: metricInfo{
-		Name: "sw.otelcol.Mqtt.Roundtrip",
+	SwOtelcolMqttBrokerActiveSubscriptions: metricInfo{
+		Name: "sw.otelcol.mqtt.broker.active_subscriptions",
+	},
+	SwOtelcolMqttBrokerBytesReceivedPerMinute: metricInfo{
+		Name: "sw.otelcol.mqtt.broker.bytes_received_per_minute",
+	},
+	SwOtelcolMqttBrokerBytesSentPerMinute: metricInfo{
+		Name: "sw.otelcol.mqtt.broker.bytes_sent_per_minute",
+	},
+	SwOtelcolMqttBrokerClientsConnected: metricInfo{
+		Name: "sw.otelcol.mqtt.broker.clients_connected",
+	},
+	SwOtelcolMqttBrokerMessagesReceivedPerMinute: metricInfo{
+		Name: "sw.otelcol.mqtt.broker.messages_received_per_minute",
+	},
+	SwOtelcolMqttBrokerMessagesSentPerMinute: metricInfo{
+		Name: "sw.otelcol.mqtt.broker.messages_sent_per_minute",
+	},
+	SwOtelcolMqttBrokerRoundtrip: metricInfo{
+		Name: "sw.otelcol.mqtt.broker.roundtrip",
 	},
 }
 
 type metricsInfo struct {
-	SwOtelcolMqttRoundtrip metricInfo
+	SwOtelcolMqttBrokerActiveSubscriptions       metricInfo
+	SwOtelcolMqttBrokerBytesReceivedPerMinute    metricInfo
+	SwOtelcolMqttBrokerBytesSentPerMinute        metricInfo
+	SwOtelcolMqttBrokerClientsConnected          metricInfo
+	SwOtelcolMqttBrokerMessagesReceivedPerMinute metricInfo
+	SwOtelcolMqttBrokerMessagesSentPerMinute     metricInfo
+	SwOtelcolMqttBrokerRoundtrip                 metricInfo
 }
 
 type metricInfo struct {
 	Name string
 }
 
-type metricSwOtelcolMqttRoundtrip struct {
+type metricSwOtelcolMqttBrokerActiveSubscriptions struct {
 	data     pmetric.Metric // data buffer for generated metric.
 	config   MetricConfig   // metric config provided by user.
 	capacity int            // max observed number of data points added to the metric.
 }
 
-// init fills sw.otelcol.Mqtt.Roundtrip metric with initial data.
-func (m *metricSwOtelcolMqttRoundtrip) init() {
-	m.data.SetName("sw.otelcol.Mqtt.Roundtrip")
-	m.data.SetDescription("Roundtrip time to the Mqtt Broker")
-	m.data.SetUnit("millisecond")
+// init fills sw.otelcol.mqtt.broker.active_subscriptions metric with initial data.
+func (m *metricSwOtelcolMqttBrokerActiveSubscriptions) init() {
+	m.data.SetName("sw.otelcol.mqtt.broker.active_subscriptions")
+	m.data.SetDescription("Number of active subscriptions on the Mqtt Broker")
+	m.data.SetUnit("count")
 	m.data.SetEmptyGauge()
 }
 
-func (m *metricSwOtelcolMqttRoundtrip) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val float64) {
+func (m *metricSwOtelcolMqttBrokerActiveSubscriptions) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricSwOtelcolMqttBrokerActiveSubscriptions) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricSwOtelcolMqttBrokerActiveSubscriptions) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricSwOtelcolMqttBrokerActiveSubscriptions(cfg MetricConfig) metricSwOtelcolMqttBrokerActiveSubscriptions {
+	m := metricSwOtelcolMqttBrokerActiveSubscriptions{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricSwOtelcolMqttBrokerBytesReceivedPerMinute struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills sw.otelcol.mqtt.broker.bytes_received_per_minute metric with initial data.
+func (m *metricSwOtelcolMqttBrokerBytesReceivedPerMinute) init() {
+	m.data.SetName("sw.otelcol.mqtt.broker.bytes_received_per_minute")
+	m.data.SetDescription("Number of bytes received by the Mqtt Broker per minute")
+	m.data.SetUnit("bytes per minute")
+	m.data.SetEmptyGauge()
+}
+
+func (m *metricSwOtelcolMqttBrokerBytesReceivedPerMinute) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val float64) {
 	if !m.config.Enabled {
 		return
 	}
@@ -51,14 +124,14 @@ func (m *metricSwOtelcolMqttRoundtrip) recordDataPoint(start pcommon.Timestamp, 
 }
 
 // updateCapacity saves max length of data point slices that will be used for the slice capacity.
-func (m *metricSwOtelcolMqttRoundtrip) updateCapacity() {
+func (m *metricSwOtelcolMqttBrokerBytesReceivedPerMinute) updateCapacity() {
 	if m.data.Gauge().DataPoints().Len() > m.capacity {
 		m.capacity = m.data.Gauge().DataPoints().Len()
 	}
 }
 
 // emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
-func (m *metricSwOtelcolMqttRoundtrip) emit(metrics pmetric.MetricSlice) {
+func (m *metricSwOtelcolMqttBrokerBytesReceivedPerMinute) emit(metrics pmetric.MetricSlice) {
 	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
 		m.updateCapacity()
 		m.data.MoveTo(metrics.AppendEmpty())
@@ -66,8 +139,253 @@ func (m *metricSwOtelcolMqttRoundtrip) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricSwOtelcolMqttRoundtrip(cfg MetricConfig) metricSwOtelcolMqttRoundtrip {
-	m := metricSwOtelcolMqttRoundtrip{config: cfg}
+func newMetricSwOtelcolMqttBrokerBytesReceivedPerMinute(cfg MetricConfig) metricSwOtelcolMqttBrokerBytesReceivedPerMinute {
+	m := metricSwOtelcolMqttBrokerBytesReceivedPerMinute{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricSwOtelcolMqttBrokerBytesSentPerMinute struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills sw.otelcol.mqtt.broker.bytes_sent_per_minute metric with initial data.
+func (m *metricSwOtelcolMqttBrokerBytesSentPerMinute) init() {
+	m.data.SetName("sw.otelcol.mqtt.broker.bytes_sent_per_minute")
+	m.data.SetDescription("Number of bytes sent by the Mqtt Broker per minute")
+	m.data.SetUnit("bytes per minute")
+	m.data.SetEmptyGauge()
+}
+
+func (m *metricSwOtelcolMqttBrokerBytesSentPerMinute) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val float64) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetDoubleValue(val)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricSwOtelcolMqttBrokerBytesSentPerMinute) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricSwOtelcolMqttBrokerBytesSentPerMinute) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricSwOtelcolMqttBrokerBytesSentPerMinute(cfg MetricConfig) metricSwOtelcolMqttBrokerBytesSentPerMinute {
+	m := metricSwOtelcolMqttBrokerBytesSentPerMinute{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricSwOtelcolMqttBrokerClientsConnected struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills sw.otelcol.mqtt.broker.clients_connected metric with initial data.
+func (m *metricSwOtelcolMqttBrokerClientsConnected) init() {
+	m.data.SetName("sw.otelcol.mqtt.broker.clients_connected")
+	m.data.SetDescription("Number of clients connected to the Mqtt Broker")
+	m.data.SetUnit("count")
+	m.data.SetEmptyGauge()
+}
+
+func (m *metricSwOtelcolMqttBrokerClientsConnected) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricSwOtelcolMqttBrokerClientsConnected) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricSwOtelcolMqttBrokerClientsConnected) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricSwOtelcolMqttBrokerClientsConnected(cfg MetricConfig) metricSwOtelcolMqttBrokerClientsConnected {
+	m := metricSwOtelcolMqttBrokerClientsConnected{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricSwOtelcolMqttBrokerMessagesReceivedPerMinute struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills sw.otelcol.mqtt.broker.messages_received_per_minute metric with initial data.
+func (m *metricSwOtelcolMqttBrokerMessagesReceivedPerMinute) init() {
+	m.data.SetName("sw.otelcol.mqtt.broker.messages_received_per_minute")
+	m.data.SetDescription("Number of messages received by the Mqtt Broker per minute")
+	m.data.SetUnit("count per minute")
+	m.data.SetEmptyGauge()
+}
+
+func (m *metricSwOtelcolMqttBrokerMessagesReceivedPerMinute) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val float64) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetDoubleValue(val)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricSwOtelcolMqttBrokerMessagesReceivedPerMinute) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricSwOtelcolMqttBrokerMessagesReceivedPerMinute) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricSwOtelcolMqttBrokerMessagesReceivedPerMinute(cfg MetricConfig) metricSwOtelcolMqttBrokerMessagesReceivedPerMinute {
+	m := metricSwOtelcolMqttBrokerMessagesReceivedPerMinute{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricSwOtelcolMqttBrokerMessagesSentPerMinute struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills sw.otelcol.mqtt.broker.messages_sent_per_minute metric with initial data.
+func (m *metricSwOtelcolMqttBrokerMessagesSentPerMinute) init() {
+	m.data.SetName("sw.otelcol.mqtt.broker.messages_sent_per_minute")
+	m.data.SetDescription("Number of messages sent by the Mqtt Broker per minute")
+	m.data.SetUnit("count per minute")
+	m.data.SetEmptyGauge()
+}
+
+func (m *metricSwOtelcolMqttBrokerMessagesSentPerMinute) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val float64) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetDoubleValue(val)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricSwOtelcolMqttBrokerMessagesSentPerMinute) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricSwOtelcolMqttBrokerMessagesSentPerMinute) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricSwOtelcolMqttBrokerMessagesSentPerMinute(cfg MetricConfig) metricSwOtelcolMqttBrokerMessagesSentPerMinute {
+	m := metricSwOtelcolMqttBrokerMessagesSentPerMinute{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricSwOtelcolMqttBrokerRoundtrip struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills sw.otelcol.mqtt.broker.roundtrip metric with initial data.
+func (m *metricSwOtelcolMqttBrokerRoundtrip) init() {
+	m.data.SetName("sw.otelcol.mqtt.broker.roundtrip")
+	m.data.SetDescription("Roundtrip time to the Mqtt Broker")
+	m.data.SetUnit("millisecond")
+	m.data.SetEmptyGauge()
+}
+
+func (m *metricSwOtelcolMqttBrokerRoundtrip) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val float64) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetDoubleValue(val)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricSwOtelcolMqttBrokerRoundtrip) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricSwOtelcolMqttBrokerRoundtrip) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricSwOtelcolMqttBrokerRoundtrip(cfg MetricConfig) metricSwOtelcolMqttBrokerRoundtrip {
+	m := metricSwOtelcolMqttBrokerRoundtrip{config: cfg}
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()
@@ -78,14 +396,20 @@ func newMetricSwOtelcolMqttRoundtrip(cfg MetricConfig) metricSwOtelcolMqttRoundt
 // MetricsBuilder provides an interface for scrapers to report metrics while taking care of all the transformations
 // required to produce metric representation defined in metadata and user config.
 type MetricsBuilder struct {
-	config                         MetricsBuilderConfig // config of the metrics builder.
-	startTime                      pcommon.Timestamp    // start time that will be applied to all recorded data points.
-	metricsCapacity                int                  // maximum observed number of metrics per resource.
-	metricsBuffer                  pmetric.Metrics      // accumulates metrics data before emitting.
-	buildInfo                      component.BuildInfo  // contains version information.
-	resourceAttributeIncludeFilter map[string]filter.Filter
-	resourceAttributeExcludeFilter map[string]filter.Filter
-	metricSwOtelcolMqttRoundtrip   metricSwOtelcolMqttRoundtrip
+	config                                             MetricsBuilderConfig // config of the metrics builder.
+	startTime                                          pcommon.Timestamp    // start time that will be applied to all recorded data points.
+	metricsCapacity                                    int                  // maximum observed number of metrics per resource.
+	metricsBuffer                                      pmetric.Metrics      // accumulates metrics data before emitting.
+	buildInfo                                          component.BuildInfo  // contains version information.
+	resourceAttributeIncludeFilter                     map[string]filter.Filter
+	resourceAttributeExcludeFilter                     map[string]filter.Filter
+	metricSwOtelcolMqttBrokerActiveSubscriptions       metricSwOtelcolMqttBrokerActiveSubscriptions
+	metricSwOtelcolMqttBrokerBytesReceivedPerMinute    metricSwOtelcolMqttBrokerBytesReceivedPerMinute
+	metricSwOtelcolMqttBrokerBytesSentPerMinute        metricSwOtelcolMqttBrokerBytesSentPerMinute
+	metricSwOtelcolMqttBrokerClientsConnected          metricSwOtelcolMqttBrokerClientsConnected
+	metricSwOtelcolMqttBrokerMessagesReceivedPerMinute metricSwOtelcolMqttBrokerMessagesReceivedPerMinute
+	metricSwOtelcolMqttBrokerMessagesSentPerMinute     metricSwOtelcolMqttBrokerMessagesSentPerMinute
+	metricSwOtelcolMqttBrokerRoundtrip                 metricSwOtelcolMqttBrokerRoundtrip
 }
 
 // MetricBuilderOption applies changes to default metrics builder.
@@ -107,49 +431,55 @@ func WithStartTime(startTime pcommon.Timestamp) MetricBuilderOption {
 }
 func NewMetricsBuilder(mbc MetricsBuilderConfig, settings receiver.Settings, options ...MetricBuilderOption) *MetricsBuilder {
 	mb := &MetricsBuilder{
-		config:                         mbc,
-		startTime:                      pcommon.NewTimestampFromTime(time.Now()),
-		metricsBuffer:                  pmetric.NewMetrics(),
-		buildInfo:                      settings.BuildInfo,
-		metricSwOtelcolMqttRoundtrip:   newMetricSwOtelcolMqttRoundtrip(mbc.Metrics.SwOtelcolMqttRoundtrip),
-		resourceAttributeIncludeFilter: make(map[string]filter.Filter),
-		resourceAttributeExcludeFilter: make(map[string]filter.Filter),
+		config:        mbc,
+		startTime:     pcommon.NewTimestampFromTime(time.Now()),
+		metricsBuffer: pmetric.NewMetrics(),
+		buildInfo:     settings.BuildInfo,
+		metricSwOtelcolMqttBrokerActiveSubscriptions:       newMetricSwOtelcolMqttBrokerActiveSubscriptions(mbc.Metrics.SwOtelcolMqttBrokerActiveSubscriptions),
+		metricSwOtelcolMqttBrokerBytesReceivedPerMinute:    newMetricSwOtelcolMqttBrokerBytesReceivedPerMinute(mbc.Metrics.SwOtelcolMqttBrokerBytesReceivedPerMinute),
+		metricSwOtelcolMqttBrokerBytesSentPerMinute:        newMetricSwOtelcolMqttBrokerBytesSentPerMinute(mbc.Metrics.SwOtelcolMqttBrokerBytesSentPerMinute),
+		metricSwOtelcolMqttBrokerClientsConnected:          newMetricSwOtelcolMqttBrokerClientsConnected(mbc.Metrics.SwOtelcolMqttBrokerClientsConnected),
+		metricSwOtelcolMqttBrokerMessagesReceivedPerMinute: newMetricSwOtelcolMqttBrokerMessagesReceivedPerMinute(mbc.Metrics.SwOtelcolMqttBrokerMessagesReceivedPerMinute),
+		metricSwOtelcolMqttBrokerMessagesSentPerMinute:     newMetricSwOtelcolMqttBrokerMessagesSentPerMinute(mbc.Metrics.SwOtelcolMqttBrokerMessagesSentPerMinute),
+		metricSwOtelcolMqttBrokerRoundtrip:                 newMetricSwOtelcolMqttBrokerRoundtrip(mbc.Metrics.SwOtelcolMqttBrokerRoundtrip),
+		resourceAttributeIncludeFilter:                     make(map[string]filter.Filter),
+		resourceAttributeExcludeFilter:                     make(map[string]filter.Filter),
 	}
 	if mbc.ResourceAttributes.SwOtelcolMqttBrokerName.MetricsInclude != nil {
-		mb.resourceAttributeIncludeFilter["sw.otelcol.MqttBroker.name"] = filter.CreateFilter(mbc.ResourceAttributes.SwOtelcolMqttBrokerName.MetricsInclude)
+		mb.resourceAttributeIncludeFilter["sw.otelcol.mqtt.broker.name"] = filter.CreateFilter(mbc.ResourceAttributes.SwOtelcolMqttBrokerName.MetricsInclude)
 	}
 	if mbc.ResourceAttributes.SwOtelcolMqttBrokerName.MetricsExclude != nil {
-		mb.resourceAttributeExcludeFilter["sw.otelcol.MqttBroker.name"] = filter.CreateFilter(mbc.ResourceAttributes.SwOtelcolMqttBrokerName.MetricsExclude)
+		mb.resourceAttributeExcludeFilter["sw.otelcol.mqtt.broker.name"] = filter.CreateFilter(mbc.ResourceAttributes.SwOtelcolMqttBrokerName.MetricsExclude)
 	}
 	if mbc.ResourceAttributes.SwOtelcolMqttBrokerPort.MetricsInclude != nil {
-		mb.resourceAttributeIncludeFilter["sw.otelcol.MqttBroker.port"] = filter.CreateFilter(mbc.ResourceAttributes.SwOtelcolMqttBrokerPort.MetricsInclude)
+		mb.resourceAttributeIncludeFilter["sw.otelcol.mqtt.broker.port"] = filter.CreateFilter(mbc.ResourceAttributes.SwOtelcolMqttBrokerPort.MetricsInclude)
 	}
 	if mbc.ResourceAttributes.SwOtelcolMqttBrokerPort.MetricsExclude != nil {
-		mb.resourceAttributeExcludeFilter["sw.otelcol.MqttBroker.port"] = filter.CreateFilter(mbc.ResourceAttributes.SwOtelcolMqttBrokerPort.MetricsExclude)
+		mb.resourceAttributeExcludeFilter["sw.otelcol.mqtt.broker.port"] = filter.CreateFilter(mbc.ResourceAttributes.SwOtelcolMqttBrokerPort.MetricsExclude)
 	}
 	if mbc.ResourceAttributes.SwOtelcolMqttBrokerProtocol.MetricsInclude != nil {
-		mb.resourceAttributeIncludeFilter["sw.otelcol.MqttBroker.protocol"] = filter.CreateFilter(mbc.ResourceAttributes.SwOtelcolMqttBrokerProtocol.MetricsInclude)
+		mb.resourceAttributeIncludeFilter["sw.otelcol.mqtt.broker.protocol"] = filter.CreateFilter(mbc.ResourceAttributes.SwOtelcolMqttBrokerProtocol.MetricsInclude)
 	}
 	if mbc.ResourceAttributes.SwOtelcolMqttBrokerProtocol.MetricsExclude != nil {
-		mb.resourceAttributeExcludeFilter["sw.otelcol.MqttBroker.protocol"] = filter.CreateFilter(mbc.ResourceAttributes.SwOtelcolMqttBrokerProtocol.MetricsExclude)
+		mb.resourceAttributeExcludeFilter["sw.otelcol.mqtt.broker.protocol"] = filter.CreateFilter(mbc.ResourceAttributes.SwOtelcolMqttBrokerProtocol.MetricsExclude)
 	}
 	if mbc.ResourceAttributes.SwOtelcolMqttBrokerServer.MetricsInclude != nil {
-		mb.resourceAttributeIncludeFilter["sw.otelcol.MqttBroker.server"] = filter.CreateFilter(mbc.ResourceAttributes.SwOtelcolMqttBrokerServer.MetricsInclude)
+		mb.resourceAttributeIncludeFilter["sw.otelcol.mqtt.broker.server"] = filter.CreateFilter(mbc.ResourceAttributes.SwOtelcolMqttBrokerServer.MetricsInclude)
 	}
 	if mbc.ResourceAttributes.SwOtelcolMqttBrokerServer.MetricsExclude != nil {
-		mb.resourceAttributeExcludeFilter["sw.otelcol.MqttBroker.server"] = filter.CreateFilter(mbc.ResourceAttributes.SwOtelcolMqttBrokerServer.MetricsExclude)
+		mb.resourceAttributeExcludeFilter["sw.otelcol.mqtt.broker.server"] = filter.CreateFilter(mbc.ResourceAttributes.SwOtelcolMqttBrokerServer.MetricsExclude)
 	}
 	if mbc.ResourceAttributes.SwOtelcolMqttBrokerStatus.MetricsInclude != nil {
-		mb.resourceAttributeIncludeFilter["sw.otelcol.MqttBroker.status"] = filter.CreateFilter(mbc.ResourceAttributes.SwOtelcolMqttBrokerStatus.MetricsInclude)
+		mb.resourceAttributeIncludeFilter["sw.otelcol.mqtt.broker.status"] = filter.CreateFilter(mbc.ResourceAttributes.SwOtelcolMqttBrokerStatus.MetricsInclude)
 	}
 	if mbc.ResourceAttributes.SwOtelcolMqttBrokerStatus.MetricsExclude != nil {
-		mb.resourceAttributeExcludeFilter["sw.otelcol.MqttBroker.status"] = filter.CreateFilter(mbc.ResourceAttributes.SwOtelcolMqttBrokerStatus.MetricsExclude)
+		mb.resourceAttributeExcludeFilter["sw.otelcol.mqtt.broker.status"] = filter.CreateFilter(mbc.ResourceAttributes.SwOtelcolMqttBrokerStatus.MetricsExclude)
 	}
 	if mbc.ResourceAttributes.SwOtelcolMqttSensorName.MetricsInclude != nil {
-		mb.resourceAttributeIncludeFilter["sw.otelcol.MqttSensor.name"] = filter.CreateFilter(mbc.ResourceAttributes.SwOtelcolMqttSensorName.MetricsInclude)
+		mb.resourceAttributeIncludeFilter["sw.otelcol.mqtt.sensor.name"] = filter.CreateFilter(mbc.ResourceAttributes.SwOtelcolMqttSensorName.MetricsInclude)
 	}
 	if mbc.ResourceAttributes.SwOtelcolMqttSensorName.MetricsExclude != nil {
-		mb.resourceAttributeExcludeFilter["sw.otelcol.MqttSensor.name"] = filter.CreateFilter(mbc.ResourceAttributes.SwOtelcolMqttSensorName.MetricsExclude)
+		mb.resourceAttributeExcludeFilter["sw.otelcol.mqtt.sensor.name"] = filter.CreateFilter(mbc.ResourceAttributes.SwOtelcolMqttSensorName.MetricsExclude)
 	}
 
 	for _, op := range options {
@@ -220,7 +550,13 @@ func (mb *MetricsBuilder) EmitForResource(options ...ResourceMetricsOption) {
 	ils.Scope().SetName(ScopeName)
 	ils.Scope().SetVersion(mb.buildInfo.Version)
 	ils.Metrics().EnsureCapacity(mb.metricsCapacity)
-	mb.metricSwOtelcolMqttRoundtrip.emit(ils.Metrics())
+	mb.metricSwOtelcolMqttBrokerActiveSubscriptions.emit(ils.Metrics())
+	mb.metricSwOtelcolMqttBrokerBytesReceivedPerMinute.emit(ils.Metrics())
+	mb.metricSwOtelcolMqttBrokerBytesSentPerMinute.emit(ils.Metrics())
+	mb.metricSwOtelcolMqttBrokerClientsConnected.emit(ils.Metrics())
+	mb.metricSwOtelcolMqttBrokerMessagesReceivedPerMinute.emit(ils.Metrics())
+	mb.metricSwOtelcolMqttBrokerMessagesSentPerMinute.emit(ils.Metrics())
+	mb.metricSwOtelcolMqttBrokerRoundtrip.emit(ils.Metrics())
 
 	for _, op := range options {
 		op.apply(rm)
@@ -252,9 +588,39 @@ func (mb *MetricsBuilder) Emit(options ...ResourceMetricsOption) pmetric.Metrics
 	return metrics
 }
 
-// RecordSwOtelcolMqttRoundtripDataPoint adds a data point to sw.otelcol.Mqtt.Roundtrip metric.
-func (mb *MetricsBuilder) RecordSwOtelcolMqttRoundtripDataPoint(ts pcommon.Timestamp, val float64) {
-	mb.metricSwOtelcolMqttRoundtrip.recordDataPoint(mb.startTime, ts, val)
+// RecordSwOtelcolMqttBrokerActiveSubscriptionsDataPoint adds a data point to sw.otelcol.mqtt.broker.active_subscriptions metric.
+func (mb *MetricsBuilder) RecordSwOtelcolMqttBrokerActiveSubscriptionsDataPoint(ts pcommon.Timestamp, val int64) {
+	mb.metricSwOtelcolMqttBrokerActiveSubscriptions.recordDataPoint(mb.startTime, ts, val)
+}
+
+// RecordSwOtelcolMqttBrokerBytesReceivedPerMinuteDataPoint adds a data point to sw.otelcol.mqtt.broker.bytes_received_per_minute metric.
+func (mb *MetricsBuilder) RecordSwOtelcolMqttBrokerBytesReceivedPerMinuteDataPoint(ts pcommon.Timestamp, val float64) {
+	mb.metricSwOtelcolMqttBrokerBytesReceivedPerMinute.recordDataPoint(mb.startTime, ts, val)
+}
+
+// RecordSwOtelcolMqttBrokerBytesSentPerMinuteDataPoint adds a data point to sw.otelcol.mqtt.broker.bytes_sent_per_minute metric.
+func (mb *MetricsBuilder) RecordSwOtelcolMqttBrokerBytesSentPerMinuteDataPoint(ts pcommon.Timestamp, val float64) {
+	mb.metricSwOtelcolMqttBrokerBytesSentPerMinute.recordDataPoint(mb.startTime, ts, val)
+}
+
+// RecordSwOtelcolMqttBrokerClientsConnectedDataPoint adds a data point to sw.otelcol.mqtt.broker.clients_connected metric.
+func (mb *MetricsBuilder) RecordSwOtelcolMqttBrokerClientsConnectedDataPoint(ts pcommon.Timestamp, val int64) {
+	mb.metricSwOtelcolMqttBrokerClientsConnected.recordDataPoint(mb.startTime, ts, val)
+}
+
+// RecordSwOtelcolMqttBrokerMessagesReceivedPerMinuteDataPoint adds a data point to sw.otelcol.mqtt.broker.messages_received_per_minute metric.
+func (mb *MetricsBuilder) RecordSwOtelcolMqttBrokerMessagesReceivedPerMinuteDataPoint(ts pcommon.Timestamp, val float64) {
+	mb.metricSwOtelcolMqttBrokerMessagesReceivedPerMinute.recordDataPoint(mb.startTime, ts, val)
+}
+
+// RecordSwOtelcolMqttBrokerMessagesSentPerMinuteDataPoint adds a data point to sw.otelcol.mqtt.broker.messages_sent_per_minute metric.
+func (mb *MetricsBuilder) RecordSwOtelcolMqttBrokerMessagesSentPerMinuteDataPoint(ts pcommon.Timestamp, val float64) {
+	mb.metricSwOtelcolMqttBrokerMessagesSentPerMinute.recordDataPoint(mb.startTime, ts, val)
+}
+
+// RecordSwOtelcolMqttBrokerRoundtripDataPoint adds a data point to sw.otelcol.mqtt.broker.roundtrip metric.
+func (mb *MetricsBuilder) RecordSwOtelcolMqttBrokerRoundtripDataPoint(ts pcommon.Timestamp, val float64) {
+	mb.metricSwOtelcolMqttBrokerRoundtrip.recordDataPoint(mb.startTime, ts, val)
 }
 
 // Reset resets metrics builder to its initial state. It should be used when external metrics source is restarted,

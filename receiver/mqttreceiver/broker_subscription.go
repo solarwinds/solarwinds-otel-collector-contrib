@@ -47,15 +47,14 @@ func newSubscriptionMetadata(broker *Broker, sensor *Sensor, metric *Metric) *su
 
 // brokerSubscription encapsulates MQTT broker connection and subscription management
 type brokerSubscription struct {
-	broker                 *Broker
-	client                 *mqtt.Client
-	logger                 *zap.Logger
-	consumer               consumer.Metrics
-	ctx                    context.Context
-	wg                     sync.WaitGroup
-	topicSubscriptions     map[string][]*subscriptionMetadata
-	settings               receiver.Settings
-	roundtripMetricBuilder *metadata.MetricsBuilder
+	broker             *Broker
+	client             *mqtt.Client
+	logger             *zap.Logger
+	consumer           consumer.Metrics
+	ctx                context.Context
+	wg                 sync.WaitGroup
+	topicSubscriptions map[string][]*subscriptionMetadata
+	settings           receiver.Settings
 }
 
 // newBrokerSubscription creates a new subscribed broker instance
@@ -71,23 +70,13 @@ func newBrokerSubscription(broker *Broker, settings receiver.Settings, logger *z
 		}
 	}
 
-	for _, metric := range brokerMetrics {
-		if _, exists := topicSubscriptions[metric.Topic]; !exists {
-			topicSubscriptions[metric.Topic] = []*subscriptionMetadata{}
-		}
-		topicSubscriptions[metric.Topic] = append(topicSubscriptions[metric.Topic], newSubscriptionMetadata(broker, nil, metric))
-	}
-
-	roundtripMetricBuilder := metadata.NewMetricsBuilder(metadata.DefaultMetricsBuilderConfig(), settings)
-
 	return &brokerSubscription{
-		broker:                 broker,
-		logger:                 logger,
-		consumer:               consumer,
-		ctx:                    ctx,
-		topicSubscriptions:     topicSubscriptions,
-		settings:               settings,
-		roundtripMetricBuilder: roundtripMetricBuilder,
+		broker:             broker,
+		logger:             logger,
+		consumer:           consumer,
+		ctx:                ctx,
+		topicSubscriptions: topicSubscriptions,
+		settings:           settings,
 	}
 }
 
@@ -101,6 +90,12 @@ func (sb *brokerSubscription) Start() error {
 
 	if err := sb.connectClient(); err != nil {
 		return fmt.Errorf("failed to connect to broker: %w", err)
+	}
+
+	if err := sb.subscribeBrokerMetrics(); err != nil {
+		sb.logger.Error("Failed to subscribe to broker metrics",
+			zap.String("broker", sb.broker.Name),
+			zap.Error(err))
 	}
 
 	if err := sb.subscribeTopics(); err != nil {
@@ -164,6 +159,21 @@ func (sb *brokerSubscription) connectClient() error {
 	return nil
 }
 
+func (sb *brokerSubscription) subscribeBrokerMetrics() error {
+	topics := make(map[string]byte, len(buildInBrokerTopicList))
+
+	for _, topic := range buildInBrokerTopicList {
+		topics[topic] = QoSLevel
+	}
+
+	if token := (*sb.client).SubscribeMultiple(topics, sb.brokerTopicMessageHandler); token.Wait() && token.Error() != nil {
+		sb.logger.Error("Failed to subscribe to topics",
+			zap.Error(token.Error()))
+		return token.Error()
+	}
+	return nil
+}
+
 func (sb *brokerSubscription) subscribeTopics() error {
 	topics := make(map[string]byte, len(sb.topicSubscriptions))
 
@@ -201,6 +211,67 @@ func (sb *brokerSubscription) defaultMessageHandler(_ mqtt.Client, msg mqtt.Mess
 				zap.Error(err))
 		}
 	}
+}
+
+func (sb *brokerSubscription) brokerTopicMessageHandler(_ mqtt.Client, msg mqtt.Message) {
+	err := sb.handleBrokerTopicMessage(msg)
+	if err != nil {
+		sb.logger.Error("Failed to handle broker topic message",
+			zap.String("topic", msg.Topic()),
+			zap.String("broker", sb.broker.Name),
+			zap.Error(err))
+	}
+}
+
+func (sb *brokerSubscription) handleBrokerTopicMessage(msg mqtt.Message) error {
+	mb := metadata.NewMetricsBuilder(metadata.DefaultMetricsBuilderConfig(), sb.settings)
+	strValue := string(msg.Payload())
+	timestamp := pcommon.NewTimestampFromTime(time.Now())
+	switch msg.Topic() {
+	case TopicClientsConnected:
+		value, err := strconv.ParseInt(strValue, 10, 64)
+		if err != nil {
+			return fmt.Errorf("failed to parse payload to int: %s", strValue)
+		}
+		mb.RecordSwOtelcolMqttBrokerClientsConnectedDataPoint(timestamp, value)
+	case TopicClientSubscriptionsCount:
+		value, err := strconv.ParseInt(strValue, 10, 64)
+		if err != nil {
+			return fmt.Errorf("failed to parse payload to int: %s", strValue)
+		}
+		mb.RecordSwOtelcolMqttBrokerActiveSubscriptionsDataPoint(timestamp, value)
+	case TopicBytesReceived:
+		value, err := strconv.ParseFloat(strValue, 64)
+		if err != nil {
+			return fmt.Errorf("failed to parse payload to float: %s", strValue)
+		}
+		mb.RecordSwOtelcolMqttBrokerBytesReceivedPerMinuteDataPoint(timestamp, value)
+	case TopicBytesSent:
+		value, err := strconv.ParseFloat(strValue, 64)
+		if err != nil {
+			return fmt.Errorf("failed to parse payload to float: %s", strValue)
+		}
+		mb.RecordSwOtelcolMqttBrokerBytesSentPerMinuteDataPoint(timestamp, value)
+	case TopicMessagesReceived:
+		value, err := strconv.ParseFloat(strValue, 64)
+		if err != nil {
+			return fmt.Errorf("failed to parse payload to float: %s", strValue)
+		}
+		mb.RecordSwOtelcolMqttBrokerMessagesReceivedPerMinuteDataPoint(timestamp, value)
+	case TopicMessagesSent:
+		value, err := strconv.ParseFloat(strValue, 64)
+		if err != nil {
+			return fmt.Errorf("failed to parse payload to float: %s", strValue)
+		}
+		mb.RecordSwOtelcolMqttBrokerMessagesSentPerMinuteDataPoint(timestamp, value)
+	default:
+		return fmt.Errorf("unknown broker topic: %s", msg.Topic())
+	}
+	rb := metadata.NewResourceBuilder(metadata.DefaultResourceAttributesConfig())
+	setBrokerAttributes(rb, sb.broker)
+	rb.SetSwOtelcolMqttBrokerStatusOK()
+	res := rb.Emit()
+	return sb.consumer.ConsumeMetrics(sb.ctx, mb.Emit(metadata.WithResource(res)))
 }
 
 // handleMessage processes incoming MQTT messages and converts them to OpenTelemetry metrics
@@ -312,13 +383,14 @@ func (sb *brokerSubscription) reconnectAndResubscribe(pingHandler mqtt.MessageHa
 
 // createRoundtripMetric creates a roundtrip metric using generated MetricsBuilder
 func (sb *brokerSubscription) createRoundtripMetric(duration time.Duration) pmetric.Metrics {
-	sb.roundtripMetricBuilder.RecordSwOtelcolMqttRoundtripDataPoint(
+	mb := metadata.NewMetricsBuilder(metadata.DefaultMetricsBuilderConfig(), sb.settings)
+	mb.RecordSwOtelcolMqttBrokerRoundtripDataPoint(
 		pcommon.NewTimestampFromTime(time.Now()), float64(duration.Milliseconds()))
 	rb := metadata.NewResourceBuilder(metadata.DefaultResourceAttributesConfig())
 	setBrokerAttributes(rb, sb.broker)
 	rb.SetSwOtelcolMqttBrokerStatusOK()
 	res := rb.Emit()
-	return sb.roundtripMetricBuilder.Emit(metadata.WithResource(res))
+	return mb.Emit(metadata.WithResource(res))
 }
 
 // sendRoundtripMetric creates and sends a roundtrip metric
@@ -336,7 +408,7 @@ func (sb *brokerSubscription) sendBrokerStatus(status string) {
 	rm := metrics.ResourceMetrics().At(0)
 	sm := rm.ScopeMetrics().At(0)
 	m := sm.Metrics().AppendEmpty()
-	m.SetName("sw.otelcol.MqttBroker.Status")
+	m.SetName("sw.otelcol.mqtt.broker.status")
 	m.SetDescription("Broker status")
 	m.SetEmptyGauge()
 	dp := m.Gauge().DataPoints().AppendEmpty()
@@ -381,15 +453,7 @@ func (sb *brokerSubscription) newMetricsWithResource(res pcommon.Resource) pmetr
 // createMetrics creates metrics for a given metadata element. If value or metric are nil, only resource+status are emitted.
 func (sb *brokerSubscription) createMetrics(meta *subscriptionMetadata, value *string) (pmetric.Metrics, error) {
 	rb := metadata.NewResourceBuilder(metadata.DefaultResourceAttributesConfig())
-	rb.SetSwOtelcolMqttBrokerName(meta.broker.Name)
-	rb.SetSwOtelcolMqttBrokerServer(meta.broker.Server)
-	rb.SetSwOtelcolMqttBrokerPort(int64(meta.broker.Port))
-	switch meta.broker.Protocol {
-	case "mqtt":
-		rb.SetSwOtelcolMqttBrokerProtocolMqtt()
-	case "mqtts":
-		rb.SetSwOtelcolMqttBrokerProtocolMqtts()
-	}
+	setBrokerAttributes(rb, meta.broker)
 	if meta.sensor != nil {
 		rb.SetSwOtelcolMqttSensorName(meta.sensor.Name)
 	}

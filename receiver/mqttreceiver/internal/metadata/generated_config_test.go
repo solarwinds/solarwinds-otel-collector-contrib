@@ -27,7 +27,13 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "all_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
-					SwOtelcolMqttRoundtrip: MetricConfig{Enabled: true},
+					SwOtelcolMqttBrokerActiveSubscriptions:       MetricConfig{Enabled: true},
+					SwOtelcolMqttBrokerBytesReceivedPerMinute:    MetricConfig{Enabled: true},
+					SwOtelcolMqttBrokerBytesSentPerMinute:        MetricConfig{Enabled: true},
+					SwOtelcolMqttBrokerClientsConnected:          MetricConfig{Enabled: true},
+					SwOtelcolMqttBrokerMessagesReceivedPerMinute: MetricConfig{Enabled: true},
+					SwOtelcolMqttBrokerMessagesSentPerMinute:     MetricConfig{Enabled: true},
+					SwOtelcolMqttBrokerRoundtrip:                 MetricConfig{Enabled: true},
 				},
 				ResourceAttributes: ResourceAttributesConfig{
 					SwOtelcolMqttBrokerName:     ResourceAttributeConfig{Enabled: true},
@@ -43,7 +49,13 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "none_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
-					SwOtelcolMqttRoundtrip: MetricConfig{Enabled: false},
+					SwOtelcolMqttBrokerActiveSubscriptions:       MetricConfig{Enabled: false},
+					SwOtelcolMqttBrokerBytesReceivedPerMinute:    MetricConfig{Enabled: false},
+					SwOtelcolMqttBrokerBytesSentPerMinute:        MetricConfig{Enabled: false},
+					SwOtelcolMqttBrokerClientsConnected:          MetricConfig{Enabled: false},
+					SwOtelcolMqttBrokerMessagesReceivedPerMinute: MetricConfig{Enabled: false},
+					SwOtelcolMqttBrokerMessagesSentPerMinute:     MetricConfig{Enabled: false},
+					SwOtelcolMqttBrokerRoundtrip:                 MetricConfig{Enabled: false},
 				},
 				ResourceAttributes: ResourceAttributesConfig{
 					SwOtelcolMqttBrokerName:     ResourceAttributeConfig{Enabled: false},
