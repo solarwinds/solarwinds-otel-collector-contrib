@@ -462,7 +462,7 @@ func (sb *brokerSubscription) createMetrics(meta *subscriptionMetadata, value *s
 	rm := metrics.ResourceMetrics().At(0)
 	sm := rm.ScopeMetrics().At(0)
 	m := sm.Metrics().AppendEmpty()
-	m.SetName(fmt.Sprintf("sw.otelcol.Mqtt.%s", meta.metric.Name))
+	m.SetName(fmt.Sprintf("sw.otelcol.mqtt.%s", meta.metric.Name))
 	m.SetDescription(meta.metric.Desc)
 	m.SetUnit(meta.metric.Unit)
 	m.SetEmptyGauge()
