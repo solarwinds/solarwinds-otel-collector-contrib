@@ -12,9 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Source: https://github.com/open-telemetry/opentelemetry-collector-contrib
-// Changes customizing the original source code
-
 package swok8sdiscovery
 
 import (
