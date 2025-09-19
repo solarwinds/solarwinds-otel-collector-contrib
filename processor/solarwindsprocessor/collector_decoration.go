@@ -12,6 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package version
+package solarwindsprocessor
 
-const Version = "0.131.8"
+type CollectorDecoration struct {
+	Enabled bool `mapstructure:"enabled"`
+	// Extension identifies a Solarwinds Extension to
+	// use for obtaining required configuration.
+	ExtensionName string `mapstructure:"extension"`
+}

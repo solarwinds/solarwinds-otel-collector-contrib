@@ -25,6 +25,9 @@ func TestResourceAttributesConfig(t *testing.T) {
 		{
 			name: "all_set",
 			want: ResourceAttributesConfig{
+				HostID:                           ResourceAttributeConfig{Enabled: true},
+				HostName:                         ResourceAttributeConfig{Enabled: true},
+				OsType:                           ResourceAttributeConfig{Enabled: true},
 				SwOtelcolCollectorEntityCreation: ResourceAttributeConfig{Enabled: true},
 				SwOtelcolCollectorName:           ResourceAttributeConfig{Enabled: true},
 			},
@@ -32,6 +35,9 @@ func TestResourceAttributesConfig(t *testing.T) {
 		{
 			name: "none_set",
 			want: ResourceAttributesConfig{
+				HostID:                           ResourceAttributeConfig{Enabled: false},
+				HostName:                         ResourceAttributeConfig{Enabled: false},
+				OsType:                           ResourceAttributeConfig{Enabled: false},
 				SwOtelcolCollectorEntityCreation: ResourceAttributeConfig{Enabled: false},
 				SwOtelcolCollectorName:           ResourceAttributeConfig{Enabled: false},
 			},
