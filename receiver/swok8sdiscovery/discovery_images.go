@@ -1,3 +1,20 @@
+// Copyright 2025 SolarWinds Worldwide, LLC. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Source: https://github.com/open-telemetry/opentelemetry-collector-contrib
+// Changes customizing the original source code
+
 package swok8sdiscovery
 
 import (
@@ -10,7 +27,8 @@ import (
 
 // discoverDatabases matches containers to database image rules, resolves ports and associated services.
 func (r *swok8sdiscoveryReceiver) discoverDatabasesByImages(ctx context.Context, pods []corev1.Pod, services []corev1.Service) {
-	if len(r.config.ImageRules) == 0 {
+
+	if r.config.Database == nil || len(r.config.Database.ImageRules) == 0 {
 		return
 	}
 
@@ -26,8 +44,8 @@ func (r *swok8sdiscoveryReceiver) discoverDatabasesByImages(ctx context.Context,
 	for _, pod := range pods {
 		for _, container := range pod.Spec.Containers {
 			matchedRule := (*ImageRule)(nil)
-			for i := range r.config.ImageRules {
-				rule := &r.config.ImageRules[i]
+			for i := range r.config.Database.ImageRules {
+				rule := &r.config.Database.ImageRules[i]
 				for _, rx := range rule.PatternsCompiled {
 					if rx.MatchString(container.Image) {
 						matchedRule = rule

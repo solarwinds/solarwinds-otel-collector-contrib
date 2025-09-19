@@ -1,3 +1,20 @@
+// Copyright 2025 SolarWinds Worldwide, LLC. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Source: https://github.com/open-telemetry/opentelemetry-collector-contrib
+// Changes customizing the original source code
+
 package swok8sdiscovery
 
 import (
@@ -27,31 +44,33 @@ func TestLoadConfig(t *testing.T) {
 					AuthType: k8sconfig.AuthTypeServiceAccount,
 				},
 				Interval: defaultInterval,
-				// add data from testdata/config.yaml
-				ImageRules: []ImageRule{
-					{
-						DatabaseType: "mysql",
-						Patterns:     []string{"mysql*", "mariadb*"},
-						DefaultPort:  3306,
-					},
-					{
-						DatabaseType: "postgres",
-						Patterns:     []string{"postgres*", "postgresql*"},
-						DefaultPort:  5432,
-					},
-				},
-				DomainRules: []DomainRule{
-					{
-						DatabaseType: "mysql",
-						Patterns:     []string{"mysql*", "mariadb*"},
-					},
-					{
-						DatabaseType: "postgres",
-						Patterns: []string{
-							`\.postgres\.database\.azure\.com$`,
-							`\.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$`,
+				Database: &DatabaseDiscoveryConfig{
+					// add data from testdata/config.yaml
+					ImageRules: []ImageRule{
+						{
+							DatabaseType: "mysql",
+							Patterns:     []string{"mysql*", "mariadb*"},
+							DefaultPort:  3306,
 						},
-						DomainHints: []string{"postgres"},
+						{
+							DatabaseType: "postgres",
+							Patterns:     []string{"postgres*", "postgresql*"},
+							DefaultPort:  5432,
+						},
+					},
+					DomainRules: []DomainRule{
+						{
+							DatabaseType: "mysql",
+							Patterns:     []string{"mysql*", "mariadb*"},
+						},
+						{
+							DatabaseType: "postgres",
+							Patterns: []string{
+								`\.postgres\.database\.azure\.com$`,
+								`\.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$`,
+							},
+							DomainHints: []string{"postgres"},
+						},
 					},
 				},
 			},
@@ -85,19 +104,19 @@ func TestLoadConfig(t *testing.T) {
 			assert.Equal(t, tt.expected.AuthType, cfg.AuthType)
 			assert.Equal(t, tt.expected.Interval, cfg.Interval)
 
-			require.Equal(t, len(tt.expected.ImageRules), len(cfg.ImageRules))
-			for i := range tt.expected.ImageRules {
-				assert.Equal(t, tt.expected.ImageRules[i].DatabaseType, cfg.ImageRules[i].DatabaseType)
-				assert.Equal(t, tt.expected.ImageRules[i].Patterns, cfg.ImageRules[i].Patterns)
-				assert.Equal(t, tt.expected.ImageRules[i].DefaultPort, cfg.ImageRules[i].DefaultPort)
-				assert.Len(t, cfg.ImageRules[i].PatternsCompiled, len(cfg.ImageRules[i].Patterns), "image_rules[%d].MatchesCompiled length mismatch", i)
+			require.Equal(t, len(tt.expected.Database.ImageRules), len(cfg.Database.ImageRules))
+			for i := range tt.expected.Database.ImageRules {
+				assert.Equal(t, tt.expected.Database.ImageRules[i].DatabaseType, cfg.Database.ImageRules[i].DatabaseType)
+				assert.Equal(t, tt.expected.Database.ImageRules[i].Patterns, cfg.Database.ImageRules[i].Patterns)
+				assert.Equal(t, tt.expected.Database.ImageRules[i].DefaultPort, cfg.Database.ImageRules[i].DefaultPort)
+				assert.Len(t, cfg.Database.ImageRules[i].PatternsCompiled, len(cfg.Database.ImageRules[i].Patterns), "image_rules[%d].MatchesCompiled length mismatch", i)
 			}
 
-			require.Equal(t, len(tt.expected.DomainRules), len(cfg.DomainRules))
-			for i := range tt.expected.DomainRules {
-				assert.Equal(t, tt.expected.DomainRules[i].DatabaseType, cfg.DomainRules[i].DatabaseType)
-				assert.Equal(t, tt.expected.DomainRules[i].Patterns, cfg.DomainRules[i].Patterns)
-				assert.Len(t, cfg.DomainRules[i].PatternsCompiled, len(cfg.DomainRules[i].Patterns), "domain_rules[%d].MatchesCompiled length mismatch", i)
+			require.Equal(t, len(tt.expected.Database.DomainRules), len(cfg.Database.DomainRules))
+			for i := range tt.expected.Database.DomainRules {
+				assert.Equal(t, tt.expected.Database.DomainRules[i].DatabaseType, cfg.Database.DomainRules[i].DatabaseType)
+				assert.Equal(t, tt.expected.Database.DomainRules[i].Patterns, cfg.Database.DomainRules[i].Patterns)
+				assert.Len(t, cfg.Database.DomainRules[i].PatternsCompiled, len(cfg.Database.DomainRules[i].Patterns), "domain_rules[%d].MatchesCompiled length mismatch", i)
 			}
 		})
 	}
@@ -106,5 +125,5 @@ func TestLoadConfig(t *testing.T) {
 func TestDefaultConfigFails(t *testing.T) {
 	rCfg := createDefaultConfig().(*Config)
 	err := rCfg.Validate()
-	require.Error(t, err)
+	require.NoError(t, err)
 }

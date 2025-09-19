@@ -1,3 +1,20 @@
+// Copyright 2025 SolarWinds Worldwide, LLC. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Source: https://github.com/open-telemetry/opentelemetry-collector-contrib
+// Changes customizing the original source code
+
 package swok8sdiscovery
 
 import (
@@ -134,10 +151,12 @@ func TestDomainDiscovery_SingleMatch(t *testing.T) {
 	cfg := &Config{
 		APIConfig: k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeServiceAccount},
 		Interval:  time.Second,
-		DomainRules: []DomainRule{{
-			DatabaseType: "redis",
-			Patterns:     []string{".*redis.example.com"},
-		}},
+		Database: &DatabaseDiscoveryConfig{
+			DomainRules: []DomainRule{{
+				DatabaseType: "redis",
+				Patterns:     []string{".*redis.example.com"},
+			}},
+		},
 	}
 	require.NoError(t, cfg.Validate())
 
@@ -184,10 +203,11 @@ func TestDomainDiscovery_DedupByDomainHint(t *testing.T) {
 	cfg := &Config{
 		APIConfig: k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeServiceAccount},
 		Interval:  time.Second,
-		DomainRules: []DomainRule{
-			{DatabaseType: "pg", Patterns: []string{".*db.company.internal"}, DomainHints: []string{"primary"}},
-			{DatabaseType: "mysql", Patterns: []string{".*db.company.internal"}, DomainHints: []string{"mysql"}}, // higher potential hint score
-		},
+		Database: &DatabaseDiscoveryConfig{
+			DomainRules: []DomainRule{
+				{DatabaseType: "pg", Patterns: []string{".*db.company.internal"}, DomainHints: []string{"primary"}},
+				{DatabaseType: "mysql", Patterns: []string{".*db.company.internal"}, DomainHints: []string{"mysql"}}, // higher potential hint score
+			}},
 	}
 	require.NoError(t, cfg.Validate())
 
@@ -216,10 +236,11 @@ func TestDomainDiscovery_MultipleMatchNoDomainHint(t *testing.T) {
 	cfg := &Config{
 		APIConfig: k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeServiceAccount},
 		Interval:  time.Second,
-		DomainRules: []DomainRule{
-			{DatabaseType: "pg", Patterns: []string{".*db.company.internal"}, DomainHints: []string{"primary"}},
-			{DatabaseType: "mysql", Patterns: []string{".*db.company.internal"}, DomainHints: []string{"mysql"}}, // higher potential hint score
-		},
+		Database: &DatabaseDiscoveryConfig{
+			DomainRules: []DomainRule{
+				{DatabaseType: "pg", Patterns: []string{".*db.company.internal"}, DomainHints: []string{"primary"}},
+				{DatabaseType: "mysql", Patterns: []string{".*db.company.internal"}, DomainHints: []string{"mysql"}}, // higher potential hint score
+			}},
 	}
 	require.NoError(t, cfg.Validate())
 
@@ -240,7 +261,9 @@ func TestImageDiscovery_SingleMatch(t *testing.T) {
 		APIConfig: k8sconfig.APIConfig{
 			AuthType: k8sconfig.AuthTypeServiceAccount,
 		},
-		Interval: time.Second, ImageRules: []ImageRule{{DatabaseType: "mongo", Patterns: []string{".*/mongo:.*"}, DefaultPort: 27017}}}
+		Interval: time.Second,
+		Database: &DatabaseDiscoveryConfig{
+			ImageRules: []ImageRule{{DatabaseType: "mongo", Patterns: []string{".*/mongo:.*"}, DefaultPort: 27017}}}}
 	require.NoError(t, cfg.Validate())
 
 	trueVal := true
@@ -302,7 +325,9 @@ func TestImageDiscovery_NonDefaultPortMatch(t *testing.T) {
 		APIConfig: k8sconfig.APIConfig{
 			AuthType: k8sconfig.AuthTypeServiceAccount,
 		},
-		Interval: time.Second, ImageRules: []ImageRule{{DatabaseType: "mongo", Patterns: []string{".*/mongo:.*"}, DefaultPort: 8080}}}
+		Interval: time.Second,
+		Database: &DatabaseDiscoveryConfig{
+			ImageRules: []ImageRule{{DatabaseType: "mongo", Patterns: []string{".*/mongo:.*"}, DefaultPort: 8080}}}}
 	require.NoError(t, cfg.Validate())
 
 	pod1 := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "mongo-b", Namespace: "db", Labels: map[string]string{"app": "mongo"}}, Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: "mongo", Image: "docker.io/library/mongo:7", Ports: []corev1.ContainerPort{{ContainerPort: 27017}, {ContainerPort: 27018}}}}}}
@@ -320,7 +345,9 @@ func TestImageDiscovery_DedupPerPortSignature(t *testing.T) {
 		APIConfig: k8sconfig.APIConfig{
 			AuthType: k8sconfig.AuthTypeServiceAccount,
 		},
-		Interval: time.Second, ImageRules: []ImageRule{{DatabaseType: "mongo", Patterns: []string{".*/mongo:.*"}, DefaultPort: 27017}}}
+		Interval: time.Second,
+		Database: &DatabaseDiscoveryConfig{
+			ImageRules: []ImageRule{{DatabaseType: "mongo", Patterns: []string{".*/mongo:.*"}, DefaultPort: 27017}}}}
 	require.NoError(t, cfg.Validate())
 
 	pod1 := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "mongo-a", Namespace: "db", Labels: map[string]string{"app": "mongo"}}, Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: "mongo", Image: "docker.io/library/mongo:7", Ports: []corev1.ContainerPort{{ContainerPort: 27017}}}}}}
@@ -351,7 +378,9 @@ func TestImageDiscovery_MultipleServicesOverlapHeuristic(t *testing.T) {
 		APIConfig: k8sconfig.APIConfig{
 			AuthType: k8sconfig.AuthTypeServiceAccount,
 		},
-		Interval: time.Second, ImageRules: []ImageRule{{DatabaseType: "pg", Patterns: []string{".*/postgres:.*"}, DefaultPort: 5432}}}
+		Interval: time.Second,
+		Database: &DatabaseDiscoveryConfig{
+			ImageRules: []ImageRule{{DatabaseType: "pg", Patterns: []string{".*/postgres:.*"}, DefaultPort: 5432}}}}
 	require.NoError(t, cfg.Validate())
 
 	pod := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "pg-0", Namespace: "db", Labels: map[string]string{"app": "pg"}}, Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: "postgres", Image: "docker.io/library/postgres:16", Ports: []corev1.ContainerPort{{ContainerPort: 5432}, {ContainerPort: 6432}}}}}}
@@ -370,7 +399,9 @@ func TestImageDiscovery_TargetPortNamedResolution(t *testing.T) {
 		APIConfig: k8sconfig.APIConfig{
 			AuthType: k8sconfig.AuthTypeServiceAccount,
 		},
-		Interval: time.Second, ImageRules: []ImageRule{{DatabaseType: "mysql", Patterns: []string{".*/mysql:.*"}, DefaultPort: 3306}}}
+		Interval: time.Second,
+		Database: &DatabaseDiscoveryConfig{
+			ImageRules: []ImageRule{{DatabaseType: "mysql", Patterns: []string{".*/mysql:.*"}, DefaultPort: 3306}}}}
 	require.NoError(t, cfg.Validate())
 
 	pod := &corev1.Pod{

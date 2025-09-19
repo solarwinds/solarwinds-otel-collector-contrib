@@ -1,3 +1,20 @@
+// Copyright 2025 SolarWinds Worldwide, LLC. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Source: https://github.com/open-telemetry/opentelemetry-collector-contrib
+// Changes customizing the original source code
+
 package swok8sdiscovery
 
 import (
@@ -21,11 +38,15 @@ type Config struct {
 
 	Interval time.Duration `mapstructure:"interval"`
 
-	ImageRules  []ImageRule  `mapstructure:"image_rules"`
-	DomainRules []DomainRule `mapstructure:"domain_rules"`
+	Database *DatabaseDiscoveryConfig `mapstructure:"database"`
 
 	// For mocking purposes only.
 	makeClient func() (k8s.Interface, error)
+}
+
+type DatabaseDiscoveryConfig struct {
+	ImageRules  []ImageRule  `mapstructure:"image_rules"`
+	DomainRules []DomainRule `mapstructure:"domain_rules"`
 }
 
 type ImageRule struct {
@@ -53,18 +74,23 @@ func (c *Config) Validate() error {
 		return err
 	}
 
-	// validation that at least one rule is specified
-	if len(c.ImageRules) == 0 && len(c.DomainRules) == 0 {
-		return errors.New("at least one image_rule or domain_rule must be specified")
-	}
-
 	if c.Interval == 0 {
 		c.Interval = defaultInterval
 	}
 
 	// validate that rules doesn't have databaseType empty
-	for i := range c.ImageRules {
-		r := &c.ImageRules[i]
+	if c.Database != nil {
+		if err := ValidateDatabaseDiscovery(c.Database); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func ValidateDatabaseDiscovery(databaseDiscovery *DatabaseDiscoveryConfig) error {
+	for i := range databaseDiscovery.ImageRules {
+		r := &databaseDiscovery.ImageRules[i]
 		if r.DatabaseType == "" {
 			return errors.New("database_type must be specified for all image_rules")
 		}
@@ -83,8 +109,8 @@ func (c *Config) Validate() error {
 		}
 	}
 
-	for i := range c.DomainRules {
-		r := &c.DomainRules[i]
+	for i := range databaseDiscovery.DomainRules {
+		r := &databaseDiscovery.DomainRules[i]
 		if r.DatabaseType == "" {
 			return errors.New("database_type must be specified for all domain_rules")
 		}
@@ -101,7 +127,6 @@ func (c *Config) Validate() error {
 			r.PatternsCompiled[j] = compiled
 		}
 	}
-
 	return nil
 }
 

@@ -51,68 +51,70 @@ func createImplicitConfig() component.Config {
 		APIConfig: k8sconfig.APIConfig{
 			AuthType: k8sconfig.AuthTypeServiceAccount,
 		},
-		ImageRules: []ImageRule{
-			{
-				DatabaseType: "redis",
-				Patterns:     []string{".*/redis:.*"},
-				DefaultPort:  6379,
+		Database: &DatabaseDiscoveryConfig{
+			ImageRules: []ImageRule{
+				{
+					DatabaseType: "redis",
+					Patterns:     []string{".*/redis:.*"},
+					DefaultPort:  6379,
+				},
+				{
+					DatabaseType: "mysql",
+					Patterns:     []string{".*/mysql:.*", ".*/mariadb:.*", ".*/mysql-server:.*"},
+					DefaultPort:  3306,
+				},
+				{
+					DatabaseType: "sqlserver",
+					Patterns:     []string{".*/mssql:.*", ".*/mssql/server:.*"},
+					DefaultPort:  1433,
+				},
+				{
+					DatabaseType: "postgresql",
+					Patterns:     []string{".*/postgres:.*", ".*/postgresql:.*"},
+					DefaultPort:  5432,
+				},
+				{
+					DatabaseType: "mongodb",
+					Patterns:     []string{".*/mongo:.*"},
+					DefaultPort:  27017,
+				},
 			},
-			{
-				DatabaseType: "mysql",
-				Patterns:     []string{".*/mysql:.*", ".*/mariadb:.*", ".*/mysql-server:.*"},
-				DefaultPort:  3306,
-			},
-			{
-				DatabaseType: "sqlserver",
-				Patterns:     []string{".*/mssql:.*", ".*/mssql/server:.*"},
-				DefaultPort:  1433,
-			},
-			{
-				DatabaseType: "postgresql",
-				Patterns:     []string{".*/postgres:.*", ".*/postgresql:.*"},
-				DefaultPort:  5432,
-			},
-			{
-				DatabaseType: "mongodb",
-				Patterns:     []string{".*/mongo:.*"},
-				DefaultPort:  27017,
-			},
-		},
-		DomainRules: []DomainRule{
-			{
-				DatabaseType: "redis",
-				Patterns: []string{
-					`\.redis\.cache\.windows\.net$`,
-					`\.elasticache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$`,
-					`\.redis(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$`,
-					`\.cache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$`},
-			},
-			{
-				DatabaseType: "mysql",
-				Patterns: []string{
-					`\.mysql\.database\.azure\.com$`,
-					`\.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$`},
-				DomainHints: []string{"mysql", "mariadb"},
-			},
-			{
-				DatabaseType: "sqlserver",
-				Patterns: []string{
-					`\.database\.windows\.net$`,
-					`\.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$`},
-				DomainHints: []string{"sqlserver", "mssql"},
-			},
-			{
-				DatabaseType: "postgresql",
-				Patterns: []string{
-					`\.postgres\.database\.azure\.com$`,
-					`\.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$`},
-				DomainHints: []string{"postgres"},
-			},
-			{
-				DatabaseType: "mongodb",
-				Patterns: []string{
-					`\.mongo\.cosmos\.azure\.com$`,
-					`\.docdb(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$`},
+			DomainRules: []DomainRule{
+				{
+					DatabaseType: "redis",
+					Patterns: []string{
+						`\.redis\.cache\.windows\.net$`,
+						`\.elasticache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$`,
+						`\.redis(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$`,
+						`\.cache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$`},
+				},
+				{
+					DatabaseType: "mysql",
+					Patterns: []string{
+						`\.mysql\.database\.azure\.com$`,
+						`\.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$`},
+					DomainHints: []string{"mysql", "mariadb"},
+				},
+				{
+					DatabaseType: "sqlserver",
+					Patterns: []string{
+						`\.database\.windows\.net$`,
+						`\.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$`},
+					DomainHints: []string{"sqlserver", "mssql"},
+				},
+				{
+					DatabaseType: "postgresql",
+					Patterns: []string{
+						`\.postgres\.database\.azure\.com$`,
+						`\.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$`},
+					DomainHints: []string{"postgres"},
+				},
+				{
+					DatabaseType: "mongodb",
+					Patterns: []string{
+						`\.mongo\.cosmos\.azure\.com$`,
+						`\.docdb(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$`},
+				},
 			},
 		},
 	}
