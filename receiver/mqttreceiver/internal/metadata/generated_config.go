@@ -102,7 +102,7 @@ type ResourceAttributesConfig struct {
 func DefaultResourceAttributesConfig() ResourceAttributesConfig {
 	return ResourceAttributesConfig{
 		SwOtelcolMqttBrokerName: ResourceAttributeConfig{
-			Enabled: false,
+			Enabled: true,
 		},
 		SwOtelcolMqttBrokerPort: ResourceAttributeConfig{
 			Enabled: true,

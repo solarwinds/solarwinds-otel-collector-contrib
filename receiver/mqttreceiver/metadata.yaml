@@ -10,6 +10,7 @@ status:
 
 resource_attributes:
   sw.otelcol.mqtt.broker.name:
+    enabled: true
     description: "Name of the Mqtt Broker"
     type: string
   sw.otelcol.mqtt.broker.server:

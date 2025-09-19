@@ -72,7 +72,7 @@ Roundtrip time to the Mqtt Broker
 
 | Name | Description | Values | Enabled |
 | ---- | ----------- | ------ | ------- |
-| sw.otelcol.mqtt.broker.name | Name of the Mqtt Broker | Any Str | false |
+| sw.otelcol.mqtt.broker.name | Name of the Mqtt Broker | Any Str | true |
 | sw.otelcol.mqtt.broker.port | Port of the Mqtt Broker | Any Int | true |
 | sw.otelcol.mqtt.broker.protocol | Protocol used to connect to the Mqtt Broker | Str: ``mqtt``, ``mqtts`` | true |
 | sw.otelcol.mqtt.broker.server | Mqtt Broker server address | Any Str | true |
