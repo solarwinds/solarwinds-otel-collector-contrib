@@ -1,0 +1,111 @@
+default:
+all_set:
+  metrics:
+    sw.otelcol.mqtt.broker.active_subscriptions:
+      enabled: true
+    sw.otelcol.mqtt.broker.bytes_received_per_minute:
+      enabled: true
+    sw.otelcol.mqtt.broker.bytes_sent_per_minute:
+      enabled: true
+    sw.otelcol.mqtt.broker.clients_connected:
+      enabled: true
+    sw.otelcol.mqtt.broker.messages_received_per_minute:
+      enabled: true
+    sw.otelcol.mqtt.broker.messages_sent_per_minute:
+      enabled: true
+    sw.otelcol.mqtt.broker.roundtrip:
+      enabled: true
+  resource_attributes:
+    sw.otelcol.mqtt.broker.name:
+      enabled: true
+    sw.otelcol.mqtt.broker.port:
+      enabled: true
+    sw.otelcol.mqtt.broker.protocol:
+      enabled: true
+    sw.otelcol.mqtt.broker.server:
+      enabled: true
+    sw.otelcol.mqtt.broker.status:
+      enabled: true
+    sw.otelcol.mqtt.sensor.name:
+      enabled: true
+none_set:
+  metrics:
+    sw.otelcol.mqtt.broker.active_subscriptions:
+      enabled: false
+    sw.otelcol.mqtt.broker.bytes_received_per_minute:
+      enabled: false
+    sw.otelcol.mqtt.broker.bytes_sent_per_minute:
+      enabled: false
+    sw.otelcol.mqtt.broker.clients_connected:
+      enabled: false
+    sw.otelcol.mqtt.broker.messages_received_per_minute:
+      enabled: false
+    sw.otelcol.mqtt.broker.messages_sent_per_minute:
+      enabled: false
+    sw.otelcol.mqtt.broker.roundtrip:
+      enabled: false
+  resource_attributes:
+    sw.otelcol.mqtt.broker.name:
+      enabled: false
+    sw.otelcol.mqtt.broker.port:
+      enabled: false
+    sw.otelcol.mqtt.broker.protocol:
+      enabled: false
+    sw.otelcol.mqtt.broker.server:
+      enabled: false
+    sw.otelcol.mqtt.broker.status:
+      enabled: false
+    sw.otelcol.mqtt.sensor.name:
+      enabled: false
+filter_set_include:
+  resource_attributes:
+    sw.otelcol.mqtt.broker.name:
+      enabled: true
+      metrics_include:
+        - regexp: ".*"
+    sw.otelcol.mqtt.broker.port:
+      enabled: true
+      metrics_include:
+        - regexp: ".*"
+    sw.otelcol.mqtt.broker.protocol:
+      enabled: true
+      metrics_include:
+        - regexp: ".*"
+    sw.otelcol.mqtt.broker.server:
+      enabled: true
+      metrics_include:
+        - regexp: ".*"
+    sw.otelcol.mqtt.broker.status:
+      enabled: true
+      metrics_include:
+        - regexp: ".*"
+    sw.otelcol.mqtt.sensor.name:
+      enabled: true
+      metrics_include:
+        - regexp: ".*"
+filter_set_exclude:
+  resource_attributes:
+    sw.otelcol.mqtt.broker.name:
+      enabled: true
+      metrics_exclude:
+        - strict: "sw.otelcol.mqtt.broker.name-val"
+    sw.otelcol.mqtt.broker.port:
+      enabled: true
+      metrics_exclude:
+        - regexp: ".*"
+    sw.otelcol.mqtt.broker.protocol:
+      enabled: true
+      metrics_exclude:
+        - strict: "mqtt"
+    sw.otelcol.mqtt.broker.server:
+      enabled: true
+      metrics_exclude:
+        - strict: "sw.otelcol.mqtt.broker.server-val"
+    sw.otelcol.mqtt.broker.status:
+      enabled: true
+      metrics_exclude:
+        - strict: "OK"
+    sw.otelcol.mqtt.sensor.name:
+      enabled: true
+      metrics_exclude:
+        - strict: "sw.otelcol.mqtt.sensor.name-val"

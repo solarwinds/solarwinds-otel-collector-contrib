@@ -1,0 +1,81 @@
+type: mqtt
+github_project: solarwinds/solarwinds-otel-collector-contrib
+
+status:
+  class: receiver
+  stability:
+    development: [ metrics ]
+  distributions: [ verified, playground, k8s ]
+  disable_codecov_badge: true
+
+resource_attributes:
+  sw.otelcol.mqtt.broker.name:
+    enabled: true
+    description: "Name of the Mqtt Broker"
+    type: string
+  sw.otelcol.mqtt.broker.server:
+    enabled: true
+    description: "Mqtt Broker server address"
+    type: string
+  sw.otelcol.mqtt.broker.port:
+    enabled: true
+    description: "Port of the Mqtt Broker"
+    type: int
+  sw.otelcol.mqtt.broker.protocol:
+    enabled: true
+    description: "Protocol used to connect to the Mqtt Broker"
+    enum: ["mqtt", "mqtts"]
+    type: string
+  sw.otelcol.mqtt.broker.status:
+    enabled: true
+    description: "Status of the Mqtt Broker"
+    enum: ["OK", "ConnectionFailed", "SubscribeFailed", "RoundtripFailed"]
+    type: string
+  sw.otelcol.mqtt.sensor.name:
+    enabled: true
+    description: "Name of the Mqtt Sensor"
+    type: string
+
+metrics:
+  sw.otelcol.mqtt.broker.roundtrip:
+    enabled: true
+    description: "Roundtrip time to the Mqtt Broker"
+    unit: "millisecond"
+    gauge:
+      value_type: double
+  sw.otelcol.mqtt.broker.clients_connected:
+    enabled: true
+    description: "Number of clients connected to the Mqtt Broker"
+    unit: "count"
+    gauge:
+      value_type: int
+  sw.otelcol.mqtt.broker.active_subscriptions:
+    enabled: true
+    description: "Number of active subscriptions on the Mqtt Broker"
+    unit: "count"
+    gauge:
+      value_type: int
+  sw.otelcol.mqtt.broker.messages_received_per_minute:
+    enabled: true
+    description: "Number of messages received by the Mqtt Broker per minute"
+    unit: "count per minute"
+    gauge:
+      value_type: double
+  sw.otelcol.mqtt.broker.messages_sent_per_minute:
+    enabled: true
+    description: "Number of messages sent by the Mqtt Broker per minute"
+    unit: "count per minute"
+    gauge:
+      value_type: double
+  sw.otelcol.mqtt.broker.bytes_received_per_minute:
+    enabled: true
+    description: "Number of bytes received by the Mqtt Broker per minute"
+    unit: "bytes per minute"
+    gauge:
+      value_type: double
+  sw.otelcol.mqtt.broker.bytes_sent_per_minute:
+    enabled: true
+    description: "Number of bytes sent by the Mqtt Broker per minute"
+    unit: "bytes per minute"
+    gauge:
+      value_type: double
