@@ -91,22 +91,19 @@ func (r *swok8sdiscoveryReceiver) discoverDatabasesByDomains(ctx context.Context
 		}
 
 		// get list of Service svcTargetPorts and Target svcTargetPorts
-		var svcTargetPorts []string
-		var svcPorts []string
+		var svcPorts []int32
 		for _, p := range svc.Spec.Ports {
-			svcPorts = append(svcPorts, string(p.Port))
-			svcTargetPorts = append(svcTargetPorts, p.TargetPort.StrVal)
+			svcPorts = append(svcPorts, p.Port)
 		}
 
-		r.publishDatabaseEvent(ctx, databaseEvent{
-			DatabaseType:       matchedRule.DatabaseType,
-			Namespace:          svc.Namespace,
-			ServiceName:        svc.Name,
-			ServicePorts:       svcPorts,
-			ServiceTargetPorts: svcTargetPorts,
-			Endpoint:           svc.Name,
-			WorkloadKind:       wKind,
-			WorkloadName:       wName,
+		//  service with external endpoint can be detected by other discoveries we mark discovery.id as `external`
+		r.publishDatabaseEvent(ctx, "external", databaseEvent{
+			DatabaseType: matchedRule.DatabaseType,
+			Namespace:    svc.Namespace,
+			Ports:        svcPorts,
+			Endpoint:     external,
+			WorkloadKind: wKind,
+			WorkloadName: wName,
 		})
 	}
 }

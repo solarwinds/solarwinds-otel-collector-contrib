@@ -16,7 +16,6 @@ package swok8sdiscovery
 
 import (
 	"context"
-	"os"
 	"testing"
 	"time"
 
@@ -37,6 +36,10 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	k8s "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
+)
+
+const (
+	testClusterUid = "test-cluster-uid"
 )
 
 func TestNewReceiver(t *testing.T) {
@@ -81,6 +84,7 @@ func runImageCycle(t *testing.T, cfg *Config, objects ...runtime.Object) []plog.
 	done := make(chan bool, 1)
 
 	if rec, ok := rec.(*swok8sdiscoveryReceiver); ok {
+		rec.clusterUid = testClusterUid
 		rec.cycleCallback = func() { done <- true }
 	}
 	require.NoError(t, err)
@@ -183,10 +187,12 @@ func TestDomainDiscovery_SingleMatch(t *testing.T) {
 	attrs := collectDBAttrs(logs, "redis")
 	require.Len(t, attrs, 1)
 	idAttrs := getAttrMap(t, attrs[0], otelEntityId)
-	checkAttr(t, idAttrs, swDiscoveryDbAddress, "redis-ext")
+	require.Equal(t, idAttrs.Len(), 3)
+	checkAttr(t, idAttrs, swDiscoveryDbAddress, "cache-01.redis.example.com")
 	checkAttr(t, idAttrs, swDiscoveryDbType, "redis")
+	checkAttr(t, idAttrs, swDiscoveryId, "external")
 	entityAttrs := getAttrMap(t, attrs[0], otelEntityAttributes)
-	checkAttr(t, entityAttrs, swDiscoveryDbName, "redis-ext#redis-deploy")
+	checkAttr(t, entityAttrs, swDiscoveryDbName, "cache-01.redis.example.com#redis-deploy")
 
 	relAttrs := collectAttrs(logs, otelEntityEventType, relationshipState)
 	require.Len(t, relAttrs, 1, "expected relationship when workload resolved")
@@ -225,7 +231,7 @@ func TestDomainDiscovery_DedupByDomainHint(t *testing.T) {
 	require.Len(t, pgAttrs, 0)
 
 	idMap := getAttrMap(t, attrs[0], otelEntityId)
-	checkAttr(t, idMap, swDiscoveryDbAddress, "mysql-svc")
+	checkAttr(t, idMap, swDiscoveryDbAddress, "some-db.company.internal")
 	checkAttr(t, idMap, swDiscoveryDbType, "mysql")
 }
 
@@ -296,8 +302,10 @@ func TestImageDiscovery_SingleMatch(t *testing.T) {
 	attrs := collectDBAttrs(logs, "mongo")
 	require.Len(t, attrs, 1)
 	id_attrs := getAttrMap(t, attrs[0], otelEntityId)
+	require.Equal(t, id_attrs.Len(), 3)
 	checkAttr(t, id_attrs, swDiscoveryDbAddress, "mongo-svc:27017")
 	checkAttr(t, id_attrs, swDiscoveryDbType, "mongo")
+	checkAttr(t, id_attrs, swDiscoveryId, testClusterUid)
 	entity_attrs := getAttrMap(t, attrs[0], otelEntityAttributes)
 	checkAttr(t, entity_attrs, swDiscoveryDbName, "mongo-svc#mongo-ds")
 
@@ -308,13 +316,12 @@ func TestImageDiscovery_SingleMatch(t *testing.T) {
 	source_ids := getAttrMap(t, relationAttrs[0], otelEntityRelationSourceID)
 	checkAttr(t, source_ids, "k8s.daemonset.name", "mongo-ds")
 	checkAttr(t, source_ids, k8sNamespace, "db")
-	checkAttr(t, source_ids, swK8sClusterUid, os.Getenv(clusterUidEnv))
+	checkAttr(t, source_ids, swK8sClusterUid, testClusterUid)
 
 	checkAttr(t, relationAttrs[0], otelEntityRelationDestinationType, discoveredDatabaseEntityType)
 	dst_ids := getAttrMap(t, relationAttrs[0], otelEntityRelationDestinationID)
 	checkAttr(t, dst_ids, swDiscoveryDbAddress, "mongo-svc:27017")
 	checkAttr(t, dst_ids, swDiscoveryDbType, "mongo")
-	checkAttr(t, dst_ids, swDiscoveryId, os.Getenv(clusterUidEnv))
 }
 
 func TestImageDiscovery_NonDefaultPortMatch(t *testing.T) {

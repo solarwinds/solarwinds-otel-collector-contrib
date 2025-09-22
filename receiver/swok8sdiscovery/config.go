@@ -35,6 +35,8 @@ type Config struct {
 
 	Interval time.Duration `mapstructure:"interval"`
 
+	Reporter string `mapstructure:"reporter"`
+
 	Database *DatabaseDiscoveryConfig `mapstructure:"database"`
 
 	// For mocking purposes only.

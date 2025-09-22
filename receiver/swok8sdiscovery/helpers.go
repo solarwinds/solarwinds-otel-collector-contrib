@@ -21,9 +21,9 @@ import (
 
 // matchServiceForPod attempts to find a service in namespace selecting the pod.
 // If multiple services match, prefer one exposing any of the provided ports.
-func matchServiceForPod(pod corev1.Pod, ports []int32, services []corev1.Service) (string, []int32, []int32) {
+func matchServiceForPod(pod corev1.Pod, ports []int32, services []corev1.Service) (string, []int32) {
 	if len(services) == 0 {
-		return "", nil, nil
+		return "", nil
 	}
 	podLabels := pod.GetLabels()
 	type svcMatch struct {
@@ -77,7 +77,7 @@ func matchServiceForPod(pod corev1.Pod, ports []int32, services []corev1.Service
 		}
 	}
 	if len(candidates) == 0 {
-		return "", nil, nil
+		return "", nil
 	}
 	var overlapping []svcMatch
 	for _, c := range candidates {
@@ -86,7 +86,7 @@ func matchServiceForPod(pod corev1.Pod, ports []int32, services []corev1.Service
 		}
 	}
 	if len(overlapping) == 0 {
-		return "", nil, nil
+		return "", nil
 	}
 	var best svcMatch
 	bestExtra := 0
@@ -97,7 +97,7 @@ func matchServiceForPod(pod corev1.Pod, ports []int32, services []corev1.Service
 			bestExtra = cExtra
 		}
 	}
-	return best.svc.Name, best.svcPorts, best.targetPorts
+	return best.svc.Name, best.svcPorts
 }
 
 func selectorMatches(selector, labels map[string]string) bool {

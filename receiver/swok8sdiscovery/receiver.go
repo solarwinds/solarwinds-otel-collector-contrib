@@ -16,6 +16,7 @@ package swok8sdiscovery
 
 import (
 	"context"
+	"os"
 	"sync"
 
 	"go.opentelemetry.io/collector/component"
@@ -34,6 +35,8 @@ type swok8sdiscoveryReceiver struct {
 	kclient  k8s.Interface
 	cancel   context.CancelFunc
 
+	clusterUid string
+
 	// Optional callback invoked after every discovery cycle (test instrumentation / extensibility)
 	cycleCallback func()
 }
@@ -41,9 +44,10 @@ type swok8sdiscoveryReceiver struct {
 func newReceiver(params receiver.Settings, config *Config, consumer consumer.Logs) (receiver.Logs, error) {
 
 	return &swok8sdiscoveryReceiver{
-		setting:  params,
-		config:   config,
-		consumer: consumer,
+		setting:    params,
+		config:     config,
+		consumer:   consumer,
+		clusterUid: os.Getenv(clusterUidEnv),
 	}, nil
 }
 

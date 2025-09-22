@@ -16,7 +16,6 @@ package swok8sdiscovery
 
 import (
 	"context"
-	"strconv"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -61,7 +60,7 @@ func (r *swok8sdiscoveryReceiver) discoverDatabasesByImages(ctx context.Context,
 			ports := resolveContainerPorts(container, matchedRule.DefaultPort)
 
 			// Try to match service exposing one of these ports by label selector (pod labels subset service selector)
-			svcName, svcPorts, svcTargetPorts := matchServiceForPod(pod, ports, svcByNamespace[pod.Namespace])
+			svcName, svcPorts := matchServiceForPod(pod, ports, svcByNamespace[pod.Namespace])
 
 			// Resolve workload (top-level)
 			wKind, wName, _ := r.resolveWorkloadForPod(ctx, &pod)
@@ -77,17 +76,21 @@ func (r *swok8sdiscoveryReceiver) discoverDatabasesByImages(ctx context.Context,
 				emittedWorkloads[key] = struct{}{}
 			}
 
-			r.publishDatabaseEvent(ctx, databaseEvent{
-				DatabaseType:       matchedRule.DatabaseType,
-				Namespace:          pod.Namespace,
-				ServiceName:        svcName,
-				Endpoint:           firstNonEmpty(svcName, pod.Name),
-				Ports:              portsAsStrings(ports),
-				ServicePorts:       portsAsStrings(svcPorts),
-				ServiceTargetPorts: portsAsStrings(svcTargetPorts),
-				WorkloadKind:       wKind,
-				WorkloadName:       wName,
-			})
+			database := databaseEvent{
+				DatabaseType: matchedRule.DatabaseType,
+				Namespace:    pod.Namespace,
+				Endpoint:     pod.Name,
+				Ports:        ports,
+				WorkloadKind: wKind,
+				WorkloadName: wName,
+			}
+
+			if svcName != "" && len(svcPorts) != 0 {
+				database.Endpoint = svcName
+				database.Ports = svcPorts
+			}
+
+			r.publishDatabaseEvent(ctx, r.clusterUid, database)
 		}
 	}
 }
@@ -104,27 +107,6 @@ func resolveContainerPorts(c corev1.Container, defaultPort int32) []int32 {
 	}
 	if defaultPort != 0 && hasDefault {
 		return []int32{defaultPort}
-	}
-	return res
-}
-
-// firstNonEmpty returns the first non-empty string from the arguments.
-func firstNonEmpty(values ...string) string {
-	for _, v := range values {
-		if v != "" {
-			return v
-		}
-	}
-	return ""
-}
-
-func portsAsStrings(ports []int32) []string {
-	if len(ports) == 0 {
-		return nil
-	}
-	res := make([]string, len(ports))
-	for i, p := range ports {
-		res[i] = strconv.FormatInt(int64(p), 10)
 	}
 	return res
 }

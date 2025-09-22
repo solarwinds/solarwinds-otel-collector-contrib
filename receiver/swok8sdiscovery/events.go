@@ -16,7 +16,7 @@ package swok8sdiscovery
 
 import (
 	"context"
-	"os"
+	"strconv"
 	"strings"
 
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -25,15 +25,12 @@ import (
 
 // databaseEvent is an internal representation before converting to logs.
 type databaseEvent struct {
-	DatabaseType       string
-	Namespace          string
-	ServiceName        string
-	Endpoint           string   // service name if available, else pod name
-	Ports              []string // chosen ports (default preferred)
-	ServicePorts       []string // all service target ports
-	ServiceTargetPorts []string // resolved target (container) ports from service
-	WorkloadKind       string   // Deployment/StatefulSet/DaemonSet/Job/CronJob
-	WorkloadName       string
+	DatabaseType string
+	Namespace    string
+	Endpoint     string  // service name if available, else pod name
+	Ports        []int32 // chosen ports (default preferred)
+	WorkloadKind string  // Deployment/StatefulSet/DaemonSet/Job/CronJob
+	WorkloadName string
 }
 
 const (
@@ -56,8 +53,9 @@ const (
 	k8sNamespace         = "k8s.namespace.name"
 	swDiscoveryDbName    = "sw.discovery.dbo.name"
 	swDiscoveryDbAddress = "sw.discovery.dbo.address"
-	swDiscoveryDbType    = "sw.discovery.dbo.dbType"
+	swDiscoveryDbType    = "sw.discovery.dbo.type"
 	swDiscoveryId        = "sw.discovery.id"
+	swDiscoverySource    = "sw.discovery.source"
 
 	// Attributes for telemetry mapping
 	otelEntityId         = "otel.entity.id"
@@ -66,7 +64,7 @@ const (
 )
 
 // publishDatabaseEvent publishes structured log record for database discovery outcome.
-func (r *swok8sdiscoveryReceiver) publishDatabaseEvent(ctx context.Context, ev databaseEvent) {
+func (r *swok8sdiscoveryReceiver) publishDatabaseEvent(ctx context.Context, discoveryId string, ev databaseEvent) {
 	logs := plog.NewLogs()
 	scopeLogs := logs.ResourceLogs().AppendEmpty().ScopeLogs().AppendEmpty()
 	scopeLogs.Scope().Attributes().PutBool(otelEntityEventAsLog, true)
@@ -82,19 +80,24 @@ func (r *swok8sdiscoveryReceiver) publishDatabaseEvent(ctx context.Context, ev d
 
 	// compose full endpoint with ports
 	address := ev.Endpoint
-	if len(ev.ServicePorts) > 0 {
-		address += ":" + strings.Join(ev.ServicePorts, ",")
-	} else if len(ev.Ports) > 0 {
-		address += ":" + strings.Join(ev.Ports, ",")
+	if len(ev.Ports) > 0 {
+		address += ":" + strings.Join(portsAsStrings(ev.Ports), ",")
 	}
 
 	attrs.PutStr(otelEntityEventType, entityState)
 	attrs.PutStr(swEntityType, discoveredDatabaseEntityType)
+	attrs.PutStr(swDiscoverySource, r.config.Reporter)
+	// add workload attributes fo filtering
+	if ev.WorkloadKind != "" {
+		attrs.PutStr("k8s."+strings.ToLower(ev.WorkloadKind)+".name", ev.WorkloadName)
+		attrs.PutStr(k8sNamespace, ev.Namespace)
+		attrs.PutStr(swK8sClusterUid, r.clusterUid)
+	}
 
 	keys := attrs.PutEmptyMap(otelEntityId)
 	keys.PutStr(swDiscoveryDbAddress, address)
 	keys.PutStr(swDiscoveryDbType, ev.DatabaseType)
-	keys.PutStr(swDiscoveryId, os.Getenv(clusterUidEnv))
+	keys.PutStr(swDiscoveryId, discoveryId)
 
 	optional := attrs.PutEmptyMap(otelEntityAttributes)
 	optional.PutStr(swDiscoveryDbName, name)
@@ -126,7 +129,7 @@ func (r *swok8sdiscoveryReceiver) publishRelationShip(ctx context.Context, ev da
 	src_ids := attrs.PutEmptyMap(otelEntityRelationSourceID)
 	src_ids.PutStr("k8s."+strings.ToLower(ev.WorkloadKind)+".name", ev.WorkloadName)
 	src_ids.PutStr(k8sNamespace, ev.Namespace)
-	src_ids.PutStr(swK8sClusterUid, os.Getenv(clusterUidEnv))
+	src_ids.PutStr(swK8sClusterUid, r.clusterUid)
 
 	//
 	// destination entity
@@ -135,4 +138,15 @@ func (r *swok8sdiscoveryReceiver) publishRelationShip(ctx context.Context, ev da
 	dbKeys.CopyTo(dst_ids)
 
 	r.consumer.ConsumeLogs(ctx, logs)
+}
+
+func portsAsStrings(ports []int32) []string {
+	if len(ports) == 0 {
+		return nil
+	}
+	res := make([]string, len(ports))
+	for i, p := range ports {
+		res[i] = strconv.FormatInt(int64(p), 10)
+	}
+	return res
 }
