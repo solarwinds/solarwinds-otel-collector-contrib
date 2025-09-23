@@ -41,7 +41,7 @@ func (r *swok8sdiscoveryReceiver) discoverDatabasesByImages(ctx context.Context,
 		for _, container := range pod.Spec.Containers {
 			matchedRule := (*ImageRule)(nil)
 			for i := range r.config.Database.ImageRules {
-				rule := &r.config.Database.ImageRules[i]
+				rule := r.config.Database.ImageRules[i]
 				for _, rx := range rule.PatternsCompiled {
 					if rx.MatchString(container.Image) {
 						matchedRule = rule
@@ -60,7 +60,7 @@ func (r *swok8sdiscoveryReceiver) discoverDatabasesByImages(ctx context.Context,
 			ports := resolveContainerPorts(container, matchedRule.DefaultPort)
 
 			// Try to match service exposing one of these ports by label selector (pod labels subset service selector)
-			svcName, svcPorts := matchServiceForPod(pod, ports, svcByNamespace[pod.Namespace])
+			svcName, svcPorts := matchServiceForPod(pod, container, ports, svcByNamespace[pod.Namespace])
 
 			// Resolve workload (top-level)
 			wKind, wName, _ := r.resolveWorkloadForPod(ctx, &pod)

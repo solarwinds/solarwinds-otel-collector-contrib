@@ -34,7 +34,6 @@ type databaseEvent struct {
 }
 
 const (
-	k8sLogType                   = "sw.k8s.log.type"
 	clusterUidEnv                = "CLUSTER_UID"
 	discoveredDatabaseEntityType = "DiscoveredDatabaseInstance"
 	entityState                  = "entity_state"

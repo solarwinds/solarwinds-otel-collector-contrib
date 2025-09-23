@@ -44,8 +44,8 @@ type Config struct {
 }
 
 type DatabaseDiscoveryConfig struct {
-	ImageRules  []ImageRule  `mapstructure:"image_rules"`
-	DomainRules []DomainRule `mapstructure:"domain_rules"`
+	ImageRules  []*ImageRule  `mapstructure:"image_rules"`
+	DomainRules []*DomainRule `mapstructure:"domain_rules"`
 }
 
 type ImageRule struct {
@@ -89,7 +89,7 @@ func (c *Config) Validate() error {
 
 func ValidateDatabaseDiscovery(databaseDiscovery *DatabaseDiscoveryConfig) error {
 	for i := range databaseDiscovery.ImageRules {
-		r := &databaseDiscovery.ImageRules[i]
+		r := databaseDiscovery.ImageRules[i]
 		if r.DatabaseType == "" {
 			return errors.New("database_type must be specified for all image_rules")
 		}
@@ -109,7 +109,7 @@ func ValidateDatabaseDiscovery(databaseDiscovery *DatabaseDiscoveryConfig) error
 	}
 
 	for i := range databaseDiscovery.DomainRules {
-		r := &databaseDiscovery.DomainRules[i]
+		r := databaseDiscovery.DomainRules[i]
 		if r.DatabaseType == "" {
 			return errors.New("database_type must be specified for all domain_rules")
 		}
@@ -138,7 +138,7 @@ func (c *Config) getClient() (k8s.Interface, error) {
 
 // listPods lists all pods across all namespaces using the typed client.
 func (c *Config) listPods(ctx context.Context, client k8s.Interface) ([]corev1.Pod, error) {
-	pl, err := client.CoreV1().Pods("").List(ctx, metav1.ListOptions{})
+	pl, err := client.CoreV1().Pods(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +147,7 @@ func (c *Config) listPods(ctx context.Context, client k8s.Interface) ([]corev1.P
 
 // listServices lists all services across all namespaces using the typed client.
 func (c *Config) listServices(ctx context.Context, client k8s.Interface) ([]corev1.Service, error) {
-	sl, err := client.CoreV1().Services("").List(ctx, metav1.ListOptions{})
+	sl, err := client.CoreV1().Services(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}

@@ -39,7 +39,7 @@ func (r *swok8sdiscoveryReceiver) discoverDatabasesByDomains(ctx context.Context
 
 		var matchedRule *DomainRule
 		for i := range r.config.Database.DomainRules {
-			rule := &r.config.Database.DomainRules[i]
+			rule := r.config.Database.DomainRules[i]
 			for _, rx := range rule.PatternsCompiled {
 				if rx.MatchString(external) {
 					matchingRules = append(matchingRules, rule)

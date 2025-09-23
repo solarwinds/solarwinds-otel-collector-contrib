@@ -153,7 +153,7 @@ func TestDomainDiscovery_SingleMatch(t *testing.T) {
 		APIConfig: k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeServiceAccount},
 		Interval:  time.Second,
 		Database: &DatabaseDiscoveryConfig{
-			DomainRules: []DomainRule{{
+			DomainRules: []*DomainRule{{
 				DatabaseType: "redis",
 				Patterns:     []string{".*redis.example.com"},
 			}},
@@ -207,7 +207,7 @@ func TestDomainDiscovery_DedupByDomainHint(t *testing.T) {
 		APIConfig: k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeServiceAccount},
 		Interval:  time.Second,
 		Database: &DatabaseDiscoveryConfig{
-			DomainRules: []DomainRule{
+			DomainRules: []*DomainRule{
 				{DatabaseType: "pg", Patterns: []string{".*db.company.internal"}, DomainHints: []string{"primary"}},
 				{DatabaseType: "mysql", Patterns: []string{".*db.company.internal"}, DomainHints: []string{"mysql"}}, // higher potential hint score
 			}},
@@ -240,7 +240,7 @@ func TestDomainDiscovery_MultipleMatchNoDomainHint(t *testing.T) {
 		APIConfig: k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeServiceAccount},
 		Interval:  time.Second,
 		Database: &DatabaseDiscoveryConfig{
-			DomainRules: []DomainRule{
+			DomainRules: []*DomainRule{
 				{DatabaseType: "pg", Patterns: []string{".*db.company.internal"}, DomainHints: []string{"primary"}},
 				{DatabaseType: "mysql", Patterns: []string{".*db.company.internal"}, DomainHints: []string{"mysql"}}, // higher potential hint score
 			}},
@@ -266,7 +266,7 @@ func TestImageDiscovery_SingleMatch(t *testing.T) {
 		},
 		Interval: time.Second,
 		Database: &DatabaseDiscoveryConfig{
-			ImageRules: []ImageRule{{DatabaseType: "mongo", Patterns: []string{".*/mongo:.*"}, DefaultPort: 27017}}}}
+			ImageRules: []*ImageRule{{DatabaseType: "mongo", Patterns: []string{".*/mongo:.*"}, DefaultPort: 27017}}}}
 	require.NoError(t, cfg.Validate())
 
 	trueVal := true
@@ -331,7 +331,7 @@ func TestImageDiscovery_NonDefaultPortMatch(t *testing.T) {
 		},
 		Interval: time.Second,
 		Database: &DatabaseDiscoveryConfig{
-			ImageRules: []ImageRule{{DatabaseType: "mongo", Patterns: []string{".*/mongo:.*"}, DefaultPort: 8080}}}}
+			ImageRules: []*ImageRule{{DatabaseType: "mongo", Patterns: []string{".*/mongo:.*"}, DefaultPort: 8080}}}}
 	require.NoError(t, cfg.Validate())
 
 	pod1 := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "mongo-b", Namespace: "db", Labels: map[string]string{"app": "mongo"}}, Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: "mongo", Image: "docker.io/library/mongo:7", Ports: []corev1.ContainerPort{{ContainerPort: 27017}, {ContainerPort: 27018}}}}}}
@@ -351,7 +351,7 @@ func TestImageDiscovery_DedupPerPortSignature(t *testing.T) {
 		},
 		Interval: time.Second,
 		Database: &DatabaseDiscoveryConfig{
-			ImageRules: []ImageRule{{DatabaseType: "mongo", Patterns: []string{".*/mongo:.*"}, DefaultPort: 27017}}}}
+			ImageRules: []*ImageRule{{DatabaseType: "mongo", Patterns: []string{".*/mongo:.*"}, DefaultPort: 27017}}}}
 	require.NoError(t, cfg.Validate())
 
 	pod1 := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "mongo-a", Namespace: "db", Labels: map[string]string{"app": "mongo"}}, Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: "mongo", Image: "docker.io/library/mongo:7", Ports: []corev1.ContainerPort{{ContainerPort: 27017}}}}}}
@@ -384,12 +384,12 @@ func TestImageDiscovery_MultipleServicesOverlapHeuristic(t *testing.T) {
 		},
 		Interval: time.Second,
 		Database: &DatabaseDiscoveryConfig{
-			ImageRules: []ImageRule{{DatabaseType: "pg", Patterns: []string{".*/postgres:.*"}, DefaultPort: 5432}}}}
+			ImageRules: []*ImageRule{{DatabaseType: "pg", Patterns: []string{".*/postgres:.*"}, DefaultPort: 5432}}}}
 	require.NoError(t, cfg.Validate())
 
 	pod := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "pg-0", Namespace: "db", Labels: map[string]string{"app": "pg"}}, Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: "postgres", Image: "docker.io/library/postgres:16", Ports: []corev1.ContainerPort{{ContainerPort: 5432}, {ContainerPort: 6432}}}}}}
 	serviceA := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: "pg-primary", Namespace: "db"}, Spec: corev1.ServiceSpec{Selector: map[string]string{"app": "pg"}, Ports: []corev1.ServicePort{{Port: 5432}}}}
-	serviceB := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: "pg-broad", Namespace: "db"}, Spec: corev1.ServiceSpec{Selector: map[string]string{"app": "pg"}, Ports: []corev1.ServicePort{{Port: 5432}, {Port: 6432}}}}
+	serviceB := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: "pg-broad", Namespace: "db"}, Spec: corev1.ServiceSpec{Selector: map[string]string{"app": "pg"}, Ports: []corev1.ServicePort{{Port: 5433}, {Port: 6432}}}}
 
 	logs := runImageCycle(t, cfg, pod, serviceA, serviceB)
 	attrs := collectDBAttrs(logs, "pg")
@@ -405,7 +405,7 @@ func TestImageDiscovery_TargetPortNamedResolution(t *testing.T) {
 		},
 		Interval: time.Second,
 		Database: &DatabaseDiscoveryConfig{
-			ImageRules: []ImageRule{{DatabaseType: "mysql", Patterns: []string{".*/mysql:.*"}, DefaultPort: 3306}}}}
+			ImageRules: []*ImageRule{{DatabaseType: "mysql", Patterns: []string{".*/mysql:.*"}, DefaultPort: 3306}}}}
 	require.NoError(t, cfg.Validate())
 
 	pod := &corev1.Pod{

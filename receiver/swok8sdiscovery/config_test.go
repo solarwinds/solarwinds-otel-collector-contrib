@@ -43,7 +43,7 @@ func TestLoadConfig(t *testing.T) {
 				Interval: defaultInterval,
 				Database: &DatabaseDiscoveryConfig{
 					// add data from testdata/config.yaml
-					ImageRules: []ImageRule{
+					ImageRules: []*ImageRule{
 						{
 							DatabaseType: "mysql",
 							Patterns:     []string{"mysql*", "mariadb*"},
@@ -55,7 +55,7 @@ func TestLoadConfig(t *testing.T) {
 							DefaultPort:  5432,
 						},
 					},
-					DomainRules: []DomainRule{
+					DomainRules: []*DomainRule{
 						{
 							DatabaseType: "mysql",
 							Patterns:     []string{"mysql*", "mariadb*"},

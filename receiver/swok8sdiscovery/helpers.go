@@ -21,7 +21,7 @@ import (
 
 // matchServiceForPod attempts to find a service in namespace selecting the pod.
 // If multiple services match, prefer one exposing any of the provided ports.
-func matchServiceForPod(pod corev1.Pod, ports []int32, services []corev1.Service) (string, []int32) {
+func matchServiceForPod(pod corev1.Pod, container corev1.Container, ports []int32, services []corev1.Service) (string, []int32) {
 	if len(services) == 0 {
 		return "", nil
 	}
@@ -30,17 +30,16 @@ func matchServiceForPod(pod corev1.Pod, ports []int32, services []corev1.Service
 		svc         corev1.Service
 		svcPorts    []int32
 		targetPorts []int32
-		overlaps    bool
+		portMatches int
 	}
 	var candidates []svcMatch
 	nameToPort := map[string]int32{}
-	for _, c := range pod.Spec.Containers {
-		for _, p := range c.Ports {
-			if p.Name != "" {
-				nameToPort[p.Name] = p.ContainerPort
-			}
+	for _, p := range container.Ports {
+		if p.Name != "" {
+			nameToPort[p.Name] = p.ContainerPort
 		}
 	}
+
 	portSet := map[int32]struct{}{}
 	for _, p := range ports {
 		portSet[p] = struct{}{}
@@ -54,9 +53,8 @@ func matchServiceForPod(pod corev1.Pod, ports []int32, services []corev1.Service
 		if selectorMatches(selector, podLabels) {
 			var svcPorts []int32
 			var targetPorts []int32
-			overlap := false
+			portMatches := 0
 			for _, sp := range svc.Spec.Ports {
-				svcPorts = append(svcPorts, sp.Port)
 				var tp int32
 				if sp.TargetPort.Type == intstr.Int {
 					tp = int32(sp.TargetPort.IntValue())
@@ -68,35 +66,37 @@ func matchServiceForPod(pod corev1.Pod, ports []int32, services []corev1.Service
 				if tp == 0 {
 					tp = sp.Port
 				}
-				targetPorts = append(targetPorts, tp)
+
 				if _, ok := portSet[tp]; ok {
-					overlap = true
+					targetPorts = append(targetPorts, tp)
+					svcPorts = append(svcPorts, sp.Port)
+					portMatches++
 				}
 			}
-			candidates = append(candidates, svcMatch{svc: svc, svcPorts: svcPorts, targetPorts: targetPorts, overlaps: overlap})
+			if portMatches == len(ports) {
+				// we have exact match, let's return it immediately
+				return svc.Name, svcPorts
+			} else if portMatches != 0 {
+				candidates = append(candidates, svcMatch{svc: svc, svcPorts: svcPorts, targetPorts: targetPorts, portMatches: portMatches})
+			}
 		}
 	}
 	if len(candidates) == 0 {
 		return "", nil
 	}
-	var overlapping []svcMatch
-	for _, c := range candidates {
-		if c.overlaps {
-			overlapping = append(overlapping, c)
-		}
-	}
-	if len(overlapping) == 0 {
-		return "", nil
-	}
+
 	var best svcMatch
-	bestExtra := 0
-	for i, c := range overlapping {
-		cExtra := countExtra(c.targetPorts, portSet)
-		if i == 0 || cExtra < bestExtra || (cExtra == bestExtra && c.svc.Name < best.svc.Name) {
+	bestMatches := 0
+	// in case we have multiple candidates, pick one with best port match and
+	// prefer one with alphabetically order to be deterministic with each run
+	for i, c := range candidates {
+		cMatches := c.portMatches
+		if i == 0 || cMatches < bestMatches || (cMatches == bestMatches && c.svc.Name < best.svc.Name) {
 			best = c
-			bestExtra = cExtra
+			bestMatches = cMatches
 		}
 	}
+
 	return best.svc.Name, best.svcPorts
 }
 
@@ -107,15 +107,4 @@ func selectorMatches(selector, labels map[string]string) bool {
 		}
 	}
 	return true
-}
-
-// countExtra counts how many ports in slice are not in the discovered set
-func countExtra(ports []int32, set map[int32]struct{}) int {
-	extra := 0
-	for _, p := range ports {
-		if _, ok := set[p]; !ok {
-			extra++
-		}
-	}
-	return extra
 }

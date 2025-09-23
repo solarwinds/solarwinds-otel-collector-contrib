@@ -49,7 +49,7 @@ func createImplicitConfig() component.Config {
 			AuthType: k8sconfig.AuthTypeServiceAccount,
 		},
 		Database: &DatabaseDiscoveryConfig{
-			ImageRules: []ImageRule{
+			ImageRules: []*ImageRule{
 				{
 					DatabaseType: "redis",
 					Patterns:     []string{".*/redis:.*"},
@@ -76,7 +76,7 @@ func createImplicitConfig() component.Config {
 					DefaultPort:  27017,
 				},
 			},
-			DomainRules: []DomainRule{
+			DomainRules: []*DomainRule{
 				{
 					DatabaseType: "redis",
 					Patterns: []string{
