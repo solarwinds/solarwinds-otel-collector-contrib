@@ -14,7 +14,7 @@ on:
   workflow_call:
 
 env:
-  GO_VERSION: '1.25.0'
+  GO_VERSION: '1.25.1'
   SHARED_SCRIPTS: './submodules/solarwinds-otel-collector-core/build/scripts'
 
 jobs:
