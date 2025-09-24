@@ -1,6 +1,6 @@
 module github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/container
 
-go 1.25.0
+go 1.25.1
 
 require (
 	go.uber.org/zap v1.27.0
