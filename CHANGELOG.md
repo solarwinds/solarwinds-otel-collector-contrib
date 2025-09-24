@@ -3,6 +3,9 @@
 ## vNext
 - Add `mqttreceiver`
 
+## v0.131.9
+- Updates golang to 1.25.1
+
 ## v0.131.8
 - `solarwindsprocessor` Refactored collector decoration configuration: introduced `collector_attributes_decoration` section with `enabled` and `extension` fields, deprecated root-level `extension` field for better configuration organization
 

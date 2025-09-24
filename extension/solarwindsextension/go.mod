@@ -1,10 +1,10 @@
 module github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension
 
-go 1.25.0
+go 1.25.1
 
 require (
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil v0.131.8
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.131.8
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil v0.131.9
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.131.9
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/collector/component v1.37.0
 	go.opentelemetry.io/collector/component/componenttest v0.131.0
