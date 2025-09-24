@@ -50,7 +50,7 @@ func (r *swok8sdiscoveryReceiver) discoverDatabasesByDomains(ctx context.Context
 
 		if len(matchingRules) == 1 {
 			matchedRule = matchingRules[0]
-		} else {
+		} else if len(matchingRules) > 1 {
 
 			lower_external := strings.ToLower(external)
 			lower_name := strings.ToLower(svc.Name)

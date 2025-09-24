@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfig"
@@ -93,6 +94,7 @@ func ValidateDatabaseDiscovery(databaseDiscovery *DatabaseDiscoveryConfig) error
 		if r.DatabaseType == "" {
 			return errors.New("database_type must be specified for all image_rules")
 		}
+		r.DatabaseType = strings.ToLower(r.DatabaseType)
 
 		if len(r.Patterns) == 0 {
 			return errors.New("at least one match pattern must be specified for all image_rules")
@@ -113,6 +115,7 @@ func ValidateDatabaseDiscovery(databaseDiscovery *DatabaseDiscoveryConfig) error
 		if r.DatabaseType == "" {
 			return errors.New("database_type must be specified for all domain_rules")
 		}
+		r.DatabaseType = strings.ToLower(r.DatabaseType)
 		if len(r.Patterns) == 0 {
 			return errors.New("at least one match pattern must be specified for all domain_rules")
 		}
@@ -124,6 +127,10 @@ func ValidateDatabaseDiscovery(databaseDiscovery *DatabaseDiscoveryConfig) error
 				return err
 			}
 			r.PatternsCompiled[j] = compiled
+		}
+
+		for j, hint := range r.DomainHints {
+			r.DomainHints[j] = strings.ToLower(hint)
 		}
 	}
 	return nil
