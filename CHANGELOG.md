@@ -1,6 +1,7 @@
 # Changelog
 
 ## vNext
+- Add `mqttreceiver`
 
 ## v0.131.9
 - Updates golang to 1.25.1
