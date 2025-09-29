@@ -272,8 +272,8 @@ github.com/opencontainers/image-spec v1.1.1 h1:y0fUlFfIZhPF1W537XOLg0/fcx6zcHCJw
 github.com/opencontainers/image-spec v1.1.1/go.mod h1:qpqAh3Dmcf36wStyyWU+kCeDgrGnAve2nCC8+7h8Q0M=
 github.com/openshift/api v0.0.0-20200618202633-7192180f496a h1:XgIAqRY7Ve0Vfl0lZHXHqGBFG2zKjvFIxlxGYL6SayE=
 github.com/openshift/api v0.0.0-20200618202633-7192180f496a/go.mod h1:fT6U/JfG8uZzemTRwZA2kBDJP5nWz7v05UHnty/D+pk=
-github.com/openshift/client-go v0.0.0-20250513150353-9ea84fa6431b h1:ffS7iyeXP5PdiiVVssk2GCP6PqrVR4LdCdrKRcI+ogM=
-github.com/openshift/client-go v0.0.0-20250513150353-9ea84fa6431b/go.mod h1:ic71V3s+SXPaFMRd80eZhNvjEWom7s61GXE2wmYCfOI=
+github.com/openshift/client-go v0.0.0-20250922201106-dd37bfd2e597 h1:MpnTxVOnXFUfAjpa1bYblgftOsgF61KmxAmBmR+s3+s=
+github.com/openshift/client-go v0.0.0-20250922201106-dd37bfd2e597/go.mod h1:xFmKmVC4oHFSbFMAjlBBhzyWqmroaRK36/qu9BpDDes=
 github.com/phpdave11/gofpdf v1.4.2/go.mod h1:zpO6xFn9yxo3YLyMvW8HcKWVdbNqgIfOOp2dXMnm1mY=
 github.com/phpdave11/gofpdi v1.0.12/go.mod h1:vBmVV0Do6hSBHC8uKUQ71JGW+ZGQq74llk/7bXwjDoI=
 github.com/phpdave11/gofpdi v1.0.13/go.mod h1:vBmVV0Do6hSBHC8uKUQ71JGW+ZGQq74llk/7bXwjDoI=
