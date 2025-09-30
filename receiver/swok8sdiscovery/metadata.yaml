@@ -1,0 +1,11 @@
+type: swok8sdiscovery
+github_project: solarwinds/solarwinds-otel-collector-contrib
+
+status:
+  class: receiver
+  stability:
+    alpha: [logs]
+  distributions: [verified, playground, k8s]
+
+tests:
+  skip_lifecycle: true
