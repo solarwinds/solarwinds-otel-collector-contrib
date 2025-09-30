@@ -2,6 +2,7 @@
 
 ## vNext
 - Add `mqttreceiver`
+- `swohostmetricsreceiver` utilizes OTEL generated code instead of original internal implementation. Relevant code cleanup.
 
 ## v0.131.9
 - Updates golang to 1.25.1

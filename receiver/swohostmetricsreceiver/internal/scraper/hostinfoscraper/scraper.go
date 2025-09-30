@@ -18,6 +18,7 @@ import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/metric"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/scope"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/framework/scraper"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/hostinfoscraper/internal/metadata"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/hostinfoscraper/metrics/cpustats"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/hostinfoscraper/metrics/firewall"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/hostinfoscraper/metrics/uptime"
@@ -44,7 +45,7 @@ func NewHostInfoScraper(
 	logger *zap.Logger,
 ) (*Scraper, error) {
 	descriptor := &scraper.Descriptor{
-		Type: ScraperType(),
+		Type: metadata.Type,
 		ScopeDescriptors: map[string]scope.Descriptor{
 			hostinfoScopeName: {
 				ScopeName: hostinfoScopeName,
