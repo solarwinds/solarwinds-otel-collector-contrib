@@ -3,7 +3,7 @@ module github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfi
 go 1.25.1
 
 require (
-	github.com/openshift/client-go v0.0.0-20250922201106-dd37bfd2e597
+	github.com/openshift/client-go v0.0.0-20190412095722-0255926f5393
 	k8s.io/api v0.34.1
 	k8s.io/apimachinery v0.34.1
 	k8s.io/client-go v0.34.1
@@ -49,7 +49,6 @@ require (
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397 // indirect
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
-	sigs.k8s.io/structured-merge-diff/v4 v4.7.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v6 v6.3.0 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
