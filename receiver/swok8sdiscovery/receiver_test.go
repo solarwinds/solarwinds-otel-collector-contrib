@@ -213,7 +213,7 @@ func TestDomainDiscovery_SingleMatch(t *testing.T) {
 	checkAttr(t, idAttrs, swDiscoveryDbType, "redis")
 	checkAttr(t, idAttrs, swDiscoveryId, "external")
 	entityAttrs := getAttrMap(t, attrs[0], otelEntityAttributes)
-	checkAttr(t, entityAttrs, swDiscoveryDbName, "cache-01.redis.example.com#redis-deploy")
+	checkAttr(t, entityAttrs, swDiscoveryDbName, "cache-01.redis.example.com#db#redis-deploy")
 
 	relAttrs := collectAttrs(logs, otelEntityEventType, relationshipState)
 	require.Len(t, relAttrs, 1, "expected relationship when workload resolved")
