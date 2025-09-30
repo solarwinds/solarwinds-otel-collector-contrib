@@ -12,22 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package types
+//go:generate mdatagen metadata.yaml
 
-import (
-	"context"
-
-	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/scraper"
-
-	"go.uber.org/zap"
-)
-
-// Interface prescribing what scraper factory needs to implement.
-type MetricsScraperFactory interface {
-	Type() component.Type
-	// Creates default configuration for the scraper.
-	CreateDefaultConfig() component.Config
-	// Creates scraper object, in case of failure error is returned.
-	CreateMetrics(ctx context.Context, settings scraper.Settings, cfg component.Config, logger *zap.Logger) (scraper.Metrics, error)
-}
+package mqttreceiver

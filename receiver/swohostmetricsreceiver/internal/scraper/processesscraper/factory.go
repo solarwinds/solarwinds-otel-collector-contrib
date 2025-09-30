@@ -21,37 +21,28 @@ import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/scraper/processesscraper/internal/metadata"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/scraper"
-	"go.uber.org/zap"
-
-	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver/internal/types"
 )
 
-type factory struct{}
-
-var _ types.MetricsScraperFactory = (*factory)(nil)
-
-func NewFactory() types.MetricsScraperFactory {
-	return new(factory)
+func NewFactory() scraper.Factory {
+	return scraper.NewFactory(
+		metadata.Type,
+		createDefaultConfig,
+		scraper.WithMetrics(createMetrics, metadata.MetricsStability))
 }
 
-func (f *factory) Type() component.Type {
-	return metadata.Type
-}
-
-func (f *factory) CreateDefaultConfig() component.Config {
+func createDefaultConfig() component.Config {
 	config := metadata.DefaultMetricsBuilderConfig()
 	return &config
 }
 
-func (f *factory) CreateMetrics(
+func createMetrics(
 	_ context.Context,
 	set scraper.Settings,
-	cfg component.Config,
-	_ *zap.Logger) (scraper.Metrics, error) {
+	cfg component.Config) (scraper.Metrics, error) {
 
 	sc, err := NewScraper(*cfg.(*metadata.MetricsBuilderConfig), set)
 	if err != nil {
-		return nil, fmt.Errorf("scraper %s creation failed: %w", f.Type(), err)
+		return nil, fmt.Errorf("scraper %s creation failed: %w", metadata.Type, err)
 	}
 
 	return scraper.NewMetrics(
