@@ -48,13 +48,15 @@ const (
 	otelEntityRelationDestinationType = "otel.entity_relationship.destination_entity.type"
 	otelEntityRelationDestinationID   = "otel.entity_relationship.destination_entity.id"
 
-	swEntityType         = "otel.entity.type"
-	k8sNamespace         = "k8s.namespace.name"
-	swDiscoveryDbName    = "sw.discovery.dbo.name"
-	swDiscoveryDbAddress = "sw.discovery.dbo.address"
-	swDiscoveryDbType    = "sw.discovery.dbo.type"
-	swDiscoveryId        = "sw.discovery.id"
-	swDiscoverySource    = "sw.discovery.source"
+	swEntityType               = "otel.entity.type"
+	k8sNamespace               = "k8s.namespace.name"
+	swDiscoveryDbName          = "sw.discovery.dbo.name"
+	swDiscoveryDbAddress       = "sw.discovery.dbo.address"
+	swDiscoveryDbPort          = "sw.discovery.dbo.port"
+	swDiscoveryDbPossiblePorts = "sw.discovery.dbo.possible.ports"
+	swDiscoveryDbType          = "sw.discovery.dbo.type"
+	swDiscoveryId              = "sw.discovery.id"
+	swDiscoverySource          = "sw.discovery.source"
 
 	// Attributes for telemetry mapping
 	otelEntityId         = "otel.entity.id"
@@ -73,14 +75,11 @@ func (r *swok8sdiscoveryReceiver) publishDatabaseEvent(ctx context.Context, disc
 
 	// compose database name
 	name := ev.Endpoint
+	if ev.Namespace != "" {
+		name += "#" + ev.Namespace
+	}
 	if ev.WorkloadName != "" {
 		name += "#" + ev.WorkloadName
-	}
-
-	// compose full endpoint with ports
-	address := ev.Endpoint
-	if len(ev.Ports) > 0 {
-		address += ":" + strings.Join(portsAsStrings(ev.Ports), ",")
 	}
 
 	attrs.PutStr(otelEntityEventType, entityState)
@@ -94,12 +93,20 @@ func (r *swok8sdiscoveryReceiver) publishDatabaseEvent(ctx context.Context, disc
 	}
 
 	keys := attrs.PutEmptyMap(otelEntityId)
-	keys.PutStr(swDiscoveryDbAddress, address)
+	keys.PutStr(swDiscoveryDbAddress, ev.Endpoint)
 	keys.PutStr(swDiscoveryDbType, ev.DatabaseType)
 	keys.PutStr(swDiscoveryId, discoveryId)
 
 	optional := attrs.PutEmptyMap(otelEntityAttributes)
 	optional.PutStr(swDiscoveryDbName, name)
+	if len(ev.Ports) == 1 {
+		optional.PutInt(swDiscoveryDbPort, int64(ev.Ports[0]))
+	} else if len(ev.Ports) > 0 {
+		arr := optional.PutEmptySlice(swDiscoveryDbPossiblePorts)
+		for _, s := range ev.Ports {
+			arr.AppendEmpty().SetInt(int64(s))
+		}
+	}
 
 	r.consumer.ConsumeLogs(ctx, logs)
 
