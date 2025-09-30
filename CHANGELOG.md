@@ -3,10 +3,10 @@
 ## vNext
 - Add `mqttreceiver`
 - `swohostmetricsreceiver` utilizes OTEL generated code instead of original internal implementation. Relevant code cleanup.
+- Added receiver `swok8sdiscovery` to publish known database entities and relationships
 
 ## v0.131.9
 - Updates golang to 1.25.1
-- Added receiver `swok8sdiscovery` to publish known database entities and relationships
 
 ## v0.131.8
 - `solarwindsprocessor` Refactored collector decoration configuration: introduced `collector_attributes_decoration` section with `enabled` and `extension` fields, deprecated root-level `extension` field for better configuration organization
