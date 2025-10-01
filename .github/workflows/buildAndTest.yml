@@ -92,20 +92,20 @@ jobs:
         run: ${{ env.SHARED_SCRIPTS }}/build-and-test.ps1
         shell: pwsh
         
-  # build_and_test_darwin_arm64:
-  #   # Based on https://docs.github.com/en/actions/using-github-hosted-runners/using-github-hosted-runners/about-github-hosted-runners#standard-github-hosted-runners-for-public-repositories
-  #   runs-on: macos-latest
-  #   needs: checks
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v5
-  #       with:
-  #         submodules: true
-  #     - name: Setup Go
-  #       uses: actions/setup-go@v6
-  #       with:
-  #         go-version: ${{ env.GO_VERSION }}
-  #         cache: false
-  #     - name: Run Tests
-  #       run: ${{ env.SHARED_SCRIPTS }}/build-and-test.sh
-  #       shell: bash
+  build_and_test_darwin_arm64:
+    # Based on https://docs.github.com/en/actions/using-github-hosted-runners/using-github-hosted-runners/about-github-hosted-runners#standard-github-hosted-runners-for-public-repositories
+    runs-on: macos-15-arm64
+    needs: checks
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          submodules: true
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: false
+      - name: Run Tests
+        run: ${{ env.SHARED_SCRIPTS }}/build-and-test.sh
+        shell: bash
