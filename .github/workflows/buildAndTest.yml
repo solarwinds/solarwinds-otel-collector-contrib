@@ -94,7 +94,7 @@ jobs:
         
   build_and_test_darwin_arm64:
     # Based on https://docs.github.com/en/actions/using-github-hosted-runners/using-github-hosted-runners/about-github-hosted-runners#standard-github-hosted-runners-for-public-repositories
-    runs-on: macos-15-arm64/20250922
+    runs-on: macos-15-arm64/20250922.2357
     needs: checks
     steps:
       - name: Checkout
