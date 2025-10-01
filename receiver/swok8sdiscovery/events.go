@@ -60,6 +60,8 @@ const (
 	otelEntityId         = "otel.entity.id"
 	otelEntityAttributes = "otel.entity.attributes"
 	swK8sClusterUid      = "sw.k8s.cluster.uid"
+
+	noPortDetected = -1
 )
 
 // publishDatabaseEvent publishes structured log record for database discovery outcome.
@@ -79,7 +81,7 @@ func (r *swok8sdiscoveryReceiver) publishDatabaseEvent(ctx context.Context, disc
 
 	// no port detected
 	if len(ev.Ports) == 0 {
-		ev.Ports = append(ev.Ports, -1)
+		ev.Ports = append(ev.Ports, noPortDetected)
 	}
 
 	for _, port := range ev.Ports {
@@ -87,7 +89,7 @@ func (r *swok8sdiscoveryReceiver) publishDatabaseEvent(ctx context.Context, disc
 		attrs := logRecord.Attributes()
 
 		address := ev.Endpoint
-		if port >= 0 {
+		if port != noPortDetected {
 			address += ":" + strconv.Itoa(int(port))
 		}
 
