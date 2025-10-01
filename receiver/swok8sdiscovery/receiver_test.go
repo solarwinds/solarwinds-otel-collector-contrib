@@ -324,12 +324,11 @@ func TestImageDiscovery_SingleMatch(t *testing.T) {
 	require.Len(t, attrs, 1)
 	id_attrs := getAttrMap(t, attrs[0], otelEntityId)
 	require.Equal(t, id_attrs.Len(), 3)
-	checkAttr(t, id_attrs, swDiscoveryDbAddress, "mongo-svc")
+	checkAttr(t, id_attrs, swDiscoveryDbAddress, "mongo-svc:27017")
 	checkAttr(t, id_attrs, swDiscoveryDbType, "mongo")
 	checkAttr(t, id_attrs, swDiscoveryId, testClusterUid)
 	entity_attrs := getAttrMap(t, attrs[0], otelEntityAttributes)
 	checkAttr(t, entity_attrs, swDiscoveryDbName, "mongo-svc#db#mongo-ds")
-	checkAttrInt(t, entity_attrs, swDiscoveryDbPort, 27017)
 
 	relationAttrs := collectAttrs(logs, otelEntityEventType, relationshipState)
 	require.Len(t, relationAttrs, 1)
@@ -342,7 +341,7 @@ func TestImageDiscovery_SingleMatch(t *testing.T) {
 
 	checkAttr(t, relationAttrs[0], otelEntityRelationDestinationType, discoveredDatabaseEntityType)
 	dst_ids := getAttrMap(t, relationAttrs[0], otelEntityRelationDestinationID)
-	checkAttr(t, dst_ids, swDiscoveryDbAddress, "mongo-svc")
+	checkAttr(t, dst_ids, swDiscoveryDbAddress, "mongo-svc:27017")
 	checkAttr(t, dst_ids, swDiscoveryDbType, "mongo")
 }
 
@@ -361,13 +360,16 @@ func TestImageDiscovery_NonDefaultPortMatch(t *testing.T) {
 	logs := runImageCycle(t, cfg, pod1)
 	require.Len(t, logs, 1)
 	attrs := collectDBAttrs(logs, "mongo")
-	require.Len(t, attrs, 1)
+	require.Len(t, attrs, 2)
 	id_attrs := getAttrMap(t, attrs[0], otelEntityId)
-	checkAttr(t, id_attrs, swDiscoveryDbAddress, "mongo-b")
+	checkAttr(t, id_attrs, swDiscoveryDbAddress, "mongo-b:27017")
 	entity_attrs := getAttrMap(t, attrs[0], otelEntityAttributes)
 	checkAttr(t, entity_attrs, swDiscoveryDbName, "mongo-b#db")
-	checkAttrInts(t, entity_attrs, swDiscoveryDbPossiblePorts, []int{27017, 27018})
 
+	id_attrs = getAttrMap(t, attrs[1], otelEntityId)
+	checkAttr(t, id_attrs, swDiscoveryDbAddress, "mongo-b:27018")
+	entity_attrs = getAttrMap(t, attrs[1], otelEntityAttributes)
+	checkAttr(t, entity_attrs, swDiscoveryDbName, "mongo-b#db")
 }
 
 func TestImageDiscovery_DedupPerPortSignature(t *testing.T) {
@@ -391,10 +393,10 @@ func TestImageDiscovery_DedupPerPortSignature(t *testing.T) {
 	for _, a := range attrs {
 		idMap := getAttrMap(t, a, otelEntityId)
 		if v, ok := idMap.Get(swDiscoveryDbAddress); ok {
-			if v.Str() == "mongo-a" {
+			if v.Str() == "mongo-a:27017" {
 				seenSingle = true
 			}
-			if v.Str() == "mongo-b" {
+			if v.Str() == "mongo-b:27017" {
 				seenMulti = true
 			}
 		}
@@ -421,9 +423,7 @@ func TestImageDiscovery_MultipleServicesOverlapHeuristic(t *testing.T) {
 	attrs := collectDBAttrs(logs, "pg")
 	require.Len(t, attrs, 1)
 	idMap := getAttrMap(t, attrs[0], otelEntityId)
-	checkAttr(t, idMap, swDiscoveryDbAddress, "pg-primary")
-	entityMap := getAttrMap(t, attrs[0], otelEntityAttributes)
-	checkAttrInt(t, entityMap, swDiscoveryDbPort, 5432)
+	checkAttr(t, idMap, swDiscoveryDbAddress, "pg-primary:5432")
 }
 
 func TestImageDiscovery_TargetPortNamedResolution(t *testing.T) {
@@ -453,7 +453,5 @@ func TestImageDiscovery_TargetPortNamedResolution(t *testing.T) {
 	require.Len(t, attrs, 1)
 
 	idMap := getAttrMap(t, attrs[0], otelEntityId)
-	checkAttr(t, idMap, swDiscoveryDbAddress, "mysql-svc")
-	entityMap := getAttrMap(t, attrs[0], otelEntityAttributes)
-	checkAttrInt(t, entityMap, swDiscoveryDbPort, 13306)
+	checkAttr(t, idMap, swDiscoveryDbAddress, "mysql-svc:13306")
 }
