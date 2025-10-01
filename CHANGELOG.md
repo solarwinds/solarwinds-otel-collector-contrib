@@ -1,6 +1,9 @@
 # Changelog
 
 ## vNext
+
+## v0.136.0
+- Updated OpenTelemetry modules to [v1.42.0/v0.136.0](https://github.com/open-telemetry/opentelemetry-collector/releases/tag/v0.136.0)
 - Add `mqttreceiver`
 - `swohostmetricsreceiver` utilizes OTEL generated code instead of original internal implementation. Relevant code cleanup.
 - Added receiver `swok8sdiscovery` to publish known database entities and relationships
