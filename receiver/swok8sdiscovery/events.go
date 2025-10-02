@@ -52,7 +52,6 @@ const (
 	k8sNamespace               = "k8s.namespace.name"
 	swDiscoveryDbName          = "sw.discovery.dbo.name"
 	swDiscoveryDbAddress       = "sw.discovery.dbo.address"
-	swDiscoveryDbPort          = "sw.discovery.dbo.port"
 	swDiscoveryDbPossiblePorts = "sw.discovery.dbo.possible.ports"
 	swDiscoveryDbType          = "sw.discovery.dbo.type"
 	swDiscoveryId              = "sw.discovery.id"
@@ -99,9 +98,7 @@ func (r *swok8sdiscoveryReceiver) publishDatabaseEvent(ctx context.Context, disc
 
 	optional := attrs.PutEmptyMap(otelEntityAttributes)
 	optional.PutStr(swDiscoveryDbName, name)
-	if len(ev.Ports) == 1 {
-		optional.PutInt(swDiscoveryDbPort, int64(ev.Ports[0]))
-	} else if len(ev.Ports) > 0 {
+	if len(ev.Ports) > 0 {
 		arr := optional.PutEmptySlice(swDiscoveryDbPossiblePorts)
 		for _, s := range ev.Ports {
 			arr.AppendEmpty().SetInt(int64(s))
