@@ -34,16 +34,8 @@ func NewFactory() receiver.Factory {
 	)
 }
 
-func createDefaultConfig() component.Config {
-	return &Config{
-		APIConfig: k8sconfig.APIConfig{
-			AuthType: k8sconfig.AuthTypeServiceAccount,
-		},
-	}
-}
-
 // Build-in configuration
-func createImplicitConfig() component.Config {
+func createDefaultConfig() component.Config {
 	return &Config{
 		APIConfig: k8sconfig.APIConfig{
 			AuthType: k8sconfig.AuthTypeServiceAccount,

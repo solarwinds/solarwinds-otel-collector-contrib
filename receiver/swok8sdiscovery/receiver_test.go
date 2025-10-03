@@ -45,7 +45,7 @@ const (
 func TestNewReceiver(t *testing.T) {
 	t.Parallel()
 
-	rCfg := createImplicitConfig().(*Config)
+	rCfg := createDefaultConfig().(*Config)
 
 	err := rCfg.Validate()
 	require.NoError(t, err)
