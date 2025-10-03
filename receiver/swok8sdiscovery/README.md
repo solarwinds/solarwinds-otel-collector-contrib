@@ -33,7 +33,6 @@ Each discovered database produces:
 | `otel.entity.event.type` | `entity_state` or `entity_relationship_state` |
 | `otel.entity.type` | Always `DiscoveredDatabaseInstance` for entity events |
 | `sw.discovery.dbo.address` | Database endpoint |
-| `sw.discovery.dbo.port` | Exact port on which database is running |
 | `sw.discovery.dbo.possible.ports` | Detected ports on database endpoint |
 | `sw.discovery.dbo.type` | Logical database type (e.g. `mongo`, `postgres`, `redis`) |
 | `sw.discovery.dbo.name` | Endpoint plus workload name (`<endpoint>#<workload>`) when workload present |
