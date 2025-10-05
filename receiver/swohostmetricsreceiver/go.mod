@@ -5,7 +5,7 @@ go 1.25.1
 require (
 	github.com/go-ole/go-ole v1.3.0
 	github.com/google/go-cmp v0.7.0
-	github.com/shirou/gopsutil/v4 v4.25.8
+	github.com/shirou/gopsutil/v4 v4.25.9
 	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/registry v0.136.0
 	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil v0.136.0
 	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.136.0
@@ -26,7 +26,7 @@ require (
 )
 
 require (
-	github.com/ebitengine/purego v0.8.4 // indirect
+	github.com/ebitengine/purego v0.9.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/hashicorp/go-version v1.7.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
