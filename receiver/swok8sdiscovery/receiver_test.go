@@ -209,11 +209,11 @@ func TestDomainDiscovery_SingleMatch(t *testing.T) {
 	require.Len(t, attrs, 1)
 	idAttrs := getAttrMap(t, attrs[0], otelEntityId)
 	require.Equal(t, idAttrs.Len(), 3)
-	checkAttr(t, idAttrs, swDiscoveryDbAddress, "cache-01.redis.example.com")
+	checkAttr(t, idAttrs, swDiscoveryDbAddress, "cache-01.redis.example.com.db")
 	checkAttr(t, idAttrs, swDiscoveryDbType, "redis")
 	checkAttr(t, idAttrs, swDiscoveryId, "external")
 	entityAttrs := getAttrMap(t, attrs[0], otelEntityAttributes)
-	checkAttr(t, entityAttrs, swDiscoveryDbName, "cache-01.redis.example.com#db#redis-deploy")
+	checkAttr(t, entityAttrs, swDiscoveryDbName, "cache-01.redis.example.com.db")
 
 	relAttrs := collectAttrs(logs, otelEntityEventType, relationshipState)
 	require.Len(t, relAttrs, 1, "expected relationship when workload resolved")
@@ -252,7 +252,7 @@ func TestDomainDiscovery_DedupByDomainHint(t *testing.T) {
 	require.Len(t, pgAttrs, 0)
 
 	idMap := getAttrMap(t, attrs[0], otelEntityId)
-	checkAttr(t, idMap, swDiscoveryDbAddress, "some-db.company.internal")
+	checkAttr(t, idMap, swDiscoveryDbAddress, "some-db.company.internal.prod")
 	checkAttr(t, idMap, swDiscoveryDbType, "mysql")
 }
 
@@ -324,11 +324,11 @@ func TestImageDiscovery_SingleMatch(t *testing.T) {
 	require.Len(t, attrs, 1)
 	id_attrs := getAttrMap(t, attrs[0], otelEntityId)
 	require.Equal(t, id_attrs.Len(), 3)
-	checkAttr(t, id_attrs, swDiscoveryDbAddress, "mongo-svc")
+	checkAttr(t, id_attrs, swDiscoveryDbAddress, "mongo-svc.db")
 	checkAttr(t, id_attrs, swDiscoveryDbType, "mongo")
 	checkAttr(t, id_attrs, swDiscoveryId, testClusterUid)
 	entity_attrs := getAttrMap(t, attrs[0], otelEntityAttributes)
-	checkAttr(t, entity_attrs, swDiscoveryDbName, "mongo-svc#db#mongo-ds")
+	checkAttr(t, entity_attrs, swDiscoveryDbName, "mongo-svc.db")
 	checkAttrInts(t, entity_attrs, swDiscoveryDbPossiblePorts, []int{27017})
 
 	relationAttrs := collectAttrs(logs, otelEntityEventType, relationshipState)
@@ -342,7 +342,7 @@ func TestImageDiscovery_SingleMatch(t *testing.T) {
 
 	checkAttr(t, relationAttrs[0], otelEntityRelationDestinationType, discoveredDatabaseEntityType)
 	dst_ids := getAttrMap(t, relationAttrs[0], otelEntityRelationDestinationID)
-	checkAttr(t, dst_ids, swDiscoveryDbAddress, "mongo-svc")
+	checkAttr(t, dst_ids, swDiscoveryDbAddress, "mongo-svc.db")
 	checkAttr(t, dst_ids, swDiscoveryDbType, "mongo")
 }
 
@@ -363,9 +363,9 @@ func TestImageDiscovery_NonDefaultPortMatch(t *testing.T) {
 	attrs := collectDBAttrs(logs, "mongo")
 	require.Len(t, attrs, 1)
 	id_attrs := getAttrMap(t, attrs[0], otelEntityId)
-	checkAttr(t, id_attrs, swDiscoveryDbAddress, "mongo-b")
+	checkAttr(t, id_attrs, swDiscoveryDbAddress, "mongo-b.db")
 	entity_attrs := getAttrMap(t, attrs[0], otelEntityAttributes)
-	checkAttr(t, entity_attrs, swDiscoveryDbName, "mongo-b#db")
+	checkAttr(t, entity_attrs, swDiscoveryDbName, "mongo-b.db")
 	checkAttrInts(t, entity_attrs, swDiscoveryDbPossiblePorts, []int{27017, 27018})
 
 }
@@ -391,10 +391,10 @@ func TestImageDiscovery_DedupPerPortSignature(t *testing.T) {
 	for _, a := range attrs {
 		idMap := getAttrMap(t, a, otelEntityId)
 		if v, ok := idMap.Get(swDiscoveryDbAddress); ok {
-			if v.Str() == "mongo-a" {
+			if v.Str() == "mongo-a.db" {
 				seenSingle = true
 			}
-			if v.Str() == "mongo-b" {
+			if v.Str() == "mongo-b.db" {
 				seenMulti = true
 			}
 		}
@@ -421,7 +421,7 @@ func TestImageDiscovery_MultipleServicesOverlapHeuristic(t *testing.T) {
 	attrs := collectDBAttrs(logs, "pg")
 	require.Len(t, attrs, 1)
 	idMap := getAttrMap(t, attrs[0], otelEntityId)
-	checkAttr(t, idMap, swDiscoveryDbAddress, "pg-primary")
+	checkAttr(t, idMap, swDiscoveryDbAddress, "pg-primary.db")
 	entityMap := getAttrMap(t, attrs[0], otelEntityAttributes)
 	checkAttrInts(t, entityMap, swDiscoveryDbPossiblePorts, []int{5432})
 }
@@ -453,7 +453,7 @@ func TestImageDiscovery_TargetPortNamedResolution(t *testing.T) {
 	require.Len(t, attrs, 1)
 
 	idMap := getAttrMap(t, attrs[0], otelEntityId)
-	checkAttr(t, idMap, swDiscoveryDbAddress, "mysql-svc")
+	checkAttr(t, idMap, swDiscoveryDbAddress, "mysql-svc.db")
 	entityMap := getAttrMap(t, attrs[0], otelEntityAttributes)
 	checkAttrInts(t, entityMap, swDiscoveryDbPossiblePorts, []int{13306})
 }

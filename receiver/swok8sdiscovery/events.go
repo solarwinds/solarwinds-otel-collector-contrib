@@ -72,13 +72,16 @@ func (r *swok8sdiscoveryReceiver) publishDatabaseEvent(ctx context.Context, disc
 	logRecord := scopeLogs.LogRecords().AppendEmpty()
 	attrs := logRecord.Attributes()
 
-	// compose database name
+	// compose database name: <endpoint>.<namespace>
 	name := ev.Endpoint
 	if ev.Namespace != "" {
-		name += "#" + ev.Namespace
+		name += "." + ev.Namespace
 	}
-	if ev.WorkloadName != "" {
-		name += "#" + ev.WorkloadName
+
+	// compose database address: <endpoint>.<namespace>
+	address := ev.Endpoint
+	if ev.Namespace != "" {
+		address += "." + ev.Namespace
 	}
 
 	attrs.PutStr(otelEntityEventType, entityState)
@@ -92,7 +95,7 @@ func (r *swok8sdiscoveryReceiver) publishDatabaseEvent(ctx context.Context, disc
 	}
 
 	keys := attrs.PutEmptyMap(otelEntityId)
-	keys.PutStr(swDiscoveryDbAddress, ev.Endpoint)
+	keys.PutStr(swDiscoveryDbAddress, address)
 	keys.PutStr(swDiscoveryDbType, ev.DatabaseType)
 	keys.PutStr(swDiscoveryId, discoveryId)
 

@@ -111,6 +111,10 @@ func (r *swok8sdiscoveryReceiver) discoverDatabasesByImages(ctx context.Context,
 
 			// Resolve ports
 			ports := resolveContainerPorts(container, matchedRule.DefaultPort)
+			if len(ports) == 0 {
+				// this could be client-only image without ports
+				continue
+			}
 
 			// Try to match service exposing one of these ports by label selector (pod labels subset service selector)
 			svcName, svcPorts := matchServiceForPod(pod, container, ports, svcByNamespace[pod.Namespace])
