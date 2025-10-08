@@ -59,7 +59,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfig v0.136.0
+	github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfig v0.136.1
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/collector/component/componentstatus v0.136.0 // indirect
 	go.opentelemetry.io/collector/component/componenttest v0.136.0
