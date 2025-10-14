@@ -1,5 +1,8 @@
 name: Check Pull Request Semantics
-
+permissions:
+  contents: read
+  issues: read
+  
 on:
   pull_request:
     branches:
