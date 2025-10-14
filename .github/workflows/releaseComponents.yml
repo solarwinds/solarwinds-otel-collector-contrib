@@ -13,6 +13,8 @@ on:
 jobs:
   release_checks:
     name: Release Checks
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.get-version.outputs.version }}
@@ -50,6 +52,8 @@ jobs:
 
   build_and_test:
     name: Build and Test
+    permissions:
+      contents: read
     uses: ./.github/workflows/buildAndTest.yml
     secrets: inherit
 
