@@ -55,6 +55,8 @@ jobs:
 
   create_release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     name: Create GitHub Release
     needs:
       - release_checks
