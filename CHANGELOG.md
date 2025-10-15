@@ -3,6 +3,8 @@
 ## vNext
 
 ## v0.136.2
+- No changes
+
 
 ## v0.136.1
 - Updated `swohostmetricsreceiver` dependencies to latest versions
