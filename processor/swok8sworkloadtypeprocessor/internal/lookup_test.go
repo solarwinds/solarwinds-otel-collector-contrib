@@ -21,6 +21,7 @@ import (
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -40,14 +41,7 @@ func TestLookupWorkloadKindByNameAndNamespace(t *testing.T) {
 		},
 	}
 
-	serviceInformer := cache.NewSharedIndexInformer(
-		nil, // ListerWatcher is nil for testing
-		testService,
-		0, // resyncPeriod
-		cache.Indexers{},
-	)
-	err := serviceInformer.GetStore().Add(testService)
-	assert.NoError(t, err)
+	serviceInformer := createInformerWithObjects(t, testService)
 
 	informers := map[string]cache.SharedIndexInformer{
 		ServicesWorkloadType: serviceInformer,
@@ -72,12 +66,7 @@ func TestLookupWorkloadKindByNameAndNamespace(t *testing.T) {
 func TestLookupWorkloadKindByNameAndNamespaceNotFound(t *testing.T) {
 	logger := zap.NewNop()
 
-	serviceInformer := cache.NewSharedIndexInformer(
-		nil, // ListerWatcher is nil for testing
-		&corev1.Service{},
-		0, // resyncPeriod
-		cache.Indexers{},
-	)
+	serviceInformer := createInformerWithObjects[*corev1.Service](t)
 
 	informers := map[string]cache.SharedIndexInformer{
 		ServicesWorkloadType: serviceInformer,
@@ -114,14 +103,7 @@ func TestLookupWorkloadByNameAndNamespace(t *testing.T) {
 		},
 	}
 
-	serviceInformer := cache.NewSharedIndexInformer(
-		nil, // ListerWatcher is nil for testing
-		testService,
-		0, // resyncPeriod
-		cache.Indexers{},
-	)
-	err := serviceInformer.GetStore().Add(testService)
-	assert.NoError(t, err)
+	serviceInformer := createInformerWithObjects(t, testService)
 
 	informers := map[string]cache.SharedIndexInformer{
 		ServicesWorkloadType: serviceInformer,
@@ -154,4 +136,379 @@ func TestLookupWorkloadByNameAndNamespace(t *testing.T) {
 	)
 
 	assert.Nil(t, result2, "Should not find service with empty namespace")
+}
+
+func TestLookupWorkloadKindByHostname(t *testing.T) {
+	testPod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-pod",
+			Namespace: "test-namespace",
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					Kind: "ReplicaSet",
+					Name: "test-rs",
+				},
+			},
+		},
+	}
+
+	testPodWithoutParent := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-pod-without-parent",
+			Namespace: "test-namespace",
+		},
+	}
+
+	testRS := &corev1.ReplicationController{ // Using ReplicationController as a stand-in for ReplicaSet in tests
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-rs",
+			Namespace: "test-namespace",
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					Kind: "Deployment",
+					Name: "test-deployment",
+				},
+			},
+		},
+	}
+
+	testService := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-service",
+			Namespace: "test-namespace",
+		},
+	}
+	testServiceWithDots := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my.test.service.with.dots",
+			Namespace: "test-namespace",
+		},
+	}
+
+	tests := []struct {
+		name              string
+		hostname          string
+		namespaceFromAttr string
+		preferPodOwner    bool
+		expectedResult    LookupResult
+	}{
+		{
+			name:              "full Pod DNS name",
+			hostname:          "test-pod.test-namespace.pod.cluster.local",
+			namespaceFromAttr: "",
+			expectedResult: LookupResult{
+				Name:      "test-pod",
+				Namespace: "test-namespace",
+				Kind:      PodKind,
+			},
+		},
+		{
+			name:              "full Pod DNS name, prefer pod owner",
+			hostname:          "test-pod.test-namespace.pod.cluster.local",
+			namespaceFromAttr: "",
+			preferPodOwner:    true,
+			expectedResult: LookupResult{
+				Name:      "test-deployment",
+				Namespace: "test-namespace",
+				Kind:      "Deployment",
+			},
+		},
+		{
+			name:              "full Pod DNS name ending with dot",
+			hostname:          "test-pod.test-namespace.pod.cluster.local.",
+			namespaceFromAttr: "",
+			expectedResult: LookupResult{
+				Name:      "test-pod",
+				Namespace: "test-namespace",
+				Kind:      PodKind,
+			},
+		},
+		{
+			name:              "full Pod DNS name ending with dot, prefer pod owner",
+			hostname:          "test-pod.test-namespace.pod.cluster.local.",
+			namespaceFromAttr: "",
+			preferPodOwner:    true,
+			expectedResult: LookupResult{
+				Name:      "test-deployment",
+				Namespace: "test-namespace",
+				Kind:      "Deployment",
+			},
+		},
+		{
+			name:              "short Pod DNS name",
+			hostname:          "test-pod.test-namespace.pod",
+			namespaceFromAttr: "",
+			expectedResult: LookupResult{
+				Name:      "test-pod",
+				Namespace: "test-namespace",
+				Kind:      PodKind,
+			},
+		},
+		{
+			name:              "short Pod DNS name, prefer pod owner",
+			hostname:          "test-pod.test-namespace.pod",
+			namespaceFromAttr: "",
+			preferPodOwner:    true,
+			expectedResult: LookupResult{
+				Name:      "test-deployment",
+				Namespace: "test-namespace",
+				Kind:      "Deployment",
+			},
+		},
+		{
+			name:              "full Service DNS name",
+			hostname:          "test-service.test-namespace.svc.cluster.local",
+			namespaceFromAttr: "",
+			expectedResult: LookupResult{
+				Name:      "test-service",
+				Namespace: "test-namespace",
+				Kind:      ServiceKind,
+			},
+		},
+		{
+			name:              "full Service DNS name ending with dot",
+			hostname:          "test-service.test-namespace.svc.cluster.local.",
+			namespaceFromAttr: "",
+			expectedResult: LookupResult{
+				Name:      "test-service",
+				Namespace: "test-namespace",
+				Kind:      ServiceKind,
+			},
+		},
+		{
+			name:              "short Service DNS name",
+			hostname:          "test-service.test-namespace.svc",
+			namespaceFromAttr: "",
+			expectedResult: LookupResult{
+				Name:      "test-service",
+				Namespace: "test-namespace",
+				Kind:      ServiceKind,
+			},
+		},
+		{
+			name:              "empty host name",
+			hostname:          "",
+			namespaceFromAttr: "",
+			expectedResult:    EmptyLookupResult,
+		},
+		{
+			name:              "Pod name and namespace",
+			hostname:          "test-pod.test-namespace",
+			namespaceFromAttr: "",
+			expectedResult: LookupResult{
+				Name:      "test-pod",
+				Namespace: "test-namespace",
+				Kind:      PodKind,
+			},
+		},
+		{
+			name:              "Pod name and namespace, prefer pod owner",
+			hostname:          "test-pod.test-namespace",
+			namespaceFromAttr: "",
+			preferPodOwner:    true,
+			expectedResult: LookupResult{
+				Name:      "test-deployment",
+				Namespace: "test-namespace",
+				Kind:      "Deployment",
+			},
+		},
+		{
+			name:              "Pod name without namespace, fallback to namespace attribute",
+			hostname:          "test-pod",
+			namespaceFromAttr: "test-namespace",
+			expectedResult: LookupResult{
+				Name:      "test-pod",
+				Namespace: "test-namespace",
+				Kind:      PodKind,
+			},
+		},
+		{
+			name:              "Pod name without namespace, fallback to namespace attribute, prefer pod owner",
+			hostname:          "test-pod",
+			namespaceFromAttr: "test-namespace",
+			preferPodOwner:    true,
+			expectedResult: LookupResult{
+				Name:      "test-deployment",
+				Namespace: "test-namespace",
+				Kind:      "Deployment",
+			},
+		},
+		{
+			name:              "Pod name and namespace, ignore namespace attribute",
+			hostname:          "test-pod.test-namespace",
+			namespaceFromAttr: "other-namespace",
+			expectedResult: LookupResult{
+				Name:      "test-pod",
+				Namespace: "test-namespace",
+				Kind:      PodKind,
+			},
+		},
+		{
+			name:              "Pod name and namespace, ignore namespace attribute, prefer pod owner",
+			hostname:          "test-pod.test-namespace",
+			namespaceFromAttr: "other-namespace",
+			preferPodOwner:    true,
+			expectedResult: LookupResult{
+				Name:      "test-deployment",
+				Namespace: "test-namespace",
+				Kind:      "Deployment",
+			},
+		},
+		{
+			name:              "Service name and namespace",
+			hostname:          "test-service.test-namespace",
+			namespaceFromAttr: "",
+			expectedResult: LookupResult{
+				Name:      "test-service",
+				Namespace: "test-namespace",
+				Kind:      ServiceKind,
+			},
+		},
+		{
+			name:              "Service name without namespace, fallback to namespace attribute",
+			hostname:          "test-service",
+			namespaceFromAttr: "test-namespace",
+			expectedResult: LookupResult{
+				Name:      "test-service",
+				Namespace: "test-namespace",
+				Kind:      ServiceKind,
+			},
+		},
+		{
+			name:              "Service name and namespace, ignore namespace attribute",
+			hostname:          "test-service.test-namespace",
+			namespaceFromAttr: "other-namespace",
+			expectedResult: LookupResult{
+				Name:      "test-service",
+				Namespace: "test-namespace",
+				Kind:      ServiceKind,
+			},
+		},
+		{
+			name:              "invalid Pod address - missing namespace",
+			hostname:          "test-pod.pod.cluster.local",
+			namespaceFromAttr: "",
+			expectedResult:    EmptyLookupResult,
+		},
+		{
+			name:              "invalid Pod address - empty namespace",
+			hostname:          "test-pod..pod.cluster.local",
+			namespaceFromAttr: "",
+			expectedResult:    EmptyLookupResult,
+		},
+		{
+			name:              "invalid Pod address - empty name",
+			hostname:          ".test-namespace.pod.cluster.local",
+			namespaceFromAttr: "",
+			expectedResult:    EmptyLookupResult,
+		},
+		{
+			name:              "invalid Service address - missing namespace",
+			hostname:          "test-service.svc.cluster.local",
+			namespaceFromAttr: "",
+			expectedResult:    EmptyLookupResult,
+		},
+		{
+			name:              "invalid Service address - empty namespace",
+			hostname:          "test-service..svc.cluster.local",
+			namespaceFromAttr: "",
+			expectedResult:    EmptyLookupResult,
+		},
+		{
+			name:              "invalid Service address - empty name",
+			hostname:          ".test-namespace.svc.cluster.local",
+			namespaceFromAttr: "",
+			expectedResult:    EmptyLookupResult,
+		},
+		{
+			name:              "Service name with dots",
+			hostname:          "my.test.service.with.dots",
+			namespaceFromAttr: "test-namespace",
+			expectedResult: LookupResult{
+				Name:      "my.test.service.with.dots",
+				Namespace: "test-namespace",
+				Kind:      ServiceKind,
+			},
+		},
+		{
+			name:     "non-existent Pod DNS name",
+			hostname: "unknown-pod.test-namespace.pod.cluster.local",
+			expectedResult: LookupResult{
+				Name:      "unknown-pod",
+				Namespace: "test-namespace",
+				Kind:      PodKind,
+			},
+		},
+		{
+			name:     "non-existent Service DNS name",
+			hostname: "unknown-service.test-namespace.svc.cluster.local",
+			expectedResult: LookupResult{
+				Name:      "unknown-service",
+				Namespace: "test-namespace",
+				Kind:      ServiceKind,
+			},
+		},
+		{
+			name:           "non-existent Pod name and namespace",
+			hostname:       "unknown-pod.test-namespace",
+			expectedResult: EmptyLookupResult,
+		},
+		{
+			name:           "non-existent Service name and namespace",
+			hostname:       "unknown-service.test-namespace",
+			expectedResult: EmptyLookupResult,
+		},
+		{
+			name:           "Pod name and namespace, prefer pod owner, non-existent parent",
+			hostname:       "test-pod-without-parent.test-namespace",
+			preferPodOwner: true,
+			expectedResult: LookupResult{
+				Name:      "test-pod-without-parent",
+				Namespace: "test-namespace",
+				Kind:      PodKind,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			podInformer := createInformerWithObjects(t, testPod, testPodWithoutParent)
+			rsInformer := createInformerWithObjects(t, testRS)
+			serviceInformer := createInformerWithObjects(t, testService, testServiceWithDots)
+
+			informers := map[string]cache.SharedIndexInformer{
+				PodsWorkloadType:        podInformer,
+				ReplicaSetsWorkloadType: rsInformer,
+				ServicesWorkloadType:    serviceInformer,
+			}
+
+			result := LookupWorkloadKindByHostname(
+				tt.hostname,
+				tt.namespaceFromAttr,
+				[]string{PodsWorkloadType, ReplicaSetsWorkloadType, ServicesWorkloadType},
+				zap.NewNop(),
+				informers,
+				tt.preferPodOwner,
+			)
+
+			assert.Equal(t, tt.expectedResult, result)
+		})
+	}
+}
+
+func createInformerWithObjects[T runtime.Object](t *testing.T, objects ...T) cache.SharedIndexInformer {
+	t.Helper()
+	var exampleObject T
+
+	informer := cache.NewSharedIndexInformer(
+		nil, // ListerWatcher is nil for testing
+		exampleObject,
+		0, // resyncPeriod
+		cache.Indexers{},
+	)
+	for _, obj := range objects {
+		err := informer.GetStore().Add(obj)
+		assert.NoError(t, err)
+	}
+	return informer
 }
