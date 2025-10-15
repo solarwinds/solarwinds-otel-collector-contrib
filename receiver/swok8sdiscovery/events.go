@@ -48,20 +48,19 @@ const (
 	otelEntityRelationDestinationType = "otel.entity_relationship.destination_entity.type"
 	otelEntityRelationDestinationID   = "otel.entity_relationship.destination_entity.id"
 
-	swEntityType         = "otel.entity.type"
-	k8sNamespace         = "k8s.namespace.name"
-	swDiscoveryDbName    = "sw.discovery.dbo.name"
-	swDiscoveryDbAddress = "sw.discovery.dbo.address"
-	swDiscoveryDbType    = "sw.discovery.dbo.type"
-	swDiscoveryId        = "sw.discovery.id"
-	swDiscoverySource    = "sw.discovery.source"
+	swEntityType               = "otel.entity.type"
+	k8sNamespace               = "k8s.namespace.name"
+	swDiscoveryDbName          = "sw.discovery.dbo.name"
+	swDiscoveryDbAddress       = "sw.discovery.dbo.address"
+	swDiscoveryDbPossiblePorts = "sw.discovery.dbo.possible.ports"
+	swDiscoveryDbType          = "sw.discovery.dbo.type"
+	swDiscoveryId              = "sw.discovery.id"
+	swDiscoverySource          = "sw.discovery.source"
 
 	// Attributes for telemetry mapping
 	otelEntityId         = "otel.entity.id"
 	otelEntityAttributes = "otel.entity.attributes"
 	swK8sClusterUid      = "sw.k8s.cluster.uid"
-
-	noPortDetected = -1
 )
 
 // publishDatabaseEvent publishes structured log record for database discovery outcome.
@@ -70,52 +69,48 @@ func (r *swok8sdiscoveryReceiver) publishDatabaseEvent(ctx context.Context, disc
 	scopeLogs := logs.ResourceLogs().AppendEmpty().ScopeLogs().AppendEmpty()
 	scopeLogs.Scope().Attributes().PutBool(otelEntityEventAsLog, true)
 
-	// compose database name
+	logRecord := scopeLogs.LogRecords().AppendEmpty()
+	attrs := logRecord.Attributes()
+
+	// compose database name: <endpoint>.<namespace>
 	name := ev.Endpoint
 	if ev.Namespace != "" {
-		name += "#" + ev.Namespace
-	}
-	if ev.WorkloadName != "" {
-		name += "#" + ev.WorkloadName
+		name += "." + ev.Namespace
 	}
 
-	// no port detected
-	if len(ev.Ports) == 0 {
-		ev.Ports = append(ev.Ports, noPortDetected)
+	// compose database address: <endpoint>.<namespace>
+	address := ev.Endpoint
+	if ev.Namespace != "" {
+		address += "." + ev.Namespace
 	}
 
-	for _, port := range ev.Ports {
-		logRecord := scopeLogs.LogRecords().AppendEmpty()
-		attrs := logRecord.Attributes()
+	attrs.PutStr(otelEntityEventType, entityState)
+	attrs.PutStr(swEntityType, discoveredDatabaseEntityType)
+	attrs.PutStr(swDiscoverySource, r.config.Reporter)
+	// add workload attributes fo filtering
+	if ev.WorkloadKind != "" {
+		attrs.PutStr("k8s."+strings.ToLower(ev.WorkloadKind)+".name", ev.WorkloadName)
+		attrs.PutStr(k8sNamespace, ev.Namespace)
+		attrs.PutStr(swK8sClusterUid, r.clusterUid)
+	}
 
-		address := ev.Endpoint
-		if port != noPortDetected {
-			address += ":" + strconv.Itoa(int(port))
+	keys := attrs.PutEmptyMap(otelEntityId)
+	keys.PutStr(swDiscoveryDbAddress, address)
+	keys.PutStr(swDiscoveryDbType, ev.DatabaseType)
+	keys.PutStr(swDiscoveryId, discoveryId)
+
+	optional := attrs.PutEmptyMap(otelEntityAttributes)
+	optional.PutStr(swDiscoveryDbName, name)
+	if len(ev.Ports) > 0 {
+		arr := optional.PutEmptySlice(swDiscoveryDbPossiblePorts)
+		for _, s := range ev.Ports {
+			arr.AppendEmpty().SetInt(int64(s))
 		}
-
-		attrs.PutStr(otelEntityEventType, entityState)
-		attrs.PutStr(swEntityType, discoveredDatabaseEntityType)
-		attrs.PutStr(swDiscoverySource, r.config.Reporter)
-		// add workload attributes fo filtering
-		if ev.WorkloadKind != "" {
-			attrs.PutStr("k8s."+strings.ToLower(ev.WorkloadKind)+".name", ev.WorkloadName)
-			attrs.PutStr(k8sNamespace, ev.Namespace)
-			attrs.PutStr(swK8sClusterUid, r.clusterUid)
-		}
-
-		keys := attrs.PutEmptyMap(otelEntityId)
-		keys.PutStr(swDiscoveryDbAddress, address)
-		keys.PutStr(swDiscoveryDbType, ev.DatabaseType)
-		keys.PutStr(swDiscoveryId, discoveryId)
-
-		optional := attrs.PutEmptyMap(otelEntityAttributes)
-		optional.PutStr(swDiscoveryDbName, name)
-
-		r.publishRelationShip(ctx, ev, keys)
 	}
 
 	r.consumer.ConsumeLogs(ctx, logs)
 
+	r.publishRelationShip(ctx, ev, keys)
 }
 
 func (r *swok8sdiscoveryReceiver) publishRelationShip(ctx context.Context, ev databaseEvent, dbKeys pcommon.Map) {
