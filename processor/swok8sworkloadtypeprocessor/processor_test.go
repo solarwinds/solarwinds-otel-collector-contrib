@@ -475,6 +475,27 @@ func TestProcessorMetricsPipelineWhenSearchingByAddress(t *testing.T) {
 			},
 		},
 		{
+			name:         "mapping matches existing pod in different namespace - <podname.namespace.pod.cluster.local> only",
+			existingPods: []*corev1.Pod{testPod},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					NamespaceAttr:    "src_namespace",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"pods"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address":   testPod.Name + "." + testPod.Namespace + ".pod.cluster.local",
+				"src_namespace": "other_namespace",
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address":   testPod.Name + "." + testPod.Namespace + ".pod.cluster.local",
+				"src_namespace": "other_namespace",
+				"src_type":      "Pod",
+			},
+		},
+		{
 			name:         "mapping does not match existing pod because of different name",
 			existingPods: []*corev1.Pod{testPod},
 			workloadMappings: []*K8sWorkloadMappingConfig{
@@ -779,6 +800,27 @@ func TestProcessorMetricsPipelineWhenSearchingByAddress(t *testing.T) {
 			expectedMetricAttrs: map[string]any{
 				"src_address": "http://" + testService.Name + "." + testService.Namespace + ".svc.cluster.local:8080",
 				"src_type":    "Service",
+			},
+		},
+		{
+			name:             "mapping matches existing service in different namespace - <servicename.namespace.svc.cluster.local> only",
+			existingServices: []*corev1.Service{testService},
+			workloadMappings: []*K8sWorkloadMappingConfig{
+				{
+					AddressAttr:      "src_address",
+					NamespaceAttr:    "src_namespace",
+					WorkloadTypeAttr: "src_type",
+					ExpectedTypes:    []string{"services"},
+				},
+			},
+			receivedMetricAttrs: map[string]any{
+				"src_address":   testService.Name + "." + testService.Namespace + ".svc.cluster.local",
+				"src_namespace": "other_namespace",
+			},
+			expectedMetricAttrs: map[string]any{
+				"src_address":   testService.Name + "." + testService.Namespace + ".svc.cluster.local",
+				"src_namespace": "other_namespace",
+				"src_type":      "Service",
 			},
 		},
 	}

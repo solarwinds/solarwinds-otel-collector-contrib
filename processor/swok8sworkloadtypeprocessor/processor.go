@@ -282,18 +282,29 @@ func (cp *swok8sworkloadtypeProcessor) Start(ctx context.Context, _ component.Ho
 		}
 		cp.informers[workloadType] = informer.Informer()
 
+		var transform cache.TransformFunc
+		var indexers []cache.Indexers
+
 		switch mappedWorkloadType.kind {
 		case internal.PodKind:
-			cp.informers[workloadType].SetTransform(internal.PodTransformFunc(cp.logger, copyOwners))
-			cp.informers[workloadType].AddIndexers(internal.PodIpIndexer(cp.logger))
-			cp.informers[workloadType].AddIndexers(internal.ServiceNameFromPodIndexers(cp.logger))
+			transform = internal.PodTransformFunc(cp.logger, copyOwners)
+			indexers = []cache.Indexers{internal.PodIpIndexer(cp.logger), internal.ServiceNameFromPodIndexers(cp.logger)}
 		case internal.ServiceKind:
-			cp.informers[workloadType].SetTransform(internal.ServiceTransformFunc(cp.logger))
-			cp.informers[workloadType].AddIndexers(internal.ServiceIpIndexer(cp.logger))
+			transform = internal.ServiceTransformFunc(cp.logger)
+			indexers = []cache.Indexers{internal.ServiceIpIndexer(cp.logger)}
 		case internal.ReplicaSetKind:
-			cp.informers[workloadType].SetTransform(internal.GenericTransformFunc(cp.logger, mappedWorkloadType.kind, copyOwners))
+			transform = internal.GenericTransformFunc(cp.logger, mappedWorkloadType.kind, copyOwners)
 		default:
-			cp.informers[workloadType].SetTransform(internal.GenericTransformFunc(cp.logger, mappedWorkloadType.kind, false))
+			transform = internal.GenericTransformFunc(cp.logger, mappedWorkloadType.kind, false)
+		}
+
+		if err := cp.informers[workloadType].SetTransform(transform); err != nil {
+			return fmt.Errorf("error setting transform for workload type '%s': %w", workloadType, err)
+		}
+		for _, indexer := range indexers {
+			if err := cp.informers[workloadType].AddIndexers(indexer); err != nil {
+				return fmt.Errorf("error adding indexers for workload type '%s': %w", workloadType, err)
+			}
 		}
 	}
 

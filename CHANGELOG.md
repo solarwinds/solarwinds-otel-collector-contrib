@@ -1,6 +1,7 @@
 # Changelog
 
 ## vNext
+- `swok8sworkloadtypeprocessor` Improve detection for workloads from different namespaces
 
 ## v0.136.2
 - No changes
