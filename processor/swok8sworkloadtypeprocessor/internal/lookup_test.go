@@ -19,6 +19,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -159,7 +160,7 @@ func TestLookupWorkloadKindByHostname(t *testing.T) {
 		},
 	}
 
-	testRS := &corev1.ReplicationController{ // Using ReplicationController as a stand-in for ReplicaSet in tests
+	testRS := &appsv1.ReplicaSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-rs",
 			Namespace: "test-namespace",
