@@ -327,9 +327,9 @@ func ExtractNameAndNamespaceAndType(host string) (name string, namespace string,
 
 // LookupWorkloadKindByHostname looks up the workload kind by hostname.
 // It extracts the name and namespace from the hostname and uses them to look up the workload type.
-// The namespaceFromAttr is used to validate the namespace extracted from the hostname.
+// The namespaceFromAttr is used as a fallback for the namespace extracted from the hostname (this can happen e.g. with cross-namespace communication).
 // The expectedTypes are used to determine which workload types to check.
-// It returns the kind of the workload if found, or an empty result if not found or if there is a mismatch in namespaces.
+// It returns the kind of the workload if found, or an empty result if not found.
 // If the hostname is in an unknown format, it returns an empty result.
 // It has a special handling for well-known DNS formats for Pods and Services.
 func LookupWorkloadKindByHostname(hostname string, namespaceFromAttr string, expectedTypes []string, logger *zap.Logger, informers map[string]cache.SharedIndexInformer, preferPodOwner bool) LookupResult {
@@ -347,18 +347,15 @@ func LookupWorkloadKindByHostname(hostname string, namespaceFromAttr string, exp
 		zap.String("workloadTypeShort", workloadTypeShort),
 		zap.Strings("hostnameParts", strings.Split(hostname, ".")))
 
-	if nameFromHostname == "" {
-		// It's unclear what the address is, so we can't determine the workload kind
-		logger.Debug("Could not extract name from hostname, returning empty result", zap.String("hostname", hostname))
-		return EmptyLookupResult
-	}
-
 	switch workloadTypeShort {
 	case podTypeShort:
-		if namespaceFromAttr != "" && namespaceFromHostname != namespaceFromAttr {
-			// The namespace in the address does not match the one in the attributes. This is suspicious.
-			logger.Warn("Namespace mismatch", zap.String("namespaceInAddress", namespaceFromHostname), zap.String("namespaceInAttributes", namespaceFromAttr))
+		if nameFromHostname == "" || namespaceFromHostname == "" {
+			// It's unclear what the address is, so we can't determine the workload kind
+			logger.Debug("Could not extract name or namespace from pod hostname, returning empty result", zap.String("hostname", hostname))
 			return EmptyLookupResult
+		}
+		if namespaceFromAttr != "" && namespaceFromHostname != namespaceFromAttr {
+			logger.Debug("The namespace in the address does not match the one in the attributes. Preferring the one in the address.", zap.String("namespaceInAddress", namespaceFromHostname), zap.String("namespaceInAttributes", namespaceFromAttr))
 		}
 
 		if preferPodOwner {
@@ -376,10 +373,13 @@ func LookupWorkloadKindByHostname(hostname string, namespaceFromAttr string, exp
 			Kind:      PodKind,
 		}
 	case serviceTypeShort:
-		if namespaceFromAttr != "" && namespaceFromHostname != namespaceFromAttr {
-			// The namespace in the address does not match the one in the attributes. This is suspicious.
-			logger.Warn("Namespace mismatch", zap.String("namespaceInAddress", namespaceFromHostname), zap.String("namespaceInAttributes", namespaceFromAttr))
+		if nameFromHostname == "" || namespaceFromHostname == "" {
+			// It's unclear what the address is, so we can't determine the workload kind
+			logger.Debug("Could not extract name or namespace from service hostname, returning empty result", zap.String("hostname", hostname))
 			return EmptyLookupResult
+		}
+		if namespaceFromAttr != "" && namespaceFromHostname != namespaceFromAttr {
+			logger.Debug("The namespace in the address does not match the one in the attributes. Preferring the one in the address.", zap.String("namespaceInAddress", namespaceFromHostname), zap.String("namespaceInAttributes", namespaceFromAttr))
 		}
 
 		return LookupResult{
@@ -388,15 +388,16 @@ func LookupWorkloadKindByHostname(hostname string, namespaceFromAttr string, exp
 			Kind:      ServiceKind,
 		}
 	default:
-		if namespaceFromAttr != "" && namespaceFromHostname != "" && namespaceFromHostname != namespaceFromAttr {
-			// The namespace in the address does not match the one in the attributes. It's unclear what the address is, so we can't determine the workload kind.
-			return EmptyLookupResult
+		res := EmptyLookupResult
+		if nameFromHostname != "" && namespaceFromHostname != "" {
+			res = LookupWorkloadKindByNameAndNamespace(nameFromHostname, namespaceFromHostname, expectedTypes, logger, informers, preferPodOwner)
 		}
-		ns := namespaceFromHostname
-		if ns == "" {
-			ns = namespaceFromAttr
+		if res == EmptyLookupResult && nameFromHostname != "" && namespaceFromHostname == "" && namespaceFromAttr != "" {
+			res = LookupWorkloadKindByNameAndNamespace(nameFromHostname, namespaceFromAttr, expectedTypes, logger, informers, preferPodOwner)
 		}
-
-		return LookupWorkloadKindByNameAndNamespace(nameFromHostname, ns, expectedTypes, logger, informers, preferPodOwner)
+		if res == EmptyLookupResult && hostname != "" && namespaceFromAttr != "" {
+			res = LookupWorkloadKindByNameAndNamespace(hostname, namespaceFromAttr, expectedTypes, logger, informers, preferPodOwner)
+		}
+		return res
 	}
 }
