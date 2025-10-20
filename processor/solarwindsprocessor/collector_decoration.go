@@ -14,9 +14,23 @@
 
 package solarwindsprocessor
 
+import "fmt"
+
 type CollectorDecoration struct {
 	Enabled bool `mapstructure:"enabled"`
 	// Extension identifies a Solarwinds Extension to
 	// use for obtaining required configuration.
 	ExtensionName string `mapstructure:"extension"`
+}
+
+func (c *Config) Validate() error {
+	if c.CollectorAttributesDecoration.Enabled && c.CollectorAttributesDecoration.ExtensionName == "" {
+		return fmt.Errorf("invalid configuration: 'extension' must be set in 'collector_attributes_decoration'")
+	}
+
+	if c.MaxSizeMib < 0 {
+		return fmt.Errorf("invalid configuration: 'max_size_mib' must be greater than or equal to zero, got: %d", c.MaxSizeMib)
+	}
+
+	return nil
 }

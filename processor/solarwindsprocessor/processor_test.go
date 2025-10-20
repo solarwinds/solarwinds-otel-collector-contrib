@@ -117,7 +117,10 @@ func newTestProcessorWithHostAttributes(t *testing.T, cfg *Config, hostAttrs *in
 
 func TestResourceAttributesPrecedenceOverHostAttributes(t *testing.T) {
 	cfg := &Config{
-		ExtensionName: "test",
+		CollectorAttributesDecoration: CollectorDecoration{
+			Enabled:       true,
+			ExtensionName: "test",
+		},
 		ResourceAttributes: map[string]string{
 			"host.id":   "resource-host-id",
 			"host.name": "resource-host-name",
@@ -160,7 +163,10 @@ func TestResourceAttributesPrecedenceOverHostAttributes(t *testing.T) {
 
 func TestProcessorDoesNotFailWhenHostDecorationDisabled(t *testing.T) {
 	cfg := &Config{
-		ExtensionName:      "test",
+		CollectorAttributesDecoration: CollectorDecoration{
+			Enabled:       true,
+			ExtensionName: "test",
+		},
 		ResourceAttributes: map[string]string{},
 		HostAttributesDecoration: internal.HostDecoration{
 			Enabled:          false,
@@ -177,7 +183,10 @@ func TestProcessorDoesNotFailWhenHostDecorationDisabled(t *testing.T) {
 
 func TestProcessorDoesNotFailOnStartWhenHostDecorationDisabled(t *testing.T) {
 	cfg := &Config{
-		ExtensionName:      "test",
+		CollectorAttributesDecoration: CollectorDecoration{
+			Enabled:       true,
+			ExtensionName: "test",
+		},
 		ResourceAttributes: map[string]string{},
 		HostAttributesDecoration: internal.HostDecoration{
 			Enabled:          false,
@@ -192,7 +201,10 @@ func TestProcessorDoesNotFailOnStartWhenHostDecorationDisabled(t *testing.T) {
 
 func TestProcessorStartWithExtensionProviderError(t *testing.T) {
 	cfg := &Config{
-		ExtensionName:      "test",
+		CollectorAttributesDecoration: CollectorDecoration{
+			Enabled:       true,
+			ExtensionName: "test",
+		},
 		ResourceAttributes: map[string]string{},
 		HostAttributesDecoration: internal.HostDecoration{
 			Enabled: false,
@@ -213,7 +225,10 @@ func TestProcessorStartWithExtensionProviderError(t *testing.T) {
 
 func TestHostDecorationInAllSignalTypes(t *testing.T) {
 	cfg := &Config{
-		ExtensionName:      "test",
+		CollectorAttributesDecoration: CollectorDecoration{
+			Enabled:       true,
+			ExtensionName: "test",
+		},
 		ResourceAttributes: map[string]string{},
 		HostAttributesDecoration: internal.HostDecoration{
 			Enabled:          true,
@@ -297,7 +312,10 @@ func TestHostDecorationInAllSignalTypes(t *testing.T) {
 
 func TestProcessorWithNilHostAttributes(t *testing.T) {
 	cfg := &Config{
-		ExtensionName:      "test",
+		CollectorAttributesDecoration: CollectorDecoration{
+			Enabled:       true,
+			ExtensionName: "test",
+		},
 		ResourceAttributes: map[string]string{"custom.attr": "value"},
 		HostAttributesDecoration: internal.HostDecoration{
 			Enabled: false,
@@ -327,7 +345,10 @@ func TestProcessorHostDecorationWhenContainerFetchFail(t *testing.T) {
 		Enabled: true,
 	}
 	cfg := &Config{
-		ExtensionName:            "test",
+		CollectorAttributesDecoration: CollectorDecoration{
+			Enabled:       true,
+			ExtensionName: "test",
+		},
 		ResourceAttributes:       map[string]string{"custom.attr": "value"},
 		HostAttributesDecoration: hostDecoration,
 	}
@@ -355,7 +376,10 @@ func TestProcessorHostDecorationWhenContainerFetchSucceed(t *testing.T) {
 		OnPremOverrideID: "client-id-456",
 	}
 	cfg := &Config{
-		ExtensionName:            "test",
+		CollectorAttributesDecoration: CollectorDecoration{
+			Enabled:       true,
+			ExtensionName: "test",
+		},
 		ResourceAttributes:       map[string]string{"custom.attr": "value"},
 		HostAttributesDecoration: hostDecoration,
 	}
@@ -387,7 +411,10 @@ func TestProcessorHostDecorationWhenContainerFetchSucceed(t *testing.T) {
 
 func TestProcessorInstantiationWithHostAttributesDecorationDisabled(t *testing.T) {
 	cfg := &Config{
-		ExtensionName:      "test",
+		CollectorAttributesDecoration: CollectorDecoration{
+			Enabled:       true,
+			ExtensionName: "test",
+		},
 		ResourceAttributes: map[string]string{},
 		HostAttributesDecoration: internal.HostDecoration{
 			Enabled:          false,
@@ -407,7 +434,10 @@ func TestProcessorInstantiationWithHostAttributesDecorationDisabled(t *testing.T
 
 func TestProcessorInstantiationWithHostAttributesDecorationEnabled(t *testing.T) {
 	cfg := &Config{
-		ExtensionName:      "test",
+		CollectorAttributesDecoration: CollectorDecoration{
+			Enabled:       true,
+			ExtensionName: "test",
+		},
 		ResourceAttributes: map[string]string{},
 		HostAttributesDecoration: internal.HostDecoration{
 			Enabled:          true,
@@ -441,7 +471,10 @@ func TestProcessorHostDecorationWhenNotInContainerFallbackToHostId(t *testing.T)
 		// No OnPremOverrideID provided
 	}
 	cfg := &Config{
-		ExtensionName:            "test",
+		CollectorAttributesDecoration: CollectorDecoration{
+			Enabled:       true,
+			ExtensionName: "test",
+		},
 		ResourceAttributes:       map[string]string{},
 		HostAttributesDecoration: hostDecoration,
 	}

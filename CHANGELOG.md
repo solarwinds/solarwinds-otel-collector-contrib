@@ -1,6 +1,7 @@
 # Changelog
 
 ## vNext
+- **BREAKING CHANGE**: `solarwindsprocessor` - Removed deprecated root-level `extension` field. Use `collector_attributes_decoration.extension` instead.
 
 ## v0.136.2
 - No changes
