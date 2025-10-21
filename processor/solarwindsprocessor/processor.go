@@ -43,7 +43,7 @@ func (p *solarwindsprocessor) start(ctx context.Context, host component.Host) er
 		return nil
 	}
 
-	extensionName := p.cfg.GetExtensionName()
+	extensionName := p.cfg.CollectorAttributesDecoration.ExtensionName
 	_, err := p.extensionProvider.Init(p.logger, extensionName, host)
 	if err != nil {
 		return fmt.Errorf("failed to get Solarwinds extension %q: %w", extensionName, err)

@@ -1,6 +1,7 @@
 # Changelog
 
 ## vNext
+- ⚠️ Breaking change: `solarwindsprocessor` - Removed deprecated root-level `extension` field as deprecation period has passed. Use `collector_attributes_decoration.extension` instead
 - `swok8sworkloadtypeprocessor` Improve detection for workloads from different namespaces
 
 ## v0.136.2
