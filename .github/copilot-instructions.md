@@ -7,6 +7,13 @@ It has a private counterpart repository for private components.
 
 Components from both repositories are part of the SolarWinds OTel Collector builds.
 
+Components should be placed in folders according to their type:
+- receiver/
+- processor/
+- exporter/
+- extension/
+- connector/
+
 ## Mandatory Development Workflow
 This is mandatory workflow with some exceptions:
 - trivial changes (e.g. typos, formatting).

@@ -1,0 +1,69 @@
+name: "Copilot Setup Steps"
+
+# This workflow is used to set up the environment for GitHub Copilot coding agent.
+# https://docs.github.com/copilot/customizing-copilot/customizing-the-development-environment-for-copilot-coding-agent
+
+# Automatically run the setup steps when they are changed to allow for easy validation, and
+# allow manual testing through the repository's "Actions" tab
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  # The job MUST be called `copilot-setup-steps` or it will not be picked up by Copilot.
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+
+    permissions:
+      # To clone repo
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Fetch full history for writing changelogs
+          fetch-depth: 0
+
+      # Workaround for fetch-depth being overridden by coding agent orchestration
+      # Source of this workaround: https://github.com/pauldotyu/azure-dev/blob/0352ac598be23fe97a08fc96baf7e5c6b76cf94a/.github/workflows/copilot-setup-steps.yml#L12
+      - name: Run git fetch to get full history
+        run: git fetch --unshallow origin && git fetch origin main:refs/remotes/origin/main
+        continue-on-error: true
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "^1.25.1"
+
+      # for npx commands (CircleCI MCP may need this)
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Setup git for private modules
+        env:
+          GITHUB_TOKEN: ${{ secrets.SWO_COPILOT_SETUP_TOKEN }}
+        run: |
+          git config --global url."https://$GITHUB_TOKEN:x-oauth-basic@github.com/solarwinds-cloud/".insteadOf "https://github.com/solarwinds-cloud/"
+
+      - name: Initialize submodules
+        run: |
+          git submodule update --init --checkout -- submodules/solarwinds-otel-collector-core
+
+      - name: Install dependencies
+        run: |
+          find . -name 'go.mod' -execdir sh -c 'echo "Processing $(pwd)" && go mod download' \;
+
+      - name: Revert git config changes
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.SWO_COPILOT_SETUP_TOKEN }}
+        run: |
+          git config --global --unset-all url."https://$GITHUB_TOKEN:x-oauth-basic@github.com/solarwinds-cloud/".insteadOf || true
