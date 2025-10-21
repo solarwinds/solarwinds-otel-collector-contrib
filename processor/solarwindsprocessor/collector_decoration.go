@@ -23,14 +23,9 @@ type CollectorDecoration struct {
 	ExtensionName string `mapstructure:"extension"`
 }
 
-func (c *Config) Validate() error {
-	if c.CollectorAttributesDecoration.Enabled && c.CollectorAttributesDecoration.ExtensionName == "" {
+func (cd *CollectorDecoration) Validate() error {
+	if cd.Enabled && cd.ExtensionName == "" {
 		return fmt.Errorf("invalid configuration: 'extension' must be set in 'collector_attributes_decoration'")
 	}
-
-	if c.MaxSizeMib < 0 {
-		return fmt.Errorf("invalid configuration: 'max_size_mib' must be greater than or equal to zero, got: %d", c.MaxSizeMib)
-	}
-
 	return nil
 }

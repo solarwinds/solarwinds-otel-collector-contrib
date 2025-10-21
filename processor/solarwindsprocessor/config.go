@@ -15,6 +15,8 @@
 package solarwindsprocessor
 
 import (
+	"fmt"
+
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/solarwindsprocessor/internal"
 )
 
@@ -28,4 +30,16 @@ type Config struct {
 	ResourceAttributes            map[string]string       `mapstructure:"resource,omitempty"`
 	CollectorAttributesDecoration CollectorDecoration     `mapstructure:"collector_attributes_decoration,omitempty"`
 	HostAttributesDecoration      internal.HostDecoration `mapstructure:"host_attributes_decoration,omitempty"`
+}
+
+func (c *Config) Validate() error {
+	if err := c.CollectorAttributesDecoration.Validate(); err != nil {
+		return err
+	}
+
+	if c.MaxSizeMib < 0 {
+		return fmt.Errorf("invalid configuration: 'max_size_mib' must be greater than or equal to zero, got: %d", c.MaxSizeMib)
+	}
+
+	return nil
 }
