@@ -4,10 +4,10 @@ go 1.25.1
 
 require (
 	github.com/google/go-cmp v0.7.0
-	github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension v0.136.2
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/attributesdecorator v0.136.2
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/container v0.136.2
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/extensionfinder v0.136.2
+	github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension v0.136.3
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/attributesdecorator v0.136.3
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/container v0.136.3
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/extensionfinder v0.136.3
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/collector/component v1.42.0
 	go.opentelemetry.io/collector/component/componenttest v0.136.0
@@ -47,7 +47,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
 	github.com/mostynb/go-grpc-compression v1.2.3 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.136.2 // indirect
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.136.3 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/collector v0.136.0 // indirect
 	go.opentelemetry.io/collector/client v1.42.0 // indirect
