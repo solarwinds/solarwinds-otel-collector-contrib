@@ -2,14 +2,6 @@
 
 ## vNext
 
-## v0.136.3
-- ⚠️ Breaking change: `solarwindsprocessor` - Removed deprecated root-level `extension` field as deprecation period has passed. Use `collector_attributes_decoration.extension` instead
-- `swok8sworkloadtypeprocessor` Improve detection for workloads from different namespaces
-
-## v0.136.2
-- No changes
-
-
 ## v0.136.1
 - Updated `swohostmetricsreceiver` dependencies to latest versions
 
@@ -219,3 +211,4 @@ from [opentelemetry-collector](https://github.com/open-telemetry/opentelemetry-c
 
 ### Additional details:
 - `solarwindsexporter` has been added to easily integrate with **SolarWinds Observability SaaS**. Please read its [documentation](exporter/solarwindsexporter/README.md) to learn more.
+Added line
