@@ -1,6 +1,6 @@
 module github.com/solarwinds/solarwinds-otel-collector-contrib/processor/k8seventgenerationprocessor
 
-go 1.25.1
+go 1.25.3
 
 require (
 	github.com/stretchr/testify v1.11.1
