@@ -1,3 +1,3 @@
 module github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version
 
-go 1.25.1
+go 1.25.3
