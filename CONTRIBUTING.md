@@ -31,16 +31,17 @@ If your component introduces new metrics, you must register them. For details on
 All SolarWinds OTel components follow the OpenTelemetry standard structure with metadata-driven code generation.
 
 ### Steps
-1. Create `metadata.yaml`, `doc.go`, and `README.md` in component directory. See details for each of them below.
-2. In the component directory, run `mdatagen ./manifest.yaml` to create generated files:
+1. Create `metadata.yaml`, `doc.go`, `go.mod` and `README.md` in component directory. See details for each of them below.
+2. Install mdatagen in root `make install-mdatagen`
+3. In the component directory, run `mdatagen ./manifest.yaml` to create generated files:
     - `internal/metadata/generated_*.go` - Type-safe metadata accessors
     - `generated_component_test.go` - Lifecycle tests
     - `generated_package_test.go` - Package-level tests
     - `documentation.md`
     - Updates README.md status section
-3. Implement factory, config, and component logic
-4. Add unit tests and update CHANGELOG.md
-5. (post merge and post release) Add component to distribution [manifest.yaml](https://github.com/solarwinds-cloud/solarwinds-otel-collector-releases/blob/main/distributions/verified/manifest.yaml)
+4. Implement factory, config, and component logic
+5. Add unit tests and update CHANGELOG.md
+6. (post merge and post release) Add component to distribution [manifest.yaml](https://github.com/solarwinds-cloud/solarwinds-otel-collector-releases/blob/main/distributions/verified/manifest.yaml)
 
 #### Metadata File (`metadata.yaml`)
 
