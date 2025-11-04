@@ -14,6 +14,8 @@ Components should be placed in folders according to their type:
 - extension/
 - connector/
 
+New components should follow [CONTRIBUTING.md](../CONTRIBUTING.md) guidelines.
+
 ## Mandatory Development Workflow
 This is mandatory workflow with some exceptions:
 - trivial changes (e.g. typos, formatting).
