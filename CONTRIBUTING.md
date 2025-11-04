@@ -2,7 +2,7 @@
 
 Thank you for your interest in contributing to SolarWinds OpenTelemetry Collector Contrib!
 
-If you are a SolarWinds contributor, we recommend that you work on this repository directly from [private releases repository](https://github.com/solarwinds-cloud/solarwinds-otel-collector-releases/pulls), where it is included as one of the submodules. It allows for easier devtesting, custom build creation and debugging as part of the collector. See repository readme for details.
+If you are a SolarWinds contributor, we recommend that you work on this repository directly from [private releases repository](https://github.com/solarwinds-cloud/solarwinds-otel-collector-releases). You can use the preconfigured [devcontainer](https://github.com/solarwinds-cloud/solarwinds-otel-collector-releases/tree/main/.devcontainer) configuration, for out of the box development experience, usefull make commands, and custom copilot instructions and prompts.
 
 ## Before Adding a New Component
 
