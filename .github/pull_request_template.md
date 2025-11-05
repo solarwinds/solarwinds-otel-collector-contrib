@@ -24,5 +24,5 @@ Please ensure your PR meets the following requirements (see [CONTRIBUTING.md](..
 - [ ] README.md contains complete configuration documentation
 - [ ] **Telemetry names registered** - New metrics registered (if applicable)
 > [!NOTE]  
-> New components need to be added into the release (one or multiple distributions in [releases repository](https://github.com/solarwinds-cloud/solarwinds-otel-collector-releases/distributions/verified/manifest.yaml)).  
+> New components need to be added into the release (one or multiple distributions in our private releases repository).  
 That can be done only after the new component has been merged & released.

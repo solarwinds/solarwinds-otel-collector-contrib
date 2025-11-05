@@ -56,6 +56,7 @@ Must contain the `//go:generate` directive for metadata generation:
 
 package componentname
 ```
+There should be no other code in this file.
 
 #### README Template
 
@@ -87,13 +88,13 @@ The distribution hack is our way of overriding the opentelemetry links in the au
 **Directory structure:**
 ```
 {receiver|processor|exporter|extension}/
-  componentname/
+  componentname{receiver|processor|exporter|extension}/
     metadata.yaml
     doc.go
     README.md
     config.go
     factory.go
-    component.go
+    {receiver|processor|exporter|extension}.go
     internal/
       metadata/          # Generated files
         generated_*.go
