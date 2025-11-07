@@ -13,7 +13,7 @@ Describe what testing was performed and which tests were added.
 Please ensure your PR meets the following requirements (see [CONTRIBUTING.md](../CONTRIBUTING.md)):
 
 **General:**
-- [ ] **CHANGELOG updated** - Added entry under `## vNext` (chore PRs are a possible exeption)
+- [ ] **CHANGELOG updated** - Added entry under `## vNext` (chore PRs are a possible exemption)
 - [ ] **Tests included** - Unit tests, generated tests (`mdatagen`), and/or integration tests
 - [ ] **Documentation updated** - README.md with config examples and behavior description
 
