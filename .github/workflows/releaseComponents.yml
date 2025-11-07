@@ -85,5 +85,4 @@ jobs:
       - name: Tag Go packages on GitHub
         run: |
           FOLDERS="./exporter ./extension ./pkg ./receiver ./connector ./processor ./internal"
-          EXCLUDED_FOLDERS="./internal/tools/"
           make tag-github-packages folders="$FOLDERS" tag=v${{ needs.release_checks.outputs.version }} excluded_folders="$EXCLUDED_FOLDERS"
