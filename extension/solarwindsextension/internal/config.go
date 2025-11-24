@@ -48,7 +48,7 @@ func (cfg *Config) Validate() error {
 		errs = errors.Join(errs, endpointMustBeSetErr)
 	}
 
-	if val, found := cfg.Grpc.Headers["Authorization"]; !found {
+	if val, found := cfg.Grpc.Headers.Get("Authorization"); !found {
 		errs = errors.Join(errs, authorizationMustBeSetErr)
 	} else if !strings.HasPrefix(string(val), "Bearer ") {
 		errs = errors.Join(errs, authorizationNotValidErr)
