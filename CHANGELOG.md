@@ -3,7 +3,7 @@
 ## vNext
 
 ## v0.140.0
-- No changes
+- Updated OpenTelemetry modules to [v1.46.0/v0.140.0](https://github.com/open-telemetry/opentelemetry-collector/releases/tag/v0.140.0)
 
 ## v0.136.7
 - No changes
