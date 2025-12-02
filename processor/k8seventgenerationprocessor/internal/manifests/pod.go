@@ -14,6 +14,12 @@
 
 package manifests
 
+import (
+	"errors"
+
+	"github.com/distribution/reference"
+)
+
 type PodManifest struct {
 	Metadata PodMetadata `json:"metadata"`
 	Status   PodStatus   `json:"status"`
@@ -35,20 +41,24 @@ type PodCondition struct {
 	Timestamp string `json:"lastTransitionTime"`
 }
 
+type specContainer struct {
+	Name  string `json:"name"`
+	Image string `json:"image"`
+}
+
 type PodSpec struct {
-	Containers []struct {
-		Name string `json:"name"`
-	} `json:"containers"`
+	Containers     []specContainer `json:"containers"`
 	InitContainers []struct {
-		Name          string `json:"name"`
+		specContainer
 		RestartPolicy string `json:"restartPolicy"`
 	} `json:"initContainers"`
 }
 
 type statusContainer struct {
-	Name        string                 `json:"name"`
-	ContainerId string                 `json:"containerID"`
-	State       map[string]interface{} `json:"state"`
+	Name        string         `json:"name"`
+	ContainerId string         `json:"containerID"`
+	State       map[string]any `json:"state"`
+	ImageID     string         `json:"imageID"`
 }
 
 type Container struct {
@@ -57,6 +67,13 @@ type Container struct {
 	State              string
 	IsInitContainer    bool
 	IsSidecarContainer bool
+	Image              Image
+}
+
+type Image struct {
+	ImageID string
+	Name    string
+	Tag     string
 }
 
 // GetContainers returns a map of containers from the manifest. Data of each container
@@ -79,8 +96,44 @@ func (m *PodManifest) GetContainers() map[string]Container {
 		}
 	}
 
+	m.fillContainerImages(containers)
 	m.Status.fillStates(containers)
 	return containers
+}
+
+func (m *PodManifest) fillContainerImages(containers map[string]Container) {
+	processSpec := func(sc specContainer) {
+		if c, ok := containers[sc.Name]; ok {
+			if name, tag, err := parseImageNameAndTag(sc.Image); err == nil {
+				c.Image.Name = name
+				c.Image.Tag = tag
+				containers[sc.Name] = c
+			}
+		}
+	}
+
+	processStatus := func(sc statusContainer) {
+		if c, ok := containers[sc.Name]; ok {
+			c.Image.ImageID = sc.ImageID
+			containers[sc.Name] = c
+		}
+	}
+
+	for _, c := range m.Spec.Containers {
+		processSpec(c)
+	}
+
+	for _, c := range m.Spec.InitContainers {
+		processSpec(c.specContainer)
+	}
+
+	for _, c := range m.Status.ContainerStatuses {
+		processStatus(c)
+	}
+
+	for _, c := range m.Status.InitContainerStatuses {
+		processStatus(c)
+	}
 }
 
 // fillStates fills the basic and init container states from the "status" part of the manifest.
@@ -110,9 +163,24 @@ func (sc *statusContainer) fillContainer(containers map[string]Container) {
 // getState parse the state of the container from the "state" part of the manifest.
 // The state is the processor is looking for is the key in the map. The value of status key
 // is ignored.
-func getState(state map[string]interface{}) string {
+func getState(state map[string]any) string {
 	for key := range state {
 		return key
 	}
 	return ""
+}
+
+func parseImageNameAndTag(image string) (name, tag string, err error) {
+	ref, err := reference.Parse(image)
+	if err != nil {
+		return "", "", err
+	}
+
+	if namedTagged, ok := ref.(reference.NamedTagged); ok {
+		return namedTagged.Name(), namedTagged.Tag(), nil
+	} else if namedOnly, ok := ref.(reference.Named); ok {
+		return namedOnly.Name(), "latest", nil
+	} else {
+		return "", "", errors.New("cannot retrieve image name and tag")
+	}
 }

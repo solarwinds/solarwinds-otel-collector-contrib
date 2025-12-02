@@ -35,7 +35,7 @@ var (
 	// some parts from original manifests that are not used by the algorithm are removed for simplicity
 	endpointManifest      = `{"apiVersion":"v1","kind":"Endpoints","metadata":{"name":"test-name","namespace":"test-namespace"},"subsets":[{"addresses":[{"ip":"192.168.1.1"},{"ip":"192.168.1.2"}]}]}`
 	endpointSliceManifest = `{"apiVersion":"discovery.k8s.io/v1","kind":"EndpointSlice","endpoints":[{"addresses":["192.168.1.3","192.168.1.4"]}],"metadata":{"labels":{"kubernetes.io/service-name":"test-name"},"name":"test-name-00001","namespace":"test-namespace"},"addressType":"IPv4"}`
-	podManifest           = `{"apiVersion":"v1","kind":"Pod","metadata":{"annotations":{"checksum/config":"123456","swo.cloud.solarwinds.com/cluster-uid":"test-cluster-uid"},"creationTimestamp":"2025-02-04T11:28:27Z","generateName":"test-generate-name","labels":{"some-label":"test-label"},"managedFields":[{"apiVersion":"v1","fieldsType":"FieldsV1","fieldsV1":{"f:metadata":{"f:annotations":{"f:swo.cloud.solarwinds.com/cluster-uid":{}},"f:generateName":{},"f:labels":{"f:app.kubernetes.io/instance":{}}},"f:spec":{"f:affinity":{},"f:containers":{}}},"manager":"test-manager","operation":"Update","time":"2025-02-04T11:28:27Z"}],"name":"test-pod-name","namespace":"test-namespace","ownerReferences":[{"apiVersion":"apps/v1","blockOwnerDeletion":true,"controller":true,"kind":"DaemonSet","name":"test","uid":"123456789"}],"resourceVersion":"1.2.3","uid":"123456789"},"spec":{"containers":[{"args":["--warning"],"env":[{"name":"EBPF_NET_CLUSTER_NAME","value":"cluster name"}],"image":"test-container-id","imagePullPolicy":"IfNotPresent","name":"test-container-name","resources":{"requests":{"memory":"50Mi"}},"securityContext":{"privileged":true},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[]}],"dnsPolicy":"ClusterFirstWithHostNet","enableServiceLinks":true,"hostNetwork":true,"hostPID":true,"initContainers":[{"command":["sh","-c","some command;"],"env":[{"name":"EBPF_NET_INTAKE_HOST","value":"test"}],"image":"test-image-container-image","imagePullPolicy":"IfNotPresent","name":"test-init-container-name","resources":{},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[]}],"nodeName":"test-node","nodeSelector":{"kubernetes.io/os":"linux"},"preemptionPolicy":"PreemptLowerPriority","priority":0,"restartPolicy":"Always","schedulerName":"test-scheduler","securityContext":{"fsGroup":0,"runAsGroup":0,"runAsUser":0},"serviceAccount":"test-service-account","serviceAccountName":"test-service-account-name","terminationGracePeriodSeconds":30,"tolerations":[{"effect":"NoSchedule","operator":"Exists"}],"volumes":[{"hostPath":{"path":"/","type":"Directory"},"name":"host"}]},"status":{"conditions":[{"lastProbeTime":null,"lastTransitionTime":"2025-02-04T11:31:42Z","message":"containers with unready status","reason":"ContainersNotReady","status":"False","type":"ContainersReady"},{"lastProbeTime":null,"lastTransitionTime":"2025-02-04T11:28:27Z","status":"True","type":"PodScheduled"}],"containerStatuses":[{"containerID":"test-container-id","image":"test-container-image-id","imageID":"test-container-image-id","lastState":{"terminated":{"containerID":"container-id","exitCode":255,"finishedAt":"2025-02-04T11:30:24Z","reason":"Error","startedAt":"2025-02-04T11:29:10Z"}},"name":"test-container-name","ready":false,"restartCount":1,"started":false,"state":{"terminated":{"containerID":"test-container-id","exitCode":255,"finishedAt":"2025-02-04T11:31:41Z","reason":"Error","startedAt":"2025-02-04T11:30:25Z"}}}],"hostIP":"1.2.3.4","hostIPs":[{"ip":"1.2.3.4"}],"initContainerStatuses":[{"containerID":"test-init-container-id","image":"test-init-container-image","imageID":"test-init-container-image-id","lastState":{},"name":"test-init-container-name","ready":true,"restartCount":0,"started":false,"state":{"terminated":{"containerID":"test-init-container-id","exitCode":0,"finishedAt":"2025-02-04T11:29:09Z","reason":"Completed","startedAt":"2025-02-04T11:28:27Z"}}}],"phase":"Running","podIP":"1.2.3.4","podIPs":[{"ip":"1.2.3.4"}],"qosClass":"Burstable","startTime":"2025-02-04T11:28:27Z"}}`
+	podManifest           = `{"apiVersion":"v1","kind":"Pod","metadata":{"annotations":{"checksum/config":"123456","swo.cloud.solarwinds.com/cluster-uid":"test-cluster-uid"},"creationTimestamp":"2025-02-04T11:28:27Z","generateName":"test-generate-name","labels":{"some-label":"test-label"},"managedFields":[{"apiVersion":"v1","fieldsType":"FieldsV1","fieldsV1":{"f:metadata":{"f:annotations":{"f:swo.cloud.solarwinds.com/cluster-uid":{}},"f:generateName":{},"f:labels":{"f:app.kubernetes.io/instance":{}}},"f:spec":{"f:affinity":{},"f:containers":{}}},"manager":"test-manager","operation":"Update","time":"2025-02-04T11:28:27Z"}],"name":"test-pod-name","namespace":"test-namespace","ownerReferences":[{"apiVersion":"apps/v1","blockOwnerDeletion":true,"controller":true,"kind":"DaemonSet","name":"test","uid":"123456789"}],"resourceVersion":"1.2.3","uid":"123456789"},"spec":{"containers":[{"args":["--warning"],"env":[{"name":"EBPF_NET_CLUSTER_NAME","value":"cluster name"}],"image":"test-container-image:v2","imagePullPolicy":"IfNotPresent","name":"test-container-name","resources":{"requests":{"memory":"50Mi"}},"securityContext":{"privileged":true},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[]}],"dnsPolicy":"ClusterFirstWithHostNet","enableServiceLinks":true,"hostNetwork":true,"hostPID":true,"initContainers":[{"command":["sh","-c","some command;"],"env":[{"name":"EBPF_NET_INTAKE_HOST","value":"test"}],"image":"test-init-container-image","imagePullPolicy":"IfNotPresent","name":"test-init-container-name","resources":{},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[]}],"nodeName":"test-node","nodeSelector":{"kubernetes.io/os":"linux"},"preemptionPolicy":"PreemptLowerPriority","priority":0,"restartPolicy":"Always","schedulerName":"test-scheduler","securityContext":{"fsGroup":0,"runAsGroup":0,"runAsUser":0},"serviceAccount":"test-service-account","serviceAccountName":"test-service-account-name","terminationGracePeriodSeconds":30,"tolerations":[{"effect":"NoSchedule","operator":"Exists"}],"volumes":[{"hostPath":{"path":"/","type":"Directory"},"name":"host"}]},"status":{"conditions":[{"lastProbeTime":null,"lastTransitionTime":"2025-02-04T11:31:42Z","message":"containers with unready status","reason":"ContainersNotReady","status":"False","type":"ContainersReady"},{"lastProbeTime":null,"lastTransitionTime":"2025-02-04T11:28:27Z","status":"True","type":"PodScheduled"}],"containerStatuses":[{"containerID":"test-container-id","image":"test-container-image:v2","imageID":"test-container-image-id","lastState":{"terminated":{"containerID":"container-id","exitCode":255,"finishedAt":"2025-02-04T11:30:24Z","reason":"Error","startedAt":"2025-02-04T11:29:10Z"}},"name":"test-container-name","ready":false,"restartCount":1,"started":false,"state":{"terminated":{"containerID":"test-container-id","exitCode":255,"finishedAt":"2025-02-04T11:31:41Z","reason":"Error","startedAt":"2025-02-04T11:30:25Z"}}}],"hostIP":"1.2.3.4","hostIPs":[{"ip":"1.2.3.4"}],"initContainerStatuses":[{"containerID":"test-init-container-id","image":"test-init-container-image","imageID":"test-init-container-image-id","lastState":{},"name":"test-init-container-name","ready":true,"restartCount":0,"started":false,"state":{"terminated":{"containerID":"test-init-container-id","exitCode":0,"finishedAt":"2025-02-04T11:29:09Z","reason":"Completed","startedAt":"2025-02-04T11:28:27Z"}}}],"phase":"Running","podIP":"1.2.3.4","podIPs":[{"ip":"1.2.3.4"}],"qosClass":"Burstable","startTime":"2025-02-04T11:28:27Z"}}`
 )
 
 func TestEmptyResourceLogs(t *testing.T) {
@@ -94,7 +94,36 @@ func TestContainerAndServiceMappingsEndUpInDifferentResources(t *testing.T) {
 
 func TestPodManifests(t *testing.T) {
 
-	verifyNewLog := func(t *testing.T, newLog plog.ResourceLogs, expectedContainers map[string]manifests.Container) {
+	verifyContainer := func(t *testing.T, attrs pcommon.Map, expectedContainers map[string]manifests.Container) {
+		assert.Equal(t, 4, attrs.Len())
+
+		ids := getMapValue(t, attrs, "otel.entity.id")
+		assert.Equal(t, "test-pod-name", getStringValue(t, ids, "k8s.pod.name"))
+		assert.Equal(t, "test-namespace", getStringValue(t, ids, "k8s.namespace.name"))
+		assert.Equal(t, "test-cluster-uid", getStringValue(t, ids, "sw.k8s.cluster.uid"))
+		containerName := getStringValue(t, ids, "k8s.container.name")
+		c, exists := expectedContainers[containerName]
+		assert.True(t, exists, "Container was not expected: %s", containerName)
+
+		otherAttrs := getMapValue(t, attrs, "otel.entity.attributes")
+		assert.Equal(t, c.ContainerId, getStringValue(t, otherAttrs, "container.id"))
+		assert.Equal(t, c.State, getStringValue(t, otherAttrs, "sw.k8s.container.status"))
+		assert.Equal(t, c.IsInitContainer, getBoolValue(t, otherAttrs, "sw.k8s.container.init"), "Unexpected value for sw.k8s.container.init attribute: %s", containerName)
+		assert.Equal(t, c.IsSidecarContainer, getBoolValue(t, otherAttrs, "sw.k8s.container.sidecar"), "Unexpected value for sw.k8s.container.sidecar attribute: %s", containerName)
+	}
+
+	verifyImage := func(t *testing.T, attrs pcommon.Map, expectedImages map[string]manifests.Image) {
+		assert.Equal(t, 3, attrs.Len())
+
+		ids := getMapValue(t, attrs, "otel.entity.id")
+		imageID := getStringValue(t, ids, "container.image.id")
+		image, exists := expectedImages[imageID]
+		assert.True(t, exists, "Image was not expected: %s", imageID)
+		assert.Equal(t, image.Name, getStringValue(t, ids, "container.image.name"))
+		assert.Equal(t, image.Tag, getStringValue(t, ids, "container.image.tag"))
+	}
+
+	verifyNewLog := func(t *testing.T, newLog plog.ResourceLogs, expectedContainers map[string]manifests.Container, expectedImages map[string]manifests.Image) {
 		// resource
 		assert.Equal(t, 1, newLog.Resource().Attributes().Len())
 		assert.Equal(t, "entitystateevent", getStringValue(t, newLog.Resource().Attributes(), "sw.k8s.log.type"))
@@ -105,33 +134,34 @@ func TestPodManifests(t *testing.T) {
 		assert.Equal(t, 1, sl.Scope().Attributes().Len())
 		assert.Equal(t, true, getBoolValue(t, sl.Scope().Attributes(), "otel.entity.event_as_log"))
 
+		expectedNumberOfEvents := len(expectedContainers) + len(expectedImages) + len(expectedContainers) // containers + images + relationships (one for each container)
 		// log records
-		assert.Equal(t, len(expectedContainers), sl.LogRecords().Len())
+		assert.Equal(t, expectedNumberOfEvents, sl.LogRecords().Len())
 		for _, lr := range sl.LogRecords().All() {
 			assert.Equal(t, timestamp, lr.ObservedTimestamp())
 
 			attrs := lr.Attributes()
-			assert.Equal(t, 4, attrs.Len())
+			assert.GreaterOrEqual(t, attrs.Len(), 1)
 			assert.Equal(t, "", lr.Body().Str())
 
 			eventType := getStringValue(t, attrs, "otel.entity.event.type")
-			assert.Equal(t, "entity_state", eventType)
-			entityType := getStringValue(t, attrs, "otel.entity.type")
-			assert.Equal(t, "KubernetesContainer", entityType)
-
-			ids := getMapValue(t, attrs, "otel.entity.id")
-			assert.Equal(t, "test-pod-name", getStringValue(t, ids, "k8s.pod.name"))
-			assert.Equal(t, "test-namespace", getStringValue(t, ids, "k8s.namespace.name"))
-			assert.Equal(t, "test-cluster-uid", getStringValue(t, ids, "sw.k8s.cluster.uid"))
-			containerName := getStringValue(t, ids, "k8s.container.name")
-			c, exists := expectedContainers[containerName]
-			assert.True(t, exists, "Container was not expected: %s", containerName)
-
-			otherAttrs := getMapValue(t, attrs, "otel.entity.attributes")
-			assert.Equal(t, c.ContainerId, getStringValue(t, otherAttrs, "container.id"))
-			assert.Equal(t, c.State, getStringValue(t, otherAttrs, "sw.k8s.container.status"))
-			assert.Equal(t, c.IsInitContainer, getBoolValue(t, otherAttrs, "sw.k8s.container.init"), "Unexpected value for sw.k8s.container.init attribute: %s", containerName)
-			assert.Equal(t, c.IsSidecarContainer, getBoolValue(t, otherAttrs, "sw.k8s.container.sidecar"), "Unexpected value for sw.k8s.container.sidecar attribute: %s", containerName)
+			switch eventType {
+			case "entity_state":
+				entityType := getStringValue(t, attrs, "otel.entity.type")
+				switch entityType {
+				case "KubernetesContainer":
+					verifyContainer(t, attrs, expectedContainers)
+				case "KubernetesContainerImage":
+					verifyImage(t, attrs, expectedImages)
+				default:
+					require.Fail(t, "Unexpected entity type", "entity_type: %s", entityType)
+				}
+			case "entity_relationship_state":
+				//TODO: verify created relationship events
+				//verifyRelationship(t, attrs, expectedContainers, expectedImages)
+			default:
+				require.Fail(t, "Unexpected event type", "event_type: %s", eventType)
+			}
 		}
 	}
 
@@ -156,20 +186,33 @@ func TestPodManifests(t *testing.T) {
 		verifyOriginalLog(t, origLog, podManifest)
 
 		newLog := result[0].ResourceLogs().At(1)
-		verifyNewLog(t, newLog, map[string]manifests.Container{
-			"test-container-name": {
-				Name:            "test-container-name",
-				ContainerId:     "test-container-id",
-				State:           "terminated",
-				IsInitContainer: false,
+		verifyNewLog(t, newLog,
+			map[string]manifests.Container{
+				"test-container-name": {
+					Name:            "test-container-name",
+					ContainerId:     "test-container-id",
+					State:           "terminated",
+					IsInitContainer: false,
+				},
+				"test-init-container-name": {
+					Name:            "test-init-container-name",
+					ContainerId:     "test-init-container-id",
+					State:           "terminated",
+					IsInitContainer: true,
+				},
 			},
-			"test-init-container-name": {
-				Name:            "test-init-container-name",
-				ContainerId:     "test-init-container-id",
-				State:           "terminated",
-				IsInitContainer: true,
-			},
-		})
+			map[string]manifests.Image{
+				"test-container-image-id": {
+					ImageID: "test-container-image-id",
+					Name:    "test-container-image",
+					Tag:     "v2",
+				},
+				"test-init-container-image-id": {
+					ImageID: "test-init-container-image-id",
+					Name:    "test-init-container-image",
+					Tag:     "latest",
+				},
+			})
 	})
 }
 
