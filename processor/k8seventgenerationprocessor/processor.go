@@ -83,7 +83,6 @@ func (cp *k8seventgenerationprocessor) generateLogRecords(resCh <-chan result, e
 		switch m := res.Manifest.(type) {
 		case *manifests.PodManifest:
 			manifestContainers := m.GetContainers()
-			cp.logger.Error("manifestContainers", zap.Any("containers", manifestContainers))
 			containers := transformContainersToContainerLogs(manifestContainers, m.Metadata, res.Timestamp)
 			containers.MoveAndAppendTo(entityStateEvents)
 			containerImages := transformContainersToContainerImageLogs(manifestContainers, res.Timestamp)
