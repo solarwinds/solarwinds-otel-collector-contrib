@@ -132,25 +132,19 @@ func transformManifestToServiceMappingLogs(m manifests.ServiceMapping, t pcommon
 func transformContainersToContainerImageLogs(containers map[string]manifests.Container, t pcommon.Timestamp) plog.LogRecordSlice {
 	lrs := plog.NewLogRecordSlice()
 
-	var noImage manifests.Image
-	uniqueImagesWithValidIDs := make(map[manifests.Image]struct{})
+	processedValidImages := make(map[manifests.Image]struct{}, len(containers))
 	for _, c := range containers {
-		if c.Image == noImage {
-			continue
-		}
-		if _, seen := uniqueImagesWithValidIDs[c.Image]; seen {
-			continue
-		}
 		if c.Image.ImageID == "" {
 			continue
 		}
-		uniqueImagesWithValidIDs[c.Image] = struct{}{}
-	}
+		if _, seen := processedValidImages[c.Image]; seen {
+			continue
+		}
+		processedValidImages[c.Image] = struct{}{}
 
-	for image := range uniqueImagesWithValidIDs {
 		lr := lrs.AppendEmpty()
 		lr.SetObservedTimestamp(t)
-		addContainerImageAttributes(lr.Attributes(), image)
+		addContainerImageAttributes(lr.Attributes(), c.Image)
 	}
 
 	return lrs
