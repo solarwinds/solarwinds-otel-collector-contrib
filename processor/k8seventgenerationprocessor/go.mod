@@ -1,6 +1,6 @@
 module github.com/solarwinds/solarwinds-otel-collector-contrib/processor/k8seventgenerationprocessor
 
-go 1.25.3
+go 1.25.5
 
 require (
 	github.com/distribution/reference v0.6.0

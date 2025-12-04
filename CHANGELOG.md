@@ -2,6 +2,7 @@
 
 ## vNext
 - `k8seventgenerationprocessor` Extend the k8seventgeneration processor with parsing and exporting entity state events for Container Images and for relations between Containers and Images.
+- Updates golang to 1.25.5
 
 ## v0.140.0
 - Updated OpenTelemetry modules to [v1.46.0/v0.140.0](https://github.com/open-telemetry/opentelemetry-collector/releases/tag/v0.140.0)

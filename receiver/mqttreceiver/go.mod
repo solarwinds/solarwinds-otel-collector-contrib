@@ -1,6 +1,6 @@
 module github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/mqttreceiver
 
-go 1.25.3
+go 1.25.5
 
 require (
 	github.com/eclipse/paho.mqtt.golang v1.5.1
