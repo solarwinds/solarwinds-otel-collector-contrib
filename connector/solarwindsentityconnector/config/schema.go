@@ -33,6 +33,10 @@ var _ xconfmap.Validator = (*Schema)(nil)
 func (s *Schema) Validate() error {
 	var errs error
 
+	if len(s.Events.Entities) == 0 && len(s.Events.Relationships) == 0 {
+		return errors.New("at least one of 'events::entities' or 'events::relationships' must be defined")
+	}
+
 	entityTypes := make(map[string]struct{})
 	for _, entity := range s.Entities {
 		entityTypes[entity.Entity] = struct{}{}

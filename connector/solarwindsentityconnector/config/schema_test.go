@@ -35,14 +35,27 @@ func TestValidate_ValidSchema(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestValidate_EmptySchemaIsValid(t *testing.T) {
+func TestValidate_EmptySchemaIsNotValid(t *testing.T) {
 	schema := Schema{
 		Entities: []Entity{},
 		Events:   Events{Entities: []EntityEvent{}, Relationships: []RelationshipEvent{}},
 	}
 
 	err := schema.Validate()
-	assert.NoError(t, err)
+	assert.ErrorContains(t, err, "at least one of 'events::entities' or 'events::relationships' must be defined")
+}
+
+func TestValidate_SchemaWithoutEventsIsNotValid(t *testing.T) {
+	schema := Schema{
+		Entities: []Entity{
+			{Entity: "a"},
+			{Entity: "b"},
+		},
+		Events: Events{Entities: []EntityEvent{}, Relationships: []RelationshipEvent{}},
+	}
+
+	err := schema.Validate()
+	assert.ErrorContains(t, err, "at least one of 'events::entities' or 'events::relationships' must be defined")
 }
 
 func TestValidate_MixedValidAndInvalidReferences(t *testing.T) {
