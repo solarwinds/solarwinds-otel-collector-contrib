@@ -29,11 +29,11 @@ const (
 	EventTypeEntityState             = "entity_state"
 	EventTypeEntityRelationshipState = "entity_relationship_state"
 
-	EntityTypeVulnerability                = "vulnerability"
+	EntityTypeVulnerability                = "VulnerabilityDetail"
 	EntityTypeKubernetesDeployment         = "KubernetesDeployment"
 	EntityTypeKubernetesDaemonSet          = "KubernetesDaemonSet"
 	EntityTypeKubernetesStatefulSet        = "KubernetesStatefulSet"
-	RelationshipTypeVulnerabilityFinding   = "vulnerability_finding"
+	RelationshipTypeVulnerabilityFinding   = "VulnerabilityFinding"
 	AttributeOtelEntityRelationshipSrcType = "otel.entity_relationship.source_entity.type"
 	AttributeOtelEntityRelationshipDstType = "otel.entity_relationship.destination_entity.type"
 
@@ -43,22 +43,11 @@ const (
 	AttributeVulnerabilitySeverity    = "vulnerability.severity"
 	AttributeVulnerabilityScoreBase   = "vulnerability.score.base"
 	AttributeVulnerabilityEnumeration = "vulnerability.enumeration"
-	AttributeVulnerabilityCategory    = "vulnerability.category"
 	AttributeVulnerabilityReference   = "vulnerability.reference"
 	AttributeCweID                    = "cwe.id"
-
-	// SW Attributes
-	AttributeSwEntityType       = "sw.entity.type"
-	AttributeSwEntityName       = "sw.entity.name"
-	AttributeSwRelationshipType = "sw.relationship.type"
-	AttributeSwRelationshipFrom = "sw.relationship.from"
-	AttributeSwRelationshipTo   = "sw.relationship.to"
 
 	// Scanner Attributes
 	AttributeScannerVendor  = "scannerVendor"
 	AttributeScannerName    = "scannerName"
 	AttributeScannerVersion = "scannerVersion"
-	AttributeStatus         = "status"
-	AttributeCreatedTime    = "createdTime"
-	AttributeUpdatedTime    = "updatedTime"
 )
