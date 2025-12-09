@@ -47,9 +47,38 @@ func TestVulnerabilityReportManifest(t *testing.T) {
 		assert.Equal(t, expectedVulnID, getStringValue(t, vulnIDMap, constants.AttributeVulnerabilityID))
 
 		vulnEntityAttrs := getMapValue(t, attrs, constants.AttributeOtelEntityAttributes)
-		assert.Equal(t, expectedVulnID, getStringValue(t, vulnEntityAttrs, constants.AttributeSwEntityName))
+
+		// Check vulnerability.id is present
+		assert.Equal(t, expectedVulnID, getStringValue(t, vulnEntityAttrs, constants.AttributeVulnerabilityID))
+
+		// Check sw.entity.type and sw.entity.name are NOT present
+		_, swEntityTypeExists := vulnEntityAttrs.Get(constants.AttributeSwEntityType)
+		assert.False(t, swEntityTypeExists, "sw.entity.type should not be in entity attributes")
+		_, swEntityNameExists := vulnEntityAttrs.Get(constants.AttributeSwEntityName)
+		assert.False(t, swEntityNameExists, "sw.entity.name should not be in entity attributes")
+
+		// Check vulnerability.description contains title text (not vulnerability.title)
+		description, descExists := vulnEntityAttrs.Get(constants.AttributeVulnerabilityDescription)
+		assert.True(t, descExists, "vulnerability.description should be present")
+		assert.NotEmpty(t, description.Str())
+
+		// Check vulnerability.title is NOT present
+		_, titleExists := vulnEntityAttrs.Get("vulnerability.title")
+		assert.False(t, titleExists, "vulnerability.title should not be present")
+
+		// Check other attributes
 		assert.Equal(t, expectedSeverity, getStringValue(t, vulnEntityAttrs, constants.AttributeVulnerabilitySeverity))
 		assert.Equal(t, expectedScore, getAttrValue(t, vulnEntityAttrs, constants.AttributeVulnerabilityScoreBase).Double())
+
+		// Check cwe.id is present
+		assert.Equal(t, expectedVulnID, getStringValue(t, vulnEntityAttrs, constants.AttributeCweID))
+
+		// Check vulnerability.reference is an array
+		rawAttrs := vulnEntityAttrs.AsRaw()
+		references, ok := rawAttrs[constants.AttributeVulnerabilityReference]
+		assert.True(t, ok, "vulnerability.reference should be present")
+		_, isSlice := references.([]any)
+		assert.True(t, isSlice, "vulnerability.reference should be an array")
 	}
 
 	verifyWorkloadFinding := func(t *testing.T, attrs pcommon.Map, expectedVulnID string, expectedWorkloadName string, expectedWorkloadNameKey string, expectedNamespace string, expectedScannerName string, expectedEntityType string) {

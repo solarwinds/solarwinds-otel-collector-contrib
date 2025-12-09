@@ -39,7 +39,6 @@ const (
 
 	// Vulnerability Attributes
 	AttributeVulnerabilityID          = "vulnerability.id"
-	AttributeVulnerabilityTitle       = "vulnerability.title"
 	AttributeVulnerabilityDescription = "vulnerability.description"
 	AttributeVulnerabilitySeverity    = "vulnerability.severity"
 	AttributeVulnerabilityScoreBase   = "vulnerability.score.base"
