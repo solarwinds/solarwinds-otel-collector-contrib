@@ -8,7 +8,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.140.1
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza v0.140.1
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/xk8stest v0.140.1
-	github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfig v0.140.1
+	github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfig v0.140.2
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/collector/component v1.46.0
 	go.opentelemetry.io/collector/component/componenttest v0.140.0
