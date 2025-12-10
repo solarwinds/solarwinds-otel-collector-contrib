@@ -3,6 +3,9 @@
 ## vNext
 - `solarwindsentityconnector` Validate that events configuration is present.
 
+## v0.140.2
+- No changes
+
 ## v0.140.1
 - `k8seventgenerationprocessor` Extend the k8seventgeneration processor with parsing and exporting entity state events for Container Images and for relations between Containers and Images.
 - Updates golang to 1.25.5
