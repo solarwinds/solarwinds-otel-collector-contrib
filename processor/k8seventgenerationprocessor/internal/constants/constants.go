@@ -50,4 +50,5 @@ const (
 
 	// Container Image Attributes
 	AttributeContainerImageTags = "container.image.tags"
+	AttributeImageTag           = "imageTag"
 )

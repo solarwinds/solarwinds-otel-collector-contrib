@@ -211,4 +211,8 @@ func addContainerImageRelationAttributes(attrs pcommon.Map, md manifests.PodMeta
 	attrs.PutStr(destEntityType, k8sContainerImageEntityType)
 	destIds.PutStr(constants.AttributeOciManifestDigest, extractSha256Digest(c.Image.ImageID))
 	destIds.PutStr(string(conventions.ContainerImageNameKey), c.Image.Name)
+
+	// Relationship attributes
+	relAttrs := attrs.PutEmptyMap(constants.AttributeOtelEntityRelationshipAttributes)
+	relAttrs.PutStr(constants.AttributeImageTag, c.Image.Tag)
 }

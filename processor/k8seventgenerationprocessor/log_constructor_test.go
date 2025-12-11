@@ -17,7 +17,10 @@ package k8seventgenerationprocessor
 import (
 	"testing"
 
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/k8seventgenerationprocessor/internal/constants"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/k8seventgenerationprocessor/internal/manifests"
 	"github.com/stretchr/testify/assert"
+	"go.opentelemetry.io/collector/pdata/pcommon"
 )
 
 func TestExtractSha256Digest(t *testing.T) {
@@ -137,6 +140,79 @@ func TestExtractSha256Digest(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := extractSha256Digest(tt.input)
 			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestAddContainerImageRelationAttributes(t *testing.T) {
+	tests := []struct {
+		name        string
+		container   manifests.Container
+		expectedTag string
+	}{
+		{
+			name: "Container with tag",
+			container: manifests.Container{
+				Name: "test-container",
+				Image: manifests.Image{
+					ImageID: "sha256:abc123",
+					Name:    "nginx",
+					Tag:     "v1.2.3",
+				},
+			},
+			expectedTag: "v1.2.3",
+		},
+		{
+			name: "Container with latest tag",
+			container: manifests.Container{
+				Name: "test-container",
+				Image: manifests.Image{
+					ImageID: "sha256:def456",
+					Name:    "redis",
+					Tag:     "latest",
+				},
+			},
+			expectedTag: "latest",
+		},
+		{
+			name: "Container with empty tag",
+			container: manifests.Container{
+				Name: "test-container",
+				Image: manifests.Image{
+					ImageID: "sha256:ghi789",
+					Name:    "busybox",
+					Tag:     "",
+				},
+			},
+			expectedTag: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			attrs := pcommon.NewMap()
+			md := manifests.PodMetadata{
+				Name:      "test-pod",
+				Namespace: "test-namespace",
+			}
+			clusterUID := "test-cluster-uid"
+
+			addContainerImageRelationAttributes(attrs, md, tt.container, clusterUID)
+
+			// Verify relationship type
+			relType, exists := attrs.Get(relationshipType)
+			assert.True(t, exists, "relationship type should exist")
+			assert.Equal(t, KubernetesResourceUsesImageRelationType, relType.Str())
+
+			// Verify relationship attributes map exists
+			relAttrs, exists := attrs.Get(constants.AttributeOtelEntityRelationshipAttributes)
+			assert.True(t, exists, "relationship attributes should exist")
+			assert.Equal(t, pcommon.ValueTypeMap, relAttrs.Type(), "relationship attributes should be a map")
+
+			// Verify imageTag is present in relationship attributes
+			imageTag, exists := relAttrs.Map().Get(constants.AttributeImageTag)
+			assert.True(t, exists, "imageTag should exist in relationship attributes")
+			assert.Equal(t, tt.expectedTag, imageTag.Str(), "imageTag value should match container image tag")
 		})
 	}
 }
