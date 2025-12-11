@@ -68,48 +68,6 @@ func TestVulnerabilityReportManifest(t *testing.T) {
 		assert.True(t, isSlice, "vulnerability.reference should be an array")
 	}
 
-	verifyImageFinding := func(t *testing.T, attrs pcommon.Map, expectedVulnID string, expectedImageID string, expectedImageName string, expectedImageTag string, expectedScannerName string) {
-		srcIDMap := getMapValue(t, attrs, constants.AttributeOtelEntityRelationshipSourceEntityID)
-		assert.Equal(t, expectedVulnID, getStringValue(t, srcIDMap, constants.AttributeVulnerabilityID))
-
-		destIDMap := getMapValue(t, attrs, constants.AttributeOtelEntityRelationshipDestinationEntityID)
-		assert.Equal(t, expectedImageID, getStringValue(t, destIDMap, constants.AttributeOciManifestDigest))
-		assert.Equal(t, expectedImageName, getStringValue(t, destIDMap, "container.image.name"))
-
-		relAttrs := getMapValue(t, attrs, constants.AttributeOtelEntityRelationshipAttributes)
-		assert.Equal(t, expectedScannerName, getStringValue(t, relAttrs, constants.AttributeScannerName))
-	}
-
-	findLogByType := func(t *testing.T, logRecords plog.LogRecordSlice, eventType, entityType, relType string) plog.LogRecord {
-		for i := 0; i < logRecords.Len(); i++ {
-			lr := logRecords.At(i)
-			attrs := lr.Attributes()
-
-			et, _ := attrs.Get(constants.AttributeOtelEntityEventType)
-			if et.Str() != eventType {
-				continue
-			}
-
-			if eventType == constants.EventTypeEntityState {
-				eType, _ := attrs.Get(constants.AttributeOtelEntityType)
-				if eType.Str() == entityType {
-					return lr
-				}
-			} else if eventType == constants.EventTypeEntityRelationshipState {
-				rType, _ := attrs.Get(constants.AttributeOtelEntityRelationshipType)
-				if rType.Str() == relType {
-					destIDMap := getMapValue(t, attrs, constants.AttributeOtelEntityRelationshipDestinationEntityID)
-					if entityType == "Image" {
-						if _, ok := destIDMap.Get(constants.AttributeOciManifestDigest); ok {
-							return lr
-						}
-					}
-				}
-			}
-		}
-		return plog.LogRecord{}
-	}
-
 	verifyContainerImage := func(t *testing.T, attrs pcommon.Map, expectedImageID string, expectedImageName string, expectedImageTag string) {
 		ids := getMapValue(t, attrs, "otel.entity.id")
 		assert.Equal(t, expectedImageID, getStringValue(t, ids, constants.AttributeOciManifestDigest))
@@ -127,6 +85,26 @@ func TestVulnerabilityReportManifest(t *testing.T) {
 		}
 	}
 
+	verifyVulnerabilityFinding := func(t *testing.T, attrs pcommon.Map, expectedVulnID string, expectedImageDigest string, expectedImageName string) {
+		// Verify source entity ID (Vulnerability)
+		sourceIDMap := getMapValue(t, attrs, constants.AttributeOtelEntityRelationshipSourceEntityID)
+		actualVulnID := getStringValue(t, sourceIDMap, constants.AttributeVulnerabilityID)
+		assert.Equal(t, expectedVulnID, actualVulnID, "Finding should reference correct vulnerability ID")
+
+		// Verify destination entity ID (Container Image)
+		destIDMap := getMapValue(t, attrs, constants.AttributeOtelEntityRelationshipDestinationEntityID)
+		actualDigest := getStringValue(t, destIDMap, constants.AttributeOciManifestDigest)
+		assert.Equal(t, expectedImageDigest, actualDigest, "Finding should reference correct image digest")
+		actualImageName := getStringValue(t, destIDMap, "container.image.name")
+		assert.Equal(t, expectedImageName, actualImageName, "Finding should reference correct image name")
+
+		// Verify relationship attributes (scanner info)
+		relAttrs := getMapValue(t, attrs, constants.AttributeOtelEntityRelationshipAttributes)
+		assert.Equal(t, "Trivy", getStringValue(t, relAttrs, constants.AttributeScannerName))
+		assert.Equal(t, "Aqua Security", getStringValue(t, relAttrs, constants.AttributeScannerVendor))
+		assert.Equal(t, "0.66.0", getStringValue(t, relAttrs, constants.AttributeScannerVersion))
+	}
+
 	verifyNewLog := func(t *testing.T, newLog plog.ResourceLogs) {
 		assert.Equal(t, 1, newLog.Resource().Attributes().Len())
 		assert.Equal(t, "entitystateevent", getStringValue(t, newLog.Resource().Attributes(), "sw.k8s.log.type"))
@@ -135,20 +113,63 @@ func TestVulnerabilityReportManifest(t *testing.T) {
 		assert.Equal(t, 1, scopeLogs.Len())
 
 		logRecords := scopeLogs.At(0).LogRecords()
-		// 1 Vulnerability Entity + 1 Container Image Entity + 1 Finding (Image) = 3 logs
-		assert.Equal(t, 3, logRecords.Len())
+		// 2 Vulnerability Entities + 1 Container Image Entity + 2 Findings (Image) = 5 logs
+		assert.Equal(t, 5, logRecords.Len())
 
-		vulnLog := findLogByType(t, logRecords, constants.EventTypeEntityState, constants.EntityTypeVulnerability, "")
-		require.NotEqual(t, plog.LogRecord{}, vulnLog)
-		verifyVulnerabilityEntity(t, vulnLog.Attributes(), "CVE-2016-2781", "LOW", 6.5)
+		// Count vulnerability entities
+		vulnCount := 0
+		findingCount := 0
+		containerImageCount := 0
+		findingsVerified := make(map[string]bool) // Track which vulnerabilities have been verified in findings
 
-		containerImageLog := findLogByType(t, logRecords, constants.EventTypeEntityState, "KubernetesContainerImage", "")
-		require.NotEqual(t, plog.LogRecord{}, containerImageLog)
-		verifyContainerImage(t, containerImageLog.Attributes(), "sha256:83c025f0faa6799fab6645102a98138e39a9a7db2be3bc792c79d72659b1805d", "registry.k8s.io/kube-proxy", "v1.32.2")
+		for i := 0; i < logRecords.Len(); i++ {
+			lr := logRecords.At(i)
+			attrs := lr.Attributes()
+			eventType := getStringValue(t, attrs, constants.AttributeOtelEntityEventType)
 
-		imageFindingLog := findLogByType(t, logRecords, constants.EventTypeEntityRelationshipState, "Image", constants.RelationshipTypeVulnerabilityFinding)
-		require.NotEqual(t, plog.LogRecord{}, imageFindingLog)
-		verifyImageFinding(t, imageFindingLog.Attributes(), "CVE-2016-2781", "sha256:83c025f0faa6799fab6645102a98138e39a9a7db2be3bc792c79d72659b1805d", "registry.k8s.io/kube-proxy", "v1.32.2", "Trivy")
+			if eventType == constants.EventTypeEntityState {
+				entityType := getStringValue(t, attrs, constants.AttributeOtelEntityType)
+				if entityType == constants.EntityTypeVulnerability {
+					vulnCount++
+					cveID := getStringValue(t, getMapValue(t, attrs, constants.AttributeOtelEntityID), constants.AttributeVulnerabilityID)
+					if cveID == "CVE-2016-2781" {
+						verifyVulnerabilityEntity(t, attrs, "CVE-2016-2781", "LOW", 6.5)
+					} else if cveID == "CVE-2017-18018" {
+						verifyVulnerabilityEntity(t, attrs, "CVE-2017-18018", "LOW", 4.7)
+					}
+				} else if entityType == "KubernetesContainerImage" {
+					containerImageCount++
+					verifyContainerImage(t, attrs, "sha256:83c025f0faa6799fab6645102a98138e39a9a7db2be3bc792c79d72659b1805d", "registry.k8s.io/kube-proxy", "v1.32.2")
+				}
+			} else if eventType == constants.EventTypeEntityRelationshipState {
+				relType := getStringValue(t, attrs, constants.AttributeOtelEntityRelationshipType)
+				if relType == constants.RelationshipTypeVulnerabilityFinding {
+					findingCount++
+
+					// Verify the finding content
+					sourceIDMap := getMapValue(t, attrs, constants.AttributeOtelEntityRelationshipSourceEntityID)
+					vulnID := getStringValue(t, sourceIDMap, constants.AttributeVulnerabilityID)
+
+					verifyVulnerabilityFinding(
+						t,
+						attrs,
+						vulnID,
+						"sha256:83c025f0faa6799fab6645102a98138e39a9a7db2be3bc792c79d72659b1805d",
+						"registry.k8s.io/kube-proxy",
+					)
+
+					findingsVerified[vulnID] = true
+				}
+			}
+		}
+
+		assert.Equal(t, 2, vulnCount, "Should have 2 vulnerability entities")
+		assert.Equal(t, 1, containerImageCount, "Should have 1 container image entity")
+		assert.Equal(t, 2, findingCount, "Should have 2 vulnerability findings")
+
+		// Ensure both vulnerabilities were verified in findings
+		assert.True(t, findingsVerified["CVE-2016-2781"], "CVE-2016-2781 finding should be verified")
+		assert.True(t, findingsVerified["CVE-2017-18018"], "CVE-2017-18018 finding should be verified")
 	}
 
 	t.Run("TestInvalidManifest", func(t *testing.T) {
