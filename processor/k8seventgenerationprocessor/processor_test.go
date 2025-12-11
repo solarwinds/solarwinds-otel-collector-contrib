@@ -178,6 +178,94 @@ func TestVulnerabilityReportManifest(t *testing.T) {
 	})
 }
 
+func TestEmptyTagScenario(t *testing.T) {
+	verifyEmptyTagArray := func(t *testing.T, attrs pcommon.Map) {
+		entityAttrs := getMapValue(t, attrs, "otel.entity.attributes")
+		tagsSlice, tagsExists := entityAttrs.Get(constants.AttributeContainerImageTags)
+		assert.True(t, tagsExists, "container.image.tags should exist")
+		assert.Equal(t, pcommon.ValueTypeSlice, tagsSlice.Type(), "container.image.tags should be a slice")
+		assert.Equal(t, 0, tagsSlice.Slice().Len(), "tags array should be empty")
+	}
+
+	t.Run("PodWithEmptyTag", func(t *testing.T) {
+		podManifestNoTag := `{"apiVersion":"v1","kind":"Pod","metadata":{"name":"test-pod-no-tag","namespace":"test-namespace","uid":"uid-no-tag"},"spec":{"containers":[{"image":"","name":"test-container"}]},"status":{"containerStatuses":[{"containerID":"test-container-id","image":"","imageID":"sha256:digest123","name":"test-container"}]}}`
+
+		l := generateManifestLogs("Pod", podManifestNoTag)
+		consumer, err := startAndConsumeLogs(t, l)
+		assert.NoError(t, err)
+
+		result := consumer.AllLogs()
+		assert.Len(t, result, 1)
+
+		newLog := result[0].ResourceLogs().At(1)
+		scopeLogs := newLog.ScopeLogs().At(0)
+
+		var foundImage bool
+		for _, lr := range scopeLogs.LogRecords().All() {
+			attrs := lr.Attributes()
+			eventType := getStringValue(t, attrs, "otel.entity.event.type")
+			if eventType == "entity_state" {
+				entityType := getStringValue(t, attrs, "otel.entity.type")
+				if entityType == "KubernetesContainerImage" {
+					foundImage = true
+					verifyEmptyTagArray(t, attrs)
+					ids := getMapValue(t, attrs, "otel.entity.id")
+					assert.Equal(t, "", getStringValue(t, ids, "container.image.name"))
+				}
+			}
+		}
+		assert.True(t, foundImage, "Should have found a container image entity")
+	})
+
+	t.Run("VulnerabilityReportWithEmptyTag", func(t *testing.T) {
+		vulnReportNoTag := `{
+			"apiVersion": "aquasecurity.github.io/v1alpha1",
+			"kind": "VulnerabilityReport",
+			"metadata": {
+				"name": "test-report",
+				"namespace": "test-namespace"
+			},
+			"report": {
+				"artifact": {
+					"digest": "sha256:digest456",
+					"repository": "test-repo",
+					"tag": ""
+				},
+				"scanner": {
+					"name": "Trivy",
+					"vendor": "Aqua Security",
+					"version": "0.40.0"
+				},
+				"vulnerabilities": []
+			}
+		}`
+
+		l := generateManifestLogs("VulnerabilityReport", vulnReportNoTag)
+		consumer, err := startAndConsumeLogs(t, l)
+		assert.NoError(t, err)
+
+		result := consumer.AllLogs()
+		assert.Len(t, result, 1)
+
+		newLog := result[0].ResourceLogs().At(1)
+		scopeLogs := newLog.ScopeLogs().At(0)
+
+		var foundImage bool
+		for _, lr := range scopeLogs.LogRecords().All() {
+			attrs := lr.Attributes()
+			eventType := getStringValue(t, attrs, "otel.entity.event.type")
+			if eventType == "entity_state" {
+				entityType := getStringValue(t, attrs, "otel.entity.type")
+				if entityType == "KubernetesContainerImage" {
+					foundImage = true
+					verifyEmptyTagArray(t, attrs)
+				}
+			}
+		}
+		assert.True(t, foundImage, "Should have found a container image entity")
+	})
+}
+
 func TestEmptyResourceLogs(t *testing.T) {
 	// processor does not decorate empty Log structure
 	consumer, err := startAndConsumeLogs(t, plog.NewLogs())
