@@ -29,13 +29,8 @@ const (
 	EventTypeEntityState             = "entity_state"
 	EventTypeEntityRelationshipState = "entity_relationship_state"
 
-	EntityTypeVulnerability                = "VulnerabilityDetail"
-	EntityTypeKubernetesDeployment         = "KubernetesDeployment"
-	EntityTypeKubernetesDaemonSet          = "KubernetesDaemonSet"
-	EntityTypeKubernetesStatefulSet        = "KubernetesStatefulSet"
-	RelationshipTypeVulnerabilityFinding   = "VulnerabilityFinding"
-	AttributeOtelEntityRelationshipSrcType = "otel.entity_relationship.source_entity.type"
-	AttributeOtelEntityRelationshipDstType = "otel.entity_relationship.destination_entity.type"
+	EntityTypeVulnerability              = "VulnerabilityDetail"
+	RelationshipTypeVulnerabilityFinding = "VulnerabilityFinding"
 
 	// Vulnerability Attributes
 	AttributeVulnerabilityID          = "vulnerability.id"
@@ -44,10 +39,15 @@ const (
 	AttributeVulnerabilityScoreBase   = "vulnerability.score.base"
 	AttributeVulnerabilityEnumeration = "vulnerability.enumeration"
 	AttributeVulnerabilityReference   = "vulnerability.reference"
-	AttributeCweID                    = "cwe.id"
 
 	// Scanner Attributes
 	AttributeScannerVendor  = "scannerVendor"
 	AttributeScannerName    = "scannerName"
 	AttributeScannerVersion = "scannerVersion"
+
+	// OCI Attributes
+	AttributeOciManifestDigest = "oci.manifest.digest"
+
+	// Container Image Attributes
+	AttributeContainerImageTags = "container.image.tags"
 )

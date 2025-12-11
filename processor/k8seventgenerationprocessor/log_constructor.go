@@ -15,6 +15,7 @@
 package k8seventgenerationprocessor
 
 import (
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/k8seventgenerationprocessor/internal/constants"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/k8seventgenerationprocessor/internal/manifests"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
@@ -53,6 +54,13 @@ const (
 	k8sContainerInit     = "sw.k8s.container.init"
 	k8sContainerSidecar  = "sw.k8s.container.sidecar"
 )
+
+// imageIdentity uniquely identifies a container image based on digest and name only,
+// excluding tag to prevent duplicate entities for the same image with different tags
+type imageIdentity struct {
+	digest string
+	name   string
+}
 
 // addEntityStateEventResourceLog adds a new ResourceLogs to the provided Logs structure
 // and sets required attributes on "resource" and "scopeLogs"
@@ -129,15 +137,19 @@ func transformManifestToServiceMappingLogs(m manifests.ServiceMapping, t pcommon
 func transformContainersToContainerImageLogs(containers map[string]manifests.Container, t pcommon.Timestamp) plog.LogRecordSlice {
 	lrs := plog.NewLogRecordSlice()
 
-	processedValidImages := make(map[manifests.Image]struct{}, len(containers))
+	processedValidImages := make(map[imageIdentity]struct{}, len(containers))
 	for _, c := range containers {
 		if c.Image.ImageID == "" {
 			continue
 		}
-		if _, seen := processedValidImages[c.Image]; seen {
+		identity := imageIdentity{
+			digest: extractSha256Digest(c.Image.ImageID),
+			name:   c.Image.Name,
+		}
+		if _, seen := processedValidImages[identity]; seen {
 			continue
 		}
-		processedValidImages[c.Image] = struct{}{}
+		processedValidImages[identity] = struct{}{}
 
 		lr := lrs.AppendEmpty()
 		lr.SetObservedTimestamp(t)
@@ -155,9 +167,15 @@ func addContainerImageAttributes(attrs pcommon.Map, i manifests.Image) {
 
 	// Telemetry mappings
 	tm := attrs.PutEmptyMap(otelEntityId)
-	tm.PutStr(string(conventions.ContainerImageIDKey), i.ImageID)
+	tm.PutStr(constants.AttributeOciManifestDigest, extractSha256Digest(i.ImageID))
 	tm.PutStr(string(conventions.ContainerImageNameKey), i.Name)
-	tm.PutStr(string(conventions.ContainerImageTagKey), i.Tag)
+
+	// Entity attributes
+	entityAttrs := attrs.PutEmptyMap(otelEntityAttributes)
+	tags := entityAttrs.PutEmptySlice(constants.AttributeContainerImageTags)
+	if i.Tag != "" {
+		tags.AppendEmpty().SetStr(i.Tag)
+	}
 }
 
 // transformContainersToContainerImageRelationsLogs returns a new [plog.LogRecordSlice] and appends
@@ -191,7 +209,6 @@ func addContainerImageRelationAttributes(attrs pcommon.Map, md manifests.PodMeta
 	srcIds.PutStr(swK8sClusterUid, clusterUID)
 
 	attrs.PutStr(destEntityType, k8sContainerImageEntityType)
-	destIds.PutStr(string(conventions.ContainerImageIDKey), c.Image.ImageID)
+	destIds.PutStr(constants.AttributeOciManifestDigest, extractSha256Digest(c.Image.ImageID))
 	destIds.PutStr(string(conventions.ContainerImageNameKey), c.Image.Name)
-	destIds.PutStr(string(conventions.ContainerImageTagKey), c.Image.Tag)
 }

@@ -120,7 +120,7 @@ func TestGetContainer(t *testing.T) {
 		IsSidecarContainer: false,
 		Image: Image{
 			ImageID: "busybox@sha256:355b3a1bf5609da364166913878a8508d4ba30572d02020a97028c75477e24ff",
-			Name:    "busybox",
+			Name:    "index.docker.io/library/busybox",
 			Tag:     "latest",
 		},
 	}
@@ -139,7 +139,7 @@ func TestGetContainer(t *testing.T) {
 		IsSidecarContainer: false,
 		Image: Image{
 			ImageID: "init-busybox@sha256:355b3a1bf5609da364166913878a8508d4ba30572d02020a97028c75477e24ff",
-			Name:    "init-busybox",
+			Name:    "index.docker.io/library/init-busybox",
 			Tag:     "latest",
 		},
 	}
@@ -158,7 +158,7 @@ func TestGetContainer(t *testing.T) {
 		IsSidecarContainer: true,
 		Image: Image{
 			ImageID: "sidecar-busybox@sha256:355b3a1bf5609da364166913878a8508d4ba30572d02020a97028c75477e24ff",
-			Name:    "sidecar-busybox",
+			Name:    "index.docker.io/library/sidecar-busybox",
 			Tag:     "latest",
 		},
 	}
@@ -174,10 +174,84 @@ func TestGetContainer(t *testing.T) {
 		IsSidecarContainer: false,
 		Image: Image{
 			ImageID: "",
-			Name:    "busybox",
+			Name:    "index.docker.io/library/busybox",
 			Tag:     "latest",
 		},
 	}
 
 	assert.Equal(t, expectedSpecOnlyContainer, specOnlyContainer)
+}
+
+func TestParseImageNameAndTag(t *testing.T) {
+	tests := []struct {
+		name          string
+		image         string
+		expectedName  string
+		expectedTag   string
+		expectedError bool
+	}{
+		{
+			name:          "Docker Hub official image (implicit library prefix)",
+			image:         "nginx",
+			expectedName:  "index.docker.io/library/nginx",
+			expectedTag:   "latest",
+			expectedError: false,
+		},
+		{
+			name:          "Docker Hub official image with tag",
+			image:         "nginx:1.21",
+			expectedName:  "index.docker.io/library/nginx",
+			expectedTag:   "1.21",
+			expectedError: false,
+		},
+		{
+			name:          "Docker Hub user image",
+			image:         "myuser/myimage:v1.0",
+			expectedName:  "index.docker.io/myuser/myimage",
+			expectedTag:   "v1.0",
+			expectedError: false,
+		},
+		{
+			name:          "Custom registry with tag",
+			image:         "myregistry.io/myimage:v2.0",
+			expectedName:  "myregistry.io/myimage",
+			expectedTag:   "v2.0",
+			expectedError: false,
+		},
+		{
+			name:          "Custom registry without tag (defaults to latest)",
+			image:         "gcr.io/project/image",
+			expectedName:  "gcr.io/project/image",
+			expectedTag:   "latest",
+			expectedError: false,
+		},
+		{
+			name:          "Docker Hub library prefix (Trivy format)",
+			image:         "library/python",
+			expectedName:  "index.docker.io/library/python",
+			expectedTag:   "latest",
+			expectedError: false,
+		},
+		{
+			name:          "Docker Hub library prefix with tag",
+			image:         "library/python:3.9",
+			expectedName:  "index.docker.io/library/python",
+			expectedTag:   "3.9",
+			expectedError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			name, tag, err := parseImageNameAndTag(tt.image)
+
+			if tt.expectedError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expectedName, name, "Image name mismatch")
+				assert.Equal(t, tt.expectedTag, tag, "Image tag mismatch")
+			}
+		})
+	}
 }

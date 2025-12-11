@@ -60,9 +60,6 @@ func TestVulnerabilityReportManifest(t *testing.T) {
 		assert.Equal(t, expectedSeverity, getStringValue(t, vulnEntityAttrs, constants.AttributeVulnerabilitySeverity))
 		assert.Equal(t, expectedScore, getAttrValue(t, vulnEntityAttrs, constants.AttributeVulnerabilityScoreBase).Double())
 
-		// Check cwe.id is present
-		assert.Equal(t, expectedVulnID, getStringValue(t, vulnEntityAttrs, constants.AttributeCweID))
-
 		// Check vulnerability.reference is an array
 		rawAttrs := vulnEntityAttrs.AsRaw()
 		references, ok := rawAttrs[constants.AttributeVulnerabilityReference]
@@ -71,28 +68,13 @@ func TestVulnerabilityReportManifest(t *testing.T) {
 		assert.True(t, isSlice, "vulnerability.reference should be an array")
 	}
 
-	verifyWorkloadFinding := func(t *testing.T, attrs pcommon.Map, expectedVulnID string, expectedWorkloadName string, expectedWorkloadNameKey string, expectedNamespace string, expectedScannerName string, expectedEntityType string) {
-		assert.Equal(t, constants.EntityTypeVulnerability, getStringValue(t, attrs, constants.AttributeOtelEntityRelationshipSrcType))
-		srcIDMap := getMapValue(t, attrs, constants.AttributeOtelEntityRelationshipSourceEntityID)
-		assert.Equal(t, expectedVulnID, getStringValue(t, srcIDMap, constants.AttributeVulnerabilityID))
-
-		assert.Equal(t, expectedEntityType, getStringValue(t, attrs, constants.AttributeOtelEntityRelationshipDstType))
-		destIDMap := getMapValue(t, attrs, constants.AttributeOtelEntityRelationshipDestinationEntityID)
-		assert.Equal(t, expectedWorkloadName, getStringValue(t, destIDMap, expectedWorkloadNameKey))
-		assert.Equal(t, expectedNamespace, getStringValue(t, destIDMap, "k8s.namespace.name"))
-
-		relAttrs := getMapValue(t, attrs, constants.AttributeOtelEntityRelationshipAttributes)
-		assert.Equal(t, expectedScannerName, getStringValue(t, relAttrs, constants.AttributeScannerName))
-	}
-
 	verifyImageFinding := func(t *testing.T, attrs pcommon.Map, expectedVulnID string, expectedImageID string, expectedImageName string, expectedImageTag string, expectedScannerName string) {
 		srcIDMap := getMapValue(t, attrs, constants.AttributeOtelEntityRelationshipSourceEntityID)
 		assert.Equal(t, expectedVulnID, getStringValue(t, srcIDMap, constants.AttributeVulnerabilityID))
 
 		destIDMap := getMapValue(t, attrs, constants.AttributeOtelEntityRelationshipDestinationEntityID)
-		assert.Equal(t, expectedImageID, getStringValue(t, destIDMap, "container.image.id"))
+		assert.Equal(t, expectedImageID, getStringValue(t, destIDMap, constants.AttributeOciManifestDigest))
 		assert.Equal(t, expectedImageName, getStringValue(t, destIDMap, "container.image.name"))
-		assert.Equal(t, expectedImageTag, getStringValue(t, destIDMap, "container.image.tag"))
 
 		relAttrs := getMapValue(t, attrs, constants.AttributeOtelEntityRelationshipAttributes)
 		assert.Equal(t, expectedScannerName, getStringValue(t, relAttrs, constants.AttributeScannerName))
@@ -117,19 +99,8 @@ func TestVulnerabilityReportManifest(t *testing.T) {
 				rType, _ := attrs.Get(constants.AttributeOtelEntityRelationshipType)
 				if rType.Str() == relType {
 					destIDMap := getMapValue(t, attrs, constants.AttributeOtelEntityRelationshipDestinationEntityID)
-					if entityType == "Workload" {
-						// Check for any workload-specific name attribute
-						if _, ok := destIDMap.Get("k8s.deployment.name"); ok {
-							return lr
-						}
-						if _, ok := destIDMap.Get("k8s.daemonset.name"); ok {
-							return lr
-						}
-						if _, ok := destIDMap.Get("k8s.statefulset.name"); ok {
-							return lr
-						}
-					} else if entityType == "Image" {
-						if _, ok := destIDMap.Get("container.image.id"); ok {
+					if entityType == "Image" {
+						if _, ok := destIDMap.Get(constants.AttributeOciManifestDigest); ok {
 							return lr
 						}
 					}
@@ -141,9 +112,19 @@ func TestVulnerabilityReportManifest(t *testing.T) {
 
 	verifyContainerImage := func(t *testing.T, attrs pcommon.Map, expectedImageID string, expectedImageName string, expectedImageTag string) {
 		ids := getMapValue(t, attrs, "otel.entity.id")
-		assert.Equal(t, expectedImageID, getStringValue(t, ids, "container.image.id"))
+		assert.Equal(t, expectedImageID, getStringValue(t, ids, constants.AttributeOciManifestDigest))
 		assert.Equal(t, expectedImageName, getStringValue(t, ids, "container.image.name"))
-		assert.Equal(t, expectedImageTag, getStringValue(t, ids, "container.image.tag"))
+
+		entityAttrs := getMapValue(t, attrs, "otel.entity.attributes")
+		tagsSlice, tagsExists := entityAttrs.Get(constants.AttributeContainerImageTags)
+		assert.True(t, tagsExists, "container.image.tags should exist")
+		assert.Equal(t, pcommon.ValueTypeSlice, tagsSlice.Type(), "container.image.tags should be a slice")
+		if expectedImageTag != "" {
+			assert.Equal(t, 1, tagsSlice.Slice().Len(), "tags array should have one element")
+			assert.Equal(t, expectedImageTag, tagsSlice.Slice().At(0).Str())
+		} else {
+			assert.Equal(t, 0, tagsSlice.Slice().Len(), "tags array should be empty")
+		}
 	}
 
 	verifyNewLog := func(t *testing.T, newLog plog.ResourceLogs) {
@@ -154,8 +135,8 @@ func TestVulnerabilityReportManifest(t *testing.T) {
 		assert.Equal(t, 1, scopeLogs.Len())
 
 		logRecords := scopeLogs.At(0).LogRecords()
-		// 1 Vulnerability Entity + 1 Container Image Entity + 1 Finding (Workload) + 1 Finding (Image) = 4 logs
-		assert.Equal(t, 4, logRecords.Len())
+		// 1 Vulnerability Entity + 1 Container Image Entity + 1 Finding (Image) = 3 logs
+		assert.Equal(t, 3, logRecords.Len())
 
 		vulnLog := findLogByType(t, logRecords, constants.EventTypeEntityState, constants.EntityTypeVulnerability, "")
 		require.NotEqual(t, plog.LogRecord{}, vulnLog)
@@ -163,15 +144,11 @@ func TestVulnerabilityReportManifest(t *testing.T) {
 
 		containerImageLog := findLogByType(t, logRecords, constants.EventTypeEntityState, "KubernetesContainerImage", "")
 		require.NotEqual(t, plog.LogRecord{}, containerImageLog)
-		verifyContainerImage(t, containerImageLog.Attributes(), "sha256:83c025f0faa6799fab6645102a98138e39a9a7db2be3bc792c79d72659b1805d", "kube-proxy", "v1.32.2")
-
-		workloadFindingLog := findLogByType(t, logRecords, constants.EventTypeEntityRelationshipState, "Workload", constants.RelationshipTypeVulnerabilityFinding)
-		require.NotEqual(t, plog.LogRecord{}, workloadFindingLog)
-		verifyWorkloadFinding(t, workloadFindingLog.Attributes(), "CVE-2016-2781", "kube-proxy", "k8s.daemonset.name", "kube-system", "Trivy", constants.EntityTypeKubernetesDaemonSet)
+		verifyContainerImage(t, containerImageLog.Attributes(), "sha256:83c025f0faa6799fab6645102a98138e39a9a7db2be3bc792c79d72659b1805d", "registry.k8s.io/kube-proxy", "v1.32.2")
 
 		imageFindingLog := findLogByType(t, logRecords, constants.EventTypeEntityRelationshipState, "Image", constants.RelationshipTypeVulnerabilityFinding)
 		require.NotEqual(t, plog.LogRecord{}, imageFindingLog)
-		verifyImageFinding(t, imageFindingLog.Attributes(), "CVE-2016-2781", "sha256:83c025f0faa6799fab6645102a98138e39a9a7db2be3bc792c79d72659b1805d", "kube-proxy", "v1.32.2", "Trivy")
+		verifyImageFinding(t, imageFindingLog.Attributes(), "CVE-2016-2781", "sha256:83c025f0faa6799fab6645102a98138e39a9a7db2be3bc792c79d72659b1805d", "registry.k8s.io/kube-proxy", "v1.32.2", "Trivy")
 	}
 
 	t.Run("TestInvalidManifest", func(t *testing.T) {
@@ -276,14 +253,24 @@ func TestPodManifests(t *testing.T) {
 	}
 
 	verifyImage := func(t *testing.T, attrs pcommon.Map, expectedImages map[string]manifests.Image) {
-		assert.Equal(t, 3, attrs.Len())
+		assert.Equal(t, 4, attrs.Len())
 
 		ids := getMapValue(t, attrs, "otel.entity.id")
-		imageID := getStringValue(t, ids, "container.image.id")
+		imageID := getStringValue(t, ids, constants.AttributeOciManifestDigest)
 		image, exists := expectedImages[imageID]
 		assert.True(t, exists, "Image was not expected: %s", imageID)
 		assert.Equal(t, image.Name, getStringValue(t, ids, "container.image.name"))
-		assert.Equal(t, image.Tag, getStringValue(t, ids, "container.image.tag"))
+
+		entityAttrs := getMapValue(t, attrs, "otel.entity.attributes")
+		tagsSlice, tagsExists := entityAttrs.Get(constants.AttributeContainerImageTags)
+		assert.True(t, tagsExists, "container.image.tags should exist")
+		assert.Equal(t, pcommon.ValueTypeSlice, tagsSlice.Type(), "container.image.tags should be a slice")
+		if image.Tag != "" {
+			assert.Equal(t, 1, tagsSlice.Slice().Len(), "tags array should have one element")
+			assert.Equal(t, image.Tag, tagsSlice.Slice().At(0).Str())
+		} else {
+			assert.Equal(t, 0, tagsSlice.Slice().Len(), "tags array should be empty")
+		}
 	}
 
 	verifyNewLog := func(t *testing.T, newLog plog.ResourceLogs, expectedContainers map[string]manifests.Container, expectedImages map[string]manifests.Image) {
@@ -364,14 +351,14 @@ func TestPodManifests(t *testing.T) {
 				},
 			},
 			map[string]manifests.Image{
-				"test-container-image-id": {
+				"sha256:test-container-image-id": {
 					ImageID: "test-container-image-id",
-					Name:    "test-container-image",
+					Name:    "index.docker.io/library/test-container-image",
 					Tag:     "v2",
 				},
-				"test-init-container-image-id": {
+				"sha256:test-init-container-image-id": {
 					ImageID: "test-init-container-image-id",
-					Name:    "test-init-container-image",
+					Name:    "index.docker.io/library/test-init-container-image",
 					Tag:     "latest",
 				},
 			})
