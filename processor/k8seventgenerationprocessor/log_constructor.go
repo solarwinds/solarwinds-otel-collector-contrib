@@ -51,10 +51,11 @@ const (
 	destEntityType            = "otel.entity_relationship.destination_entity.type"
 
 	// Attributes containing additional information about container
-	otelEntityAttributes = "otel.entity.attributes"
-	k8sContainerStatus   = "sw.k8s.container.status"
-	k8sContainerInit     = "sw.k8s.container.init"
-	k8sContainerSidecar  = "sw.k8s.container.sidecar"
+	otelEntityAttributes               = "otel.entity.attributes"
+	k8sContainerStatus                 = "sw.k8s.container.status"
+	k8sContainerInit                   = "sw.k8s.container.init"
+	k8sContainerSidecar                = "sw.k8s.container.sidecar"
+	k8sContainerDeployedByK8sCollector = "sw.k8s.deployedbycollector"
 )
 
 // addEntityStateEventResourceLog adds a new ResourceLogs to the provided Logs structure
@@ -100,6 +101,10 @@ func addContainerAttributes(attrs pcommon.Map, md manifests.PodMetadata, c manif
 	ea.PutStr(k8sContainerStatus, c.State)
 	ea.PutBool(k8sContainerInit, c.IsInitContainer)
 	ea.PutBool(k8sContainerSidecar, c.IsSidecarContainer)
+
+	if c.IsDeployedByK8sCollector {
+		ea.PutBool(k8sContainerDeployedByK8sCollector, c.IsDeployedByK8sCollector)
+	}
 }
 
 // addServiceMappingsResourceLog adds a new ResourceLogs to the provided Logs structure

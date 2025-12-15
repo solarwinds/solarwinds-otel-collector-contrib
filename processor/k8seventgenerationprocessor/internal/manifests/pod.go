@@ -27,8 +27,9 @@ type PodManifest struct {
 }
 
 type PodMetadata struct {
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
+	Name      string            `json:"name"`
+	Namespace string            `json:"namespace"`
+	Labels    map[string]string `json:"labels"`
 }
 
 type PodStatus struct {
@@ -62,12 +63,13 @@ type statusContainer struct {
 }
 
 type Container struct {
-	Name               string
-	ContainerId        string
-	State              string
-	IsInitContainer    bool
-	IsSidecarContainer bool
-	Image              Image
+	Name                     string
+	ContainerId              string
+	State                    string
+	IsInitContainer          bool
+	IsSidecarContainer       bool
+	Image                    Image
+	IsDeployedByK8sCollector bool
 }
 
 type Image struct {
@@ -79,20 +81,29 @@ type Image struct {
 // GetContainers returns a map of containers from the manifest. Data of each container
 // are merged from "spec" and "status" parts of the manifest.
 func (m *PodManifest) GetContainers() map[string]Container {
+
+	isDeployedByK8sCollector := false
+	if len(m.Metadata.Labels) > 0 {
+		val, ok := m.Metadata.Labels["swo.cloud.solarwinds.com/deployed-with-k8s-collector"]
+		isDeployedByK8sCollector = ok && val == "true"
+	}
+
 	containers := make(map[string]Container, 0)
 	for _, c := range m.Spec.Containers {
 		containers[c.Name] = Container{
-			Name:               c.Name,
-			IsInitContainer:    false,
-			IsSidecarContainer: false,
+			Name:                     c.Name,
+			IsInitContainer:          false,
+			IsSidecarContainer:       false,
+			IsDeployedByK8sCollector: isDeployedByK8sCollector,
 		}
 	}
 
 	for _, ic := range m.Spec.InitContainers {
 		containers[ic.Name] = Container{
-			Name:               ic.Name,
-			IsInitContainer:    true,
-			IsSidecarContainer: ic.RestartPolicy == "Always",
+			Name:                     ic.Name,
+			IsInitContainer:          true,
+			IsSidecarContainer:       ic.RestartPolicy == "Always",
+			IsDeployedByK8sCollector: isDeployedByK8sCollector,
 		}
 	}
 
