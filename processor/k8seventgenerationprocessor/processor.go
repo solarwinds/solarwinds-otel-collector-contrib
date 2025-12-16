@@ -38,8 +38,9 @@ type k8seventgenerationprocessor struct {
 }
 
 type result struct {
-	Manifest  any // Can be *manifests.PodManifest, *manifests.EndpointManifest, or *manifests.EndpointSliceManifest
-	Timestamp pcommon.Timestamp
+	Manifest   any // Can be *manifests.PodManifest, *manifests.EndpointManifest, *manifests.EndpointSliceManifest, or *manifests.VulnerabilityReportManifest
+	Timestamp  pcommon.Timestamp
+	ClusterUID string
 }
 
 // processLogs goes through all log records and parse information about Container entities
@@ -83,15 +84,22 @@ func (cp *k8seventgenerationprocessor) generateLogRecords(resCh <-chan result, e
 		switch m := res.Manifest.(type) {
 		case *manifests.PodManifest:
 			manifestContainers := m.GetContainers()
-			containers := transformContainersToContainerLogs(manifestContainers, m.Metadata, res.Timestamp)
+			containers := transformContainersToContainerLogs(manifestContainers, m.Metadata, res.Timestamp, res.ClusterUID)
 			containers.MoveAndAppendTo(entityStateEvents)
 			containerImages := transformContainersToContainerImageLogs(manifestContainers, res.Timestamp)
 			containerImages.MoveAndAppendTo(entityStateEvents)
-			containerImageRelations := transformContainersToContainerImageRelationsLogs(manifestContainers, m.Metadata, res.Timestamp)
+			containerImageRelations := transformContainersToContainerImageRelationsLogs(manifestContainers, m.Metadata, res.Timestamp, res.ClusterUID)
 			containerImageRelations.MoveAndAppendTo(entityStateEvents)
 		case manifests.ServiceMapping:
-			mappings := transformManifestToServiceMappingLogs(m, res.Timestamp)
+			mappings := transformManifestToServiceMappingLogs(m, res.Timestamp, res.ClusterUID)
 			mappings.MoveAndAppendTo(lrsServiceMappings)
+		case *manifests.VulnerabilityReportManifest:
+			entities := transformVulnerabilitiesToEntityLogs(m, res.Timestamp, res.ClusterUID)
+			entities.MoveAndAppendTo(entityStateEvents)
+			findings := transformVulnerabilitiesToFindingLogs(m, res.Timestamp, res.ClusterUID)
+			findings.MoveAndAppendTo(entityStateEvents)
+			containerImage := transformVulnerabilityReportToContainerImageLog(m, res.Timestamp)
+			containerImage.MoveAndAppendTo(entityStateEvents)
 		}
 	}
 }
@@ -102,6 +110,11 @@ func (cp *k8seventgenerationprocessor) generateManifests(resCh chan<- result, er
 	defer close(errCh)
 
 	for _, rl := range resourceLogs.All() {
+		clusterUID := ""
+		if uid, ok := rl.Resource().Attributes().Get("sw.k8s.cluster.uid"); ok {
+			clusterUID = uid.Str()
+		}
+
 		scopeLogs := rl.ScopeLogs()
 
 		for _, sl := range scopeLogs.All() {
@@ -117,8 +130,9 @@ func (cp *k8seventgenerationprocessor) generateManifests(resCh chan<- result, er
 				} else if manifest != nil {
 					timestamp := getTimestamp(lr)
 					resCh <- result{
-						Manifest:  manifest,
-						Timestamp: timestamp,
+						Manifest:   manifest,
+						Timestamp:  timestamp,
+						ClusterUID: clusterUID,
 					}
 				}
 			}
@@ -152,6 +166,13 @@ func extractManifest(lr plog.LogRecord) (manifestPointer any, err error) {
 		body := lr.Body().AsString()
 		err = json.Unmarshal([]byte(body), &m)
 		manifest = &m
+	case "VulnerabilityReport":
+		var m manifests.VulnerabilityReportManifest
+		body := lr.Body().AsString()
+		err = json.Unmarshal([]byte(body), &m)
+		if err == nil && m.ApiVersion == "aquasecurity.github.io/v1alpha1" {
+			manifest = &m
+		}
 	default:
 		return nil, nil // Not a supported k8s manifest
 	}

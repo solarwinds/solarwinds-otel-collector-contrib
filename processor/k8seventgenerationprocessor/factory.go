@@ -37,8 +37,7 @@ func NewFactory() processor.Factory {
 	)
 }
 
-type Config struct {
-}
+type Config struct{}
 
 func createDefaultConfig() component.Config {
 	return Config{}
