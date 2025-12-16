@@ -1,6 +1,8 @@
 # Changelog
 
 ## vNext
+
+## v0.140.3
 - `k8seventgenerationprocessor` Add support for parsing `VulnerabilityReport` manifests and generating `VulnerabilityDetail` entities and `VulnerabilityFinding` relationships.
 
 ## v0.140.2
