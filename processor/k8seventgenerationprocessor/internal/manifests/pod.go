@@ -15,9 +15,7 @@
 package manifests
 
 import (
-	"errors"
-
-	"github.com/distribution/reference"
+	"github.com/google/go-containerregistry/pkg/name"
 )
 
 type PodManifest struct {
@@ -181,17 +179,31 @@ func getState(state map[string]any) string {
 	return ""
 }
 
-func parseImageNameAndTag(image string) (name, tag string, err error) {
-	ref, err := reference.Parse(image)
+// parseImageNameAndTag uses go-containerregistry to parse image references.
+// This library is used by Trivy and ensures consistent image name normalization,
+// including handling Docker Hub's implicit "library/" prefix for official images.
+// Returns the full registry+repository path to comply with OTel semantic conventions.
+// Examples:
+//   - "nginx" → name: "index.docker.io/library/nginx", tag: "latest"
+//   - "myregistry.io/myimage:v1.0" → name: "myregistry.io/myimage", tag: "v1.0"
+//   - "registry.k8s.io/kube-proxy" → name: "registry.k8s.io/kube-proxy", tag: "latest"
+func parseImageNameAndTag(image string) (imageName, tag string, err error) {
+	ref, err := name.ParseReference(image)
 	if err != nil {
 		return "", "", err
 	}
 
-	if namedTagged, ok := ref.(reference.NamedTagged); ok {
-		return namedTagged.Name(), namedTagged.Tag(), nil
-	} else if namedOnly, ok := ref.(reference.Named); ok {
-		return namedOnly.Name(), "latest", nil
+	// Use Name() to get full registry+repository path
+	// This matches OTel semantics and ensures proper entity matching
+	imageName = ref.Context().Name()
+
+	// Extract the tag (default to "latest" if not specified)
+	if tagged, ok := ref.(name.Tag); ok {
+		tag = tagged.TagStr()
 	} else {
-		return "", "", errors.New("cannot retrieve image name and tag")
+		// If it's a digest-only reference, default to "latest" tag
+		tag = "latest"
 	}
+
+	return imageName, tag, nil
 }
