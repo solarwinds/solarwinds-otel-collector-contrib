@@ -1,6 +1,8 @@
 # Changelog
 
 ## vNext
+
+## v0.140.3
 - `solarwindsentityconnector` Validate that events configuration is present.
 - `k8seventgenerationprocessor` Extend the k8seventgeneration processor with annotating Container entity state events with `sw.k8s.deployedbycollector` when applicable.
 - `k8seventgenerationprocessor` Add support for parsing `VulnerabilityReport` manifests and generating `VulnerabilityDetail` entities and `VulnerabilityFinding` relationships.
