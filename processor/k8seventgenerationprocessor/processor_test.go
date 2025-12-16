@@ -86,6 +86,12 @@ func TestVulnerabilityReportManifest(t *testing.T) {
 	}
 
 	verifyVulnerabilityFinding := func(t *testing.T, attrs pcommon.Map, expectedVulnID string, expectedImageDigest string, expectedImageName string) {
+		// Verify entity types
+		actualSrcType := getStringValue(t, attrs, "otel.entity_relationship.source_entity.type")
+		assert.Equal(t, constants.EntityTypeVulnerability, actualSrcType, "Source entity type should be VulnerabilityDetail")
+		actualDestType := getStringValue(t, attrs, "otel.entity_relationship.destination_entity.type")
+		assert.Equal(t, "KubernetesContainerImage", actualDestType, "Destination entity type should be KubernetesContainerImage")
+
 		// Verify source entity ID (Vulnerability)
 		sourceIDMap := getMapValue(t, attrs, constants.AttributeOtelEntityRelationshipSourceEntityID)
 		actualVulnID := getStringValue(t, sourceIDMap, constants.AttributeVulnerabilityID)
