@@ -6,10 +6,10 @@ require (
 	github.com/go-ole/go-ole v1.3.0
 	github.com/google/go-cmp v0.7.0
 	github.com/shirou/gopsutil/v4 v4.25.12
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/registry v0.140.3
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil v0.140.3
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.140.3
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/wmi v0.140.3
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/registry v0.140.4
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil v0.140.4
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.140.4
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/wmi v0.140.4
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/collector/component v1.46.0
 	go.opentelemetry.io/collector/component/componenttest v0.140.0

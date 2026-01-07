@@ -2,6 +2,9 @@
 
 ## vNext
 
+## v0.140.4
+- No changes
+
 ## v0.140.3
 - `solarwindsentityconnector` Validate that events configuration is present.
 - `k8seventgenerationprocessor` Extend the k8seventgeneration processor with annotating Container entity state events with `sw.k8s.deployedbycollector` when applicable.
