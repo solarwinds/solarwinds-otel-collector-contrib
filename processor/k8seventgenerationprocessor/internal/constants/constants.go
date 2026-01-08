@@ -29,21 +29,42 @@ const (
 	EventTypeEntityState             = "entity_state"
 	EventTypeEntityRelationshipState = "entity_relationship_state"
 
-	EntityTypeVulnerability              = "VulnerabilityDetail"
-	RelationshipTypeVulnerabilityFinding = "VulnerabilityFinding"
+	EntityTypeVulnerability                 = "VulnerabilityDetail"
+	EntityTypeVulnerabilityResourceFinding  = "VulnerabilityResourceFinding"
+	RelationshipTypeVulnerabilityFinding    = "VulnerabilityFinding"
+	RelationshipTypeVulnerabilityHasFinding = "VulnerabilityHasFinding"
+	RelationshipTypeVulnerabilityFoundOn    = "VulnerabilityFoundOn"
 
 	// Vulnerability Attributes
-	AttributeVulnerabilityID          = "vulnerability.id"
-	AttributeVulnerabilityDescription = "vulnerability.description"
-	AttributeVulnerabilitySeverity    = "vulnerability.severity"
-	AttributeVulnerabilityScoreBase   = "vulnerability.score.base"
-	AttributeVulnerabilityEnumeration = "vulnerability.enumeration"
-	AttributeVulnerabilityReference   = "vulnerability.reference"
+	AttributeVulnerabilityID               = "vulnerability.id"
+	AttributeVulnerabilityDescription      = "vulnerability.description"
+	AttributeVulnerabilitySeverity         = "vulnerability.severity"
+	AttributeVulnerabilityScoreBase        = "vulnerability.score.base"
+	AttributeVulnerabilityScoreVersion     = "vulnerability.score.version"
+	AttributeVulnerabilityEnumeration      = "vulnerability.enumeration"
+	AttributeVulnerabilityReference        = "vulnerability.reference"
+	AttributeVulnerabilityClassification   = "vulnerability.classification"
+	AttributeVulnerabilityPublishedDate    = "vulnerability.published_date"
+	AttributeVulnerabilityLastModifiedDate = "vulnerability.last_modified_date"
+
+	// Relationship Attributes (for VulnerabilityFinding - deprecated, keeping for backward compatibility)
+	AttributeRelationshipSeverity         = "severity"
+	AttributeRelationshipResource         = "resource"
+	AttributeRelationshipInstalledVersion = "installedVersion"
+	AttributeRelationshipFixedVersion     = "fixedVersion"
+
+	// VulnerabilityResourceFinding Entity Attributes
+	AttributeFindingResource           = "vulnerability.resource"
+	AttributeFindingInstalledVersion   = "vulnerability.installed_version"
+	AttributeFindingFixedVersion       = "vulnerability.fixed_version"
+	AttributeFindingVendorSeverity     = "vulnerability.severity.vendor"
+	AttributeFindingScoreEnvironmental = "vulnerability.score.environmental"
+	AttributeFindingScoreVersion       = "vulnerability.score.version"
 
 	// Scanner Attributes
-	AttributeScannerVendor  = "scannerVendor"
-	AttributeScannerName    = "scannerName"
-	AttributeScannerVersion = "scannerVersion"
+	AttributeScannerVendor  = "vulnerability.scanner.vendor"
+	AttributeScannerName    = "vulnerability.scanner.name"
+	AttributeScannerVersion = "vulnerability.scanner.version"
 
 	// OCI Attributes
 	AttributeOciManifestDigest = "oci.manifest.digest"

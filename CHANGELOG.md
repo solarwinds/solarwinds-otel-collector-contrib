@@ -2,6 +2,9 @@
 
 ## vNext
 
+### k8seventgenerationprocessor
+- ⚠️ Breaking change: Restructured vulnerability schema to two-entity model with updated attribute names to match OpenTelemetry conventions and GraphQL schema requirements.
+
 ## v0.140.4
 - No changes
 
