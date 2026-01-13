@@ -33,14 +33,23 @@ const (
 	RelationshipTypeVulnerabilityFinding = "VulnerabilityFinding"
 
 	// Vulnerability Attributes
-	AttributeVulnerabilityID          = "vulnerability.id"
-	AttributeVulnerabilityDescription = "vulnerability.description"
-	AttributeVulnerabilitySeverity    = "vulnerability.severity"
-	AttributeVulnerabilityScoreBase   = "vulnerability.score.base"
-	AttributeVulnerabilityEnumeration = "vulnerability.enumeration"
-	AttributeVulnerabilityReference   = "vulnerability.reference"
+	AttributeVulnerabilityID                 = "vulnerability.id"
+	AttributeVulnerabilityDescription        = "vulnerability.description"
+	AttributeVulnerabilitySeverity           = "vulnerability.severity"
+	AttributeVulnerabilityScoreBase          = "vulnerability.score.base"
+	AttributeVulnerabilityScoreVersion       = "vulnerability.score.version"
+	AttributeVulnerabilityEnumeration        = "vulnerability.enumeration"
+	AttributeVulnerabilityReference          = "vulnerability.reference"
+	AttributeVulnerabilityClassification     = "vulnerability.classification"
+	AttributeVulnerabilityPublishedDate      = "vulnerability.published_date"
+	AttributeVulnerabilityLastModifiedDate   = "vulnerability.last_modified_date"
+	AttributeVulnerabilityResource           = "vulnerability.resource"
+	AttributeVulnerabilityInstalledVersion   = "vulnerability.installed_version"
+	AttributeVulnerabilityFixedVersion       = "vulnerability.fixed_version"
+	AttributeVulnerabilityVendorSeverity     = "vulnerability.severity.vendor"
+	AttributeVulnerabilityScoreEnvironmental = "vulnerability.score.environmental"
 
-	// Scanner Attributes
+	// Scanner Attributes (GraphQL property names for relationship attributes)
 	AttributeScannerVendor  = "scannerVendor"
 	AttributeScannerName    = "scannerName"
 	AttributeScannerVersion = "scannerVersion"

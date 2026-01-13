@@ -60,6 +60,9 @@ func TestVulnerabilityReportManifest(t *testing.T) {
 		assert.Equal(t, expectedSeverity, getStringValue(t, vulnEntityAttrs, constants.AttributeVulnerabilitySeverity))
 		assert.Equal(t, expectedScore, getAttrValue(t, vulnEntityAttrs, constants.AttributeVulnerabilityScoreBase).Double())
 
+		// Check classification is always set
+		assert.Equal(t, "CVSS", getStringValue(t, vulnEntityAttrs, constants.AttributeVulnerabilityClassification))
+
 		// Check vulnerability.reference is an array
 		rawAttrs := vulnEntityAttrs.AsRaw()
 		references, ok := rawAttrs[constants.AttributeVulnerabilityReference]
@@ -85,30 +88,48 @@ func TestVulnerabilityReportManifest(t *testing.T) {
 		}
 	}
 
-	verifyVulnerabilityFinding := func(t *testing.T, attrs pcommon.Map, expectedVulnID string, expectedImageDigest string, expectedImageName string) {
-		// Verify entity types
-		actualSrcType := getStringValue(t, attrs, "otel.entity_relationship.source_entity.type")
-		assert.Equal(t, constants.EntityTypeVulnerability, actualSrcType, "Source entity type should be VulnerabilityDetail")
-		actualDestType := getStringValue(t, attrs, "otel.entity_relationship.destination_entity.type")
-		assert.Equal(t, "KubernetesContainerImage", actualDestType, "Destination entity type should be KubernetesContainerImage")
+	verifyEnhancedVulnerabilityDetailEntity := func(t *testing.T, attrs pcommon.Map) {
+		// Verify entity ID contains required fields: vulnerability.id, resource, installed_version (3-key composite ID)
+		entityIDMap := getMapValue(t, attrs, constants.AttributeOtelEntityID)
+		assert.NotEmpty(t, getStringValue(t, entityIDMap, constants.AttributeVulnerabilityID), "Entity should have vulnerability.id in ID")
+		assert.NotEmpty(t, getStringValue(t, entityIDMap, constants.AttributeVulnerabilityResource), "Entity should have resource in ID")
+		assert.NotEmpty(t, getStringValue(t, entityIDMap, constants.AttributeVulnerabilityInstalledVersion), "Entity should have installed_version in ID")
 
-		// Verify source entity ID (Vulnerability)
+		// Verify entity attributes contain merged properties from both old entities
+		entityAttrs := getMapValue(t, attrs, constants.AttributeOtelEntityAttributes)
+		assert.NotEmpty(t, getStringValue(t, entityAttrs, constants.AttributeVulnerabilityResource), "Entity should have resource attribute")
+		assert.NotEmpty(t, getStringValue(t, entityAttrs, constants.AttributeVulnerabilityInstalledVersion), "Entity should have installedVersion attribute")
+
+		// Scanner metadata should NOT be in entity (it's in the relationship now)
+		_, scannerNameExists := entityAttrs.Get(constants.AttributeScannerName)
+		assert.False(t, scannerNameExists, "Scanner metadata should not be in entity attributes")
+	}
+
+	verifyVulnerabilityFindingRelationship := func(t *testing.T, attrs pcommon.Map, expectedImageDigest string, expectedImageName string) {
+		// Verify relationship connects VulnerabilityDetail (3-key) -> KubernetesContainerImage
+		actualSrcType := getStringValue(t, attrs, "otel.entity_relationship.source_entity.type")
+		assert.Equal(t, constants.EntityTypeVulnerability, actualSrcType, "Source should be VulnerabilityDetail")
+		actualDestType := getStringValue(t, attrs, "otel.entity_relationship.destination_entity.type")
+		assert.Equal(t, "KubernetesContainerImage", actualDestType, "Destination should be KubernetesContainerImage")
+
+		// Verify source entity ID (composite 3-key ID)
 		sourceIDMap := getMapValue(t, attrs, constants.AttributeOtelEntityRelationshipSourceEntityID)
-		actualVulnID := getStringValue(t, sourceIDMap, constants.AttributeVulnerabilityID)
-		assert.Equal(t, expectedVulnID, actualVulnID, "Finding should reference correct vulnerability ID")
+		assert.NotEmpty(t, getStringValue(t, sourceIDMap, constants.AttributeVulnerabilityID), "Source should have vulnerability ID")
+		assert.NotEmpty(t, getStringValue(t, sourceIDMap, constants.AttributeVulnerabilityResource), "Source should have resource")
+		assert.NotEmpty(t, getStringValue(t, sourceIDMap, constants.AttributeVulnerabilityInstalledVersion), "Source should have installed_version")
 
 		// Verify destination entity ID (Container Image)
 		destIDMap := getMapValue(t, attrs, constants.AttributeOtelEntityRelationshipDestinationEntityID)
 		actualDigest := getStringValue(t, destIDMap, constants.AttributeOciManifestDigest)
-		assert.Equal(t, expectedImageDigest, actualDigest, "Finding should reference correct image digest")
+		assert.Equal(t, expectedImageDigest, actualDigest, "Relationship should reference correct image digest")
 		actualImageName := getStringValue(t, destIDMap, "container.image.name")
-		assert.Equal(t, expectedImageName, actualImageName, "Finding should reference correct image name")
+		assert.Equal(t, expectedImageName, actualImageName, "Relationship should reference correct image name")
 
-		// Verify relationship attributes (scanner info)
+		// Verify scanner metadata in relationship attributes
 		relAttrs := getMapValue(t, attrs, constants.AttributeOtelEntityRelationshipAttributes)
-		assert.Equal(t, "Trivy", getStringValue(t, relAttrs, constants.AttributeScannerName))
-		assert.Equal(t, "Aqua Security", getStringValue(t, relAttrs, constants.AttributeScannerVendor))
-		assert.Equal(t, "0.66.0", getStringValue(t, relAttrs, constants.AttributeScannerVersion))
+		assert.Equal(t, "Trivy", getStringValue(t, relAttrs, constants.AttributeScannerName), "Scanner name should be in relationship attributes")
+		assert.Equal(t, "Aqua Security", getStringValue(t, relAttrs, constants.AttributeScannerVendor), "Scanner vendor should be in relationship attributes")
+		assert.Equal(t, "0.66.0", getStringValue(t, relAttrs, constants.AttributeScannerVersion), "Scanner version should be in relationship attributes")
 	}
 
 	verifyNewLog := func(t *testing.T, newLog plog.ResourceLogs) {
@@ -119,12 +140,12 @@ func TestVulnerabilityReportManifest(t *testing.T) {
 		assert.Equal(t, 1, scopeLogs.Len())
 
 		logRecords := scopeLogs.At(0).LogRecords()
-		// 2 Vulnerability Entities + 1 Container Image Entity + 2 Findings (Image) = 5 logs
-		assert.Equal(t, 5, logRecords.Len())
+		// 5 VulnerabilityDetail (enhanced with 3-key ID) + 5 VulnerabilityFinding relationships + 1 KubernetesContainerImage = 11 logs
+		assert.Equal(t, 11, logRecords.Len())
 
-		// Count vulnerability entities
+		// Count vulnerability entities and relationships
 		vulnCount := 0
-		findingCount := 0
+		findingRelCount := 0
 		containerImageCount := 0
 		findingsVerified := make(map[string]bool) // Track which vulnerabilities have been verified in findings
 
@@ -137,11 +158,20 @@ func TestVulnerabilityReportManifest(t *testing.T) {
 				entityType := getStringValue(t, attrs, constants.AttributeOtelEntityType)
 				if entityType == constants.EntityTypeVulnerability {
 					vulnCount++
+					// Verify this is the enhanced entity with 3-key composite ID
+					verifyEnhancedVulnerabilityDetailEntity(t, attrs)
+
 					cveID := getStringValue(t, getMapValue(t, attrs, constants.AttributeOtelEntityID), constants.AttributeVulnerabilityID)
 					if cveID == "CVE-2016-2781" {
-						verifyVulnerabilityEntity(t, attrs, "CVE-2016-2781", "LOW", 6.5)
+						verifyVulnerabilityEntity(t, attrs, "CVE-2016-2781", "MEDIUM", 6.5)
 					} else if cveID == "CVE-2017-18018" {
-						verifyVulnerabilityEntity(t, attrs, "CVE-2017-18018", "LOW", 4.7)
+						verifyVulnerabilityEntity(t, attrs, "CVE-2017-18018", "MEDIUM", 4.7)
+					} else if cveID == "CVE-2024-9999" {
+						verifyVulnerabilityEntity(t, attrs, "CVE-2024-9999", "CRITICAL", 9.8)
+					} else if cveID == "CVE-2024-8888" {
+						verifyVulnerabilityEntity(t, attrs, "CVE-2024-8888", "HIGH", 7.5)
+					} else if cveID == "CVE-2023-7777" {
+						verifyVulnerabilityEntity(t, attrs, "CVE-2023-7777", "LOW", 2.1)
 					}
 				} else if entityType == "KubernetesContainerImage" {
 					containerImageCount++
@@ -150,32 +180,31 @@ func TestVulnerabilityReportManifest(t *testing.T) {
 			} else if eventType == constants.EventTypeEntityRelationshipState {
 				relType := getStringValue(t, attrs, constants.AttributeOtelEntityRelationshipType)
 				if relType == constants.RelationshipTypeVulnerabilityFinding {
-					findingCount++
-
-					// Verify the finding content
-					sourceIDMap := getMapValue(t, attrs, constants.AttributeOtelEntityRelationshipSourceEntityID)
-					vulnID := getStringValue(t, sourceIDMap, constants.AttributeVulnerabilityID)
-
-					verifyVulnerabilityFinding(
+					findingRelCount++
+					// Verify VulnerabilityDetail (3-key) -> KubernetesContainerImage relationship
+					verifyVulnerabilityFindingRelationship(
 						t,
 						attrs,
-						vulnID,
 						"sha256:83c025f0faa6799fab6645102a98138e39a9a7db2be3bc792c79d72659b1805d",
 						"registry.k8s.io/kube-proxy",
 					)
-
+					sourceIDMap := getMapValue(t, attrs, constants.AttributeOtelEntityRelationshipSourceEntityID)
+					vulnID := getStringValue(t, sourceIDMap, constants.AttributeVulnerabilityID)
 					findingsVerified[vulnID] = true
 				}
 			}
 		}
 
-		assert.Equal(t, 2, vulnCount, "Should have 2 vulnerability entities")
-		assert.Equal(t, 1, containerImageCount, "Should have 1 container image entity")
-		assert.Equal(t, 2, findingCount, "Should have 2 vulnerability findings")
+		assert.Equal(t, 5, vulnCount, "Should have 5 enhanced VulnerabilityDetail entities")
+		assert.Equal(t, 1, containerImageCount, "Should have 1 KubernetesContainerImage entity")
+		assert.Equal(t, 5, findingRelCount, "Should have 5 VulnerabilityFinding relationships")
 
-		// Ensure both vulnerabilities were verified in findings
+		// Ensure all vulnerabilities were verified in findings
 		assert.True(t, findingsVerified["CVE-2016-2781"], "CVE-2016-2781 finding should be verified")
 		assert.True(t, findingsVerified["CVE-2017-18018"], "CVE-2017-18018 finding should be verified")
+		assert.True(t, findingsVerified["CVE-2024-9999"], "CVE-2024-9999 finding should be verified")
+		assert.True(t, findingsVerified["CVE-2024-8888"], "CVE-2024-8888 finding should be verified")
+		assert.True(t, findingsVerified["CVE-2023-7777"], "CVE-2023-7777 finding should be verified")
 	}
 
 	t.Run("TestInvalidManifest", func(t *testing.T) {
