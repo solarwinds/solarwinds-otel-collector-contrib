@@ -2,6 +2,7 @@
 
 ## vNext
 
+## v0.140.5
 - `k8seventgenerationprocessor` Restructured vulnerability schema to two-entity model (VulnerabilityDetail with composite ID, KubernetesContainerImage) connected by single VulnerabilityFinding relationship, with updated attribute names to match OpenTelemetry conventions.
 
 ## v0.140.4
@@ -40,7 +41,6 @@
 
 ## v0.136.2
 - No changes
-
 
 ## v0.136.1
 - Updated `swohostmetricsreceiver` dependencies to latest versions
