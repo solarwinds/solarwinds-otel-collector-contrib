@@ -92,13 +92,13 @@ func TestVulnerabilityReportManifest(t *testing.T) {
 		// Verify entity ID contains required fields: vulnerability.id, resource, installed_version (3-key composite ID)
 		entityIDMap := getMapValue(t, attrs, constants.AttributeOtelEntityID)
 		assert.NotEmpty(t, getStringValue(t, entityIDMap, constants.AttributeVulnerabilityID), "Entity should have vulnerability.id in ID")
-		assert.NotEmpty(t, getStringValue(t, entityIDMap, constants.AttributeFindingResource), "Entity should have resource in ID")
-		assert.NotEmpty(t, getStringValue(t, entityIDMap, constants.AttributeFindingInstalledVersion), "Entity should have installed_version in ID")
+		assert.NotEmpty(t, getStringValue(t, entityIDMap, constants.AttributeVulnerabilityResource), "Entity should have resource in ID")
+		assert.NotEmpty(t, getStringValue(t, entityIDMap, constants.AttributeVulnerabilityInstalledVersion), "Entity should have installed_version in ID")
 
 		// Verify entity attributes contain merged properties from both old entities
 		entityAttrs := getMapValue(t, attrs, constants.AttributeOtelEntityAttributes)
-		assert.NotEmpty(t, getStringValue(t, entityAttrs, constants.AttributeFindingResource), "Entity should have resource attribute")
-		assert.NotEmpty(t, getStringValue(t, entityAttrs, constants.AttributeFindingInstalledVersion), "Entity should have installedVersion attribute")
+		assert.NotEmpty(t, getStringValue(t, entityAttrs, constants.AttributeVulnerabilityResource), "Entity should have resource attribute")
+		assert.NotEmpty(t, getStringValue(t, entityAttrs, constants.AttributeVulnerabilityInstalledVersion), "Entity should have installedVersion attribute")
 
 		// Scanner metadata should NOT be in entity (it's in the relationship now)
 		_, scannerNameExists := entityAttrs.Get(constants.AttributeScannerName)
@@ -115,8 +115,8 @@ func TestVulnerabilityReportManifest(t *testing.T) {
 		// Verify source entity ID (composite 3-key ID)
 		sourceIDMap := getMapValue(t, attrs, constants.AttributeOtelEntityRelationshipSourceEntityID)
 		assert.NotEmpty(t, getStringValue(t, sourceIDMap, constants.AttributeVulnerabilityID), "Source should have vulnerability ID")
-		assert.NotEmpty(t, getStringValue(t, sourceIDMap, constants.AttributeFindingResource), "Source should have resource")
-		assert.NotEmpty(t, getStringValue(t, sourceIDMap, constants.AttributeFindingInstalledVersion), "Source should have installed_version")
+		assert.NotEmpty(t, getStringValue(t, sourceIDMap, constants.AttributeVulnerabilityResource), "Source should have resource")
+		assert.NotEmpty(t, getStringValue(t, sourceIDMap, constants.AttributeVulnerabilityInstalledVersion), "Source should have installed_version")
 
 		// Verify destination entity ID (Container Image)
 		destIDMap := getMapValue(t, attrs, constants.AttributeOtelEntityRelationshipDestinationEntityID)
