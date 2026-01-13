@@ -157,6 +157,18 @@ Processes EndpointSlice resources (newer Endpoints API) for service mappings.
 
 Processes VulnerabilityReport CRDs from Trivy Operator (aquasecurity.github.io/v1alpha1).
 
+The processor implements a **two-entity, one-relationship model** for vulnerabilities:
+
+1. **VulnerabilityDetail Entity**: Represents each CVE/vulnerability observed on a specific resource with a specific version
+   - **Composite ID**: `vulnerability.id` + `resource` + `installedVersion` (uniquely identifies each finding)
+   - **Merged properties**: resource, installedVersion, fixedVersion, vendorSeverity, scoreEnvironmental, scannerVendor, scannerName, scannerVersion
+   - **Calculated severity**: severity is calculated from CVSS base score using standard ranges (CRITICAL ≥ 9.0, HIGH ≥ 7.0, MEDIUM ≥ 4.0, LOW > 0)
+   - **Additional fields**: classification ("CVSS"), publishedDate, lastModifiedDate, CVSS vectors and scores
+
+2. **KubernetesContainerImage Entity**: The scanned container image
+
+3. **VulnerabilityFinding Relationship**: Links VulnerabilityDetail → KubernetesContainerImage with scanner metadata
+
 **Input Example:**
 
 ```json
@@ -204,12 +216,13 @@ Processes VulnerabilityReport CRDs from Trivy Operator (aquasecurity.github.io/v
 ```
 
 **Generated Entities:**
-- `VulnerabilityDetail` entity for each unique CVE with severity, CVSS scores, description
-- `VulnerabilityResourceFinding` entity for each resource-vulnerability pair with installed/fixed versions
+- `VulnerabilityDetail` entity for each unique CVE-resource-version combination
+  - Composite ID: `vulnerability.id` + `resource` + `installedVersion`
+  - Attributes include: severity (calculated from CVSS base score), CVSS scores, resource, installedVersion, fixedVersion, vendorSeverity, classification, description, links
 - `KubernetesContainerImage` entity for the scanned image
-- Relationships:
-  - `has_finding`: VulnerabilityResourceFinding → VulnerabilityDetail
-  - `found_on`: VulnerabilityResourceFinding → KubernetesContainerImage
+- Relationship:
+  - `VulnerabilityFinding`: VulnerabilityDetail → KubernetesContainerImage
+    - Includes scanner metadata: scannerVendor, scannerName, scannerVersion
 
 ## Output Format
 
@@ -226,8 +239,8 @@ Scope Attributes:
 
 Log Record Attributes:
   - otel.entity.event.type: "entity_state" (or "entity_relationship_state")
-  - otel.entity.type: "KubernetesContainer" | "KubernetesContainerImage" | "VulnerabilityDetail" | "VulnerabilityResourceFinding"
-  - otel.entity.id: Map of telemetry mapping attributes (pod name, namespace, container name, image digest, etc.)
+  - otel.entity.type: "KubernetesContainer" | "KubernetesContainerImage" | "VulnerabilityDetail"
+  - otel.entity.id: Map of telemetry mapping attributes (pod name, namespace, container name, image digest, vulnerability ID, etc.)
   - otel.entity.attributes: Map of entity-specific attributes
 ```
 
@@ -282,6 +295,66 @@ Log Record Attributes:
 }
 ```
 
+**Example VulnerabilityDetail Entity Log Record:**
+
+```json
+{
+  "observedTimestamp": "2025-01-08T10:00:00Z",
+  "attributes": {
+    "otel.entity.event.type": "entity_state",
+    "otel.entity.type": "VulnerabilityDetail",
+    "otel.entity.id": {
+      "vulnerability.id": "CVE-2023-12345",
+      "resource": "nginx",
+      "installedVersion": "1.21"
+    },
+    "otel.entity.attributes": {
+      "vulnerability.severity": "HIGH",
+      "vulnerability.score.base": 7.5,
+      "vulnerability.classification": "CVSS",
+      "vulnerability.description": "Example vulnerability",
+      "vulnerability.links": ["https://nvd.nist.gov/vuln/detail/CVE-2023-12345"],
+      "resource": "nginx",
+      "installedVersion": "1.21",
+      "fixedVersion": "1.22",
+      "vendorSeverity": "HIGH",
+      "scoreEnvironmental": 7.5,
+      "scannerVendor": "Aqua Security",
+      "scannerName": "Trivy",
+      "scannerVersion": "0.50.0"
+    }
+  }
+}
+```
+
+**Example VulnerabilityFinding Relationship Log Record:**
+
+```json
+{
+  "observedTimestamp": "2025-01-08T10:00:00Z",
+  "attributes": {
+    "otel.entity.event.type": "entity_relationship_state",
+    "otel.entity_relationship.type": "VulnerabilityFinding",
+    "otel.entity_relationship.source_entity.type": "VulnerabilityDetail",
+    "otel.entity_relationship.source_entity.id": {
+      "vulnerability.id": "CVE-2023-12345",
+      "resource": "nginx",
+      "installedVersion": "1.21"
+    },
+    "otel.entity_relationship.destination_entity.type": "KubernetesContainerImage",
+    "otel.entity_relationship.destination_entity.id": {
+      "oci.manifest.digest": "sha256:abc123def456",
+      "container.image.name": "docker.io/library/nginx"
+    },
+    "otel.entity_relationship.attributes": {
+      "scannerVendor": "Aqua Security",
+      "scannerName": "Trivy",
+      "scannerVersion": "0.50.0"
+    }
+  }
+}
+```
+
 ### Service Mappings
 
 Service mappings are emitted as separate log records:
@@ -309,5 +382,7 @@ Log Record Attributes:
 - The processor does not modify existing log records; it only appends new ones
 - Container images are deduplicated by digest and name (tags are stored as attributes)
 - VulnerabilityReport processing requires `apiVersion: aquasecurity.github.io/v1alpha1`
+- Vulnerability severity is calculated from CVSS base score using standard ranges (CRITICAL ≥ 9.0, HIGH ≥ 7.0, MEDIUM ≥ 4.0, LOW > 0)
+- VulnerabilityDetail uses a composite ID (vulnerability.id + resource + installedVersion) to uniquely identify each finding
 - Timestamps are derived from log record's ObservedTimestamp, Timestamp, or current time (in that order)
 - All entity IDs use telemetry mapping semantics for correlation with metrics and traces

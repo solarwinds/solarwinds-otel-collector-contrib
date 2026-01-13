@@ -29,11 +29,8 @@ const (
 	EventTypeEntityState             = "entity_state"
 	EventTypeEntityRelationshipState = "entity_relationship_state"
 
-	EntityTypeVulnerability                 = "VulnerabilityDetail"
-	EntityTypeVulnerabilityResourceFinding  = "VulnerabilityResourceFinding"
-	RelationshipTypeVulnerabilityFinding    = "VulnerabilityFinding"
-	RelationshipTypeVulnerabilityHasFinding = "VulnerabilityHasFinding"
-	RelationshipTypeVulnerabilityFoundOn    = "VulnerabilityFoundOn"
+	EntityTypeVulnerability              = "VulnerabilityDetail"
+	RelationshipTypeVulnerabilityFinding = "VulnerabilityFinding"
 
 	// Vulnerability Attributes
 	AttributeVulnerabilityID               = "vulnerability.id"
@@ -47,13 +44,7 @@ const (
 	AttributeVulnerabilityPublishedDate    = "vulnerability.published_date"
 	AttributeVulnerabilityLastModifiedDate = "vulnerability.last_modified_date"
 
-	// Relationship Attributes (for VulnerabilityFinding - deprecated, keeping for backward compatibility)
-	AttributeRelationshipSeverity         = "severity"
-	AttributeRelationshipResource         = "resource"
-	AttributeRelationshipInstalledVersion = "installedVersion"
-	AttributeRelationshipFixedVersion     = "fixedVersion"
-
-	// VulnerabilityResourceFinding Entity Attributes
+	// VulnerabilityDetail Entity Finding Attributes
 	AttributeFindingResource           = "vulnerability.resource"
 	AttributeFindingInstalledVersion   = "vulnerability.installed_version"
 	AttributeFindingFixedVersion       = "vulnerability.fixed_version"
@@ -61,10 +52,10 @@ const (
 	AttributeFindingScoreEnvironmental = "vulnerability.score.environmental"
 	AttributeFindingScoreVersion       = "vulnerability.score.version"
 
-	// Scanner Attributes
-	AttributeScannerVendor  = "vulnerability.scanner.vendor"
-	AttributeScannerName    = "vulnerability.scanner.name"
-	AttributeScannerVersion = "vulnerability.scanner.version"
+	// Scanner Attributes (GraphQL property names for relationship attributes)
+	AttributeScannerVendor  = "scannerVendor"
+	AttributeScannerName    = "scannerName"
+	AttributeScannerVersion = "scannerVersion"
 
 	// OCI Attributes
 	AttributeOciManifestDigest = "oci.manifest.digest"

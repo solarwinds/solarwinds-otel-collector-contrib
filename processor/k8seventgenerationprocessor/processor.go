@@ -96,12 +96,8 @@ func (cp *k8seventgenerationprocessor) generateLogRecords(resCh <-chan result, e
 		case *manifests.VulnerabilityReportManifest:
 			entities := transformVulnerabilitiesToEntityLogs(m, res.Timestamp, res.ClusterUID)
 			entities.MoveAndAppendTo(entityStateEvents)
-			findingEntities := transformVulnerabilitiesToResourceFindingEntityLogs(m, res.Timestamp, res.ClusterUID)
-			findingEntities.MoveAndAppendTo(entityStateEvents)
-			hasFindingRels := transformVulnerabilitiesToHasFindingLogs(m, res.Timestamp, res.ClusterUID)
-			hasFindingRels.MoveAndAppendTo(entityStateEvents)
-			foundOnRels := transformVulnerabilitiesToFoundOnLogs(m, res.Timestamp, res.ClusterUID)
-			foundOnRels.MoveAndAppendTo(entityStateEvents)
+			findingRels := transformVulnerabilitiesToFindingLogs(m, res.Timestamp, res.ClusterUID)
+			findingRels.MoveAndAppendTo(entityStateEvents)
 			containerImage := transformVulnerabilityReportToContainerImageLog(m, res.Timestamp)
 			containerImage.MoveAndAppendTo(entityStateEvents)
 		}
