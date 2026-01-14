@@ -462,14 +462,11 @@ func (sb *brokerSubscription) createMetrics(meta *subscriptionMetadata, value *s
 	rm := metrics.ResourceMetrics().At(0)
 	sm := rm.ScopeMetrics().At(0)
 	m := sm.Metrics().AppendEmpty()
-	
-	var metricName string
-	if meta.sensor != nil {
-		metricName = fmt.Sprintf("sw.otelcol.mqtt.sensor.%s", meta.metric.Name)
-	} else {
-		metricName = fmt.Sprintf("sw.otelcol.mqtt.broker.%s", meta.metric.Name)
-	}
-	m.SetName(metricName)
+    prefix := "broker"
+    if meta.sensor != nil {
+        prefix = "sensor"
+    }
+    m.SetName(fmt.Sprintf("sw.otelcol.mqtt.%s.%s", prefix, meta.metric.Name))
 	m.SetDescription(meta.metric.Desc)
 	m.SetUnit(meta.metric.Unit)
 	m.SetEmptyGauge()
