@@ -4,7 +4,7 @@ go 1.25.5
 
 require (
 	github.com/dgraph-io/ristretto/v2 v2.3.0
-	github.com/go-viper/mapstructure/v2 v2.4.0
+	github.com/go-viper/mapstructure/v2 v2.5.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.140.1
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl v0.140.1
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.140.1
