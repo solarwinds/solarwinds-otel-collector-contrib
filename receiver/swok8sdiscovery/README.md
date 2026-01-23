@@ -13,6 +13,8 @@
 
 The `swok8sdiscovery` receiver performs periodic discovery of databases used in a Kubernetes cluster and emits **entity events as OpenTelemetry log records** describing discovered database instances and their relationships to owning Kubernetes workloads (Deployment / StatefulSet / DaemonSet / Job / CronJob).
 
+**Important**: Database entities are only created when **exactly one port** is discovered. This ensures high-confidence discoveries and prevents ambiguous topology. For containers or services with multiple ports, configure `default_port` in the matching image rule to specify which port represents the database endpoint.
+
 Discovery currently supports two complementary strategies (both optional – enable either or both):
 
 1. Image-based discovery (`database.image_rules`):
@@ -32,8 +34,7 @@ Each discovered database produces:
 |-----------|-------------|
 | `otel.entity.event.type` | `entity_state` or `entity_relationship_state` |
 | `otel.entity.type` | Always `DiscoveredDatabaseInstance` for entity events |
-| `sw.discovery.dbo.address` | Database endpoint |
-| `sw.discovery.dbo.possible.ports` | Detected ports on database endpoint |
+| `sw.discovery.dbo.address` | Database endpoint in `host:port` format (e.g., `mongo-svc.db:27017` or `my-db.rds.amazonaws.com:3306`) |
 | `sw.discovery.dbo.type` | Logical database type (e.g. `mongo`, `postgres`, `redis`) |
 | `sw.discovery.dbo.name` | Endpoint plus workload name (`<endpoint>#<workload>`) when workload present |
 | `sw.discovery.source` | Value of configured `reporter` (for provenance) |
@@ -57,7 +58,7 @@ Top-level settings:
 |-------|------|----------|-------------|
 | `database_type` | string | yes | Logical database type label. |
 | `patterns` | []string (regex) | yes | Regex patterns matched against full container image (e.g. `docker.io/library/mongo:.*`). |
-| `default_port` | int | no | If present and exists among container ports, only that port will be emitted (deduping multi-port images). |
+| `default_port` | int | no | Specifies which port to use when a container exposes multiple ports. When set and found among container ports, only that port is considered, enabling entity creation. Without this, multi-port containers will not generate entities. |
 
 `database.domain_rules` entries:
 | Field | Type | Required | Description |

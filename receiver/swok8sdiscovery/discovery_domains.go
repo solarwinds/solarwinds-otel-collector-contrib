@@ -139,6 +139,30 @@ func (r *swok8sdiscoveryReceiver) discoverDatabasesByDomains(ctx context.Context
 			svcPorts = append(svcPorts, p.Port)
 		}
 
+		// Validate port count: only create entity when exactly one port is present
+		if len(svcPorts) == 0 {
+			r.setting.Logger.Debug("Skipping ExternalName service with no ports",
+				zap.String("service", svc.Name),
+				zap.String("namespace", svc.Namespace),
+				zap.String("external_name", external),
+				zap.String("database_type", matchedRule.DatabaseType))
+			continue
+		}
+
+		if len(svcPorts) != 1 {
+			// TODO: Consider implementing direct connection attempts to identify the actual database port
+			// when multiple ports are detected. We could attempt database-specific handshakes on each
+			// port to automatically determine which one is the database port, eliminating ambiguity.
+			r.setting.Logger.Debug("Skipping ExternalName service with multiple ports",
+				zap.String("service", svc.Name),
+				zap.String("namespace", svc.Namespace),
+				zap.String("external_name", external),
+				zap.String("database_type", matchedRule.DatabaseType),
+				zap.Int32s("ports", svcPorts),
+				zap.String("reason", "Entity creation requires exactly one port."))
+			continue
+		}
+
 		//  service with external endpoint can be detected by other discoveries we mark discovery.id as `external`
 		r.setting.Logger.Debug("Publishing external database discovery event",
 			zap.String("database_type", matchedRule.DatabaseType),

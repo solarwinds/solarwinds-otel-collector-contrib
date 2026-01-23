@@ -2,6 +2,9 @@
 
 ## vNext
 
+### Breaking Changes
+- ⚠️ **swok8sdiscovery receiver** : The `sw.discovery.dbo.address` attribute now includes the port number in the format `hostname.namespace:port` (e.g., `mongo-svc.db:27017`) instead of just `hostname.namespace`. This makes the address connection-ready and unambiguous. Discovered database entities are now only created when exactly one port is detected.
+
 ## v0.140.7
 - No changes
 

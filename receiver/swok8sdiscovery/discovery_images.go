@@ -112,7 +112,27 @@ func (r *swok8sdiscoveryReceiver) discoverDatabasesByImages(ctx context.Context,
 			// Resolve ports
 			ports := resolveContainerPorts(container, matchedRule.DefaultPort)
 			if len(ports) == 0 {
-				// this could be client-only image without ports
+				r.setting.Logger.Debug("Skipping container with no ports",
+					zap.String("pod", pod.Name),
+					zap.String("namespace", pod.Namespace),
+					zap.String("container", container.Name),
+					zap.String("database_type", matchedRule.DatabaseType))
+				continue
+			}
+
+			// Validate port count: only create entity when exactly one port is resolved
+			if len(ports) != 1 {
+				// TODO: Consider implementing direct connection attempts to identify the actual database port
+				// when multiple ports are detected. We could attempt database-specific handshakes on each
+				// port to automatically determine which one is the database port, eliminating the need for
+				// manual default_port configuration in ambiguous cases.
+				r.setting.Logger.Debug("Skipping container with multiple ports",
+					zap.String("pod", pod.Name),
+					zap.String("namespace", pod.Namespace),
+					zap.String("container", container.Name),
+					zap.String("database_type", matchedRule.DatabaseType),
+					zap.Int32s("ports", ports),
+					zap.String("reason", "Entity creation requires exactly one port. Configure default_port in image rule to disambiguate."))
 				continue
 			}
 
@@ -125,6 +145,7 @@ func (r *swok8sdiscoveryReceiver) discoverDatabasesByImages(ctx context.Context,
 			// duplicate workload+db+port combo
 			if wKind != "" && wName != "" {
 				// Build stable port key (ports slice already reflects selected port(s))
+				// Note: ports will always have length 1 at this point due to validation in rulesMatching
 				portKey := strings.Join(portsAsStrings(ports), ",")
 				key := pod.Namespace + "|" + wKind + "|" + wName + "|" + matchedRule.DatabaseType + "|" + portKey
 				if _, exists := emittedWorkloads[key]; exists {
