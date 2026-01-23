@@ -38,7 +38,7 @@ func TestConfigUnmarshalFull(t *testing.T) {
 		Grpc: configgrpc.ClientConfig{
 			Endpoint: "test-url:0",
 			TLS:      configtls.ClientConfig{Insecure: true},
-			Headers:  map[string]configopaque.String{"Authorization": "Bearer test-token"},
+			Headers:  configopaque.MapList{{Name: "Authorization", Value: "Bearer test-token"}},
 		},
 		WithoutEntity: true,
 	}, cfg)
@@ -101,7 +101,7 @@ func TestConfigApplyGrpcConfigOk(t *testing.T) {
 	assert.Equal(t, "test-url:0", otlpCfg.ClientConfig.Endpoint)
 	assert.Equal(
 		t,
-		map[string]configopaque.String{"Authorization": "Bearer test-token"},
+		configopaque.MapList{{Name: "Authorization", Value: "Bearer test-token"}},
 		otlpCfg.ClientConfig.Headers,
 	)
 	assert.True(t, otlpCfg.ClientConfig.TLS.Insecure)

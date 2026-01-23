@@ -14,9 +14,18 @@
 
 package solarwindsprocessor
 
+import "fmt"
+
 type CollectorDecoration struct {
 	Enabled bool `mapstructure:"enabled"`
 	// Extension identifies a Solarwinds Extension to
 	// use for obtaining required configuration.
 	ExtensionName string `mapstructure:"extension"`
+}
+
+func (cd *CollectorDecoration) Validate() error {
+	if cd.Enabled && cd.ExtensionName == "" {
+		return fmt.Errorf("invalid configuration: 'extension' must be set in 'collector_attributes_decoration'")
+	}
+	return nil
 }

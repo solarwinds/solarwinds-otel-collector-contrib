@@ -15,19 +15,20 @@
 package k8seventgenerationprocessor
 
 import (
-	"os"
-
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/k8seventgenerationprocessor/internal/constants"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/k8seventgenerationprocessor/internal/manifests"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
-	conventions "go.opentelemetry.io/otel/semconv/v1.6.1"
+	conventions "go.opentelemetry.io/otel/semconv/v1.21.0"
 )
 
 const (
-	k8sLogType             = "sw.k8s.log.type"
-	clusterUidEnv          = "CLUSTER_UID"
-	k8sContainerEntityType = "KubernetesContainer"
-	entityState            = "entity_state"
+	k8sLogType                              = "sw.k8s.log.type"
+	k8sContainerEntityType                  = "KubernetesContainer"
+	k8sContainerImageEntityType             = "KubernetesContainerImage"
+	KubernetesResourceUsesImageRelationType = "KubernetesResourceUsesImage"
+	entityState                             = "entity_state"
+	relationshipUpdateEventType             = "entity_relationship_state"
 
 	// Attributes for OTel entity events identification
 	otelEntityEventAsLog = "otel.entity.event_as_log"
@@ -40,16 +41,31 @@ const (
 	swK8sWorkloadIp = "sw.k8s.workload.ip"
 	serviceName     = "k8s.service.name"
 
+	// Relationship properties
+	relationshipSrcEntityIds  = "otel.entity_relationship.source_entity.id"
+	relationshipDestEntityIds = "otel.entity_relationship.destination_entity.id"
+	relationshipType          = "otel.entity_relationship.type"
+	srcEntityType             = "otel.entity_relationship.source_entity.type"
+	destEntityType            = "otel.entity_relationship.destination_entity.type"
+
 	// Attributes containing additional information about container
-	otelEntityAttributes = "otel.entity.attributes"
-	k8sContainerStatus   = "sw.k8s.container.status"
-	k8sContainerInit     = "sw.k8s.container.init"
-	k8sContainerSidecar  = "sw.k8s.container.sidecar"
+	otelEntityAttributes               = "otel.entity.attributes"
+	k8sContainerStatus                 = "sw.k8s.container.status"
+	k8sContainerInit                   = "sw.k8s.container.init"
+	k8sContainerSidecar                = "sw.k8s.container.sidecar"
+	k8sContainerDeployedByK8sCollector = "sw.k8s.deployedbycollector"
 )
 
-// addContainerResourceLog adds a new ResourceLogs to the provided Logs structure
+// imageIdentity uniquely identifies a container image based on digest and name only,
+// excluding tag to prevent duplicate entities for the same image with different tags
+type imageIdentity struct {
+	digest string
+	name   string
+}
+
+// addEntityStateEventResourceLog adds a new ResourceLogs to the provided Logs structure
 // and sets required attributes on "resource" and "scopeLogs"
-func addContainerResourceLog(ld plog.Logs, containersLogSlice plog.LogRecordSlice) {
+func addEntityStateEventResourceLog(ld plog.Logs, containersLogSlice plog.LogRecordSlice) {
 	rl := ld.ResourceLogs().AppendEmpty()
 	rl.Resource().Attributes().PutStr(k8sLogType, "entitystateevent")
 	sl := rl.ScopeLogs().AppendEmpty()
@@ -57,23 +73,22 @@ func addContainerResourceLog(ld plog.Logs, containersLogSlice plog.LogRecordSlic
 	containersLogSlice.CopyTo(sl.LogRecords())
 }
 
-// transformManifestToContainerLogs returns a new plog.LogRecordSlice and appends
-// all LogRecords containing container information from the provided Manifest.
-func transformManifestToContainerLogs(m *manifests.PodManifest, t pcommon.Timestamp) plog.LogRecordSlice {
+// transformContainersToContainerLogs returns a new [plog.LogRecordSlice] and appends
+// all LogRecords containing container information from the provided Containers.
+func transformContainersToContainerLogs(containers map[string]manifests.Container, md manifests.PodMetadata, t pcommon.Timestamp, clusterUID string) plog.LogRecordSlice {
 	lrs := plog.NewLogRecordSlice()
 
-	containers := m.GetContainers()
 	for _, c := range containers {
 		lr := lrs.AppendEmpty()
 		lr.SetObservedTimestamp(t)
-		addContainerAttributes(lr.Attributes(), m.Metadata, c)
+		addContainerAttributes(lr.Attributes(), md, c, clusterUID)
 	}
 
 	return lrs
 }
 
 // addContainerAttributes sets attributes on the provided map for the given Metadata and Container.
-func addContainerAttributes(attrs pcommon.Map, md manifests.PodMetadata, c manifests.Container) {
+func addContainerAttributes(attrs pcommon.Map, md manifests.PodMetadata, c manifests.Container, clusterUID string) {
 	// Ingestion attributes
 	attrs.PutStr(otelEntityEventType, entityState)
 	attrs.PutStr(swEntityType, k8sContainerEntityType)
@@ -83,7 +98,7 @@ func addContainerAttributes(attrs pcommon.Map, md manifests.PodMetadata, c manif
 	tm.PutStr(string(conventions.K8SPodNameKey), md.Name)
 	tm.PutStr(string(conventions.K8SNamespaceNameKey), md.Namespace)
 	tm.PutStr(string(conventions.K8SContainerNameKey), c.Name)
-	tm.PutStr(swK8sClusterUid, os.Getenv(clusterUidEnv))
+	tm.PutStr(swK8sClusterUid, clusterUID)
 
 	// Entity attributes
 	ea := attrs.PutEmptyMap(otelEntityAttributes)
@@ -91,6 +106,10 @@ func addContainerAttributes(attrs pcommon.Map, md manifests.PodMetadata, c manif
 	ea.PutStr(k8sContainerStatus, c.State)
 	ea.PutBool(k8sContainerInit, c.IsInitContainer)
 	ea.PutBool(k8sContainerSidecar, c.IsSidecarContainer)
+
+	if c.IsDeployedByK8sCollector {
+		ea.PutBool(k8sContainerDeployedByK8sCollector, c.IsDeployedByK8sCollector)
+	}
 }
 
 // addServiceMappingsResourceLog adds a new ResourceLogs to the provided Logs structure
@@ -102,7 +121,7 @@ func addServiceMappingsResourceLog(ld plog.Logs, serviceMappingsLogSlice plog.Lo
 	serviceMappingsLogSlice.CopyTo(lrs)
 }
 
-func transformManifestToServiceMappingLogs(m manifests.ServiceMapping, t pcommon.Timestamp) plog.LogRecordSlice {
+func transformManifestToServiceMappingLogs(m manifests.ServiceMapping, t pcommon.Timestamp, clusterUID string) plog.LogRecordSlice {
 	lrs := plog.NewLogRecordSlice()
 
 	for _, addr := range m.GetAddresses() {
@@ -112,8 +131,93 @@ func transformManifestToServiceMappingLogs(m manifests.ServiceMapping, t pcommon
 		attrs.PutStr(serviceName, m.GetServiceName())
 		attrs.PutStr(string(conventions.K8SNamespaceNameKey), m.GetNamespace())
 		attrs.PutStr(swK8sWorkloadIp, addr)
-		attrs.PutStr(swK8sClusterUid, os.Getenv(clusterUidEnv))
+		attrs.PutStr(swK8sClusterUid, clusterUID)
 	}
 
 	return lrs
+}
+
+// transformContainersToContainerImageLogs returns a new [plog.LogRecordSlice] and appends
+// all LogRecords containing container image information from the provided Containers.
+func transformContainersToContainerImageLogs(containers map[string]manifests.Container, t pcommon.Timestamp) plog.LogRecordSlice {
+	lrs := plog.NewLogRecordSlice()
+
+	processedValidImages := make(map[imageIdentity]struct{}, len(containers))
+	for _, c := range containers {
+		if c.Image.ImageID == "" {
+			continue
+		}
+		identity := imageIdentity{
+			digest: extractSha256Digest(c.Image.ImageID),
+			name:   c.Image.Name,
+		}
+		if _, seen := processedValidImages[identity]; seen {
+			continue
+		}
+		processedValidImages[identity] = struct{}{}
+
+		lr := lrs.AppendEmpty()
+		lr.SetObservedTimestamp(t)
+		addContainerImageAttributes(lr.Attributes(), c.Image)
+	}
+
+	return lrs
+}
+
+// addContainerImageAttributes sets attributes on the provided map for the given Metadata and Image.
+func addContainerImageAttributes(attrs pcommon.Map, i manifests.Image) {
+	// Ingestion attributes
+	attrs.PutStr(otelEntityEventType, entityState)
+	attrs.PutStr(swEntityType, k8sContainerImageEntityType)
+
+	// Telemetry mappings
+	tm := attrs.PutEmptyMap(otelEntityId)
+	tm.PutStr(constants.AttributeOciManifestDigest, extractSha256Digest(i.ImageID))
+	tm.PutStr(string(conventions.ContainerImageNameKey), i.Name)
+
+	// Entity attributes
+	entityAttrs := attrs.PutEmptyMap(otelEntityAttributes)
+	tags := entityAttrs.PutEmptySlice(constants.AttributeContainerImageTags)
+	if i.Tag != "" {
+		tags.AppendEmpty().SetStr(i.Tag)
+	}
+}
+
+// transformContainersToContainerImageRelationsLogs returns a new [plog.LogRecordSlice] and appends
+// all LogRecords containing information about relations between containers and images from the provided Containers.
+func transformContainersToContainerImageRelationsLogs(containers map[string]manifests.Container, md manifests.PodMetadata, t pcommon.Timestamp, clusterUID string) plog.LogRecordSlice {
+	lrs := plog.NewLogRecordSlice()
+
+	for _, c := range containers {
+		lr := lrs.AppendEmpty()
+		lr.SetObservedTimestamp(t)
+		addContainerImageRelationAttributes(lr.Attributes(), md, c, clusterUID)
+	}
+
+	return lrs
+}
+
+// addContainerImageRelationAttributes sets attributes on the provided map for the given Metadata and Container.
+func addContainerImageRelationAttributes(attrs pcommon.Map, md manifests.PodMetadata, c manifests.Container, clusterUID string) {
+	// Ingestion attributes
+	attrs.PutStr(otelEntityEventType, relationshipUpdateEventType)
+	attrs.PutStr(relationshipType, KubernetesResourceUsesImageRelationType)
+
+	srcIds := attrs.PutEmptyMap(relationshipSrcEntityIds)
+	destIds := attrs.PutEmptyMap(relationshipDestEntityIds)
+
+	// Telemetry mappings
+	attrs.PutStr(srcEntityType, k8sContainerEntityType)
+	srcIds.PutStr(string(conventions.K8SPodNameKey), md.Name)
+	srcIds.PutStr(string(conventions.K8SNamespaceNameKey), md.Namespace)
+	srcIds.PutStr(string(conventions.K8SContainerNameKey), c.Name)
+	srcIds.PutStr(swK8sClusterUid, clusterUID)
+
+	attrs.PutStr(destEntityType, k8sContainerImageEntityType)
+	destIds.PutStr(constants.AttributeOciManifestDigest, extractSha256Digest(c.Image.ImageID))
+	destIds.PutStr(string(conventions.ContainerImageNameKey), c.Image.Name)
+
+	// Relationship attributes
+	relAttrs := attrs.PutEmptyMap(constants.AttributeOtelEntityRelationshipAttributes)
+	relAttrs.PutStr(constants.AttributeImageTag, c.Image.Tag)
 }

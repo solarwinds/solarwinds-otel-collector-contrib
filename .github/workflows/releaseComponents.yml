@@ -13,12 +13,14 @@ on:
 jobs:
   release_checks:
     name: Release Checks
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.get-version.outputs.version }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           submodules: true
       - name: Get Current Version
@@ -36,7 +38,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           submodules: true
       - name: Setup Go
@@ -50,18 +52,22 @@ jobs:
 
   build_and_test:
     name: Build and Test
+    permissions:
+      contents: read
     uses: ./.github/workflows/buildAndTest.yml
     secrets: inherit
 
   create_release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     name: Create GitHub Release
     needs:
       - release_checks
       - build_and_test
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           submodules: true
           fetch-depth: 0
@@ -79,5 +85,4 @@ jobs:
       - name: Tag Go packages on GitHub
         run: |
           FOLDERS="./exporter ./extension ./pkg ./receiver ./connector ./processor ./internal"
-          EXCLUDED_FOLDERS="./internal/tools/"
           make tag-github-packages folders="$FOLDERS" tag=v${{ needs.release_checks.outputs.version }} excluded_folders="$EXCLUDED_FOLDERS"

@@ -2,6 +2,55 @@
 
 ## vNext
 
+## v0.140.7
+- No changes
+
+## v0.140.6
+- No changes
+
+## v0.140.5
+- `k8seventgenerationprocessor` Restructured vulnerability schema to two-entity model (VulnerabilityDetail with composite ID, KubernetesContainerImage) connected by single VulnerabilityFinding relationship, with updated attribute names to match OpenTelemetry conventions.
+
+## v0.140.4
+- No changes
+
+## v0.140.3
+- `solarwindsentityconnector` Validate that events configuration is present.
+- `k8seventgenerationprocessor` Extend the k8seventgeneration processor with annotating Container entity state events with `sw.k8s.deployedbycollector` when applicable.
+- `k8seventgenerationprocessor` Add support for parsing `VulnerabilityReport` manifests and generating `VulnerabilityDetail` entities and `VulnerabilityFinding` relationships.
+
+## v0.140.2
+- No changes
+
+## v0.140.1
+- `k8seventgenerationprocessor` Extend the k8seventgeneration processor with parsing and exporting entity state events for Container Images and for relations between Containers and Images.
+- Updates golang to 1.25.5
+
+## v0.140.0
+- Updated OpenTelemetry modules to [v1.46.0/v0.140.0](https://github.com/open-telemetry/opentelemetry-collector/releases/tag/v0.140.0)
+
+## v0.136.7
+- No changes
+
+## v0.136.6
+- No changes
+
+## v0.136.5
+- Updates golang to 1.25.3
+
+## v0.136.4
+- No changes
+
+## v0.136.3
+- ⚠️ Breaking change: `solarwindsprocessor` - Removed deprecated root-level `extension` field as deprecation period has passed. Use `collector_attributes_decoration.extension` instead
+- `swok8sworkloadtypeprocessor` Improve detection for workloads from different namespaces
+
+## v0.136.2
+- No changes
+
+## v0.136.1
+- Updated `swohostmetricsreceiver` dependencies to latest versions
+
 ## v0.136.0
 - Updated OpenTelemetry modules to [v1.42.0/v0.136.0](https://github.com/open-telemetry/opentelemetry-collector/releases/tag/v0.136.0)
 - Add `mqttreceiver`
