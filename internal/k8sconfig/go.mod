@@ -1,6 +1,6 @@
 module github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfig
 
-go 1.25.5
+go 1.25.6
 
 require (
 	github.com/openshift/client-go v0.0.0-20250513150353-9ea84fa6431b
