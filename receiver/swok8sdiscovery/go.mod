@@ -1,6 +1,6 @@
 module github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swok8sdiscovery
 
-go 1.25.5
+go 1.25.6
 
 require (
 	github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfig v0.140.8
