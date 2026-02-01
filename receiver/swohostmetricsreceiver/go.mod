@@ -5,7 +5,7 @@ go 1.25.6
 require (
 	github.com/go-ole/go-ole v1.3.0
 	github.com/google/go-cmp v0.7.0
-	github.com/shirou/gopsutil/v4 v4.25.12
+	github.com/shirou/gopsutil/v4 v4.26.1
 	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/registry v0.140.8
 	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil v0.140.8
 	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.140.8
