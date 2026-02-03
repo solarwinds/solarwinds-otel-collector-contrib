@@ -60,8 +60,6 @@ const (
 	otelEntityId         = "otel.entity.id"
 	otelEntityAttributes = "otel.entity.attributes"
 	swK8sClusterUid      = "sw.k8s.cluster.uid"
-
-	noPortDetected = -1
 )
 
 // publishDatabaseEvent publishes structured log record for database discovery outcome.
@@ -70,52 +68,46 @@ func (r *swok8sdiscoveryReceiver) publishDatabaseEvent(ctx context.Context, disc
 	scopeLogs := logs.ResourceLogs().AppendEmpty().ScopeLogs().AppendEmpty()
 	scopeLogs.Scope().Attributes().PutBool(otelEntityEventAsLog, true)
 
-	// compose database name
+	logRecord := scopeLogs.LogRecords().AppendEmpty()
+	attrs := logRecord.Attributes()
+
+	// compose database name: <endpoint>.<namespace>
 	name := ev.Endpoint
 	if ev.Namespace != "" {
-		name += "#" + ev.Namespace
-	}
-	if ev.WorkloadName != "" {
-		name += "#" + ev.WorkloadName
+		name += "." + ev.Namespace
 	}
 
-	// no port detected
-	if len(ev.Ports) == 0 {
-		ev.Ports = append(ev.Ports, noPortDetected)
+	// compose database address: <endpoint>.<namespace>:<port>
+	address := ev.Endpoint
+	if ev.Namespace != "" {
+		address += "." + ev.Namespace
+	}
+	// Append port to address (validated to have exactly one port before reaching this function)
+	if len(ev.Ports) == 1 {
+		address += ":" + strconv.FormatInt(int64(ev.Ports[0]), 10)
 	}
 
-	for _, port := range ev.Ports {
-		logRecord := scopeLogs.LogRecords().AppendEmpty()
-		attrs := logRecord.Attributes()
-
-		address := ev.Endpoint
-		if port != noPortDetected {
-			address += ":" + strconv.Itoa(int(port))
-		}
-
-		attrs.PutStr(otelEntityEventType, entityState)
-		attrs.PutStr(swEntityType, discoveredDatabaseEntityType)
-		attrs.PutStr(swDiscoverySource, r.config.Reporter)
-		// add workload attributes fo filtering
-		if ev.WorkloadKind != "" {
-			attrs.PutStr("k8s."+strings.ToLower(ev.WorkloadKind)+".name", ev.WorkloadName)
-			attrs.PutStr(k8sNamespace, ev.Namespace)
-			attrs.PutStr(swK8sClusterUid, r.clusterUid)
-		}
-
-		keys := attrs.PutEmptyMap(otelEntityId)
-		keys.PutStr(swDiscoveryDbAddress, address)
-		keys.PutStr(swDiscoveryDbType, ev.DatabaseType)
-		keys.PutStr(swDiscoveryId, discoveryId)
-
-		optional := attrs.PutEmptyMap(otelEntityAttributes)
-		optional.PutStr(swDiscoveryDbName, name)
-
-		r.publishRelationShip(ctx, ev, keys)
+	attrs.PutStr(otelEntityEventType, entityState)
+	attrs.PutStr(swEntityType, discoveredDatabaseEntityType)
+	attrs.PutStr(swDiscoverySource, r.config.Reporter)
+	// add workload attributes fo filtering
+	if ev.WorkloadKind != "" {
+		attrs.PutStr("k8s."+strings.ToLower(ev.WorkloadKind)+".name", ev.WorkloadName)
+		attrs.PutStr(k8sNamespace, ev.Namespace)
+		attrs.PutStr(swK8sClusterUid, r.clusterUid)
 	}
+
+	keys := attrs.PutEmptyMap(otelEntityId)
+	keys.PutStr(swDiscoveryDbAddress, address)
+	keys.PutStr(swDiscoveryDbType, ev.DatabaseType)
+	keys.PutStr(swDiscoveryId, discoveryId)
+
+	optional := attrs.PutEmptyMap(otelEntityAttributes)
+	optional.PutStr(swDiscoveryDbName, name)
 
 	r.consumer.ConsumeLogs(ctx, logs)
 
+	r.publishRelationShip(ctx, ev, keys)
 }
 
 func (r *swok8sdiscoveryReceiver) publishRelationShip(ctx context.Context, ev databaseEvent, dbKeys pcommon.Map) {
