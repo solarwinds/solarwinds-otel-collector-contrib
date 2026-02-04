@@ -1,6 +1,9 @@
 # Changelog
 
 ## vNext
+
+## v0.145.0
+- Updates OpenTelemetry modules to [v1.51.0/v0.145.0](https://github.com/open-telemetry/opentelemetry-collector/releases/tag/v0.145.0)
 - Updates golang to 1.25.6
 
 ## v0.140.8
