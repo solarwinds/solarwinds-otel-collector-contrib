@@ -23,6 +23,7 @@ import (
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension/internal"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension/internal/metadata"
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/componentcommunication"
 )
 
 func NewFactory() extension.Factory {
@@ -38,5 +39,11 @@ func createExtension(ctx context.Context, set extension.Settings, cfg component.
 	if !ok {
 		return nil, fmt.Errorf("unexpected config type: %T", cfg)
 	}
-	return newExtension(ctx, set, extCfg)
+
+	client, err := componentcommunication.NewClient(set.Logger, extCfg.Config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create component communication client: %w", err)
+	}
+
+	return newExtension(ctx, set, extCfg, client)
 }

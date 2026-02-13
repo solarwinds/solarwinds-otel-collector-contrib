@@ -18,6 +18,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/componentcommunication"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config/configgrpc"
 	"go.opentelemetry.io/collector/exporter/otlpexporter"
@@ -31,10 +32,11 @@ var (
 )
 
 type Config struct {
-	CollectorName string                  `mapstructure:"collector_name"`
-	Resource      map[string]string       `mapstructure:"resource"`
-	WithoutEntity bool                    `mapstructure:"without_entity"`
-	Grpc          configgrpc.ClientConfig `mapstructure:"grpc"`
+	CollectorName                 string                  `mapstructure:"collector_name"`
+	Resource                      map[string]string       `mapstructure:"resource"`
+	WithoutEntity                 bool                    `mapstructure:"without_entity"`
+	Grpc                          configgrpc.ClientConfig `mapstructure:"grpc"`
+	componentcommunication.Config `mapstructure:"component_communication"`
 }
 
 func NewDefaultConfig() component.Config {

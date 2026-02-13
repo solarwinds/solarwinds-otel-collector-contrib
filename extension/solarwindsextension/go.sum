@@ -60,11 +60,17 @@ github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee h1:W5t00kpgFd
 github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee/go.mod h1:yWuevngMOJpCy52FWWMvUC8ws7m/LJsjYzDa0/r8luk=
 github.com/mostynb/go-grpc-compression v1.2.3 h1:42/BKWMy0KEJGSdWvzqIyOZ95YcR9mLPqKctH7Uo//I=
 github.com/mostynb/go-grpc-compression v1.2.3/go.mod h1:AghIxF3P57umzqM9yz795+y1Vjs47Km/Y2FE6ouQ7Lg=
+github.com/open-telemetry/opamp-go v0.22.0 h1:7UnsQgFFS7ffM09JQk+9aGVBAAlsLfcooZ9xvSYwxWM=
+github.com/open-telemetry/opamp-go v0.22.0/go.mod h1:339N71soCPrhHywbAcKUZJDODod581ZOxCpTkrl3zYQ=
+github.com/open-telemetry/opentelemetry-collector-contrib/extension/opampcustommessages v0.145.0 h1:+vxIyxe8KkaXYrABiuslJRqC0vPIPDz8JaDNszi0UpA=
+github.com/open-telemetry/opentelemetry-collector-contrib/extension/opampcustommessages v0.145.0/go.mod h1:fd4BmG/alnGTP5jbYwyRAegWFkvqYjgXU4EXYUXPUyA=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 h1:Jamvg5psRIccs7FGNTlIRMkT8wgtp5eCXdBlqhYGL6U=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/rogpeppe/go-internal v1.14.1 h1:UQB4HGPB6osV0SQTLymcB4TgvyWu6ZyliaW0tI/otEQ=
 github.com/rogpeppe/go-internal v1.14.1/go.mod h1:MaRKkUm5W0goXpeCfT7UZI6fk/L7L7so1lCWt35ZSgc=
+github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/extensionfinder v0.145.1 h1:XZY6EwH1TaUPCZ8FS7hirk+n7q4kEEhwe+6QQ40PAOQ=
+github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/extensionfinder v0.145.1/go.mod h1:+/iEOV5Z5rNwVudHs3rqEhiBLPdptRt4gL9rUsY1ZoU=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
