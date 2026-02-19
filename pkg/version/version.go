@@ -14,4 +14,6 @@
 
 package version
 
+// Version comment to invoke re-release of the package.
+// This will be removed with the next release.
 const Version = "0.145.3"
