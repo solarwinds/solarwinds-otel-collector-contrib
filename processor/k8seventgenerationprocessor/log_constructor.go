@@ -15,6 +15,10 @@
 package k8seventgenerationprocessor
 
 import (
+	"strings"
+
+	"go.uber.org/zap"
+
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/k8seventgenerationprocessor/internal/constants"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/k8seventgenerationprocessor/internal/manifests"
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -29,6 +33,10 @@ const (
 	KubernetesResourceUsesImageRelationType = "KubernetesResourceUsesImage"
 	entityState                             = "entity_state"
 	relationshipUpdateEventType             = "entity_relationship_state"
+
+	// CICD entity types
+	cicdContainerImageEntityType = "ContainerImage"
+	relatesToRelationType        = "RelatesTo"
 
 	// Attributes for OTel entity events identification
 	otelEntityEventAsLog = "otel.entity.event_as_log"
@@ -220,4 +228,109 @@ func addContainerImageRelationAttributes(attrs pcommon.Map, md manifests.PodMeta
 	// Relationship attributes
 	relAttrs := attrs.PutEmptyMap(constants.AttributeOtelEntityRelationshipAttributes)
 	relAttrs.PutStr(constants.AttributeImageTag, c.Image.Tag)
+}
+
+// isValidSha256Digest validates that a digest string has the format "sha256:<64 hex chars>".
+func isValidSha256Digest(digest string) bool {
+	const sha256Prefix = "sha256:"
+	if !strings.HasPrefix(digest, sha256Prefix) {
+		return false
+	}
+	hash := digest[len(sha256Prefix):]
+	if len(hash) != 64 {
+		return false
+	}
+	for _, c := range hash {
+		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')) {
+			return false
+		}
+	}
+	return true
+}
+
+// transformContainersToCICDContainerImageLogs emits ContainerImage entity state events
+// for each unique image digest found in the provided containers.
+// Deduplication is per-pod (no shared state across pods).
+func transformContainersToCICDContainerImageLogs(containers map[string]manifests.Container, t pcommon.Timestamp, logger *zap.Logger) plog.LogRecordSlice {
+	lrs := plog.NewLogRecordSlice()
+	seenDigests := make(map[string]struct{}, len(containers))
+
+	for _, c := range containers {
+		if c.Image.ImageID == "" {
+			continue
+		}
+
+		digest := extractSha256Digest(c.Image.ImageID)
+		if digest == "" || !isValidSha256Digest(digest) {
+			logger.Warn("skipping container with malformed ImageID",
+				zap.String("container", c.Name),
+				zap.String("imageID", c.Image.ImageID),
+			)
+			continue
+		}
+
+		if _, seen := seenDigests[digest]; seen {
+			continue
+		}
+		seenDigests[digest] = struct{}{}
+
+		lr := lrs.AppendEmpty()
+		lr.SetObservedTimestamp(t)
+		attrs := lr.Attributes()
+		attrs.PutStr(otelEntityEventType, entityState)
+		attrs.PutStr(swEntityType, cicdContainerImageEntityType)
+
+		ids := attrs.PutEmptyMap(otelEntityId)
+		ids.PutStr(constants.AttributeOciManifestDigest, digest)
+	}
+
+	return lrs
+}
+
+// transformContainersToCICDContainerImageRelatesToLogs emits RelatesTo relationship
+// state events linking ContainerImage (source) to KubernetesContainerImage (destination)
+// for each unique {digest, name} pair in the provided containers.
+func transformContainersToCICDContainerImageRelatesToLogs(containers map[string]manifests.Container, t pcommon.Timestamp, logger *zap.Logger) plog.LogRecordSlice {
+	lrs := plog.NewLogRecordSlice()
+	seenIdentities := make(map[imageIdentity]struct{}, len(containers))
+
+	for _, c := range containers {
+		if c.Image.ImageID == "" {
+			continue
+		}
+
+		digest := extractSha256Digest(c.Image.ImageID)
+		if digest == "" || !isValidSha256Digest(digest) {
+			logger.Warn("skipping container with malformed ImageID for RelatesTo relationship",
+				zap.String("container", c.Name),
+				zap.String("imageID", c.Image.ImageID),
+			)
+			continue
+		}
+
+		identity := imageIdentity{digest: digest, name: c.Image.Name}
+		if _, seen := seenIdentities[identity]; seen {
+			continue
+		}
+		seenIdentities[identity] = struct{}{}
+
+		lr := lrs.AppendEmpty()
+		lr.SetObservedTimestamp(t)
+		attrs := lr.Attributes()
+		attrs.PutStr(otelEntityEventType, relationshipUpdateEventType)
+		attrs.PutStr(relationshipType, relatesToRelationType)
+
+		// Source: ContainerImage identified by digest only
+		attrs.PutStr(srcEntityType, cicdContainerImageEntityType)
+		srcIds := attrs.PutEmptyMap(relationshipSrcEntityIds)
+		srcIds.PutStr(constants.AttributeOciManifestDigest, digest)
+
+		// Destination: KubernetesContainerImage identified by {digest, name}
+		attrs.PutStr(destEntityType, k8sContainerImageEntityType)
+		destIds := attrs.PutEmptyMap(relationshipDestEntityIds)
+		destIds.PutStr(constants.AttributeOciManifestDigest, digest)
+		destIds.PutStr(string(conventions.ContainerImageNameKey), c.Image.Name)
+	}
+
+	return lrs
 }
