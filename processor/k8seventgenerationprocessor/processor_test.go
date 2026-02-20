@@ -698,11 +698,11 @@ func TestPodManifestEmitsContainerImageAndRelatesToEvents(t *testing.T) {
 
 	// Count each event type in the output
 	var (
-		containerImageCount        int
-		relatesToCount             int
-		k8sContainerImageCount     int
-		k8sResourceUsesImageCount  int
-		k8sContainerCount          int
+		containerImageCount       int
+		relatesToCount            int
+		k8sContainerImageCount    int
+		k8sResourceUsesImageCount int
+		k8sContainerCount         int
 	)
 
 	logRecords := entityRL.ScopeLogs().At(0).LogRecords()
