@@ -44,17 +44,10 @@ func collectEntityDigests(t *testing.T, lrs plog.LogRecordSlice) []string {
 	return digests
 }
 
-// ---------------------------------------------------------------------------
-// Task 1.1: TestTransformContainersToCICDContainerImageLogs
+// TestTransformContainersToCICDContainerImageLogs
 //
-// Tests the ContainerImage entity state event emission function.
-// Expected function signature (not yet implemented):
-//   func transformContainersToCICDContainerImageLogs(
-//       containers map[string]manifests.Container,
-//       t pcommon.Timestamp,
-//       logger *zap.Logger,
-//   ) plog.LogRecordSlice
-// ---------------------------------------------------------------------------
+// Verifies that transformContainersToCICDContainerImageLogs emits ContainerImage
+// entity state log records with the expected attributes and timestamps.
 
 func TestTransformContainersToCICDContainerImageLogs(t *testing.T) {
 	const (
@@ -182,13 +175,10 @@ func TestTransformContainersToCICDContainerImageLogs(t *testing.T) {
 	})
 }
 
-// ---------------------------------------------------------------------------
-// Task 1.2: Container type tests
-//
-// Verifies init containers and main containers are processed.
-// Ephemeral containers are excluded at PodManifest.GetContainers() level,
-// so the transform function never sees them.
-// ---------------------------------------------------------------------------
+// TestTransformContainersToCICDContainerImageLogs_ContainerTypes verifies
+// init containers and main containers are processed. Ephemeral containers
+// are excluded at PodManifest.GetContainers() level, so the transform
+// function never sees them.
 
 func TestTransformContainersToCICDContainerImageLogs_ContainerTypes(t *testing.T) {
 	const (
@@ -260,17 +250,10 @@ func TestTransformContainersToCICDContainerImageLogs_ContainerTypes(t *testing.T
 	})
 }
 
-// ---------------------------------------------------------------------------
-// Task 1.3: TestTransformContainersToCICDContainerImageRelatesToLogs
-//
-// Tests the RelatesTo relationship state event emission function.
-// Expected function signature (not yet implemented):
-//   func transformContainersToCICDContainerImageRelatesToLogs(
-//       containers map[string]manifests.Container,
-//       t pcommon.Timestamp,
-//       logger *zap.Logger,
-//   ) plog.LogRecordSlice
-// ---------------------------------------------------------------------------
+// TestTransformContainersToCICDContainerImageRelatesToLogs verifies that
+// transformContainersToCICDContainerImageRelatesToLogs emits RelatesTo
+// relationship state events with the expected source/destination entity
+// types, IDs, and deduplication behavior.
 
 func TestTransformContainersToCICDContainerImageRelatesToLogs(t *testing.T) {
 	const (
@@ -383,12 +366,9 @@ func TestTransformContainersToCICDContainerImageRelatesToLogs(t *testing.T) {
 	})
 }
 
-// ---------------------------------------------------------------------------
-// Task 1.4: Error handling — partial failure in multi-container pod
-//
-// Verifies best-effort behavior: valid containers produce events even when
-// other containers in the same pod have malformed or empty ImageIDs.
-// ---------------------------------------------------------------------------
+// TestTransformContainersToCICDPartialFailure verifies best-effort behavior:
+// valid containers produce events even when other containers in the same pod
+// have malformed or empty ImageIDs.
 
 func TestTransformContainersToCICDPartialFailure(t *testing.T) {
 	const (

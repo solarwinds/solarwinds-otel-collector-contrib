@@ -650,16 +650,13 @@ func getAttrValue(t *testing.T, attrs pcommon.Map, key string) pcommon.Value {
 	return value
 }
 
-// ---------------------------------------------------------------------------
-// Task 1.5: Integration test — pod manifest produces both new CICD event
-// types alongside existing KubernetesContainerImage and
+// Integration test: pod manifest produces both new CICD event types
+// alongside existing KubernetesContainerImage and
 // KubernetesResourceUsesImage events.
 //
 // This test processes a pod manifest through the full processor pipeline and
-// verifies the output contains all four event types. Until the new transform
-// functions are wired in processor.go (Phase 3), this test will FAIL because
-// the new events are not yet emitted.
-// ---------------------------------------------------------------------------
+// verifies that the output contains all four expected event types emitted by
+// the configured transforms.
 
 func TestPodManifestEmitsCICDContainerImageAndRelatesToEvents(t *testing.T) {
 	// Pod with two containers (main + init), each with a distinct sha256 digest.

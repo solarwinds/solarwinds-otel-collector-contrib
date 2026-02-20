@@ -1,5 +1,10 @@
 # AGENTS.md
 
+## Code Conventions
+
+- Branch naming: `{type}/#{issue-number}-{description-of-changes}`
+- Follow [development-guidelines.md](docs/development-guidelines.md) for all naming conventions
+
 ## Tools usage
 ### CircleCI
 This is how you proceed if you want to get CircleCI build failure logs:

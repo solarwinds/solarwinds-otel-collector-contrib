@@ -241,7 +241,7 @@ func isValidSha256Digest(digest string) bool {
 		return false
 	}
 	for _, c := range hash {
-		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')) {
+		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
 			return false
 		}
 	}
@@ -257,6 +257,9 @@ func transformContainersToCICDContainerImageLogs(containers map[string]manifests
 
 	for _, c := range containers {
 		if c.Image.ImageID == "" {
+			logger.Debug("skipping container with empty ImageID",
+				zap.String("container", c.Name),
+			)
 			continue
 		}
 
@@ -296,6 +299,9 @@ func transformContainersToCICDContainerImageRelatesToLogs(containers map[string]
 
 	for _, c := range containers {
 		if c.Image.ImageID == "" {
+			logger.Debug("skipping container with empty ImageID for RelatesTo relationship",
+				zap.String("container", c.Name),
+			)
 			continue
 		}
 
