@@ -5,6 +5,16 @@
 - Branch naming: `{type}/#{issue-number}-{description-of-changes}`
 - Follow [development-guidelines.md](docs/development-guidelines.md) for all naming conventions
 
+## Testing Conventions
+
+- **Test file placement:** Each test file must mirror its source file in name and scope. For example, tests for functions in `log_constructor.go` belong in `log_constructor_test.go`. Do not create standalone test files for individual features — add tests to the file that tests the same SUT.
+
+## Code Style
+
+- **Comments must reflect current state:** Comments must be valid for the entire future lifetime of the code, ignoring PR context. Never use temporal markers such as `new:`, `existing:`, `// New `, `// Added ` in comments — these become incorrect the moment the PR is merged.
+
+- **Prefer clean readable code over inline comments:** Write inline comments only when recording WHY, not WHAT. If a comment merely restates what the code does, delete it. Reserve inline comments for non-obvious constraints, trade-offs, or gotchas that cannot be expressed through naming alone.
+
 ## Tools usage
 ### CircleCI
 This is how you proceed if you want to get CircleCI build failure logs:

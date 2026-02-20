@@ -650,9 +650,8 @@ func getAttrValue(t *testing.T, attrs pcommon.Map, key string) pcommon.Value {
 	return value
 }
 
-// Integration test: pod manifest produces both new CICD event types
-// alongside existing KubernetesContainerImage and
-// KubernetesResourceUsesImage events.
+// Integration test: verifies that a pod manifest produces ContainerImage and RelatesTo
+// events alongside KubernetesContainerImage and KubernetesResourceUsesImage events.
 //
 // This test processes a pod manifest through the full processor pipeline and
 // verifies that the output contains all four expected event types emitted by
@@ -685,8 +684,8 @@ func TestPodManifestEmitsCICDContainerImageAndRelatesToEvents(t *testing.T) {
 	// Verify resource-level attributes.
 	// Note: sw.k8s.agent.manifest.version is a resource attribute set by the upstream collector
 	// pipeline configuration, not by this processor. The processor sets only sw.k8s.log.type
-	// on the entity ResourceLogs via addEntityStateEventResourceLog. New CICD events share
-	// the same ResourceLogs as existing events, automatically inheriting all resource attributes.
+	// on the entity ResourceLogs via addEntityStateEventResourceLog. ContainerImage events share
+	// the same ResourceLogs, automatically inheriting all resource attributes.
 	assert.Equal(t, 1, entityRL.Resource().Attributes().Len(),
 		"entity state event resource should have exactly one processor-set attribute")
 	assert.Equal(t, "entitystateevent", getStringValue(t, entityRL.Resource().Attributes(), "sw.k8s.log.type"))
@@ -699,11 +698,11 @@ func TestPodManifestEmitsCICDContainerImageAndRelatesToEvents(t *testing.T) {
 
 	// Count each event type in the output
 	var (
-		cicdContainerImageCount   int // new: ContainerImage entity
-		relatesToCount            int // new: RelatesTo relationship
-		k8sContainerImageCount    int // existing: KubernetesContainerImage entity
-		k8sResourceUsesImageCount int // existing: KubernetesResourceUsesImage relationship
-		k8sContainerCount         int // existing: KubernetesContainer entity
+		cicdContainerImageCount   int
+		relatesToCount            int
+		k8sContainerImageCount    int
+		k8sResourceUsesImageCount int
+		k8sContainerCount         int
 	)
 
 	logRecords := entityRL.ScopeLogs().At(0).LogRecords()
@@ -743,11 +742,9 @@ func TestPodManifestEmitsCICDContainerImageAndRelatesToEvents(t *testing.T) {
 		}
 	}
 
-	// New CICD event types must be present (2 containers with 2 unique digests)
 	assert.Equal(t, 2, cicdContainerImageCount, "should emit ContainerImage entities (one per unique digest)")
 	assert.Equal(t, 2, relatesToCount, "should emit RelatesTo relationships (one per unique {digest, name})")
 
-	// Existing event types must still be present
 	assert.GreaterOrEqual(t, k8sContainerImageCount, 1, "should still emit KubernetesContainerImage entities")
 	assert.GreaterOrEqual(t, k8sResourceUsesImageCount, 1, "should still emit KubernetesResourceUsesImage relationships")
 	assert.GreaterOrEqual(t, k8sContainerCount, 1, "should still emit KubernetesContainer entities")
