@@ -684,8 +684,8 @@ func TestPodManifestEmitsContainerImageAndRelatesToEvents(t *testing.T) {
 	// Verify resource-level attributes.
 	// Note: sw.k8s.agent.manifest.version is a resource attribute set by the upstream collector
 	// pipeline configuration, not by this processor. The processor sets only sw.k8s.log.type
-	// on the entity ResourceLogs via addEntityStateEventResourceLog. ContainerImage events share
-	// the same ResourceLogs, automatically inheriting all resource attributes.
+	// on the entity ResourceLogs via addEntityStateEventResourceLog; it does not copy or inherit
+	// other resource attributes from incoming logs.
 	assert.Equal(t, 1, entityRL.Resource().Attributes().Len(),
 		"entity state event resource should have exactly one processor-set attribute")
 	assert.Equal(t, "entitystateevent", getStringValue(t, entityRL.Resource().Attributes(), "sw.k8s.log.type"))

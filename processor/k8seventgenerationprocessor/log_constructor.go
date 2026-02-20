@@ -15,8 +15,7 @@
 package k8seventgenerationprocessor
 
 import (
-	"strings"
-
+	godigest "github.com/opencontainers/go-digest"
 	"go.uber.org/zap"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/processor/k8seventgenerationprocessor/internal/constants"
@@ -216,22 +215,11 @@ func addContainerImageRelationAttributes(attrs pcommon.Map, md manifests.PodMeta
 	relAttrs.PutStr(constants.AttributeImageTag, c.Image.Tag)
 }
 
-// isValidSha256Digest validates that a digest string has the format "sha256:<64 hex chars>".
-func isValidSha256Digest(digest string) bool {
-	const sha256Prefix = "sha256:"
-	if !strings.HasPrefix(digest, sha256Prefix) {
-		return false
-	}
-	hash := digest[len(sha256Prefix):]
-	if len(hash) != 64 {
-		return false
-	}
-	for _, c := range hash {
-		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
-			return false
-		}
-	}
-	return true
+// isValidDigest validates that a digest string is a valid OCI digest
+// (e.g., "sha256:<64 hex chars>" or "sha512:<128 hex chars>"),
+// consistent with the output of extractSha256Digest.
+func isValidDigest(digest string) bool {
+	return godigest.Digest(digest).Validate() == nil
 }
 
 // transformContainersToContainerImageEntityLogs emits ContainerImage entity state events
@@ -243,14 +231,14 @@ func transformContainersToContainerImageEntityLogs(containers map[string]manifes
 
 	for _, c := range containers {
 		if c.Image.ImageID == "" {
-			logger.Debug("skipping container with empty ImageID",
+			logger.Warn("skipping container with empty ImageID",
 				zap.String("container", c.Name),
 			)
 			continue
 		}
 
 		digest := extractSha256Digest(c.Image.ImageID)
-		if digest == "" || !isValidSha256Digest(digest) {
+		if digest == "" || !isValidDigest(digest) {
 			logger.Warn("skipping container with malformed ImageID",
 				zap.String("container", c.Name),
 				zap.String("imageID", c.Image.ImageID),
@@ -285,14 +273,14 @@ func transformContainersToContainerImageRelatesToLogs(containers map[string]mani
 
 	for _, c := range containers {
 		if c.Image.ImageID == "" {
-			logger.Debug("skipping container with empty ImageID for RelatesTo relationship",
+			logger.Warn("skipping container with empty ImageID for RelatesTo relationship",
 				zap.String("container", c.Name),
 			)
 			continue
 		}
 
 		digest := extractSha256Digest(c.Image.ImageID)
-		if digest == "" || !isValidSha256Digest(digest) {
+		if digest == "" || !isValidDigest(digest) {
 			logger.Warn("skipping container with malformed ImageID for RelatesTo relationship",
 				zap.String("container", c.Name),
 				zap.String("imageID", c.Image.ImageID),
