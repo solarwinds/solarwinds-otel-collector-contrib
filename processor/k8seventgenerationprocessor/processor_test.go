@@ -657,11 +657,11 @@ func getAttrValue(t *testing.T, attrs pcommon.Map, key string) pcommon.Value {
 // verifies that the output contains all four expected event types emitted by
 // the configured transforms.
 
-func TestPodManifestEmitsCICDContainerImageAndRelatesToEvents(t *testing.T) {
+func TestPodManifestEmitsContainerImageAndRelatesToEvents(t *testing.T) {
 	// Pod with two containers (main + init), each with a distinct sha256 digest.
-	cicdPodManifest := `{"apiVersion":"v1","kind":"Pod","metadata":{"annotations":{"swo.cloud.solarwinds.com/cluster-uid":"test-cluster-uid"},"name":"cicd-test-pod","namespace":"test-namespace"},"spec":{"containers":[{"image":"nginx:1.25","name":"nginx"}],"initContainers":[{"image":"busybox:latest","name":"init-setup"}]},"status":{"containerStatuses":[{"containerID":"containerd://abc123","image":"nginx:1.25","imageID":"docker://sha256:a3ed95caeb02ffe68cdd9fd84406680ae93d633cb16422d00e8a7c22955b46d4","name":"nginx","state":{"running":{}}}],"initContainerStatuses":[{"containerID":"containerd://def456","image":"busybox:latest","imageID":"docker://sha256:b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c","name":"init-setup","state":{"terminated":{"exitCode":0,"reason":"Completed"}}}]}}`
+	podManifest := `{"apiVersion":"v1","kind":"Pod","metadata":{"annotations":{"swo.cloud.solarwinds.com/cluster-uid":"test-cluster-uid"},"name":"test-pod","namespace":"test-namespace"},"spec":{"containers":[{"image":"nginx:1.25","name":"nginx"}],"initContainers":[{"image":"busybox:latest","name":"init-setup"}]},"status":{"containerStatuses":[{"containerID":"containerd://abc123","image":"nginx:1.25","imageID":"docker://sha256:a3ed95caeb02ffe68cdd9fd84406680ae93d633cb16422d00e8a7c22955b46d4","name":"nginx","state":{"running":{}}}],"initContainerStatuses":[{"containerID":"containerd://def456","image":"busybox:latest","imageID":"docker://sha256:b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c","name":"init-setup","state":{"terminated":{"exitCode":0,"reason":"Completed"}}}]}}`
 
-	l := generateManifestLogs("Pod", cicdPodManifest)
+	l := generateManifestLogs("Pod", podManifest)
 	consumer, err := startAndConsumeLogs(t, l)
 	require.NoError(t, err)
 
@@ -698,11 +698,11 @@ func TestPodManifestEmitsCICDContainerImageAndRelatesToEvents(t *testing.T) {
 
 	// Count each event type in the output
 	var (
-		cicdContainerImageCount   int
-		relatesToCount            int
-		k8sContainerImageCount    int
-		k8sResourceUsesImageCount int
-		k8sContainerCount         int
+		containerImageCount        int
+		relatesToCount             int
+		k8sContainerImageCount     int
+		k8sResourceUsesImageCount  int
+		k8sContainerCount          int
 	)
 
 	logRecords := entityRL.ScopeLogs().At(0).LogRecords()
@@ -715,7 +715,7 @@ func TestPodManifestEmitsCICDContainerImageAndRelatesToEvents(t *testing.T) {
 			entityType := getStringValue(t, attrs, "otel.entity.type")
 			switch entityType {
 			case "ContainerImage":
-				cicdContainerImageCount++
+				containerImageCount++
 				// ContainerImage entity ID should contain only oci.manifest.digest
 				ids := getMapValue(t, attrs, "otel.entity.id")
 				assert.Equal(t, 1, ids.Len(), "ContainerImage should have single-attribute ID")
@@ -742,7 +742,7 @@ func TestPodManifestEmitsCICDContainerImageAndRelatesToEvents(t *testing.T) {
 		}
 	}
 
-	assert.Equal(t, 2, cicdContainerImageCount, "should emit ContainerImage entities (one per unique digest)")
+	assert.Equal(t, 2, containerImageCount, "should emit ContainerImage entities (one per unique digest)")
 	assert.Equal(t, 2, relatesToCount, "should emit RelatesTo relationships (one per unique {digest, name})")
 
 	assert.GreaterOrEqual(t, k8sContainerImageCount, 1, "should still emit KubernetesContainerImage entities")
