@@ -649,3 +649,103 @@ func getAttrValue(t *testing.T, attrs pcommon.Map, key string) pcommon.Value {
 	}
 	return value
 }
+
+// Integration test: verifies that a pod manifest produces ContainerImage and RelatesTo
+// events alongside KubernetesContainerImage and KubernetesResourceUsesImage events.
+//
+// This test processes a pod manifest through the full processor pipeline and
+// verifies that the output contains all four expected event types emitted by
+// the configured transforms.
+
+func TestPodManifestEmitsContainerImageAndRelatesToEvents(t *testing.T) {
+	// Pod with two containers (main + init), each with a distinct sha256 digest.
+	podManifest := `{"apiVersion":"v1","kind":"Pod","metadata":{"annotations":{"swo.cloud.solarwinds.com/cluster-uid":"test-cluster-uid"},"name":"test-pod","namespace":"test-namespace"},"spec":{"containers":[{"image":"nginx:1.25","name":"nginx"}],"initContainers":[{"image":"busybox:latest","name":"init-setup"}]},"status":{"containerStatuses":[{"containerID":"containerd://abc123","image":"nginx:1.25","imageID":"docker://sha256:a3ed95caeb02ffe68cdd9fd84406680ae93d633cb16422d00e8a7c22955b46d4","name":"nginx","state":{"running":{}}}],"initContainerStatuses":[{"containerID":"containerd://def456","image":"busybox:latest","imageID":"docker://sha256:b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c","name":"init-setup","state":{"terminated":{"exitCode":0,"reason":"Completed"}}}]}}`
+
+	l := generateManifestLogs("Pod", podManifest)
+	consumer, err := startAndConsumeLogs(t, l)
+	require.NoError(t, err)
+
+	result := consumer.AllLogs()
+	require.Len(t, result, 1)
+
+	// Find the entity state event resource log
+	var entityRL plog.ResourceLogs
+	found := false
+	for i := 0; i < result[0].ResourceLogs().Len(); i++ {
+		rl := result[0].ResourceLogs().At(i)
+		if v, ok := rl.Resource().Attributes().Get("sw.k8s.log.type"); ok && v.AsString() == "entitystateevent" {
+			entityRL = rl
+			found = true
+			break
+		}
+	}
+	require.True(t, found, "should have entity state event resource log")
+
+	// Verify resource-level attributes.
+	// Note: sw.k8s.agent.manifest.version is a resource attribute set by the upstream collector
+	// pipeline configuration, not by this processor. The processor sets only sw.k8s.log.type
+	// on the entity ResourceLogs via addEntityStateEventResourceLog; it does not copy or inherit
+	// other resource attributes from incoming logs.
+	assert.Equal(t, 1, entityRL.Resource().Attributes().Len(),
+		"entity state event resource should have exactly one processor-set attribute")
+	assert.Equal(t, "entitystateevent", getStringValue(t, entityRL.Resource().Attributes(), "sw.k8s.log.type"))
+
+	// Verify scope-level attributes match existing entity state event pattern
+	require.Equal(t, 1, entityRL.ScopeLogs().Len())
+	scopeAttrs := entityRL.ScopeLogs().At(0).Scope().Attributes()
+	assert.Equal(t, 1, scopeAttrs.Len())
+	assert.Equal(t, true, getBoolValue(t, scopeAttrs, "otel.entity.event_as_log"))
+
+	// Count each event type in the output
+	var (
+		containerImageCount       int
+		relatesToCount            int
+		k8sContainerImageCount    int
+		k8sResourceUsesImageCount int
+		k8sContainerCount         int
+	)
+
+	logRecords := entityRL.ScopeLogs().At(0).LogRecords()
+	for i := 0; i < logRecords.Len(); i++ {
+		attrs := logRecords.At(i).Attributes()
+		eventType := getStringValue(t, attrs, "otel.entity.event.type")
+
+		switch eventType {
+		case "entity_state":
+			entityType := getStringValue(t, attrs, "otel.entity.type")
+			switch entityType {
+			case "ContainerImage":
+				containerImageCount++
+				// ContainerImage entity ID should contain only oci.manifest.digest
+				ids := getMapValue(t, attrs, "otel.entity.id")
+				assert.Equal(t, 1, ids.Len(), "ContainerImage should have single-attribute ID")
+				_, hasDigest := ids.Get(constants.AttributeOciManifestDigest)
+				assert.True(t, hasDigest, "ContainerImage ID should contain oci.manifest.digest")
+			case "KubernetesContainerImage":
+				k8sContainerImageCount++
+			case "KubernetesContainer":
+				k8sContainerCount++
+			}
+
+		case "entity_relationship_state":
+			if relTypeVal, ok := attrs.Get("otel.entity_relationship.type"); ok {
+				switch relTypeVal.AsString() {
+				case "RelatesTo":
+					relatesToCount++
+					// Verify directionality: ContainerImage → KubernetesContainerImage
+					assert.Equal(t, "ContainerImage", getStringValue(t, attrs, "otel.entity_relationship.source_entity.type"))
+					assert.Equal(t, "KubernetesContainerImage", getStringValue(t, attrs, "otel.entity_relationship.destination_entity.type"))
+				case "KubernetesResourceUsesImage":
+					k8sResourceUsesImageCount++
+				}
+			}
+		}
+	}
+
+	assert.Equal(t, 2, containerImageCount, "should emit ContainerImage entities (one per unique digest)")
+	assert.Equal(t, 2, relatesToCount, "should emit RelatesTo relationships (one per unique {digest, name})")
+
+	assert.GreaterOrEqual(t, k8sContainerImageCount, 1, "should still emit KubernetesContainerImage entities")
+	assert.GreaterOrEqual(t, k8sResourceUsesImageCount, 1, "should still emit KubernetesResourceUsesImage relationships")
+	assert.GreaterOrEqual(t, k8sContainerCount, 1, "should still emit KubernetesContainer entities")
+}
