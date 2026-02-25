@@ -3,6 +3,9 @@
 ## vNext
 - **Added** `k8seventgenerationprocessor` Emit `ContainerImage` entity state events and `RelatesTo` relationship state events connecting `ContainerImage` to `KubernetesContainerImage` when processing pod manifests.
 
+## v0.145.4
+- No changes
+
 ## v0.145.3
 - No changes
 
