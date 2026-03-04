@@ -74,7 +74,7 @@ jobs:
         run: go test -C connector/solarwindsentityconnector/benchmark -run=^$ -bench . | tee benchmark.txt
         shell: bash
       - name: Upload Benchmark Log
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: benchmark
           path: benchmark.txt
