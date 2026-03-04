@@ -17,6 +17,7 @@ package uptime
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"math"
 	"sync"
 	"time"
@@ -189,9 +190,7 @@ loop:
 }
 
 func mergeAttributes(base shared.Attributes, increment shared.Attributes) {
-	for k, v := range increment {
-		base[k] = v
-	}
+	maps.Copy(base, increment)
 }
 
 func calculateUptime(uptime uptimeprovider.Uptime, logger *zap.Logger) (int64, error) {

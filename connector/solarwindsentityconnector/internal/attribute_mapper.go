@@ -16,6 +16,7 @@ package internal
 
 import (
 	"fmt"
+	"maps"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector/config"
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -119,12 +120,10 @@ func getOptionalAttributes(optionalKeys []string, actualAttributes ...map[string
 	return optional
 }
 
-func mergeMaps(maps ...map[string]pcommon.Value) map[string]pcommon.Value {
+func mergeMaps(mapsToMerge ...map[string]pcommon.Value) map[string]pcommon.Value {
 	merged := make(map[string]pcommon.Value)
-	for _, m := range maps {
-		for k, v := range m {
-			merged[k] = v
-		}
+	for _, m := range mapsToMerge {
+		maps.Copy(merged, m)
 	}
 	return merged
 }

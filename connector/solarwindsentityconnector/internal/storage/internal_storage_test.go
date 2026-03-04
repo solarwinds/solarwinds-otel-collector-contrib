@@ -200,7 +200,7 @@ func TestTtlExpiration_TenIdenticalUpdates_ResultInOneExpiryEvent(t *testing.T) 
 	t.Logf("Inserting 10 identical relationships at %v", insertTime.Format(time.RFC3339Nano))
 
 	// Send 10 updates
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		err = storage.update(relationship)
 		t.Logf("Inserting identical relationships at %v", insertTime.Format(time.RFC3339Nano))
 		time.Sleep(10 * time.Millisecond) // Sleep to simulate time passing between updates
@@ -251,7 +251,7 @@ func TestTtlExpiration_TenDifferentUpdates_ResultInTenExpiryEvents(t *testing.T)
 	insertTime := time.Now()
 	t.Logf("Inserting 10 different relationships at %v", insertTime.Format(time.RFC3339Nano))
 
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		// Create a unique relationship by varying the source entity's ID
 		sourceEntity := internal.Entity{
 			Type: "service",
