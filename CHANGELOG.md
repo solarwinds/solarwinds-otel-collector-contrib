@@ -1,6 +1,7 @@
 # Changelog
 
 ## vNext
+- **Added** `k8seventgenerationprocessor` Add `sw.vulnerability.severity.vendor_category` attribute to entity state events for `VulnerabilityDetail`.
 
 ## v0.145.5
 - **Added** `k8seventgenerationprocessor` Emit `ContainerImage` entity state events and `RelatesTo` relationship state events connecting `ContainerImage` to `KubernetesContainerImage` when processing pod manifests.
