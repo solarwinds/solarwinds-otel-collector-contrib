@@ -179,11 +179,9 @@ func TestReceiveExpired_CanceledContext_ClosesChannel(t *testing.T) {
 
 	// Start the receiveExpired function in a goroutine
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		manager.receiveExpired(ctx)
-	}()
+	})
 
 	// Cancel the context immediately
 	cancel()
@@ -217,14 +215,12 @@ func TestReceiveExpired_MultipleBatches(t *testing.T) {
 
 	// Start the receiveExpired function in a goroutine
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		manager.receiveExpired(ctx)
-	}()
+	})
 
 	// Send first batch of events
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		manager.expiredCh <- &internal.Relationship{
 			Type: "batch1" + string(rune('0'+i)),
 			Source: internal.Entity{
@@ -242,7 +238,7 @@ func TestReceiveExpired_MultipleBatches(t *testing.T) {
 	time.Sleep(1500 * time.Millisecond)
 
 	// Send second batch of events
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		manager.expiredCh <- &internal.Relationship{
 			Type: "batch1" + string(rune('0'+i)),
 			Source: internal.Entity{
@@ -291,11 +287,9 @@ func TestReceiveExpired_EmptyBatch(t *testing.T) {
 
 	// Start the receiveExpired function in a goroutine
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		manager.receiveExpired(ctx)
-	}()
+	})
 
 	// Send one event to initialize the batch and timer
 	manager.expiredCh <- &internal.Relationship{

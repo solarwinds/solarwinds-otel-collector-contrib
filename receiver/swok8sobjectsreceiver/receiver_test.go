@@ -225,38 +225,38 @@ func TestGetObjectHashesRemovesTimestamps(t *testing.T) {
 	t.Parallel()
 
 	objWithTimestamp := &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": "v1",
 			"kind":       "ConfigMap",
-			"metadata": map[string]interface{}{
+			"metadata": map[string]any{
 				"name": "test-configmap",
-				"annotations": map[string]interface{}{
+				"annotations": map[string]any{
 					"time": "2025-03-04T09:11:59Z",
 				},
 			},
-			"spec": map[string]interface{}{
+			"spec": map[string]any{
 				"dummy": "value",
 			},
-			"status": map[string]interface{}{
+			"status": map[string]any{
 				"dummy": "value",
 			},
 		},
 	}
 
 	objWithoutTimestamp := &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": "v1",
 			"kind":       "ConfigMap",
-			"metadata": map[string]interface{}{
+			"metadata": map[string]any{
 				"name": "test-configmap",
-				"annotations": map[string]interface{}{
+				"annotations": map[string]any{
 					"time": "",
 				},
 			},
-			"spec": map[string]interface{}{
+			"spec": map[string]any{
 				"dummy": "value",
 			},
-			"status": map[string]interface{}{
+			"status": map[string]any{
 				"dummy": "value",
 			},
 		},

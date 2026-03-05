@@ -20,13 +20,13 @@ import (
 
 type ExecutorMock struct {
 	errors  map[string]error
-	results map[string]interface{}
+	results map[string]any
 }
 
-func CreateWmiExecutorMock(results []interface{}, errors map[interface{}]error) Executor {
+func CreateWmiExecutorMock(results []any, errors map[any]error) Executor {
 	mock := &ExecutorMock{
 		errors:  make(map[string]error),
-		results: make(map[string]interface{}),
+		results: make(map[string]any),
 	}
 
 	for _, result := range results {
@@ -40,17 +40,17 @@ func CreateWmiExecutorMock(results []interface{}, errors map[interface{}]error) 
 	return mock
 }
 
-func (m *ExecutorMock) SetupResult(i interface{}) {
+func (m *ExecutorMock) SetupResult(i any) {
 	m.results[getImplementationName(i)] = i
 }
 
-func (m *ExecutorMock) SetupError(i interface{}, error error) {
+func (m *ExecutorMock) SetupError(i any, error error) {
 	m.errors[getImplementationName(i)] = error
 }
 
-func (*ExecutorMock) CreateQuery(_ interface{}, _ string) string { return "not relevant" }
+func (*ExecutorMock) CreateQuery(_ any, _ string) string { return "not relevant" }
 
-func (m *ExecutorMock) Query(_ string, dst interface{}) (interface{}, error) {
+func (m *ExecutorMock) Query(_ string, dst any) (any, error) {
 	err := m.errors[getImplementationName(dst)]
 	if err != nil {
 		return nil, err
@@ -60,6 +60,6 @@ func (m *ExecutorMock) Query(_ string, dst interface{}) (interface{}, error) {
 	return result, nil
 }
 
-func getImplementationName(i interface{}) string {
+func getImplementationName(i any) string {
 	return reflect.TypeOf(i).String()
 }

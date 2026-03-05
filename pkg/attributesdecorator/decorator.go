@@ -31,7 +31,7 @@ func DecorateResourceAttributes[T Resource](collection ResourceCollection[T], at
 		return
 	}
 
-	for i := 0; i < collectionLen; i++ {
+	for i := range collectionLen {
 		resource := collection.At(i).Resource()
 		resourceAttributes := resource.Attributes()
 		for key, value := range atts {
