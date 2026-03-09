@@ -1,6 +1,8 @@
 # Changelog
 
 ## vNext
+
+## v0.145.6
 - **Added** `k8seventgenerationprocessor` Add `sw.vulnerability.severity.vendor_category` attribute to entity state events for `VulnerabilityDetail`.
 
 ## v0.145.5
