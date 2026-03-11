@@ -1,5 +1,5 @@
 module github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/registry
 
-go 1.25.7
+go 1.25.8
 
 require golang.org/x/sys v0.41.0
