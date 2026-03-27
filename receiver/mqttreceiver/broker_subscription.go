@@ -462,11 +462,11 @@ func (sb *brokerSubscription) createMetrics(meta *subscriptionMetadata, value *s
 	rm := metrics.ResourceMetrics().At(0)
 	sm := rm.ScopeMetrics().At(0)
 	m := sm.Metrics().AppendEmpty()
-    prefix := "broker"
-    if meta.sensor != nil {
-        prefix = "sensor"
-    }
-    m.SetName(fmt.Sprintf("sw.otelcol.mqtt.%s.%s", prefix, meta.metric.Name))
+	prefix := "broker"
+	if meta.sensor != nil {
+		prefix = "sensor"
+	}
+	m.SetName(fmt.Sprintf("sw.otelcol.mqtt.%s.%s", prefix, meta.metric.Name))
 	m.SetDescription(meta.metric.Desc)
 	m.SetUnit(meta.metric.Unit)
 	m.SetEmptyGauge()
@@ -486,7 +486,7 @@ func extractValue(message mqtt.Message, jsonProperty string) (string, error) {
 		return string(payload), nil
 	}
 
-	var jsonData map[string]interface{}
+	var jsonData map[string]any
 	if err := json.Unmarshal(payload, &jsonData); err != nil {
 		return "", err
 	}
