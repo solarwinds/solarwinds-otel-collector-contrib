@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"runtime"
 	"strconv"
 	"testing"
 	"time"
@@ -225,6 +226,12 @@ func TestScrape_Timeout(t *testing.T) {
 }
 
 func TestScrape_Error(t *testing.T) {
+	// This test relies on ICMP "port unreachable" being returned immediately
+	// for unbound UDP ports, which is Linux/macOS behavior. On Windows, the
+	// query times out instead, so we skip this test there.
+	if runtime.GOOS == "windows" {
+		t.Skip("ICMP port-unreachable is not reliably returned on Windows UDP; skipping")
+	}
 	// Find a free UDP port by binding and immediately releasing it.
 	// On Linux, an ICMP "port unreachable" is returned for unbound UDP ports,
 	// which the DNS client surfaces as a connection error (result_code=2).
