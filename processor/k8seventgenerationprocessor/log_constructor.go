@@ -138,8 +138,12 @@ func transformManifestToServiceMappingLogs(m manifests.ServiceMapping, t pcommon
 
 // transformContainersToContainerImageLogs returns a new [plog.LogRecordSlice] and appends
 // all LogRecords containing container image information from the provided Containers.
-func transformContainersToContainerImageLogs(containers map[string]manifests.Container, t pcommon.Timestamp) plog.LogRecordSlice {
+func transformContainersToContainerImageLogs(containers map[string]manifests.Container, t pcommon.Timestamp, clusterUID string) plog.LogRecordSlice {
 	lrs := plog.NewLogRecordSlice()
+
+	if clusterUID == "" {
+		return lrs
+	}
 
 	processedValidImages := make(map[imageIdentity]struct{}, len(containers))
 	for _, c := range containers {
@@ -150,6 +154,9 @@ func transformContainersToContainerImageLogs(containers map[string]manifests.Con
 			digest: extractSha256Digest(c.Image.ImageID),
 			name:   c.Image.Name,
 		}
+		if identity.digest == "" || identity.name == "" {
+			continue
+		}
 		if _, seen := processedValidImages[identity]; seen {
 			continue
 		}
@@ -157,18 +164,19 @@ func transformContainersToContainerImageLogs(containers map[string]manifests.Con
 
 		lr := lrs.AppendEmpty()
 		lr.SetObservedTimestamp(t)
-		addContainerImageAttributes(lr.Attributes(), c.Image)
+		addContainerImageAttributes(lr.Attributes(), c.Image, clusterUID)
 	}
 
 	return lrs
 }
 
 // addContainerImageAttributes sets attributes on the provided map for the given Metadata and Image.
-func addContainerImageAttributes(attrs pcommon.Map, i manifests.Image) {
+func addContainerImageAttributes(attrs pcommon.Map, i manifests.Image, clusterUID string) {
 	attrs.PutStr(otelEntityEventType, entityState)
 	attrs.PutStr(swEntityType, k8sContainerImageEntityType)
 
 	tm := attrs.PutEmptyMap(otelEntityId)
+	tm.PutStr(swK8sClusterUid, clusterUID)
 	tm.PutStr(constants.AttributeOciManifestDigest, extractSha256Digest(i.ImageID))
 	tm.PutStr(string(conventions.ContainerImageNameKey), i.Name)
 
@@ -184,7 +192,18 @@ func addContainerImageAttributes(attrs pcommon.Map, i manifests.Image) {
 func transformContainersToContainerImageRelationsLogs(containers map[string]manifests.Container, md manifests.PodMetadata, t pcommon.Timestamp, clusterUID string) plog.LogRecordSlice {
 	lrs := plog.NewLogRecordSlice()
 
+	if clusterUID == "" {
+		return lrs
+	}
+
 	for _, c := range containers {
+		if c.Image.ImageID == "" {
+			continue
+		}
+		digest := extractSha256Digest(c.Image.ImageID)
+		if digest == "" || c.Image.Name == "" {
+			continue
+		}
 		lr := lrs.AppendEmpty()
 		lr.SetObservedTimestamp(t)
 		addContainerImageRelationAttributes(lr.Attributes(), md, c, clusterUID)
@@ -208,6 +227,7 @@ func addContainerImageRelationAttributes(attrs pcommon.Map, md manifests.PodMeta
 	srcIds.PutStr(swK8sClusterUid, clusterUID)
 
 	attrs.PutStr(destEntityType, k8sContainerImageEntityType)
+	destIds.PutStr(swK8sClusterUid, clusterUID)
 	destIds.PutStr(constants.AttributeOciManifestDigest, extractSha256Digest(c.Image.ImageID))
 	destIds.PutStr(string(conventions.ContainerImageNameKey), c.Image.Name)
 
@@ -267,8 +287,13 @@ func transformContainersToContainerImageEntityLogs(containers map[string]manifes
 // transformContainersToContainerImageRelatesToLogs emits RelatesTo relationship
 // state events linking ContainerImage (source) to KubernetesContainerImage (destination)
 // for each unique {digest, name} pair in the provided containers.
-func transformContainersToContainerImageRelatesToLogs(containers map[string]manifests.Container, t pcommon.Timestamp, logger *zap.Logger) plog.LogRecordSlice {
+func transformContainersToContainerImageRelatesToLogs(containers map[string]manifests.Container, t pcommon.Timestamp, clusterUID string, logger *zap.Logger) plog.LogRecordSlice {
 	lrs := plog.NewLogRecordSlice()
+
+	if clusterUID == "" {
+		return lrs
+	}
+
 	seenIdentities := make(map[imageIdentity]struct{}, len(containers))
 
 	for _, c := range containers {
@@ -284,6 +309,13 @@ func transformContainersToContainerImageRelatesToLogs(containers map[string]mani
 			logger.Warn("skipping container with malformed ImageID for RelatesTo relationship",
 				zap.String("container", c.Name),
 				zap.String("imageID", c.Image.ImageID),
+			)
+			continue
+		}
+
+		if c.Image.Name == "" {
+			logger.Warn("skipping container with empty image name for RelatesTo relationship",
+				zap.String("container", c.Name),
 			)
 			continue
 		}
@@ -305,9 +337,10 @@ func transformContainersToContainerImageRelatesToLogs(containers map[string]mani
 		srcIds := attrs.PutEmptyMap(relationshipSrcEntityIds)
 		srcIds.PutStr(constants.AttributeOciManifestDigest, digest)
 
-		// Destination: KubernetesContainerImage identified by {digest, name}
+		// Destination: KubernetesContainerImage identified by {clusterUid, digest, name}
 		attrs.PutStr(destEntityType, k8sContainerImageEntityType)
 		destIds := attrs.PutEmptyMap(relationshipDestEntityIds)
+		destIds.PutStr(swK8sClusterUid, clusterUID)
 		destIds.PutStr(constants.AttributeOciManifestDigest, digest)
 		destIds.PutStr(string(conventions.ContainerImageNameKey), c.Image.Name)
 	}
