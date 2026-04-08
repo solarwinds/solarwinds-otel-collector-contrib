@@ -112,7 +112,7 @@ func processAttributesWithResourceFallback(cp *swok8sworkloadtypeProcessor, attr
 		}
 
 		// Log input attributes for debugging
-		allAttrs := make(map[string]interface{})
+		allAttrs := make(map[string]any)
 		attributes.Range(func(k string, v pcommon.Value) bool {
 			allAttrs[k] = v.AsString()
 			return true
