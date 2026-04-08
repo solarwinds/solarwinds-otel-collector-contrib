@@ -516,7 +516,6 @@ func TestTransformContainersToContainerImageRelatesToLogs(t *testing.T) {
 		assert.Equal(t, 0, result.Len(), "container with empty ImageID should be skipped")
 	})
 
-	// T009: supply clusterUID and assert sw.k8s.cluster.uid is present in destination entity IDs.
 	t.Run("correct source and destination entity types and IDs with clusterUID", func(t *testing.T) {
 		containers := map[string]manifests.Container{
 			"nginx": {
@@ -546,7 +545,6 @@ func TestTransformContainersToContainerImageRelatesToLogs(t *testing.T) {
 		assert.Equal(t, "docker.io/library/nginx", getStringValue(t, destIds, "container.image.name"))
 	})
 
-	// T010: skips records when clusterUID is empty.
 	t.Run("skips records when clusterUID is empty", func(t *testing.T) {
 		containers := map[string]manifests.Container{
 			"nginx": {
@@ -619,8 +617,6 @@ func TestTransformContainersToContainerImagePartialFailure(t *testing.T) {
 }
 
 // TestTransformContainersToContainerImageLogs tests the KubernetesContainerImage entity state event path.
-// T005: entity ID map must include sw.k8s.cluster.uid when clusterUID is provided.
-// T006: function must skip (return zero records) when clusterUID is empty.
 func TestTransformContainersToContainerImageLogs(t *testing.T) {
 	const (
 		validImageID = "docker://sha256:a3ed95caeb02ffe68cdd9fd84406680ae93d633cb16422d00e8a7c22955b46d4"
@@ -628,7 +624,7 @@ func TestTransformContainersToContainerImageLogs(t *testing.T) {
 		clusterUID   = "test-cluster-uid"
 	)
 
-	t.Run("entity ID includes sw.k8s.cluster.uid (T005)", func(t *testing.T) {
+	t.Run("entity ID includes sw.k8s.cluster.uid", func(t *testing.T) {
 		containers := map[string]manifests.Container{
 			"nginx": {
 				Name:  "nginx",
@@ -646,7 +642,7 @@ func TestTransformContainersToContainerImageLogs(t *testing.T) {
 		assert.Equal(t, "docker.io/library/nginx", getStringValue(t, ids, "container.image.name"))
 	})
 
-	t.Run("skips all records when clusterUID is empty (T006)", func(t *testing.T) {
+	t.Run("skips all records when clusterUID is empty", func(t *testing.T) {
 		containers := map[string]manifests.Container{
 			"nginx": {
 				Name:  "nginx",
@@ -662,8 +658,6 @@ func TestTransformContainersToContainerImageLogs(t *testing.T) {
 }
 
 // TestTransformContainersToContainerImageRelationsLogs tests the KubernetesResourceUsesImage relationship path.
-// T007: destination entity ID must include sw.k8s.cluster.uid when clusterUID is provided.
-// T008: function must skip records when clusterUID is empty.
 func TestTransformContainersToContainerImageRelationsLogs(t *testing.T) {
 	const (
 		validImageID = "docker://sha256:a3ed95caeb02ffe68cdd9fd84406680ae93d633cb16422d00e8a7c22955b46d4"
@@ -676,7 +670,7 @@ func TestTransformContainersToContainerImageRelationsLogs(t *testing.T) {
 		Namespace: "test-namespace",
 	}
 
-	t.Run("destination entity ID includes sw.k8s.cluster.uid (T007)", func(t *testing.T) {
+	t.Run("destination entity ID includes sw.k8s.cluster.uid", func(t *testing.T) {
 		containers := map[string]manifests.Container{
 			"nginx": {
 				Name:  "nginx",
@@ -695,7 +689,7 @@ func TestTransformContainersToContainerImageRelationsLogs(t *testing.T) {
 		assert.Equal(t, "docker.io/library/nginx", getStringValue(t, destIds, "container.image.name"))
 	})
 
-	t.Run("skips records when clusterUID is empty (T008)", func(t *testing.T) {
+	t.Run("skips records when clusterUID is empty", func(t *testing.T) {
 		containers := map[string]manifests.Container{
 			"nginx": {
 				Name:  "nginx",

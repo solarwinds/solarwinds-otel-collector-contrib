@@ -725,7 +725,6 @@ func TestPodManifestEmitsContainerImageAndRelatesToEvents(t *testing.T) {
 				assert.True(t, hasDigest, "ContainerImage ID should contain oci.manifest.digest")
 			case "KubernetesContainerImage":
 				k8sContainerImageCount++
-				// T014b: verify entity ID contains sw.k8s.cluster.uid
 				ids := getMapValue(t, attrs, "otel.entity.id")
 				assert.Equal(t, "test-cluster-uid", getStringValue(t, ids, "sw.k8s.cluster.uid"),
 					"KubernetesContainerImage entity ID must contain sw.k8s.cluster.uid")
