@@ -88,9 +88,9 @@ func (cp *k8seventgenerationprocessor) generateLogRecords(resCh <-chan result, e
 			containers.MoveAndAppendTo(entityStateEvents)
 			containerImageEntities := transformContainersToContainerImageEntityLogs(manifestContainers, res.Timestamp, cp.logger)
 			containerImageEntities.MoveAndAppendTo(entityStateEvents)
-			containerImageRelates := transformContainersToContainerImageRelatesToLogs(manifestContainers, res.Timestamp, cp.logger)
+			containerImageRelates := transformContainersToContainerImageRelatesToLogs(manifestContainers, res.Timestamp, res.ClusterUID, cp.logger)
 			containerImageRelates.MoveAndAppendTo(entityStateEvents)
-			containerImages := transformContainersToContainerImageLogs(manifestContainers, res.Timestamp)
+			containerImages := transformContainersToContainerImageLogs(manifestContainers, res.Timestamp, res.ClusterUID)
 			containerImages.MoveAndAppendTo(entityStateEvents)
 			containerImageRelations := transformContainersToContainerImageRelationsLogs(manifestContainers, m.Metadata, res.Timestamp, res.ClusterUID)
 			containerImageRelations.MoveAndAppendTo(entityStateEvents)
@@ -102,7 +102,7 @@ func (cp *k8seventgenerationprocessor) generateLogRecords(resCh <-chan result, e
 			entities.MoveAndAppendTo(entityStateEvents)
 			findingRels := transformVulnerabilitiesToFindingLogs(m, res.Timestamp, res.ClusterUID)
 			findingRels.MoveAndAppendTo(entityStateEvents)
-			containerImage := transformVulnerabilityReportToContainerImageLog(m, res.Timestamp)
+			containerImage := transformVulnerabilityReportToContainerImageLog(m, res.Timestamp, res.ClusterUID)
 			containerImage.MoveAndAppendTo(entityStateEvents)
 		}
 	}
