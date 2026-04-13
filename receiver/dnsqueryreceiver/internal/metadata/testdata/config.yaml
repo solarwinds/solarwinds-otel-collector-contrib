@@ -1,0 +1,59 @@
+default:
+all_set:
+  metrics:
+    dns_query.query_time_ms:
+      enabled: true
+    dns_query.rcode_value:
+      enabled: true
+    dns_query.result_code:
+      enabled: true
+  resource_attributes:
+    sw.otelcol.dnsquery.domain:
+      enabled: true
+    sw.otelcol.dnsquery.record_type:
+      enabled: true
+    sw.otelcol.dnsquery.server:
+      enabled: true
+none_set:
+  metrics:
+    dns_query.query_time_ms:
+      enabled: false
+    dns_query.rcode_value:
+      enabled: false
+    dns_query.result_code:
+      enabled: false
+  resource_attributes:
+    sw.otelcol.dnsquery.domain:
+      enabled: false
+    sw.otelcol.dnsquery.record_type:
+      enabled: false
+    sw.otelcol.dnsquery.server:
+      enabled: false
+filter_set_include:
+  resource_attributes:
+    sw.otelcol.dnsquery.domain:
+      enabled: true
+      metrics_include:
+        - regexp: ".*"
+    sw.otelcol.dnsquery.record_type:
+      enabled: true
+      metrics_include:
+        - regexp: ".*"
+    sw.otelcol.dnsquery.server:
+      enabled: true
+      metrics_include:
+        - regexp: ".*"
+filter_set_exclude:
+  resource_attributes:
+    sw.otelcol.dnsquery.domain:
+      enabled: true
+      metrics_exclude:
+        - strict: "sw.otelcol.dnsquery.domain-val"
+    sw.otelcol.dnsquery.record_type:
+      enabled: true
+      metrics_exclude:
+        - strict: "sw.otelcol.dnsquery.record_type-val"
+    sw.otelcol.dnsquery.server:
+      enabled: true
+      metrics_exclude:
+        - strict: "sw.otelcol.dnsquery.server-val"

@@ -1,0 +1,10 @@
+dnsquery:
+  servers:
+    - "8.8.8.8"
+  domains:
+    - "."
+  record_type: NS
+  network: udp
+  port: 53
+  timeout: 2s
+  collection_interval: 60s
