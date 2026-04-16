@@ -34,8 +34,8 @@ type solarwindsentity struct {
 	logger *zap.Logger
 
 	logsConsumer        consumer.Logs
-	metricEventDetector *internal.EventDetector[ottlmetric.TransformContext]
-	logEventDetector    *internal.EventDetector[ottllog.TransformContext]
+	metricEventDetector *internal.EventDetector[*ottlmetric.TransformContext]
+	logEventDetector    *internal.EventDetector[*ottllog.TransformContext]
 	// Source and destination prefixes for entity attributes
 	sourcePrefix string
 	destPrefix   string
@@ -103,7 +103,7 @@ func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.M
 			for k := 0; k < scopeMetric.Metrics().Len(); k++ {
 				metric := scopeMetric.Metrics().At(k)
 
-				tc := ottlmetric.NewTransformContext(metric, scopeMetric.Metrics(), scopeMetric.Scope(), resourceMetric.Resource(), scopeMetric, resourceMetric)
+				tc := ottlmetric.NewTransformContextPtr(resourceMetric, scopeMetric, metric)
 				events, err := s.metricEventDetector.Detect(ctx, attrs, tc)
 
 				if err != nil {
@@ -143,7 +143,7 @@ func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) erro
 			for k := 0; k < scopeLog.LogRecords().Len(); k++ {
 				logRecord := scopeLog.LogRecords().At(k)
 
-				tc := ottllog.NewTransformContext(logRecord, scopeLog.Scope(), resourceLog.Resource(), scopeLog, resourceLog)
+				tc := ottllog.NewTransformContextPtr(resourceLog, scopeLog, logRecord)
 				events, err := s.logEventDetector.Detect(ctx, attrs, tc)
 
 				if err != nil {

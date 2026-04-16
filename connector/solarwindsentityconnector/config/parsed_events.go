@@ -25,8 +25,8 @@ import (
 )
 
 type ParsedEvents struct {
-	MetricEvents EventsGroup[ottlmetric.TransformContext]
-	LogEvents    EventsGroup[ottllog.TransformContext]
+	MetricEvents EventsGroup[*ottlmetric.TransformContext]
+	LogEvents    EventsGroup[*ottllog.TransformContext]
 }
 
 type EventsGroup[C any] struct {
@@ -40,8 +40,8 @@ type ParsedEvent[T any, C any] struct {
 }
 
 type ProcessingContext struct {
-	metricParser ottl.Parser[ottlmetric.TransformContext]
-	logParser    ottl.Parser[ottllog.TransformContext]
+	metricParser ottl.Parser[*ottlmetric.TransformContext]
+	logParser    ottl.Parser[*ottllog.TransformContext]
 	settings     component.TelemetrySettings
 }
 
@@ -51,11 +51,11 @@ func createParsedEvents(s Schema, settings component.TelemetrySettings) (ParsedE
 	ctx := ProcessingContext{settings: settings}
 
 	var err error
-	ctx.metricParser, err = ottlmetric.NewParser(ottlfuncs.StandardConverters[ottlmetric.TransformContext](), settings)
+	ctx.metricParser, err = ottlmetric.NewParser(ottlfuncs.StandardConverters[*ottlmetric.TransformContext](), settings)
 	if err != nil {
 		return ParsedEvents{}, fmt.Errorf("failed to create parser for metric events: %w", err)
 	}
-	ctx.logParser, err = ottllog.NewParser(ottlfuncs.StandardConverters[ottllog.TransformContext](), settings)
+	ctx.logParser, err = ottllog.NewParser(ottlfuncs.StandardConverters[*ottllog.TransformContext](), settings)
 	if err != nil {
 		return ParsedEvents{}, fmt.Errorf("failed to create parser for log events: %w", err)
 	}
@@ -94,8 +94,8 @@ func processEvent[T any](
 	event T,
 	context string,
 	conditions []string,
-	metricEvents *[]ParsedEvent[T, ottlmetric.TransformContext],
-	logEvents *[]ParsedEvent[T, ottllog.TransformContext],
+	metricEvents *[]ParsedEvent[T, *ottlmetric.TransformContext],
+	logEvents *[]ParsedEvent[T, *ottllog.TransformContext],
 	ctx ProcessingContext) error {
 	if len(conditions) == 0 {
 		conditions = []string{"true"}

@@ -14,7 +14,7 @@ on:
   workflow_call:
 
 env:
-  GO_VERSION: '1.25.5'
+  GO_VERSION: '1.25.9'
   SHARED_SCRIPTS: './submodules/solarwinds-otel-collector-core/build/scripts'
 
 jobs:
@@ -74,7 +74,7 @@ jobs:
         run: go test -C connector/solarwindsentityconnector/benchmark -run=^$ -bench . | tee benchmark.txt
         shell: bash
       - name: Upload Benchmark Log
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: benchmark
           path: benchmark.txt
