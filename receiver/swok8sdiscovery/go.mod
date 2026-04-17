@@ -1,9 +1,9 @@
 module github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swok8sdiscovery
 
-go 1.25.8
+go 1.25.9
 
 require (
-	github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfig v0.145.9
+	github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfig v0.145.10
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/collector/component v1.51.0
 	go.opentelemetry.io/collector/component/componenttest v0.145.0

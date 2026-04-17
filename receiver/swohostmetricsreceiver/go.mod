@@ -1,15 +1,15 @@
 module github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swohostmetricsreceiver
 
-go 1.25.8
+go 1.25.9
 
 require (
 	github.com/go-ole/go-ole v1.3.0
 	github.com/google/go-cmp v0.7.0
-	github.com/shirou/gopsutil/v4 v4.26.2
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/registry v0.145.9
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil v0.145.9
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.145.9
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/wmi v0.145.9
+	github.com/shirou/gopsutil/v4 v4.26.3
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/registry v0.145.10
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil v0.145.10
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.145.10
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/wmi v0.145.10
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/collector/component v1.51.0
 	go.opentelemetry.io/collector/component/componenttest v0.145.0
@@ -36,7 +36,7 @@ require (
 	go.opentelemetry.io/collector/pipeline/xpipeline v0.145.0 // indirect
 	go.opentelemetry.io/collector/receiver/receiverhelper v0.145.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/sys v0.42.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
 )
 
 require (

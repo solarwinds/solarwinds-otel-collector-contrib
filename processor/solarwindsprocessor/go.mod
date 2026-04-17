@@ -1,13 +1,13 @@
 module github.com/solarwinds/solarwinds-otel-collector-contrib/processor/solarwindsprocessor
 
-go 1.25.8
+go 1.25.9
 
 require (
 	github.com/google/go-cmp v0.7.0
-	github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension v0.145.9
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/attributesdecorator v0.145.9
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/container v0.145.9
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/extensionfinder v0.145.9
+	github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension v0.145.10
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/attributesdecorator v0.145.10
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/container v0.145.10
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/extensionfinder v0.145.10
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/collector/component v1.51.0
 	go.opentelemetry.io/collector/component/componenttest v0.145.0
@@ -47,7 +47,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
 	github.com/mostynb/go-grpc-compression v1.2.3 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.145.9 // indirect
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.145.10 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/collector v0.145.0 // indirect
 	go.opentelemetry.io/collector/client v1.51.0 // indirect
@@ -92,7 +92,7 @@ require (
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/crypto v0.47.0 // indirect
 	golang.org/x/net v0.49.0 // indirect
-	golang.org/x/sys v0.42.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
 	golang.org/x/text v0.33.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260128011058-8636f8732409 // indirect
 	google.golang.org/grpc v1.79.3 // indirect
