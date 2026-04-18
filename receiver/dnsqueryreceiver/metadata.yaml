@@ -1,0 +1,74 @@
+type: dnsquery
+github_project: solarwinds/solarwinds-otel-collector-contrib
+
+status:
+  class: receiver
+  stability:
+    development: [metrics]
+  distributions: [verified]
+  disable_codecov_badge: true
+
+attributes:
+  dns_query.domain:
+    description: "The domain that was queried."
+    type: string
+  dns_query.rcode:
+    description: "The DNS response code name (e.g. NOERROR, NXDOMAIN, SERVFAIL)."
+    type: string
+  dns_query.record_type:
+    description: "The DNS record type that was queried (e.g. A, AAAA, NS)."
+    type: string
+  dns_query.result:
+    description: "The query outcome: success, timeout, or error."
+    type: string
+  dns_query.server:
+    description: "The DNS server that was queried."
+    type: string
+
+metrics:
+  dns_query.query_time_ms:
+    enabled: true
+    description: "The time taken to complete the DNS query in milliseconds. Zero on timeout or error."
+    stability: development
+    unit: "ms"
+    gauge:
+      value_type: double
+    attributes:
+      - dns_query.domain
+      - dns_query.rcode
+      - dns_query.record_type
+      - dns_query.result
+      - dns_query.server
+
+  dns_query.rcode_value:
+    enabled: true
+    description: "The numeric DNS response code (rcode). 0=NOERROR, 3=NXDOMAIN, etc. Zero on timeout or error."
+    stability: development
+    unit: "1"
+    gauge:
+      value_type: int
+    attributes:
+      - dns_query.domain
+      - dns_query.rcode
+      - dns_query.record_type
+      - dns_query.result
+      - dns_query.server
+
+  dns_query.result_code:
+    enabled: true
+    description: "The result code of the DNS query: 0=success, 1=timeout, 2=error."
+    stability: development
+    unit: "1"
+    gauge:
+      value_type: int
+    attributes:
+      - dns_query.domain
+      - dns_query.rcode
+      - dns_query.record_type
+      - dns_query.result
+      - dns_query.server
+
+tests:
+  config:
+    servers:
+      - "8.8.8.8"
