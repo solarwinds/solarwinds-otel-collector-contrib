@@ -114,23 +114,6 @@ func datapointsForMetric(metrics pmetric.Metrics, name string) []pmetric.NumberD
 	return out
 }
 
-// findRMForMetric returns the first ResourceMetrics containing the named metric.
-func findRMForMetric(t *testing.T, metrics pmetric.Metrics, name string) pmetric.ResourceMetrics {
-	t.Helper()
-	for i := 0; i < metrics.ResourceMetrics().Len(); i++ {
-		rm := metrics.ResourceMetrics().At(i)
-		for j := 0; j < rm.ScopeMetrics().Len(); j++ {
-			sm := rm.ScopeMetrics().At(j)
-			for k := 0; k < sm.Metrics().Len(); k++ {
-				if sm.Metrics().At(k).Name() == name {
-					return rm
-				}
-			}
-		}
-	}
-	t.Fatalf("metric %q not found", name)
-	return pmetric.NewResourceMetrics()
-}
 
 func TestScrape_Success(t *testing.T) {
 	addr := startTestDNSServer(t, noErrorHandler)
@@ -161,11 +144,6 @@ func TestScrape_Success(t *testing.T) {
 	timeDPs := datapointsForMetric(metrics, "dns_query.query_time_ms")
 	require.Len(t, timeDPs, 1)
 	require.GreaterOrEqual(t, timeDPs[0].DoubleValue(), 0.0)
-
-	rm := findRMForMetric(t, metrics, "dns_query.result_code")
-	requireAttrStr(t, rm.Resource().Attributes(), "sw.otelcol.dnsquery.server", host)
-	requireAttrStr(t, rm.Resource().Attributes(), "sw.otelcol.dnsquery.domain", ".")
-	requireAttrStr(t, rm.Resource().Attributes(), "sw.otelcol.dnsquery.record_type", "NS")
 }
 
 func TestScrape_NXDOMAIN(t *testing.T) {
@@ -277,12 +255,12 @@ func TestScrape_ConcurrentPairs(t *testing.T) {
 	// 2 servers × 2 domains = 4 (server, domain) pairs → 4 ResourceMetrics
 	require.Equal(t, 4, metrics.ResourceMetrics().Len())
 
+	// Verify all (server, domain) combinations appear as data point attributes.
 	type pair struct{ server, domain string }
 	seen := make(map[pair]bool)
-	for i := 0; i < metrics.ResourceMetrics().Len(); i++ {
-		attrs := metrics.ResourceMetrics().At(i).Resource().Attributes()
-		srv, sOk := attrs.Get("sw.otelcol.dnsquery.server")
-		dom, dOk := attrs.Get("sw.otelcol.dnsquery.domain")
+	for _, dp := range datapointsForMetric(metrics, "dns_query.result_code") {
+		srv, sOk := dp.Attributes().Get("dns_query.server")
+		dom, dOk := dp.Attributes().Get("dns_query.domain")
 		if sOk && dOk {
 			seen[pair{srv.Str(), dom.Str()}] = true
 		}
@@ -290,7 +268,7 @@ func TestScrape_ConcurrentPairs(t *testing.T) {
 
 	for _, dom := range []string{".", "example.com."} {
 		p := pair{host, dom}
-		require.True(t, seen[p], "expected pair %+v in resource attributes", p)
+		require.True(t, seen[p], "expected pair %+v in data point attributes", p)
 	}
 }
 

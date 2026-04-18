@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/filter"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/receiver"
@@ -205,16 +204,14 @@ func newMetricDNSQueryResultCode(cfg MetricConfig) metricDNSQueryResultCode {
 // MetricsBuilder provides an interface for scrapers to report metrics while taking care of all the transformations
 // required to produce metric representation defined in metadata and user config.
 type MetricsBuilder struct {
-	config                         MetricsBuilderConfig // config of the metrics builder.
-	startTime                      pcommon.Timestamp    // start time that will be applied to all recorded data points.
-	metricsCapacity                int                  // maximum observed number of metrics per resource.
-	metricsBuffer                  pmetric.Metrics      // accumulates metrics data before emitting.
-	buildInfo                      component.BuildInfo  // contains version information.
-	resourceAttributeIncludeFilter map[string]filter.Filter
-	resourceAttributeExcludeFilter map[string]filter.Filter
-	metricDNSQueryQueryTimeMs      metricDNSQueryQueryTimeMs
-	metricDNSQueryRcodeValue       metricDNSQueryRcodeValue
-	metricDNSQueryResultCode       metricDNSQueryResultCode
+	config                    MetricsBuilderConfig // config of the metrics builder.
+	startTime                 pcommon.Timestamp    // start time that will be applied to all recorded data points.
+	metricsCapacity           int                  // maximum observed number of metrics per resource.
+	metricsBuffer             pmetric.Metrics      // accumulates metrics data before emitting.
+	buildInfo                 component.BuildInfo  // contains version information.
+	metricDNSQueryQueryTimeMs metricDNSQueryQueryTimeMs
+	metricDNSQueryRcodeValue  metricDNSQueryRcodeValue
+	metricDNSQueryResultCode  metricDNSQueryResultCode
 }
 
 // MetricBuilderOption applies changes to default metrics builder.
@@ -236,44 +233,19 @@ func WithStartTime(startTime pcommon.Timestamp) MetricBuilderOption {
 }
 func NewMetricsBuilder(mbc MetricsBuilderConfig, settings receiver.Settings, options ...MetricBuilderOption) *MetricsBuilder {
 	mb := &MetricsBuilder{
-		config:                         mbc,
-		startTime:                      pcommon.NewTimestampFromTime(time.Now()),
-		metricsBuffer:                  pmetric.NewMetrics(),
-		buildInfo:                      settings.BuildInfo,
-		metricDNSQueryQueryTimeMs:      newMetricDNSQueryQueryTimeMs(mbc.Metrics.DNSQueryQueryTimeMs),
-		metricDNSQueryRcodeValue:       newMetricDNSQueryRcodeValue(mbc.Metrics.DNSQueryRcodeValue),
-		metricDNSQueryResultCode:       newMetricDNSQueryResultCode(mbc.Metrics.DNSQueryResultCode),
-		resourceAttributeIncludeFilter: make(map[string]filter.Filter),
-		resourceAttributeExcludeFilter: make(map[string]filter.Filter),
-	}
-	if mbc.ResourceAttributes.SwOtelcolDnsqueryDomain.MetricsInclude != nil {
-		mb.resourceAttributeIncludeFilter["sw.otelcol.dnsquery.domain"] = filter.CreateFilter(mbc.ResourceAttributes.SwOtelcolDnsqueryDomain.MetricsInclude)
-	}
-	if mbc.ResourceAttributes.SwOtelcolDnsqueryDomain.MetricsExclude != nil {
-		mb.resourceAttributeExcludeFilter["sw.otelcol.dnsquery.domain"] = filter.CreateFilter(mbc.ResourceAttributes.SwOtelcolDnsqueryDomain.MetricsExclude)
-	}
-	if mbc.ResourceAttributes.SwOtelcolDnsqueryRecordType.MetricsInclude != nil {
-		mb.resourceAttributeIncludeFilter["sw.otelcol.dnsquery.record_type"] = filter.CreateFilter(mbc.ResourceAttributes.SwOtelcolDnsqueryRecordType.MetricsInclude)
-	}
-	if mbc.ResourceAttributes.SwOtelcolDnsqueryRecordType.MetricsExclude != nil {
-		mb.resourceAttributeExcludeFilter["sw.otelcol.dnsquery.record_type"] = filter.CreateFilter(mbc.ResourceAttributes.SwOtelcolDnsqueryRecordType.MetricsExclude)
-	}
-	if mbc.ResourceAttributes.SwOtelcolDnsqueryServer.MetricsInclude != nil {
-		mb.resourceAttributeIncludeFilter["sw.otelcol.dnsquery.server"] = filter.CreateFilter(mbc.ResourceAttributes.SwOtelcolDnsqueryServer.MetricsInclude)
-	}
-	if mbc.ResourceAttributes.SwOtelcolDnsqueryServer.MetricsExclude != nil {
-		mb.resourceAttributeExcludeFilter["sw.otelcol.dnsquery.server"] = filter.CreateFilter(mbc.ResourceAttributes.SwOtelcolDnsqueryServer.MetricsExclude)
+		config:                    mbc,
+		startTime:                 pcommon.NewTimestampFromTime(time.Now()),
+		metricsBuffer:             pmetric.NewMetrics(),
+		buildInfo:                 settings.BuildInfo,
+		metricDNSQueryQueryTimeMs: newMetricDNSQueryQueryTimeMs(mbc.Metrics.DNSQueryQueryTimeMs),
+		metricDNSQueryRcodeValue:  newMetricDNSQueryRcodeValue(mbc.Metrics.DNSQueryRcodeValue),
+		metricDNSQueryResultCode:  newMetricDNSQueryResultCode(mbc.Metrics.DNSQueryResultCode),
 	}
 
 	for _, op := range options {
 		op.apply(mb)
 	}
 	return mb
-}
-
-// NewResourceBuilder returns a new resource builder that should be used to build a resource associated with for the emitted metrics.
-func (mb *MetricsBuilder) NewResourceBuilder() *ResourceBuilder {
-	return NewResourceBuilder(mb.config.ResourceAttributes)
 }
 
 // updateCapacity updates max length of metrics and resource attributes that will be used for the slice capacity.
@@ -339,16 +311,6 @@ func (mb *MetricsBuilder) EmitForResource(options ...ResourceMetricsOption) {
 
 	for _, op := range options {
 		op.apply(rm)
-	}
-	for attr, filter := range mb.resourceAttributeIncludeFilter {
-		if val, ok := rm.Resource().Attributes().Get(attr); ok && !filter.Matches(val.AsString()) {
-			return
-		}
-	}
-	for attr, filter := range mb.resourceAttributeExcludeFilter {
-		if val, ok := rm.Resource().Attributes().Get(attr); ok && filter.Matches(val.AsString()) {
-			return
-		}
 	}
 
 	if ils.Metrics().Len() > 0 {

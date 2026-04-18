@@ -31,6 +31,7 @@ import (
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/dnsqueryreceiver/internal/metadata"
 )
 
+
 // dnsQueryResult holds the result of a single DNS query for one (server, domain) pair.
 type dnsQueryResult struct {
 	server      string
@@ -90,11 +91,6 @@ func (s *dnsQueryScraper) ScrapeMetrics(ctx context.Context) (pmetric.Metrics, e
 	now := pcommon.NewTimestampFromTime(time.Now())
 
 	for _, r := range results {
-		rb := s.mb.NewResourceBuilder()
-		rb.SetSwOtelcolDnsqueryServer(r.server)
-		rb.SetSwOtelcolDnsqueryDomain(r.domain)
-		rb.SetSwOtelcolDnsqueryRecordType(s.config.RecordType)
-
 		s.mb.RecordDNSQueryQueryTimeMsDataPoint(now, r.queryTimeMs,
 			r.domain, r.rcodeStr, s.config.RecordType, r.resultStr, r.server)
 		s.mb.RecordDNSQueryResultCodeDataPoint(now, r.resultCode,
@@ -102,8 +98,7 @@ func (s *dnsQueryScraper) ScrapeMetrics(ctx context.Context) (pmetric.Metrics, e
 		s.mb.RecordDNSQueryRcodeValueDataPoint(now, r.rcodeValue,
 			r.domain, r.rcodeStr, s.config.RecordType, r.resultStr, r.server)
 
-		rm := s.mb.Emit(metadata.WithResource(rb.Emit()))
-		rm.ResourceMetrics().MoveAndAppendTo(out.ResourceMetrics())
+		s.mb.Emit().ResourceMetrics().MoveAndAppendTo(out.ResourceMetrics())
 	}
 
 	return out, nil

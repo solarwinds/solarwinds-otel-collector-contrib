@@ -42,15 +42,6 @@ func TestMetricsBuilder(t *testing.T) {
 			resAttrsSet: testDataSetNone,
 			expectEmpty: true,
 		},
-		{
-			name:        "filter_set_include",
-			resAttrsSet: testDataSetAll,
-		},
-		{
-			name:        "filter_set_exclude",
-			resAttrsSet: testDataSetAll,
-			expectEmpty: true,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -79,11 +70,7 @@ func TestMetricsBuilder(t *testing.T) {
 			allMetricsCount++
 			mb.RecordDNSQueryResultCodeDataPoint(ts, 1, "dns_query.domain-val", "dns_query.rcode-val", "dns_query.record_type-val", "dns_query.result-val", "dns_query.server-val")
 
-			rb := mb.NewResourceBuilder()
-			rb.SetSwOtelcolDnsqueryDomain("sw.otelcol.dnsquery.domain-val")
-			rb.SetSwOtelcolDnsqueryRecordType("sw.otelcol.dnsquery.record_type-val")
-			rb.SetSwOtelcolDnsqueryServer("sw.otelcol.dnsquery.server-val")
-			res := rb.Emit()
+			res := pcommon.NewResource()
 			metrics := mb.Emit(WithResource(res))
 
 			if tt.expectEmpty {
@@ -91,101 +78,107 @@ func TestMetricsBuilder(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, 1, metrics.ResourceMetrics().Len())
-			rm := metrics.ResourceMetrics().At(0)
-			assert.Equal(t, res, rm.Resource())
-			assert.Equal(t, 1, rm.ScopeMetrics().Len())
-			ms := rm.ScopeMetrics().At(0).Metrics()
+			var allMetricsList []pmetric.Metric
+			totalMetricsCount := 0
+			for ri := 0; ri < metrics.ResourceMetrics().Len(); ri++ {
+				rm := metrics.ResourceMetrics().At(ri)
+				assert.Equal(t, 1, rm.ScopeMetrics().Len())
+				ms := rm.ScopeMetrics().At(0).Metrics()
+				totalMetricsCount += ms.Len()
+				for mi := 0; mi < ms.Len(); mi++ {
+					allMetricsList = append(allMetricsList, ms.At(mi))
+				}
+			}
 			if tt.metricsSet == testDataSetDefault {
-				assert.Equal(t, defaultMetricsCount, ms.Len())
+				assert.Equal(t, defaultMetricsCount, totalMetricsCount)
 			}
 			if tt.metricsSet == testDataSetAll {
-				assert.Equal(t, allMetricsCount, ms.Len())
+				assert.Equal(t, allMetricsCount, totalMetricsCount)
 			}
 			validatedMetrics := make(map[string]bool)
-			for i := 0; i < ms.Len(); i++ {
-				switch ms.At(i).Name() {
+			for _, mi := range allMetricsList {
+				switch mi.Name() {
 				case "dns_query.query_time_ms":
 					assert.False(t, validatedMetrics["dns_query.query_time_ms"], "Found a duplicate in the metrics slice: dns_query.query_time_ms")
 					validatedMetrics["dns_query.query_time_ms"] = true
-					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
-					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
-					assert.Equal(t, "The time taken to complete the DNS query in milliseconds. Zero on timeout or error.", ms.At(i).Description())
-					assert.Equal(t, "ms", ms.At(i).Unit())
-					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+					assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+					assert.Equal(t, "The time taken to complete the DNS query in milliseconds. Zero on timeout or error.", mi.Description())
+					assert.Equal(t, "ms", mi.Unit())
+					dp := mi.Gauge().DataPoints().At(0)
 					assert.Equal(t, start, dp.StartTimestamp())
 					assert.Equal(t, ts, dp.Timestamp())
 					assert.Equal(t, pmetric.NumberDataPointValueTypeDouble, dp.ValueType())
 					assert.InDelta(t, float64(1), dp.DoubleValue(), 0.01)
-					attrVal, ok := dp.Attributes().Get("dns_query.domain")
+					dnsQueryDomainAttrVal, ok := dp.Attributes().Get("dns_query.domain")
 					assert.True(t, ok)
-					assert.Equal(t, "dns_query.domain-val", attrVal.Str())
-					attrVal, ok = dp.Attributes().Get("dns_query.rcode")
+					assert.Equal(t, "dns_query.domain-val", dnsQueryDomainAttrVal.Str())
+					dnsQueryRcodeAttrVal, ok := dp.Attributes().Get("dns_query.rcode")
 					assert.True(t, ok)
-					assert.Equal(t, "dns_query.rcode-val", attrVal.Str())
-					attrVal, ok = dp.Attributes().Get("dns_query.record_type")
+					assert.Equal(t, "dns_query.rcode-val", dnsQueryRcodeAttrVal.Str())
+					dnsQueryRecordTypeAttrVal, ok := dp.Attributes().Get("dns_query.record_type")
 					assert.True(t, ok)
-					assert.Equal(t, "dns_query.record_type-val", attrVal.Str())
-					attrVal, ok = dp.Attributes().Get("dns_query.result")
+					assert.Equal(t, "dns_query.record_type-val", dnsQueryRecordTypeAttrVal.Str())
+					dnsQueryResultAttrVal, ok := dp.Attributes().Get("dns_query.result")
 					assert.True(t, ok)
-					assert.Equal(t, "dns_query.result-val", attrVal.Str())
-					attrVal, ok = dp.Attributes().Get("dns_query.server")
+					assert.Equal(t, "dns_query.result-val", dnsQueryResultAttrVal.Str())
+					dnsQueryServerAttrVal, ok := dp.Attributes().Get("dns_query.server")
 					assert.True(t, ok)
-					assert.Equal(t, "dns_query.server-val", attrVal.Str())
+					assert.Equal(t, "dns_query.server-val", dnsQueryServerAttrVal.Str())
 				case "dns_query.rcode_value":
 					assert.False(t, validatedMetrics["dns_query.rcode_value"], "Found a duplicate in the metrics slice: dns_query.rcode_value")
 					validatedMetrics["dns_query.rcode_value"] = true
-					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
-					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
-					assert.Equal(t, "The numeric DNS response code (rcode). 0=NOERROR, 3=NXDOMAIN, etc. Zero on timeout or error.", ms.At(i).Description())
-					assert.Equal(t, "1", ms.At(i).Unit())
-					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+					assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+					assert.Equal(t, "The numeric DNS response code (rcode). 0=NOERROR, 3=NXDOMAIN, etc. Zero on timeout or error.", mi.Description())
+					assert.Equal(t, "1", mi.Unit())
+					dp := mi.Gauge().DataPoints().At(0)
 					assert.Equal(t, start, dp.StartTimestamp())
 					assert.Equal(t, ts, dp.Timestamp())
 					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
 					assert.Equal(t, int64(1), dp.IntValue())
-					attrVal, ok := dp.Attributes().Get("dns_query.domain")
+					dnsQueryDomainAttrVal, ok := dp.Attributes().Get("dns_query.domain")
 					assert.True(t, ok)
-					assert.Equal(t, "dns_query.domain-val", attrVal.Str())
-					attrVal, ok = dp.Attributes().Get("dns_query.rcode")
+					assert.Equal(t, "dns_query.domain-val", dnsQueryDomainAttrVal.Str())
+					dnsQueryRcodeAttrVal, ok := dp.Attributes().Get("dns_query.rcode")
 					assert.True(t, ok)
-					assert.Equal(t, "dns_query.rcode-val", attrVal.Str())
-					attrVal, ok = dp.Attributes().Get("dns_query.record_type")
+					assert.Equal(t, "dns_query.rcode-val", dnsQueryRcodeAttrVal.Str())
+					dnsQueryRecordTypeAttrVal, ok := dp.Attributes().Get("dns_query.record_type")
 					assert.True(t, ok)
-					assert.Equal(t, "dns_query.record_type-val", attrVal.Str())
-					attrVal, ok = dp.Attributes().Get("dns_query.result")
+					assert.Equal(t, "dns_query.record_type-val", dnsQueryRecordTypeAttrVal.Str())
+					dnsQueryResultAttrVal, ok := dp.Attributes().Get("dns_query.result")
 					assert.True(t, ok)
-					assert.Equal(t, "dns_query.result-val", attrVal.Str())
-					attrVal, ok = dp.Attributes().Get("dns_query.server")
+					assert.Equal(t, "dns_query.result-val", dnsQueryResultAttrVal.Str())
+					dnsQueryServerAttrVal, ok := dp.Attributes().Get("dns_query.server")
 					assert.True(t, ok)
-					assert.Equal(t, "dns_query.server-val", attrVal.Str())
+					assert.Equal(t, "dns_query.server-val", dnsQueryServerAttrVal.Str())
 				case "dns_query.result_code":
 					assert.False(t, validatedMetrics["dns_query.result_code"], "Found a duplicate in the metrics slice: dns_query.result_code")
 					validatedMetrics["dns_query.result_code"] = true
-					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
-					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
-					assert.Equal(t, "The result code of the DNS query: 0=success, 1=timeout, 2=error.", ms.At(i).Description())
-					assert.Equal(t, "1", ms.At(i).Unit())
-					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+					assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+					assert.Equal(t, "The result code of the DNS query: 0=success, 1=timeout, 2=error.", mi.Description())
+					assert.Equal(t, "1", mi.Unit())
+					dp := mi.Gauge().DataPoints().At(0)
 					assert.Equal(t, start, dp.StartTimestamp())
 					assert.Equal(t, ts, dp.Timestamp())
 					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
 					assert.Equal(t, int64(1), dp.IntValue())
-					attrVal, ok := dp.Attributes().Get("dns_query.domain")
+					dnsQueryDomainAttrVal, ok := dp.Attributes().Get("dns_query.domain")
 					assert.True(t, ok)
-					assert.Equal(t, "dns_query.domain-val", attrVal.Str())
-					attrVal, ok = dp.Attributes().Get("dns_query.rcode")
+					assert.Equal(t, "dns_query.domain-val", dnsQueryDomainAttrVal.Str())
+					dnsQueryRcodeAttrVal, ok := dp.Attributes().Get("dns_query.rcode")
 					assert.True(t, ok)
-					assert.Equal(t, "dns_query.rcode-val", attrVal.Str())
-					attrVal, ok = dp.Attributes().Get("dns_query.record_type")
+					assert.Equal(t, "dns_query.rcode-val", dnsQueryRcodeAttrVal.Str())
+					dnsQueryRecordTypeAttrVal, ok := dp.Attributes().Get("dns_query.record_type")
 					assert.True(t, ok)
-					assert.Equal(t, "dns_query.record_type-val", attrVal.Str())
-					attrVal, ok = dp.Attributes().Get("dns_query.result")
+					assert.Equal(t, "dns_query.record_type-val", dnsQueryRecordTypeAttrVal.Str())
+					dnsQueryResultAttrVal, ok := dp.Attributes().Get("dns_query.result")
 					assert.True(t, ok)
-					assert.Equal(t, "dns_query.result-val", attrVal.Str())
-					attrVal, ok = dp.Attributes().Get("dns_query.server")
+					assert.Equal(t, "dns_query.result-val", dnsQueryResultAttrVal.Str())
+					dnsQueryServerAttrVal, ok := dp.Attributes().Get("dns_query.server")
 					assert.True(t, ok)
-					assert.Equal(t, "dns_query.server-val", attrVal.Str())
+					assert.Equal(t, "dns_query.server-val", dnsQueryServerAttrVal.Str())
 				}
 			}
 		})
