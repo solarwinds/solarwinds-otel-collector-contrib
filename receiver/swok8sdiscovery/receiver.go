@@ -82,33 +82,30 @@ func (r *swok8sdiscoveryReceiver) discoveryLoop(ctx context.Context) {
 
 // performDiscoveryCycle performs one full discovery iteration.
 func (r *swok8sdiscoveryReceiver) performDiscoveryCycle(ctx context.Context) {
+	r.setting.Logger.Info("Starting discovery cycle")
+
 	pods, err := r.config.listPods(ctx, r.kclient)
 	if err != nil {
 		r.setting.Logger.Error("Failed to list pods", zap.Error(err))
 		return
 	}
+	r.setting.Logger.Info("Listed pods for discovery", zap.Int("count", len(pods)))
+
 	services, err := r.config.listServices(ctx, r.kclient)
 	if err != nil {
 		r.setting.Logger.Error("Failed to list services", zap.Error(err))
 	}
+	r.setting.Logger.Info("Listed services for discovery", zap.Int("count", len(services)))
 
 	var wg sync.WaitGroup
-	wg.Add(2)
-
-	go func() {
-		defer wg.Done()
-		r.discoverDatabasesByImages(ctx, pods, services)
-	}()
-
-	go func() {
-		defer wg.Done()
-		r.discoverDatabasesByDomains(ctx, pods, services)
-	}()
+	wg.Go(func() { r.discoverDatabasesByImages(ctx, pods, services) })
+	wg.Go(func() { r.discoverDatabasesByDomains(ctx, pods, services) })
 
 	wg.Wait()
 	if r.cycleCallback != nil {
 		r.cycleCallback()
 	}
+	r.setting.Logger.Info("Completed discovery cycle")
 }
 
 func (r *swok8sdiscoveryReceiver) Shutdown(ctx context.Context) error {
