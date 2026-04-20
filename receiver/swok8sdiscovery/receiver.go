@@ -98,17 +98,8 @@ func (r *swok8sdiscoveryReceiver) performDiscoveryCycle(ctx context.Context) {
 	r.setting.Logger.Info("Listed services for discovery", zap.Int("count", len(services)))
 
 	var wg sync.WaitGroup
-	wg.Add(2)
-
-	go func() {
-		defer wg.Done()
-		r.discoverDatabasesByImages(ctx, pods, services)
-	}()
-
-	go func() {
-		defer wg.Done()
-		r.discoverDatabasesByDomains(ctx, pods, services)
-	}()
+	wg.Go(func() { r.discoverDatabasesByImages(ctx, pods, services) })
+	wg.Go(func() { r.discoverDatabasesByDomains(ctx, pods, services) })
 
 	wg.Wait()
 	if r.cycleCallback != nil {

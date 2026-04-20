@@ -67,6 +67,8 @@ Top-level settings:
 | `patterns` | []string (regex) | yes | Patterns matched against `ExternalName` value. |
 | `domain_hints` | []string | no | Tie-break hints (substring matches in service name or external domain). |
 
+The default configuration of the receiver checks for Redis, MySQL, MSSQL, MongoDB and PostgreSQL databases.
+
 ### Example Configuration
 
 ```yaml

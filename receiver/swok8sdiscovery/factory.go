@@ -44,27 +44,27 @@ func createDefaultConfig() component.Config {
 			ImageRules: []*ImageRule{
 				{
 					DatabaseType: "redis",
-					Patterns:     []string{`(^|/)redis:.*`},
+					Patterns:     []string{`(^|/)redis:.+`},
 					DefaultPort:  6379,
 				},
 				{
 					DatabaseType: "mysql",
-					Patterns:     []string{`(^|/)mysql:.*`, `(^|/)mariadb:.*`, `(^|/)mysql-server:.*`},
+					Patterns:     []string{`(^|/)mysql:.+`, `(^|/)mariadb:.+`, `(^|/)mysql-server:.+`},
 					DefaultPort:  3306,
 				},
 				{
 					DatabaseType: "sqlserver",
-					Patterns:     []string{`(^|/)mssql:.*`, `(^|/)mssql/server:.*`},
+					Patterns:     []string{`(^|/)mssql:.+`, `(^|/)mssql/server:.+`},
 					DefaultPort:  1433,
 				},
 				{
 					DatabaseType: "postgresql",
-					Patterns:     []string{`(^|/)postgres:.*`, `(^|/)postgresql:.*`},
+					Patterns:     []string{`(^|/)postgres:.+`, `(^|/)postgresql:.+`},
 					DefaultPort:  5432,
 				},
 				{
 					DatabaseType: "mongodb",
-					Patterns:     []string{`(^|/)mongo:.*`},
+					Patterns:     []string{`(^|/)mongo:.+`},
 					DefaultPort:  27017,
 				},
 			},
@@ -102,7 +102,8 @@ func createDefaultConfig() component.Config {
 					DatabaseType: "mongodb",
 					Patterns: []string{
 						`\.mongo\.cosmos\.azure\.com$`,
-						`\.docdb(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$`},
+						`\.docdb(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$`,
+						`\.mongodb\.net$`},
 				},
 			},
 		},

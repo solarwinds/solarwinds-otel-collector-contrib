@@ -139,14 +139,6 @@ func checkAttr(t *testing.T, attrs pcommon.Map, key string, expectedValue string
 	}
 }
 
-func checkAttrInt(t *testing.T, attrs pcommon.Map, key string, expectedValue int64) {
-	if v, ok := attrs.Get(key); ok {
-		assert.Equal(t, expectedValue, v.Int())
-	} else {
-		t.Fatalf("missing attribute: %s", key)
-	}
-}
-
 func getAttrMap(t *testing.T, attrs pcommon.Map, key string) pcommon.Map {
 	if v, ok := attrs.Get(key); ok {
 		return v.Map()
@@ -321,7 +313,7 @@ func TestImageDiscovery_SingleMatch(t *testing.T) {
 
 	relationAttrs := collectAttrs(logs, otelEntityEventType, relationshipState)
 	require.Len(t, relationAttrs, 1)
-	checkAttr(t, relationAttrs[0], otelEntityRelationType, "DiscoveredBy")
+	checkAttr(t, relationAttrs[0], otelEntityRelationType, discoveredRelationshipType)
 	checkAttr(t, relationAttrs[0], otelEntityRelationSourceType, "KubernetesDaemonSet")
 	source_ids := getAttrMap(t, relationAttrs[0], otelEntityRelationSourceID)
 	checkAttr(t, source_ids, "k8s.daemonset.name", "mongo-ds")
