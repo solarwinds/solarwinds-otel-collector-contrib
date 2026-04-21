@@ -2,6 +2,9 @@
 
 ## vNext
 
+## v0.145.11
+- No changes
+
 ## v0.145.10
 - **Added** `k8seventgenerationprocessor` Add `sw.k8s.cluster.uid` attribute to entity state events for `KubernetesContainerImage`.
 
