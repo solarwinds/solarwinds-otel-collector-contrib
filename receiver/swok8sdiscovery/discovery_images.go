@@ -147,7 +147,7 @@ func (r *swok8sdiscoveryReceiver) discoverDatabasesByImages(ctx context.Context,
 			}
 
 			endpoint := pod.Name
-			if svcName != "" && len(svcPorts) != 0 {
+			if len(svcPorts) > 0 {
 				endpoint = svcName
 				ports = svcPorts
 			}
@@ -155,11 +155,10 @@ func (r *swok8sdiscoveryReceiver) discoverDatabasesByImages(ctx context.Context,
 				endpoint += "." + pod.Namespace
 			}
 
-			addr := buildK8sAddress(endpoint, ports)
-			// addr:= endpoint
-			// if len(ports) == 1 {
-			// 	addr = buildAddressWithPort(endpoint, ports[0])
-			// }
+			addr := endpoint
+			if len(ports) == 1 {
+				addr = buildAddressWithPort(endpoint, ports[0])
+			}
 
 			database := databaseEvent{
 				Name:         endpoint,
@@ -197,12 +196,4 @@ func resolveContainerPorts(c corev1.Container, defaultPort int32) []int32 {
 		return []int32{defaultPort}
 	}
 	return res
-}
-
-func buildK8sAddress(endpoint string, ports []int32) string {
-	// Append port to address (validated to have exactly one port before reaching this function)
-	if len(ports) == 1 {
-		return buildAddressWithPort(endpoint, ports[0])
-	}
-	return endpoint
 }
