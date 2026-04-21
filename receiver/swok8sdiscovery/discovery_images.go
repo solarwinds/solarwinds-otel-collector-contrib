@@ -16,6 +16,8 @@ package swok8sdiscovery
 
 import (
 	"context"
+	"net"
+	"strconv"
 	"strings"
 
 	"go.uber.org/zap"
@@ -68,11 +70,12 @@ func (r *swok8sdiscoveryReceiver) discoverDatabasesByImages(ctx context.Context,
 
 			evaluatedContainers++
 
-			r.setting.Logger.Debug("Evaluating container image",
+			l := r.setting.Logger.With(
 				zap.String("pod", pod.Name),
 				zap.String("namespace", pod.Namespace),
-				zap.String("container", container.Name),
-				zap.String("image", container.Image))
+				zap.String("container", container.Name))
+
+			l.Debug("Evaluating container image", zap.String("image", container.Image))
 
 			matchedRule := (*ImageRule)(nil)
 			triedPatterns := []string{}
@@ -92,31 +95,21 @@ func (r *swok8sdiscoveryReceiver) discoverDatabasesByImages(ctx context.Context,
 			}
 
 			if matchedRule == nil {
-				r.setting.Logger.Debug("Container image did not match any database rule",
-					zap.String("pod", pod.Name),
-					zap.String("namespace", pod.Namespace),
-					zap.String("container", container.Name),
+				l.Debug("Container image did not match any database rule",
 					zap.String("image", container.Image),
 					zap.Int("patterns_tried", len(triedPatterns)))
 				continue
 			}
 
 			matchedContainers++
-			r.setting.Logger.Debug("Matched container image to database rule",
-				zap.String("pod", pod.Name),
-				zap.String("namespace", pod.Namespace),
-				zap.String("container", container.Name),
+			l.Debug("Matched container image to database rule",
 				zap.String("image", container.Image),
 				zap.String("database_type", matchedRule.DatabaseType))
 
 			// Resolve ports
 			ports := resolveContainerPorts(container, matchedRule.DefaultPort)
 			if len(ports) == 0 {
-				r.setting.Logger.Debug("Skipping container with no ports",
-					zap.String("pod", pod.Name),
-					zap.String("namespace", pod.Namespace),
-					zap.String("container", container.Name),
-					zap.String("database_type", matchedRule.DatabaseType))
+				l.Debug("Skipping container with no ports", zap.String("database_type", matchedRule.DatabaseType))
 				continue
 			}
 
@@ -126,10 +119,7 @@ func (r *swok8sdiscoveryReceiver) discoverDatabasesByImages(ctx context.Context,
 				// when multiple ports are detected. We could attempt database-specific handshakes on each
 				// port to automatically determine which one is the database port, eliminating the need for
 				// manual default_port configuration in ambiguous cases.
-				r.setting.Logger.Debug("Skipping container with multiple ports",
-					zap.String("pod", pod.Name),
-					zap.String("namespace", pod.Namespace),
-					zap.String("container", container.Name),
+				l.Debug("Skipping container with multiple ports",
 					zap.String("database_type", matchedRule.DatabaseType),
 					zap.Int32s("ports", ports),
 					zap.String("reason", "Entity creation requires exactly one port. Configure default_port in image rule to disambiguate."))
@@ -149,8 +139,7 @@ func (r *swok8sdiscoveryReceiver) discoverDatabasesByImages(ctx context.Context,
 				portKey := strings.Join(portsAsStrings(ports), ",")
 				key := pod.Namespace + "|" + wKind + "|" + wName + "|" + matchedRule.DatabaseType + "|" + portKey
 				if _, exists := emittedWorkloads[key]; exists {
-					r.setting.Logger.Debug("Skipping duplicate database discovery event",
-						zap.String("namespace", pod.Namespace),
+					l.Debug("Skipping duplicate database discovery event",
 						zap.String("workload_kind", wKind),
 						zap.String("workload_name", wName),
 						zap.String("database_type", matchedRule.DatabaseType))
@@ -159,27 +148,31 @@ func (r *swok8sdiscoveryReceiver) discoverDatabasesByImages(ctx context.Context,
 				emittedWorkloads[key] = struct{}{}
 			}
 
+			endpoint := pod.Name
+			if svcName != "" && len(svcPorts) != 0 {
+				endpoint = svcName
+				ports = svcPorts
+			}
+			if pod.Namespace != "" {
+				endpoint += "." + pod.Namespace
+			}
+
 			database := databaseEvent{
+				Name:         endpoint,
+				Address:      buildAddress(endpoint, ports),
 				DatabaseType: matchedRule.DatabaseType,
 				Namespace:    pod.Namespace,
-				Endpoint:     pod.Name,
-				Ports:        ports,
 				WorkloadKind: wKind,
 				WorkloadName: wName,
 			}
 
-			if svcName != "" && len(svcPorts) != 0 {
-				database.Endpoint = svcName
-				database.Ports = svcPorts
-			}
-
 			r.setting.Logger.Debug("Publishing database discovery event",
 				zap.String("database_type", database.DatabaseType),
+				zap.String("name", database.Name),
+				zap.String("address", database.Address),
 				zap.String("namespace", database.Namespace),
-				zap.String("endpoint", database.Endpoint),
 				zap.String("workload_kind", database.WorkloadKind),
-				zap.String("workload_name", database.WorkloadName),
-				zap.Int32s("ports", database.Ports))
+				zap.String("workload_name", database.WorkloadName))
 
 			r.publishDatabaseEvent(ctx, r.clusterUid, database)
 		}
@@ -206,4 +199,13 @@ func resolveContainerPorts(c corev1.Container, defaultPort int32) []int32 {
 		return []int32{defaultPort}
 	}
 	return res
+}
+
+// compose database address: <endpoint>.<namespace>:<port>
+func buildAddress(endpoint string, ports []int32) string {
+	// Append port to address (validated to have exactly one port before reaching this function)
+	if len(ports) == 1 {
+		return net.JoinHostPort(endpoint, strconv.Itoa(int(ports[0])))
+	}
+	return endpoint
 }

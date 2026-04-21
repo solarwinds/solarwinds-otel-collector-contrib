@@ -58,16 +58,19 @@ func (r *swok8sdiscoveryReceiver) discoverDatabasesByDomains(ctx context.Context
 		externalNameServices++
 		external := svc.Spec.ExternalName
 
-		r.setting.Logger.Debug("Evaluating ExternalName service",
+		l := r.setting.Logger.With(
 			zap.String("service", svc.Name),
 			zap.String("namespace", svc.Namespace),
 			zap.String("external_name", external))
+
+		l.Debug("Evaluating ExternalName service")
 
 		matchingRules := make([]*DomainRule, 0)
 
 		var matchedRule *DomainRule
 		triedPatterns := []string{}
 
+		// Find all rules whose patterns match the service's external name
 		for i := range r.config.Database.DomainRules {
 			rule := r.config.Database.DomainRules[i]
 			for _, rx := range rule.PatternsCompiled {
@@ -82,6 +85,9 @@ func (r *swok8sdiscoveryReceiver) discoverDatabasesByDomains(ctx context.Context
 		if len(matchingRules) == 1 {
 			matchedRule = matchingRules[0]
 		} else if len(matchingRules) > 1 {
+			// If multiple rules match, apply tie-breaking logic:
+			// prefer rules that match the service name or external name,
+			// and then prefer rules with domain hints that match the service or external name.
 
 			lower_external := strings.ToLower(external)
 			lower_name := strings.ToLower(svc.Name)
@@ -110,75 +116,29 @@ func (r *swok8sdiscoveryReceiver) discoverDatabasesByDomains(ctx context.Context
 		}
 
 		if matchedRule == nil {
-			r.setting.Logger.Debug("ExternalName service did not match any domain rule",
-				zap.String("service", svc.Name),
-				zap.String("namespace", svc.Namespace),
-				zap.String("external_name", external),
-				zap.Int("patterns_tried", len(triedPatterns)))
+			l.Debug("ExternalName service did not match any domain rule", zap.Int("patterns_tried", len(triedPatterns)))
 			continue
 		}
 
 		matchedServices++
-		r.setting.Logger.Debug("Matched ExternalName service to database rule",
-			zap.String("service", svc.Name),
-			zap.String("namespace", svc.Namespace),
-			zap.String("external_name", external),
-			zap.String("database_type", matchedRule.DatabaseType))
-
-		var wKind, wName string
-		if len(svc.Spec.Selector) > 0 {
-			matchedPods := findServicePods(&svc, pods)
-			if len(matchedPods) > 0 {
-				wKind, wName, _ = r.resolveWorkloadForPod(ctx, &matchedPods[0])
-			}
-		}
-
-		// get list of Service svcTargetPorts and Target svcTargetPorts
-		var svcPorts []int32
-		for _, p := range svc.Spec.Ports {
-			svcPorts = append(svcPorts, p.Port)
-		}
-
-		// Validate port count: only create entity when exactly one port is present
-		if len(svcPorts) == 0 {
-			r.setting.Logger.Debug("Skipping ExternalName service with no ports",
-				zap.String("service", svc.Name),
-				zap.String("namespace", svc.Namespace),
-				zap.String("external_name", external),
-				zap.String("database_type", matchedRule.DatabaseType))
-			continue
-		}
-
-		if len(svcPorts) != 1 {
-			// TODO: Consider implementing direct connection attempts to identify the actual database port
-			// when multiple ports are detected. We could attempt database-specific handshakes on each
-			// port to automatically determine which one is the database port, eliminating ambiguity.
-			r.setting.Logger.Debug("Skipping ExternalName service with multiple ports",
-				zap.String("service", svc.Name),
-				zap.String("namespace", svc.Namespace),
-				zap.String("external_name", external),
-				zap.String("database_type", matchedRule.DatabaseType),
-				zap.Int32s("ports", svcPorts),
-				zap.String("reason", "Entity creation requires exactly one port."))
-			continue
-		}
+		l.Debug("Matched ExternalName service to database rule", zap.String("database_type", matchedRule.DatabaseType))
 
 		//  service with external endpoint can be detected by other discoveries we mark discovery.id as `external`
 		r.setting.Logger.Debug("Publishing external database discovery event",
 			zap.String("database_type", matchedRule.DatabaseType),
+			zap.String("name", external),
+			zap.String("address", external),
 			zap.String("namespace", svc.Namespace),
-			zap.String("endpoint", external),
-			zap.String("workload_kind", wKind),
-			zap.String("workload_name", wName),
-			zap.Int32s("ports", svcPorts))
+			zap.String("workload_kind", kindService),
+			zap.String("workload_name", svc.Name))
 
 		r.publishDatabaseEvent(ctx, "external", databaseEvent{
 			DatabaseType: matchedRule.DatabaseType,
+			Name:         external,
+			Address:      external,
 			Namespace:    svc.Namespace,
-			Ports:        svcPorts,
-			Endpoint:     external,
-			WorkloadKind: wKind,
-			WorkloadName: wName,
+			WorkloadKind: kindService,
+			WorkloadName: svc.Name,
 		})
 	}
 
@@ -186,21 +146,4 @@ func (r *swok8sdiscoveryReceiver) discoverDatabasesByDomains(ctx context.Context
 		zap.Int("domain_rules_count", len(r.config.Database.DomainRules)),
 		zap.Int("external_name_services", externalNameServices),
 		zap.Int("matched_services", matchedServices))
-}
-
-// findServicePods returns pods whose labels satisfy the service selector (best effort; requires caller to pass pod list).
-func findServicePods(svc *corev1.Service, pods []corev1.Pod) []corev1.Pod {
-	if svc == nil || len(svc.Spec.Selector) == 0 {
-		return nil
-	}
-	var out []corev1.Pod
-	for _, p := range pods {
-		if p.Namespace != svc.Namespace {
-			continue
-		}
-		if selectorMatches(svc.Spec.Selector, p.GetLabels()) {
-			out = append(out, p)
-		}
-	}
-	return out
 }

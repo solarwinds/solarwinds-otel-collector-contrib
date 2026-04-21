@@ -27,11 +27,11 @@ import (
 
 // databaseEvent is an internal representation before converting to logs.
 type databaseEvent struct {
+	Name         string
+	Address      string
 	DatabaseType string
 	Namespace    string
-	Endpoint     string  // service name if available, else pod name
-	Ports        []int32 // chosen ports (default preferred)
-	WorkloadKind string  // Deployment/StatefulSet/DaemonSet/Job/CronJob
+	WorkloadKind string // Deployment/StatefulSet/DaemonSet/Job/CronJob/Service
 	WorkloadName string
 }
 
@@ -75,32 +75,16 @@ func (r *swok8sdiscoveryReceiver) publishDatabaseEvent(ctx context.Context, disc
 	logRecord.SetObservedTimestamp(pcommon.NewTimestampFromTime(time.Now()))
 	attrs := logRecord.Attributes()
 
-	// compose database name: <endpoint>.<namespace>
-	name := ev.Endpoint
-	if ev.Namespace != "" {
-		name += "." + ev.Namespace
-	}
-
-	// compose database address: <endpoint>.<namespace>:<port>
-	address := ev.Endpoint
-	if ev.Namespace != "" {
-		address += "." + ev.Namespace
-	}
-	// Append port to address (validated to have exactly one port before reaching this function)
-	if len(ev.Ports) == 1 {
-		address += ":" + strconv.FormatInt(int64(ev.Ports[0]), 10)
-	}
-
 	attrs.PutStr(otelEntityEventType, entityState)
 	attrs.PutStr(swEntityType, discoveredDatabaseEntityType)
 
 	keys := attrs.PutEmptyMap(otelEntityId)
-	keys.PutStr(swDiscoveryDbAddress, address)
+	keys.PutStr(swDiscoveryDbAddress, ev.Address)
 	keys.PutStr(swDiscoveryDbType, ev.DatabaseType)
 	keys.PutStr(swDiscoveryId, discoveryId)
 
 	entityAttrs := attrs.PutEmptyMap(otelEntityAttributes)
-	entityAttrs.PutStr(swDiscoveryDbName, name)
+	entityAttrs.PutStr(swDiscoveryDbName, ev.Name)
 	entityAttrs.PutStr(swDiscoverySource, r.config.Reporter)
 
 	if err := r.consumer.ConsumeLogs(ctx, logs); err != nil {

@@ -161,45 +161,30 @@ func TestDomainDiscovery_SingleMatch(t *testing.T) {
 	}
 	require.NoError(t, cfg.Validate())
 
-	trueVal := true
-
-	deploy := &appsv1.Deployment{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "db", Name: "redis-deploy", UID: types.UID("deploy-uid"), Labels: map[string]string{"app": "redis"}},
-	}
-	rs := &appsv1.ReplicaSet{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "db", Name: "redis-deploy-rs", UID: types.UID("rs-uid"), Labels: map[string]string{"app": "redis"}, OwnerReferences: []metav1.OwnerReference{{APIVersion: "apps/v1", Kind: "Deployment", Name: deploy.Name, UID: deploy.UID, Controller: &trueVal}}},
-	}
-	pod := &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "db", Name: "redis-pod", UID: types.UID("pod-uid"), Labels: map[string]string{"app": "redis"}, OwnerReferences: []metav1.OwnerReference{{APIVersion: "apps/v1", Kind: "ReplicaSet", Name: rs.Name, UID: rs.UID, Controller: &trueVal}}},
-		Spec:       corev1.PodSpec{Containers: []corev1.Container{{Name: "redis", Image: "docker.io/library/redis:7"}}},
-	}
-
 	svc := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{Namespace: "db", Name: "redis-ext"},
 		Spec: corev1.ServiceSpec{
 			Type:         corev1.ServiceTypeExternalName,
 			ExternalName: "cache-01.redis.example.com",
-			Selector:     map[string]string{"app": "redis"},
-			Ports:        []corev1.ServicePort{{Port: 6379}},
 		},
 	}
 
-	logs := runImageCycle(t, cfg, deploy, rs, pod, svc)
+	logs := runImageCycle(t, cfg, svc)
 	attrs := collectDBAttrs(logs, "redis")
 	require.Len(t, attrs, 1)
 	idAttrs := getAttrMap(t, attrs[0], otelEntityId)
 	require.Equal(t, idAttrs.Len(), 3)
-	checkAttr(t, idAttrs, swDiscoveryDbAddress, "cache-01.redis.example.com.db:6379")
+	checkAttr(t, idAttrs, swDiscoveryDbAddress, "cache-01.redis.example.com")
 	checkAttr(t, idAttrs, swDiscoveryDbType, "redis")
 	checkAttr(t, idAttrs, swDiscoveryId, "external")
 	entityAttrs := getAttrMap(t, attrs[0], otelEntityAttributes)
-	checkAttr(t, entityAttrs, swDiscoveryDbName, "cache-01.redis.example.com.db")
+	checkAttr(t, entityAttrs, swDiscoveryDbName, "cache-01.redis.example.com")
 
 	relAttrs := collectAttrs(logs, otelEntityEventType, relationshipState)
 	require.Len(t, relAttrs, 1, "expected relationship when workload resolved")
-	checkAttr(t, relAttrs[0], otelEntityRelationSourceType, "KubernetesDeployment")
+	checkAttr(t, relAttrs[0], otelEntityRelationSourceType, "KubernetesService")
 	srcIDs := getAttrMap(t, relAttrs[0], otelEntityRelationSourceID)
-	checkAttr(t, srcIDs, "k8s.deployment.name", "redis-deploy")
+	checkAttr(t, srcIDs, "k8s.service.name", "redis-ext")
 	checkAttr(t, srcIDs, k8sNamespace, "db")
 }
 
@@ -220,20 +205,21 @@ func TestDomainDiscovery_DedupByDomainHint(t *testing.T) {
 		Spec: corev1.ServiceSpec{
 			Type:         corev1.ServiceTypeExternalName,
 			ExternalName: "some-db.company.internal",
-			Ports:        []corev1.ServicePort{{Port: 3306}},
 		},
 	}
 
 	logs := runImageCycle(t, cfg, svc)
-	require.Len(t, logs, 1)
+	require.Len(t, logs, 2, "expected two log records (entity + relationship)")
 	attrs := collectDBAttrs(logs, "mysql") // expect mysql chosen due to more hint matches ("company" substring)
 	require.Len(t, attrs, 1)
 	// ensure pg not emitted
 	pgAttrs := collectDBAttrs(logs, "pg")
 	require.Len(t, pgAttrs, 0)
+	relationAttrs := collectAttrs(logs, otelEntityEventType, relationshipState)
+	require.Len(t, relationAttrs, 1)
 
 	idMap := getAttrMap(t, attrs[0], otelEntityId)
-	checkAttr(t, idMap, swDiscoveryDbAddress, "some-db.company.internal.prod:3306")
+	checkAttr(t, idMap, swDiscoveryDbAddress, "some-db.company.internal")
 	checkAttr(t, idMap, swDiscoveryDbType, "mysql")
 }
 
@@ -451,31 +437,4 @@ func TestImageDiscovery_NoPorts(t *testing.T) {
 	logs := runImageCycle(t, cfg, pod)
 	attrs := collectDBAttrs(logs, "mongo")
 	require.Len(t, attrs, 0, "expected no entity when container has zero ports")
-}
-
-func TestDomainDiscovery_MultiplePorts(t *testing.T) {
-	cfg := &Config{
-		APIConfig: k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeServiceAccount},
-		Interval:  time.Second,
-		Database: &DatabaseDiscoveryConfig{
-			DomainRules: []*DomainRule{{
-				DatabaseType: "redis",
-				Patterns:     []string{".*redis.example.com"},
-			}},
-		},
-	}
-	require.NoError(t, cfg.Validate())
-
-	svc := &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "db", Name: "redis-ext"},
-		Spec: corev1.ServiceSpec{
-			Type:         corev1.ServiceTypeExternalName,
-			ExternalName: "cache-01.redis.example.com",
-			Ports:        []corev1.ServicePort{{Port: 6379}, {Port: 6380}},
-		},
-	}
-
-	logs := runImageCycle(t, cfg, svc)
-	attrs := collectDBAttrs(logs, "redis")
-	require.Len(t, attrs, 0, "expected no entity when ExternalName service has multiple ports")
 }
