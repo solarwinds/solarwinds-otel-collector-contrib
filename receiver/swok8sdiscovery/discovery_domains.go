@@ -123,23 +123,19 @@ func (r *swok8sdiscoveryReceiver) discoverDatabasesByDomains(ctx context.Context
 		matchedServices++
 		l.Debug("Matched ExternalName service to database rule", zap.String("database_type", matchedRule.DatabaseType))
 
-		//  service with external endpoint can be detected by other discoveries we mark discovery.id as `external`
-		r.setting.Logger.Debug("Publishing external database discovery event",
-			zap.String("database_type", matchedRule.DatabaseType),
-			zap.String("name", external),
-			zap.String("address", external),
-			zap.String("namespace", svc.Namespace),
-			zap.String("workload_kind", kindService),
-			zap.String("workload_name", svc.Name))
-
-		r.publishDatabaseEvent(ctx, "external", databaseEvent{
+		database := databaseEvent{
 			DatabaseType: matchedRule.DatabaseType,
 			Name:         external,
-			Address:      external,
+			Address:      buildAddressWithPort(external, matchedRule.DefaultPort),
 			Namespace:    svc.Namespace,
 			WorkloadKind: kindService,
 			WorkloadName: svc.Name,
-		})
+		}
+
+		r.setting.Logger.Debug("Publishing external database discovery event", zap.Any("database", database))
+
+		//  service with external endpoint can be detected by other discoveries we mark discovery.id as `external`
+		r.publishDatabaseEvent(ctx, "external", database)
 	}
 
 	r.setting.Logger.Info("Completed domain-based database discovery",

@@ -16,8 +16,6 @@ package swok8sdiscovery
 
 import (
 	"context"
-	"net"
-	"strconv"
 	"strings"
 
 	"go.uber.org/zap"
@@ -157,22 +155,22 @@ func (r *swok8sdiscoveryReceiver) discoverDatabasesByImages(ctx context.Context,
 				endpoint += "." + pod.Namespace
 			}
 
+			addr := buildK8sAddress(endpoint, ports)
+			// addr:= endpoint
+			// if len(ports) == 1 {
+			// 	addr = buildAddressWithPort(endpoint, ports[0])
+			// }
+
 			database := databaseEvent{
 				Name:         endpoint,
-				Address:      buildAddress(endpoint, ports),
+				Address:      addr,
 				DatabaseType: matchedRule.DatabaseType,
 				Namespace:    pod.Namespace,
 				WorkloadKind: wKind,
 				WorkloadName: wName,
 			}
 
-			r.setting.Logger.Debug("Publishing database discovery event",
-				zap.String("database_type", database.DatabaseType),
-				zap.String("name", database.Name),
-				zap.String("address", database.Address),
-				zap.String("namespace", database.Namespace),
-				zap.String("workload_kind", database.WorkloadKind),
-				zap.String("workload_name", database.WorkloadName))
+			r.setting.Logger.Debug("Publishing database discovery event", zap.Any("database", database))
 
 			r.publishDatabaseEvent(ctx, r.clusterUid, database)
 		}
@@ -201,11 +199,10 @@ func resolveContainerPorts(c corev1.Container, defaultPort int32) []int32 {
 	return res
 }
 
-// compose database address: <endpoint>.<namespace>:<port>
-func buildAddress(endpoint string, ports []int32) string {
+func buildK8sAddress(endpoint string, ports []int32) string {
 	// Append port to address (validated to have exactly one port before reaching this function)
 	if len(ports) == 1 {
-		return net.JoinHostPort(endpoint, strconv.Itoa(int(ports[0])))
+		return buildAddressWithPort(endpoint, ports[0])
 	}
 	return endpoint
 }

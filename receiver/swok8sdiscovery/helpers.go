@@ -15,6 +15,9 @@
 package swok8sdiscovery
 
 import (
+	"net"
+	"strconv"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -107,4 +110,18 @@ func selectorMatches(selector, labels map[string]string) bool {
 		}
 	}
 	return true
+}
+
+// compose database address: <endpoint>:<port>
+func buildAddressWithPort(endpoint string, defaultPort int32) string {
+	if defaultPort == 0 {
+		return endpoint
+	}
+
+	_, portStr, err := net.SplitHostPort(endpoint)
+	if err == nil && portStr != "" {
+		return endpoint
+	}
+
+	return net.JoinHostPort(endpoint, strconv.Itoa(int(defaultPort)))
 }

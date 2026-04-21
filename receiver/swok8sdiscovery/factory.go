@@ -76,6 +76,7 @@ func createDefaultConfig() component.Config {
 						`\.elasticache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$`,
 						`\.redis(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$`,
 						`\.cache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$`},
+					DefaultPort: 6379,
 				},
 				{
 					DatabaseType: "mysql",
@@ -83,6 +84,7 @@ func createDefaultConfig() component.Config {
 						`\.mysql\.database\.azure\.com$`,
 						`\.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$`},
 					DomainHints: []string{"mysql", "mariadb"},
+					DefaultPort: 3306,
 				},
 				{
 					DatabaseType: "sqlserver",
@@ -90,6 +92,7 @@ func createDefaultConfig() component.Config {
 						`\.database\.windows\.net$`,
 						`\.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$`},
 					DomainHints: []string{"sqlserver", "mssql"},
+					DefaultPort: 1433,
 				},
 				{
 					DatabaseType: "postgresql",
@@ -97,6 +100,7 @@ func createDefaultConfig() component.Config {
 						`\.postgres\.database\.azure\.com$`,
 						`\.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$`},
 					DomainHints: []string{"postgres"},
+					DefaultPort: 5432,
 				},
 				{
 					DatabaseType: "mongodb",
@@ -104,6 +108,7 @@ func createDefaultConfig() component.Config {
 						`\.mongo\.cosmos\.azure\.com$`,
 						`\.docdb(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$`,
 						`\.mongodb\.net$`},
+					DefaultPort: 27017,
 				},
 			},
 		},

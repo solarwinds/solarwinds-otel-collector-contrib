@@ -133,7 +133,7 @@ func collectDBAttrs(all []plog.Logs, dbType string) []pcommon.Map {
 
 func checkAttr(t *testing.T, attrs pcommon.Map, key string, expectedValue string) {
 	if v, ok := attrs.Get(key); ok {
-		assert.Equal(t, expectedValue, v.Str())
+		assert.Equal(t, expectedValue, v.Str(), "attribute '%s' value mismatch", key)
 	} else {
 		t.Fatalf("missing attribute: %s", key)
 	}
@@ -156,6 +156,7 @@ func TestDomainDiscovery_SingleMatch(t *testing.T) {
 			DomainRules: []*DomainRule{{
 				DatabaseType: "redis",
 				Patterns:     []string{".*redis.example.com"},
+				DefaultPort:  6379,
 			}},
 		},
 	}
@@ -174,7 +175,7 @@ func TestDomainDiscovery_SingleMatch(t *testing.T) {
 	require.Len(t, attrs, 1)
 	idAttrs := getAttrMap(t, attrs[0], otelEntityId)
 	require.Equal(t, idAttrs.Len(), 3)
-	checkAttr(t, idAttrs, swDiscoveryDbAddress, "cache-01.redis.example.com")
+	checkAttr(t, idAttrs, swDiscoveryDbAddress, "cache-01.redis.example.com:6379")
 	checkAttr(t, idAttrs, swDiscoveryDbType, "redis")
 	checkAttr(t, idAttrs, swDiscoveryId, "external")
 	entityAttrs := getAttrMap(t, attrs[0], otelEntityAttributes)
@@ -186,6 +187,40 @@ func TestDomainDiscovery_SingleMatch(t *testing.T) {
 	srcIDs := getAttrMap(t, relAttrs[0], otelEntityRelationSourceID)
 	checkAttr(t, srcIDs, "k8s.service.name", "redis-ext")
 	checkAttr(t, srcIDs, k8sNamespace, "db")
+}
+
+func TestDomainDiscovery_SingleMatchCustomPort(t *testing.T) {
+	cfg := &Config{
+		APIConfig: k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeServiceAccount},
+		Interval:  time.Second,
+		Database: &DatabaseDiscoveryConfig{
+			DomainRules: []*DomainRule{{
+				DatabaseType: "redis",
+				Patterns:     []string{".*redis.example.com"},
+				DefaultPort:  6379,
+			}},
+		},
+	}
+	require.NoError(t, cfg.Validate())
+
+	svc := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "db", Name: "redis-ext"},
+		Spec: corev1.ServiceSpec{
+			Type:         corev1.ServiceTypeExternalName,
+			ExternalName: "cache-01.redis.example.com:123",
+		},
+	}
+
+	logs := runImageCycle(t, cfg, svc)
+	attrs := collectDBAttrs(logs, "redis")
+	require.Len(t, attrs, 1)
+	idAttrs := getAttrMap(t, attrs[0], otelEntityId)
+	require.Equal(t, idAttrs.Len(), 3)
+	checkAttr(t, idAttrs, swDiscoveryDbAddress, "cache-01.redis.example.com:123")
+	checkAttr(t, idAttrs, swDiscoveryDbType, "redis")
+	checkAttr(t, idAttrs, swDiscoveryId, "external")
+	entityAttrs := getAttrMap(t, attrs[0], otelEntityAttributes)
+	checkAttr(t, entityAttrs, swDiscoveryDbName, "cache-01.redis.example.com:123")
 }
 
 func TestDomainDiscovery_DedupByDomainHint(t *testing.T) {
