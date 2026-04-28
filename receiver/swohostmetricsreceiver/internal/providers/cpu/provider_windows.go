@@ -63,6 +63,7 @@ func wmiProcessorToProcessor(result Win32_Processor) Processor {
 		Cores:        result.NumberOfCores,
 		Threads:      result.NumberOfLogicalProcessors,
 		Stepping:     result.Stepping,
+		DeviceID:     result.DeviceID,
 	}
 	return amendFromCaption(processor, result.Caption)
 }
@@ -91,4 +92,5 @@ type Win32_Processor struct {
 	NumberOfLogicalProcessors uint32
 	Stepping                  string
 	Caption                   string
+	DeviceID                  string
 }
