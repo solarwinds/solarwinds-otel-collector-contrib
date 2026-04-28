@@ -22,6 +22,7 @@ type Processor struct {
 	Threads      uint32
 	Model        string
 	Stepping     string
+	DeviceID     string
 }
 
 type Container struct {
