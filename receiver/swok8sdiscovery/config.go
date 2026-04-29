@@ -55,7 +55,7 @@ type ImageRule struct {
 	Patterns         []string         `mapstructure:"patterns"`
 	PatternsCompiled []*regexp.Regexp `mapstructure:"-"` // compiled from Patterns during validation
 
-	// default port for database communitation if not specified elsewhere
+	// default port for database communication if not specified elsewhere
 	DefaultPort int32 `mapstructure:"default_port"`
 }
 
@@ -67,6 +67,9 @@ type DomainRule struct {
 
 	// in case more DomainRules match, this one will be preferred to be found in service name or endpoint self
 	DomainHints []string `mapstructure:"domain_hints"`
+
+	// default port for database communication if not specified elsewhere
+	DefaultPort int32 `mapstructure:"default_port"`
 }
 
 func (c *Config) Validate() error {

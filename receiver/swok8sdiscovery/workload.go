@@ -29,6 +29,7 @@ const (
 	kindDaemonSet   = "DaemonSet"
 	kindJob         = "Job"
 	kindCronJob     = "CronJob"
+	kindService     = "Service"
 )
 
 // resolveWorkloadForPod attempts to identify the top-level workload controlling the pod.

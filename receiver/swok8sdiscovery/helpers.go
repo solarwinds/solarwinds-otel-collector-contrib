@@ -15,6 +15,9 @@
 package swok8sdiscovery
 
 import (
+	"net"
+	"strconv"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -29,7 +32,6 @@ func matchServiceForPod(pod corev1.Pod, container corev1.Container, ports []int3
 	type svcMatch struct {
 		svc         corev1.Service
 		svcPorts    []int32
-		targetPorts []int32
 		portMatches int
 	}
 	var candidates []svcMatch
@@ -52,7 +54,6 @@ func matchServiceForPod(pod corev1.Pod, container corev1.Container, ports []int3
 		}
 		if selectorMatches(selector, podLabels) {
 			var svcPorts []int32
-			var targetPorts []int32
 			portMatches := 0
 			for _, sp := range svc.Spec.Ports {
 				var tp int32
@@ -68,7 +69,6 @@ func matchServiceForPod(pod corev1.Pod, container corev1.Container, ports []int3
 				}
 
 				if _, ok := portSet[tp]; ok {
-					targetPorts = append(targetPorts, tp)
 					svcPorts = append(svcPorts, sp.Port)
 					portMatches++
 				}
@@ -77,7 +77,7 @@ func matchServiceForPod(pod corev1.Pod, container corev1.Container, ports []int3
 				// we have exact match, let's return it immediately
 				return svc.Name, svcPorts
 			} else if portMatches != 0 {
-				candidates = append(candidates, svcMatch{svc: svc, svcPorts: svcPorts, targetPorts: targetPorts, portMatches: portMatches})
+				candidates = append(candidates, svcMatch{svc: svc, svcPorts: svcPorts, portMatches: portMatches})
 			}
 		}
 	}
@@ -107,4 +107,18 @@ func selectorMatches(selector, labels map[string]string) bool {
 		}
 	}
 	return true
+}
+
+// compose database address: <endpoint>:<port>
+func buildAddressWithPort(endpoint string, defaultPort int32) string {
+	if defaultPort == 0 {
+		return endpoint
+	}
+
+	_, portStr, err := net.SplitHostPort(endpoint)
+	if err == nil && portStr != "" {
+		return endpoint
+	}
+
+	return net.JoinHostPort(endpoint, strconv.Itoa(int(defaultPort)))
 }

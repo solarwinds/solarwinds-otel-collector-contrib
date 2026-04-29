@@ -45,7 +45,7 @@ const (
 func TestNewReceiver(t *testing.T) {
 	t.Parallel()
 
-	rCfg := createImplicitConfig().(*Config)
+	rCfg := createDefaultConfig().(*Config)
 
 	err := rCfg.Validate()
 	require.NoError(t, err)
@@ -133,28 +133,7 @@ func collectDBAttrs(all []plog.Logs, dbType string) []pcommon.Map {
 
 func checkAttr(t *testing.T, attrs pcommon.Map, key string, expectedValue string) {
 	if v, ok := attrs.Get(key); ok {
-		assert.Equal(t, expectedValue, v.Str())
-	} else {
-		t.Fatalf("missing attribute: %s", key)
-	}
-}
-
-func checkAttrInt(t *testing.T, attrs pcommon.Map, key string, expectedValue int64) {
-	if v, ok := attrs.Get(key); ok {
-		assert.Equal(t, expectedValue, v.Int())
-	} else {
-		t.Fatalf("missing attribute: %s", key)
-	}
-}
-
-func checkAttrInts(t *testing.T, attrs pcommon.Map, key string, expected []int) {
-	if v, ok := attrs.Get(key); ok {
-		arr := v.Slice()
-
-		assert.Equal(t, len(expected), arr.Len())
-		for i := 0; i < arr.Len(); i++ {
-			assert.Equal(t, expected[i], int(arr.At(i).Int()))
-		}
+		assert.Equal(t, expectedValue, v.Str(), "attribute '%s' value mismatch", key)
 	} else {
 		t.Fatalf("missing attribute: %s", key)
 	}
@@ -177,50 +156,71 @@ func TestDomainDiscovery_SingleMatch(t *testing.T) {
 			DomainRules: []*DomainRule{{
 				DatabaseType: "redis",
 				Patterns:     []string{".*redis.example.com"},
+				DefaultPort:  6379,
 			}},
 		},
 	}
 	require.NoError(t, cfg.Validate())
-
-	trueVal := true
-
-	deploy := &appsv1.Deployment{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "db", Name: "redis-deploy", UID: types.UID("deploy-uid"), Labels: map[string]string{"app": "redis"}},
-	}
-	rs := &appsv1.ReplicaSet{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "db", Name: "redis-deploy-rs", UID: types.UID("rs-uid"), Labels: map[string]string{"app": "redis"}, OwnerReferences: []metav1.OwnerReference{{APIVersion: "apps/v1", Kind: "Deployment", Name: deploy.Name, UID: deploy.UID, Controller: &trueVal}}},
-	}
-	pod := &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "db", Name: "redis-pod", UID: types.UID("pod-uid"), Labels: map[string]string{"app": "redis"}, OwnerReferences: []metav1.OwnerReference{{APIVersion: "apps/v1", Kind: "ReplicaSet", Name: rs.Name, UID: rs.UID, Controller: &trueVal}}},
-		Spec:       corev1.PodSpec{Containers: []corev1.Container{{Name: "redis", Image: "docker.io/library/redis:7"}}},
-	}
 
 	svc := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{Namespace: "db", Name: "redis-ext"},
 		Spec: corev1.ServiceSpec{
 			Type:         corev1.ServiceTypeExternalName,
 			ExternalName: "cache-01.redis.example.com",
-			Selector:     map[string]string{"app": "redis"},
 		},
 	}
 
-	logs := runImageCycle(t, cfg, deploy, rs, pod, svc)
+	logs := runImageCycle(t, cfg, svc)
 	attrs := collectDBAttrs(logs, "redis")
 	require.Len(t, attrs, 1)
 	idAttrs := getAttrMap(t, attrs[0], otelEntityId)
 	require.Equal(t, idAttrs.Len(), 3)
-	checkAttr(t, idAttrs, swDiscoveryDbAddress, "cache-01.redis.example.com")
+	checkAttr(t, idAttrs, swDiscoveryDbAddress, "cache-01.redis.example.com:6379")
 	checkAttr(t, idAttrs, swDiscoveryDbType, "redis")
 	checkAttr(t, idAttrs, swDiscoveryId, "external")
 	entityAttrs := getAttrMap(t, attrs[0], otelEntityAttributes)
-	checkAttr(t, entityAttrs, swDiscoveryDbName, "cache-01.redis.example.com#db#redis-deploy")
+	checkAttr(t, entityAttrs, swDiscoveryDbName, "cache-01.redis.example.com")
 
 	relAttrs := collectAttrs(logs, otelEntityEventType, relationshipState)
 	require.Len(t, relAttrs, 1, "expected relationship when workload resolved")
-	checkAttr(t, relAttrs[0], otelEntityRelationSourceType, "KubernetesDeployment")
+	checkAttr(t, relAttrs[0], otelEntityRelationSourceType, "KubernetesService")
 	srcIDs := getAttrMap(t, relAttrs[0], otelEntityRelationSourceID)
-	checkAttr(t, srcIDs, "k8s.deployment.name", "redis-deploy")
+	checkAttr(t, srcIDs, "k8s.service.name", "redis-ext")
 	checkAttr(t, srcIDs, k8sNamespace, "db")
+}
+
+func TestDomainDiscovery_SingleMatchCustomPort(t *testing.T) {
+	cfg := &Config{
+		APIConfig: k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeServiceAccount},
+		Interval:  time.Second,
+		Database: &DatabaseDiscoveryConfig{
+			DomainRules: []*DomainRule{{
+				DatabaseType: "redis",
+				Patterns:     []string{".*redis.example.com"},
+				DefaultPort:  6379,
+			}},
+		},
+	}
+	require.NoError(t, cfg.Validate())
+
+	svc := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "db", Name: "redis-ext"},
+		Spec: corev1.ServiceSpec{
+			Type:         corev1.ServiceTypeExternalName,
+			ExternalName: "cache-01.redis.example.com:123",
+		},
+	}
+
+	logs := runImageCycle(t, cfg, svc)
+	attrs := collectDBAttrs(logs, "redis")
+	require.Len(t, attrs, 1)
+	idAttrs := getAttrMap(t, attrs[0], otelEntityId)
+	require.Equal(t, idAttrs.Len(), 3)
+	checkAttr(t, idAttrs, swDiscoveryDbAddress, "cache-01.redis.example.com:123")
+	checkAttr(t, idAttrs, swDiscoveryDbType, "redis")
+	checkAttr(t, idAttrs, swDiscoveryId, "external")
+	entityAttrs := getAttrMap(t, attrs[0], otelEntityAttributes)
+	checkAttr(t, entityAttrs, swDiscoveryDbName, "cache-01.redis.example.com:123")
 }
 
 func TestDomainDiscovery_DedupByDomainHint(t *testing.T) {
@@ -244,12 +244,14 @@ func TestDomainDiscovery_DedupByDomainHint(t *testing.T) {
 	}
 
 	logs := runImageCycle(t, cfg, svc)
-	require.Len(t, logs, 1)
+	require.Len(t, logs, 2, "expected two log records (entity + relationship)")
 	attrs := collectDBAttrs(logs, "mysql") // expect mysql chosen due to more hint matches ("company" substring)
 	require.Len(t, attrs, 1)
 	// ensure pg not emitted
 	pgAttrs := collectDBAttrs(logs, "pg")
 	require.Len(t, pgAttrs, 0)
+	relationAttrs := collectAttrs(logs, otelEntityEventType, relationshipState)
+	require.Len(t, relationAttrs, 1)
 
 	idMap := getAttrMap(t, attrs[0], otelEntityId)
 	checkAttr(t, idMap, swDiscoveryDbAddress, "some-db.company.internal")
@@ -324,15 +326,15 @@ func TestImageDiscovery_SingleMatch(t *testing.T) {
 	require.Len(t, attrs, 1)
 	id_attrs := getAttrMap(t, attrs[0], otelEntityId)
 	require.Equal(t, id_attrs.Len(), 3)
-	checkAttr(t, id_attrs, swDiscoveryDbAddress, "mongo-svc:27017")
+	checkAttr(t, id_attrs, swDiscoveryDbAddress, "mongo-svc.db:27017")
 	checkAttr(t, id_attrs, swDiscoveryDbType, "mongo")
 	checkAttr(t, id_attrs, swDiscoveryId, testClusterUid)
 	entity_attrs := getAttrMap(t, attrs[0], otelEntityAttributes)
-	checkAttr(t, entity_attrs, swDiscoveryDbName, "mongo-svc#db#mongo-ds")
+	checkAttr(t, entity_attrs, swDiscoveryDbName, "mongo-svc.db")
 
 	relationAttrs := collectAttrs(logs, otelEntityEventType, relationshipState)
 	require.Len(t, relationAttrs, 1)
-	checkAttr(t, relationAttrs[0], otelEntityRelationType, "DiscoveredBy")
+	checkAttr(t, relationAttrs[0], otelEntityRelationType, discoveredRelationshipType)
 	checkAttr(t, relationAttrs[0], otelEntityRelationSourceType, "KubernetesDaemonSet")
 	source_ids := getAttrMap(t, relationAttrs[0], otelEntityRelationSourceID)
 	checkAttr(t, source_ids, "k8s.daemonset.name", "mongo-ds")
@@ -341,7 +343,7 @@ func TestImageDiscovery_SingleMatch(t *testing.T) {
 
 	checkAttr(t, relationAttrs[0], otelEntityRelationDestinationType, discoveredDatabaseEntityType)
 	dst_ids := getAttrMap(t, relationAttrs[0], otelEntityRelationDestinationID)
-	checkAttr(t, dst_ids, swDiscoveryDbAddress, "mongo-svc:27017")
+	checkAttr(t, dst_ids, swDiscoveryDbAddress, "mongo-svc.db:27017")
 	checkAttr(t, dst_ids, swDiscoveryDbType, "mongo")
 }
 
@@ -358,18 +360,12 @@ func TestImageDiscovery_NonDefaultPortMatch(t *testing.T) {
 	pod1 := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "mongo-b", Namespace: "db", Labels: map[string]string{"app": "mongo"}}, Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: "mongo", Image: "docker.io/library/mongo:7", Ports: []corev1.ContainerPort{{ContainerPort: 27017}, {ContainerPort: 27018}}}}}}
 
 	logs := runImageCycle(t, cfg, pod1)
-	require.Len(t, logs, 1)
+	// No entity created because default_port (8080) doesn't match any container ports [27017, 27018]
+	// Result: multi-port scenario without default_port match -> skipped
+	require.Len(t, logs, 0)
 	attrs := collectDBAttrs(logs, "mongo")
-	require.Len(t, attrs, 2)
-	id_attrs := getAttrMap(t, attrs[0], otelEntityId)
-	checkAttr(t, id_attrs, swDiscoveryDbAddress, "mongo-b:27017")
-	entity_attrs := getAttrMap(t, attrs[0], otelEntityAttributes)
-	checkAttr(t, entity_attrs, swDiscoveryDbName, "mongo-b#db")
+	require.Len(t, attrs, 0)
 
-	id_attrs = getAttrMap(t, attrs[1], otelEntityId)
-	checkAttr(t, id_attrs, swDiscoveryDbAddress, "mongo-b:27018")
-	entity_attrs = getAttrMap(t, attrs[1], otelEntityAttributes)
-	checkAttr(t, entity_attrs, swDiscoveryDbName, "mongo-b#db")
 }
 
 func TestImageDiscovery_DedupPerPortSignature(t *testing.T) {
@@ -387,16 +383,18 @@ func TestImageDiscovery_DedupPerPortSignature(t *testing.T) {
 
 	logs := runImageCycle(t, cfg, pod1, pod2)
 	attrs := collectDBAttrs(logs, "mongo")
-	require.Len(t, attrs, 2, "expected two distinct mongo events due to different port signatures")
+	// Only mongo-a with single port (27017 matching default_port) creates entity
+	// mongo-b has [27017, 27018], but default_port matches so it resolves to [27017], creating entity
+	require.Len(t, attrs, 2, "expected two mongo events")
 
 	var seenSingle, seenMulti bool
 	for _, a := range attrs {
 		idMap := getAttrMap(t, a, otelEntityId)
 		if v, ok := idMap.Get(swDiscoveryDbAddress); ok {
-			if v.Str() == "mongo-a:27017" {
+			if v.Str() == "mongo-a.db:27017" {
 				seenSingle = true
 			}
-			if v.Str() == "mongo-b:27017" {
+			if v.Str() == "mongo-b.db:27017" {
 				seenMulti = true
 			}
 		}
@@ -423,7 +421,7 @@ func TestImageDiscovery_MultipleServicesOverlapHeuristic(t *testing.T) {
 	attrs := collectDBAttrs(logs, "pg")
 	require.Len(t, attrs, 1)
 	idMap := getAttrMap(t, attrs[0], otelEntityId)
-	checkAttr(t, idMap, swDiscoveryDbAddress, "pg-primary:5432")
+	checkAttr(t, idMap, swDiscoveryDbAddress, "pg-primary.db:5432")
 }
 
 func TestImageDiscovery_TargetPortNamedResolution(t *testing.T) {
@@ -453,5 +451,25 @@ func TestImageDiscovery_TargetPortNamedResolution(t *testing.T) {
 	require.Len(t, attrs, 1)
 
 	idMap := getAttrMap(t, attrs[0], otelEntityId)
-	checkAttr(t, idMap, swDiscoveryDbAddress, "mysql-svc:13306")
+	checkAttr(t, idMap, swDiscoveryDbAddress, "mysql-svc.db:13306")
+}
+
+func TestImageDiscovery_NoPorts(t *testing.T) {
+	cfg := &Config{
+		APIConfig: k8sconfig.APIConfig{
+			AuthType: k8sconfig.AuthTypeServiceAccount,
+		},
+		Interval: time.Second,
+		Database: &DatabaseDiscoveryConfig{
+			ImageRules: []*ImageRule{{DatabaseType: "mongo", Patterns: []string{".*/mongo:.*"}, DefaultPort: 27017}}}}
+	require.NoError(t, cfg.Validate())
+
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{Name: "mongo-a", Namespace: "db", Labels: map[string]string{"app": "mongo"}},
+		Spec:       corev1.PodSpec{Containers: []corev1.Container{{Name: "mongo", Image: "docker.io/library/mongo:7"}}},
+	}
+
+	logs := runImageCycle(t, cfg, pod)
+	attrs := collectDBAttrs(logs, "mongo")
+	require.Len(t, attrs, 0, "expected no entity when container has zero ports")
 }

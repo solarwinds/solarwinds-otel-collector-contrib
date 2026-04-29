@@ -3,6 +3,9 @@
 ## vNext
 - Updates OpenTelemetry modules to [v1.56.0/v0.150.0](https://github.com/open-telemetry/opentelemetry-collector/releases/tag/v0.150.0)
 
+### Breaking Changes
+- ⚠️ **swok8sdiscovery receiver** : The `sw.discovery.dbo.address` attribute now includes the port number in the format `hostname.namespace:port` (e.g., `mongo-svc.db:27017`) instead of just `hostname.namespace`. This makes the address connection-ready and unambiguous. Discovered database entities are now only created when exactly one port is detected.
+
 ## v0.145.11
 - No changes
 
