@@ -1,6 +1,6 @@
 module github.com/solarwinds/solarwinds-otel-collector-contrib/processor/k8seventgenerationprocessor
 
-go 1.25.9
+go 1.25.10
 
 require (
 	github.com/google/go-containerregistry v0.21.5
