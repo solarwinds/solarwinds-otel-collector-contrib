@@ -3,8 +3,8 @@ module github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwi
 go 1.25.10
 
 require (
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil v0.145.11
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.145.11
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil v0.150.1
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.150.1
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/collector/component v1.56.0
 	go.opentelemetry.io/collector/component/componenttest v0.150.0
@@ -19,7 +19,7 @@ require (
 	go.opentelemetry.io/collector/extension/extensiontest v0.150.0
 	go.opentelemetry.io/collector/pdata v1.56.0
 	go.uber.org/goleak v1.3.0
-	go.uber.org/zap v1.27.1
+	go.uber.org/zap v1.28.0
 )
 
 require (

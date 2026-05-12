@@ -5,11 +5,11 @@ go 1.25.10
 require (
 	github.com/go-ole/go-ole v1.3.0
 	github.com/google/go-cmp v0.7.0
-	github.com/shirou/gopsutil/v4 v4.26.3
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/registry v0.145.11
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil v0.145.11
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.145.11
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/wmi v0.145.11
+	github.com/shirou/gopsutil/v4 v4.26.4
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/registry v0.150.1
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil v0.150.1
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.150.1
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/wmi v0.150.1
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/collector/component v1.56.0
 	go.opentelemetry.io/collector/component/componenttest v0.150.0
@@ -22,7 +22,7 @@ require (
 	go.opentelemetry.io/collector/scraper/scrapertest v0.150.0
 	go.opentelemetry.io/otel v1.43.0
 	go.uber.org/goleak v1.3.0
-	go.uber.org/zap v1.27.1
+	go.uber.org/zap v1.28.0
 )
 
 require (

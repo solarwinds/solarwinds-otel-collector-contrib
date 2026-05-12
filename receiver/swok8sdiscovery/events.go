@@ -18,24 +18,27 @@ import (
 	"context"
 	"strconv"
 	"strings"
+	"time"
 
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
+	"go.uber.org/zap"
 )
 
 // databaseEvent is an internal representation before converting to logs.
 type databaseEvent struct {
+	Name         string
+	Address      string
 	DatabaseType string
 	Namespace    string
-	Endpoint     string  // service name if available, else pod name
-	Ports        []int32 // chosen ports (default preferred)
-	WorkloadKind string  // Deployment/StatefulSet/DaemonSet/Job/CronJob
+	WorkloadKind string // Deployment/StatefulSet/DaemonSet/Job/CronJob/Service
 	WorkloadName string
 }
 
 const (
 	clusterUidEnv                = "CLUSTER_UID"
 	discoveredDatabaseEntityType = "DiscoveredDatabaseInstance"
+	discoveredRelationshipType   = "DiscoveredBy"
 	entityState                  = "entity_state"
 	relationshipState            = "entity_relationship_state"
 
@@ -60,8 +63,6 @@ const (
 	otelEntityId         = "otel.entity.id"
 	otelEntityAttributes = "otel.entity.attributes"
 	swK8sClusterUid      = "sw.k8s.cluster.uid"
-
-	noPortDetected = -1
 )
 
 // publishDatabaseEvent publishes structured log record for database discovery outcome.
@@ -70,58 +71,37 @@ func (r *swok8sdiscoveryReceiver) publishDatabaseEvent(ctx context.Context, disc
 	scopeLogs := logs.ResourceLogs().AppendEmpty().ScopeLogs().AppendEmpty()
 	scopeLogs.Scope().Attributes().PutBool(otelEntityEventAsLog, true)
 
-	// compose database name
-	name := ev.Endpoint
-	if ev.Namespace != "" {
-		name += "#" + ev.Namespace
-	}
-	if ev.WorkloadName != "" {
-		name += "#" + ev.WorkloadName
-	}
+	logRecord := scopeLogs.LogRecords().AppendEmpty()
+	logRecord.SetObservedTimestamp(pcommon.NewTimestampFromTime(time.Now()))
+	attrs := logRecord.Attributes()
 
-	// no port detected
-	if len(ev.Ports) == 0 {
-		ev.Ports = append(ev.Ports, noPortDetected)
-	}
+	attrs.PutStr(otelEntityEventType, entityState)
+	attrs.PutStr(swEntityType, discoveredDatabaseEntityType)
 
-	for _, port := range ev.Ports {
-		logRecord := scopeLogs.LogRecords().AppendEmpty()
-		attrs := logRecord.Attributes()
+	keys := attrs.PutEmptyMap(otelEntityId)
+	keys.PutStr(swDiscoveryDbAddress, ev.Address)
+	keys.PutStr(swDiscoveryDbType, ev.DatabaseType)
+	keys.PutStr(swDiscoveryId, discoveryId)
 
-		address := ev.Endpoint
-		if port != noPortDetected {
-			address += ":" + strconv.Itoa(int(port))
-		}
+	entityAttrs := attrs.PutEmptyMap(otelEntityAttributes)
+	entityAttrs.PutStr(swDiscoveryDbName, ev.Name)
+	entityAttrs.PutStr(swDiscoverySource, r.config.Reporter)
 
-		attrs.PutStr(otelEntityEventType, entityState)
-		attrs.PutStr(swEntityType, discoveredDatabaseEntityType)
-		attrs.PutStr(swDiscoverySource, r.config.Reporter)
-		// add workload attributes fo filtering
-		if ev.WorkloadKind != "" {
-			attrs.PutStr("k8s."+strings.ToLower(ev.WorkloadKind)+".name", ev.WorkloadName)
-			attrs.PutStr(k8sNamespace, ev.Namespace)
-			attrs.PutStr(swK8sClusterUid, r.clusterUid)
-		}
-
-		keys := attrs.PutEmptyMap(otelEntityId)
-		keys.PutStr(swDiscoveryDbAddress, address)
-		keys.PutStr(swDiscoveryDbType, ev.DatabaseType)
-		keys.PutStr(swDiscoveryId, discoveryId)
-
-		optional := attrs.PutEmptyMap(otelEntityAttributes)
-		optional.PutStr(swDiscoveryDbName, name)
-
-		r.publishRelationShip(ctx, ev, keys)
+	if err := r.consumer.ConsumeLogs(ctx, logs); err != nil {
+		// Log the error but do not retry, as this is a best-effort discovery entity event.
+		r.setting.Logger.Debug("Error sending entity event to the consumer", zap.Error(err))
 	}
 
-	r.consumer.ConsumeLogs(ctx, logs)
-
+	if err := r.publishRelationShip(ctx, ev, keys); err != nil {
+		// Log the error but do not retry, as this is a best-effort discovery relationship event.
+		r.setting.Logger.Debug("Error sending relationship event to the consumer", zap.Error(err))
+	}
 }
 
-func (r *swok8sdiscoveryReceiver) publishRelationShip(ctx context.Context, ev databaseEvent, dbKeys pcommon.Map) {
+func (r *swok8sdiscoveryReceiver) publishRelationShip(ctx context.Context, ev databaseEvent, dbKeys pcommon.Map) error {
 
 	if ev.WorkloadKind == "" || ev.WorkloadName == "" {
-		return
+		return nil
 	}
 
 	logs := plog.NewLogs()
@@ -129,12 +109,12 @@ func (r *swok8sdiscoveryReceiver) publishRelationShip(ctx context.Context, ev da
 	scopeLogs.Scope().Attributes().PutBool(otelEntityEventAsLog, true)
 
 	logRecord := scopeLogs.LogRecords().AppendEmpty()
+	logRecord.SetObservedTimestamp(pcommon.NewTimestampFromTime(time.Now()))
 	attrs := logRecord.Attributes()
 
 	attrs.PutStr(otelEntityEventType, relationshipState)
-	attrs.PutStr(otelEntityRelationType, "DiscoveredBy")
+	attrs.PutStr(otelEntityRelationType, discoveredRelationshipType)
 
-	//
 	// source entity
 	attrs.PutStr(otelEntityRelationSourceType, "Kubernetes"+ev.WorkloadKind)
 	src_ids := attrs.PutEmptyMap(otelEntityRelationSourceID)
@@ -142,13 +122,12 @@ func (r *swok8sdiscoveryReceiver) publishRelationShip(ctx context.Context, ev da
 	src_ids.PutStr(k8sNamespace, ev.Namespace)
 	src_ids.PutStr(swK8sClusterUid, r.clusterUid)
 
-	//
 	// destination entity
 	attrs.PutStr(otelEntityRelationDestinationType, discoveredDatabaseEntityType)
 	dst_ids := attrs.PutEmptyMap(otelEntityRelationDestinationID)
 	dbKeys.CopyTo(dst_ids)
 
-	r.consumer.ConsumeLogs(ctx, logs)
+	return r.consumer.ConsumeLogs(ctx, logs)
 }
 
 func portsAsStrings(ports []int32) []string {

@@ -59,6 +59,7 @@ func TestLoadConfig(t *testing.T) {
 						{
 							DatabaseType: "mysql",
 							Patterns:     []string{"mysql*", "mariadb*"},
+							DefaultPort:  3306,
 						},
 						{
 							DatabaseType: "postgres",
@@ -67,6 +68,7 @@ func TestLoadConfig(t *testing.T) {
 								`\.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$`,
 							},
 							DomainHints: []string{"postgres"},
+							DefaultPort: 5432,
 						},
 					},
 				},

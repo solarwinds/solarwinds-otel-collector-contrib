@@ -8,7 +8,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.150.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza v0.150.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/xk8stest v0.150.0
-	github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfig v0.145.11
+	github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfig v0.150.1
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/collector/component v1.56.0
 	go.opentelemetry.io/collector/component/componenttest v0.150.0
@@ -24,7 +24,7 @@ require (
 	go.opentelemetry.io/collector/receiver/receivertest v0.150.0
 	go.opentelemetry.io/otel v1.43.0
 	go.uber.org/goleak v1.3.0
-	go.uber.org/zap v1.27.1
+	go.uber.org/zap v1.28.0
 	k8s.io/apimachinery v0.35.3
 	k8s.io/client-go v0.35.3
 )
