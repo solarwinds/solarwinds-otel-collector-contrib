@@ -66,7 +66,7 @@ func (b *defaultKeyBuilder) BuildRelationshipKey(relationshipType string, source
 	return fmt.Sprintf("%s:%s:%s", relationshipType, sourceHash, destHash), nil
 }
 
-func hashObject(data interface{}) (string, error) {
+func hashObject(data any) (string, error) {
 	bytes, err := json.Marshal(data)
 	if err != nil {
 		return "", fmt.Errorf("failed to encode: %w", err)

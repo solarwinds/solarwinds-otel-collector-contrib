@@ -110,7 +110,7 @@ func buildSingleMetrics(b *testing.B, count int, configuredMetrics []pmetric.Met
 	b.Helper()
 
 	var metric []pmetric.Metrics
-	for i := 0; i < count; i++ {
+	for i := range count {
 		metric = append(metric, configuredMetrics[i%len(configuredMetrics)]) // Loop through the metrics cyclically
 	}
 
@@ -122,7 +122,7 @@ func buildMultipleMetric(b *testing.B, count int, metrics []pmetric.Metrics) pme
 	b.Helper()
 
 	multiple := pmetric.NewMetrics()
-	for i := 0; i < count; i++ {
+	for i := range count {
 		metric := metrics[i%len(metrics)]       // Loop through the metrics cyclically
 		srcRM := metric.ResourceMetrics().At(0) // There is only one resource metric in each metric
 		dstRM := multiple.ResourceMetrics().AppendEmpty()
@@ -274,7 +274,7 @@ func buildSingleLogs(b *testing.B, count int, configuredLogs []plog.Logs) []plog
 	b.Helper()
 
 	var logs []plog.Logs
-	for i := 0; i < count; i++ {
+	for i := range count {
 		logs = append(logs, configuredLogs[i%len(configuredLogs)]) // Loop through the logs cyclically
 	}
 	return logs
@@ -286,7 +286,7 @@ func buildMultipleLog(b *testing.B, amount int, logs []plog.Logs) plog.Logs {
 
 	multipleLog := plog.NewLogs()
 
-	for i := 0; i < amount; i++ {
+	for i := range amount {
 		log := logs[i%len(logs)]          // Loop through the logs cyclically
 		srcRL := log.ResourceLogs().At(0) // There is only one resource log in each log
 		dstRL := multipleLog.ResourceLogs().AppendEmpty()

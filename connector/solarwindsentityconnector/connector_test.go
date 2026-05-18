@@ -310,8 +310,7 @@ func TestRelationship_DeletedRelationshipDoesNotExpire(t *testing.T) {
 	require.NoError(t, err)
 	factory := NewFactory()
 	sink := &consumertest.LogsSink{}
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	conn, err := factory.CreateMetricsToLogs(ctx,
 		connectortest.NewNopSettings(metadata.Type), cfg, sink)
 	require.NoError(t, err)
