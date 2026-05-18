@@ -1,0 +1,16 @@
+type: swootelentityref
+github_project: solarwinds/solarwinds-otel-collector-contrib
+
+status:
+  class: processor
+  stability:
+    development: [logs, metrics, traces]
+  distributions: [verified, playground, k8s]
+  disable_codecov_badge: true
+
+tests:
+  config:
+    action: insert
+    entity_refs:
+      - type: KubernetesPod
+        id_keys: [sw.k8s.cluster.uid, k8s.namespace.name, k8s.pod.name]
