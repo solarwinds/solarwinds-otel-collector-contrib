@@ -71,8 +71,10 @@ func TestVulnerabilityReportManifest(t *testing.T) {
 		assert.True(t, isSlice, "vulnerability.reference should be an array")
 	}
 
-	verifyContainerImage := func(t *testing.T, attrs pcommon.Map, expectedImageID string, expectedImageName string, expectedImageTag string) {
+	verifyContainerImage := func(t *testing.T, attrs pcommon.Map, expectedClusterUID string, expectedImageID string, expectedImageName string, expectedImageTag string) {
 		ids := getMapValue(t, attrs, "otel.entity.id")
+		assert.Equal(t, expectedClusterUID, getStringValue(t, ids, "sw.k8s.cluster.uid"),
+			"KubernetesContainerImage entity ID must contain sw.k8s.cluster.uid")
 		assert.Equal(t, expectedImageID, getStringValue(t, ids, constants.AttributeOciManifestDigest))
 		assert.Equal(t, expectedImageName, getStringValue(t, ids, "container.image.name"))
 
@@ -175,7 +177,7 @@ func TestVulnerabilityReportManifest(t *testing.T) {
 					}
 				} else if entityType == "KubernetesContainerImage" {
 					containerImageCount++
-					verifyContainerImage(t, attrs, "sha256:83c025f0faa6799fab6645102a98138e39a9a7db2be3bc792c79d72659b1805d", "registry.k8s.io/kube-proxy", "v1.32.2")
+					verifyContainerImage(t, attrs, "test-cluster-uid", "sha256:83c025f0faa6799fab6645102a98138e39a9a7db2be3bc792c79d72659b1805d", "registry.k8s.io/kube-proxy", "v1.32.2")
 				}
 			} else if eventType == constants.EventTypeEntityRelationshipState {
 				relType := getStringValue(t, attrs, constants.AttributeOtelEntityRelationshipType)
@@ -723,6 +725,9 @@ func TestPodManifestEmitsContainerImageAndRelatesToEvents(t *testing.T) {
 				assert.True(t, hasDigest, "ContainerImage ID should contain oci.manifest.digest")
 			case "KubernetesContainerImage":
 				k8sContainerImageCount++
+				ids := getMapValue(t, attrs, "otel.entity.id")
+				assert.Equal(t, "test-cluster-uid", getStringValue(t, ids, "sw.k8s.cluster.uid"),
+					"KubernetesContainerImage entity ID must contain sw.k8s.cluster.uid")
 			case "KubernetesContainer":
 				k8sContainerCount++
 			}
@@ -748,4 +753,47 @@ func TestPodManifestEmitsContainerImageAndRelatesToEvents(t *testing.T) {
 	assert.GreaterOrEqual(t, k8sContainerImageCount, 1, "should still emit KubernetesContainerImage entities")
 	assert.GreaterOrEqual(t, k8sResourceUsesImageCount, 1, "should still emit KubernetesResourceUsesImage relationships")
 	assert.GreaterOrEqual(t, k8sContainerCount, 1, "should still emit KubernetesContainer entities")
+}
+
+// TestPodManifestWithoutClusterUIDEmitsNoKubernetesContainerImageEvents verifies that
+// when the resource log does not carry the sw.k8s.cluster.uid resource attribute,
+// no KubernetesContainerImage entity state events are emitted (skip-on-missing invariant).
+// T014b (negative path)
+func TestPodManifestWithoutClusterUIDEmitsNoKubernetesContainerImageEvents(t *testing.T) {
+	podManifestNoClusterUID := `{"apiVersion":"v1","kind":"Pod","metadata":{"annotations":{},"name":"test-pod","namespace":"test-namespace"},"spec":{"containers":[{"image":"nginx:1.25","name":"nginx"}]},"status":{"containerStatuses":[{"containerID":"containerd://abc123","image":"nginx:1.25","imageID":"docker://sha256:a3ed95caeb02ffe68cdd9fd84406680ae93d633cb16422d00e8a7c22955b46d4","name":"nginx","state":{"running":{}}}]}}`
+
+	// Build a log WITHOUT sw.k8s.cluster.uid resource attribute (unlike generateManifestLogs which always sets it).
+	l := generateLogs()
+	rl := l.ResourceLogs().At(0)
+	rl.Resource().Attributes().PutBool("ORIGINAL_LOG", true)
+	sl := rl.ScopeLogs().At(0)
+	lr := sl.LogRecords().AppendEmpty()
+	lr.Attributes().PutStr("k8s.object.kind", "Pod")
+	lr.Body().SetStr(podManifestNoClusterUID)
+	lr.SetObservedTimestamp(timestamp)
+
+	consumer, err := startAndConsumeLogs(t, l)
+	require.NoError(t, err)
+
+	result := consumer.AllLogs()
+	require.Len(t, result, 1)
+
+	// Find entity state event resource log (if any)
+	k8sContainerImageCount := 0
+	for i := 0; i < result[0].ResourceLogs().Len(); i++ {
+		rl := result[0].ResourceLogs().At(i)
+		if v, ok := rl.Resource().Attributes().Get("sw.k8s.log.type"); ok && v.AsString() == "entitystateevent" {
+			logRecords := rl.ScopeLogs().At(0).LogRecords()
+			for j := 0; j < logRecords.Len(); j++ {
+				attrs := logRecords.At(j).Attributes()
+				if getStringValue(t, attrs, "otel.entity.event.type") == "entity_state" &&
+					getStringValue(t, attrs, "otel.entity.type") == "KubernetesContainerImage" {
+					k8sContainerImageCount++
+				}
+			}
+		}
+	}
+
+	assert.Equal(t, 0, k8sContainerImageCount,
+		"should emit no KubernetesContainerImage events when sw.k8s.cluster.uid resource attribute is absent")
 }

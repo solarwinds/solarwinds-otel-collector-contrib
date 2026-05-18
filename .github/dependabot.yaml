@@ -24,7 +24,7 @@ updates:
       - "/cmd/*/"
     schedule:
       interval: weekly
-      day: sunday
+      day: thursday
       time: "03:30"
     allow:
       - dependency-type: "direct"

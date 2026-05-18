@@ -2,6 +2,36 @@
 
 ## vNext
 
+## v0.150.2
+- No changes
+
+## v0.150.1
+- No changes
+
+## v0.150.0
+- Updates OpenTelemetry modules to [v1.56.0/v0.150.0](https://github.com/open-telemetry/opentelemetry-collector/releases/tag/v0.150.0)
+
+### Breaking Changes
+- ⚠️ **swok8sdiscovery receiver** : The `sw.discovery.dbo.address` attribute now includes the port number in the format `hostname.namespace:port` (e.g., `mongo-svc.db:27017`) instead of just `hostname.namespace`. This makes the address connection-ready and unambiguous. Discovered database entities are now only created when exactly one port is detected.
+
+## v0.145.11
+- No changes
+
+## v0.145.10
+- **Added** `k8seventgenerationprocessor` Add `sw.k8s.cluster.uid` attribute to entity state events for `KubernetesContainerImage`.
+
+## v0.145.9
+- No changes
+
+## v0.145.8
+- No changes
+
+## v0.145.7
+- No changes
+
+## v0.145.6
+- **Added** `k8seventgenerationprocessor` Add `sw.vulnerability.severity.vendor_category` attribute to entity state events for `VulnerabilityDetail`.
+
 ## v0.145.5
 - **Added** `k8seventgenerationprocessor` Emit `ContainerImage` entity state events and `RelatesTo` relationship state events connecting `ContainerImage` to `KubernetesContainerImage` when processing pod manifests.
 

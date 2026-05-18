@@ -33,21 +33,22 @@ const (
 	RelationshipTypeVulnerabilityFinding = "VulnerabilityFinding"
 
 	// Vulnerability Attributes
-	AttributeVulnerabilityID                 = "vulnerability.id"
-	AttributeVulnerabilityDescription        = "vulnerability.description"
-	AttributeVulnerabilitySeverity           = "vulnerability.severity"
-	AttributeVulnerabilityScoreBase          = "vulnerability.score.base"
-	AttributeVulnerabilityScoreVersion       = "vulnerability.score.version"
-	AttributeVulnerabilityEnumeration        = "vulnerability.enumeration"
-	AttributeVulnerabilityReference          = "vulnerability.reference"
-	AttributeVulnerabilityClassification     = "vulnerability.classification"
-	AttributeVulnerabilityPublishedDate      = "vulnerability.published_date"
-	AttributeVulnerabilityLastModifiedDate   = "vulnerability.last_modified_date"
-	AttributeVulnerabilityResource           = "vulnerability.resource"
-	AttributeVulnerabilityInstalledVersion   = "vulnerability.installed_version"
-	AttributeVulnerabilityFixedVersion       = "vulnerability.fixed_version"
-	AttributeVulnerabilityVendorSeverity     = "vulnerability.severity.vendor"
-	AttributeVulnerabilityScoreEnvironmental = "vulnerability.score.environmental"
+	AttributeVulnerabilityID                     = "vulnerability.id"
+	AttributeVulnerabilityDescription            = "vulnerability.description"
+	AttributeVulnerabilitySeverity               = "vulnerability.severity"
+	AttributeVulnerabilityScoreBase              = "vulnerability.score.base"
+	AttributeVulnerabilityScoreVersion           = "vulnerability.score.version"
+	AttributeVulnerabilityEnumeration            = "vulnerability.enumeration"
+	AttributeVulnerabilityReference              = "vulnerability.reference"
+	AttributeVulnerabilityClassification         = "vulnerability.classification"
+	AttributeVulnerabilityPublishedDate          = "vulnerability.published_date"
+	AttributeVulnerabilityLastModifiedDate       = "vulnerability.last_modified_date"
+	AttributeVulnerabilityResource               = "vulnerability.resource"
+	AttributeVulnerabilityInstalledVersion       = "vulnerability.installed_version"
+	AttributeVulnerabilityFixedVersion           = "vulnerability.fixed_version"
+	AttributeVulnerabilityVendorSeverity         = "vulnerability.severity.vendor"
+	AttributeVulnerabilityScoreEnvironmental     = "vulnerability.score.environmental"
+	AttributeVulnerabilityVendorSeverityCategory = "sw.vulnerability.severity.vendor_category"
 
 	// Scanner Attributes (GraphQL property names for relationship attributes)
 	AttributeScannerVendor  = "scannerVendor"
@@ -60,4 +61,14 @@ const (
 	// Container Image Attributes
 	AttributeContainerImageTags = "container.image.tags"
 	AttributeImageTag           = "imageTag"
+)
+
+type VendorSeverityCategory string
+
+const (
+	VendorSeverityCategoryCritical VendorSeverityCategory = "CRITICAL"
+	VendorSeverityCategoryHigh     VendorSeverityCategory = "HIGH"
+	VendorSeverityCategoryMedium   VendorSeverityCategory = "MEDIUM"
+	VendorSeverityCategoryLow      VendorSeverityCategory = "LOW"
+	VendorSeverityCategoryUnknown  VendorSeverityCategory = "UNKNOWN"
 )
