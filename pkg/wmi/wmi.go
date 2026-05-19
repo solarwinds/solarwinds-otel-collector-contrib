@@ -26,12 +26,12 @@ var (
 )
 
 type Executor interface {
-	CreateQuery(interface{}, string) string
-	Query(string, interface{}) (interface{}, error)
+	CreateQuery(any, string) string
+	Query(string, any) (any, error)
 }
 
 // QueryResult utilizes executor to get TResult.
-func QueryResult[TResult interface{}](executor Executor) (TResult, error) {
+func QueryResult[TResult any](executor Executor) (TResult, error) {
 	var model TResult
 	query := executor.CreateQuery(&model, "")
 	result, err := executor.Query(query, &model)
@@ -46,7 +46,7 @@ func QueryResult[TResult interface{}](executor Executor) (TResult, error) {
 // QuerySingleResult utilizes executor to get single result of TResult.
 // If not exactly single result is returned from the query, error with
 // nil result is returned.
-func QuerySingleResult[TResult interface{}](executor Executor) (TResult, error) {
+func QuerySingleResult[TResult any](executor Executor) (TResult, error) {
 	var nilResult TResult
 	res, err := QueryResult[[]TResult](executor)
 	if err != nil {

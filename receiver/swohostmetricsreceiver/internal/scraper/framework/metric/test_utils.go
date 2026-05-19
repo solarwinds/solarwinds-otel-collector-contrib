@@ -38,7 +38,7 @@ func createMetricSlice(
 
 	s := m.SetEmptySum()
 
-	for i := 0; i < dpCount; i++ {
+	for range dpCount {
 		dp := s.DataPoints().AppendEmpty()
 		dp.SetIntValue(int64(dpValue))
 	}
