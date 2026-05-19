@@ -37,8 +37,8 @@ func TestValidate_Insert(t *testing.T) {
 	require.NoError(t, cfg.Validate())
 }
 
-func TestValidate_Remove(t *testing.T) {
-	cfg := &Config{Action: ActionRemove}
+func TestValidate_RemoveAll(t *testing.T) {
+	cfg := &Config{Action: ActionRemoveAll}
 	require.NoError(t, cfg.Validate())
 }
 
@@ -66,9 +66,9 @@ func TestValidate_EntityRef_EmptyIDKeys(t *testing.T) {
 	require.Contains(t, err.Error(), "id_keys must not be empty")
 }
 
-func TestValidate_Remove_WithEntityRefs_IsError(t *testing.T) {
+func TestValidate_RemoveAll_WithEntityRefs_IsError(t *testing.T) {
 	cfg := &Config{
-		Action: ActionRemove,
+		Action: ActionRemoveAll,
 		EntityRefs: []EntityRefConfig{
 			{Type: "KubernetesPod", IDKeys: []string{"sw.k8s.cluster.uid", "k8s.pod.name"}},
 		},

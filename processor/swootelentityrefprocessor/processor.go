@@ -104,7 +104,7 @@ func (p *swootelentityrefprocessor) processResource(resource pcommon.Resource) {
 			existingTypes[ercfg.normalizedType] = struct{}{}
 			p.logger.Debug("added entity ref", zap.String("type", ercfg.Type), zap.Any("idKeys", ercfg.IDKeys))
 		}
-	case ActionRemove:
+	case ActionRemoveAll:
 		// EntityRefSlice has no RemoveAll; RemoveIf with a tautological predicate is the standard clear pattern.
 		refs.RemoveIf(func(_ entity.EntityRef) bool { return true })
 	}

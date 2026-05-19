@@ -28,14 +28,14 @@ The `swootelentityref` processor inserts or removes [OpenTelemetry Entity Refere
 
 When `action: insert` is configured, the processor evaluates each `entity_refs` entry against the Resource attributes of every incoming signal (log record, metric resource, or trace resource). An EntityRef is appended to the Resource only when **all** attribute keys listed in `id_keys` are present. This means a single processor instance can hold a full static mapping (e.g. all Kubernetes entity types) and will only populate the entries that are actually supported by the attributes available on each resource.
 
-When `action: remove` is configured, all EntityRefs are cleared from the Resource of each signal.
+When `action: remove_all` is configured, all EntityRefs are cleared from the Resource of each signal.
 
 ## Configuration
 
 | Field | Type | Required | Description |
 | --------------------- | -------------- | ------------------ | ----------- |
-| `action` | string | ✅ | Operation to perform: `insert` or `remove` |
-| `entity_refs` | list | required when `action: insert` | List of EntityRef entries to evaluate. Must be empty when `action: remove`. Duplicate types (case-insensitive) are rejected at startup. |
+| `action` | string | ✅ | Operation to perform: `insert` or `remove_all` |
+| `entity_refs` | list | required when `action: insert` | List of EntityRef entries to evaluate. Must be empty when `action: remove_all`. Duplicate types (case-insensitive) are rejected at startup. |
 | `entity_refs[*].type` | string | ✅ | Entity type name (e.g. `KubernetesContainer`) |
 | `entity_refs[*].id_keys` | list of string | ✅ | Resource attribute keys that identify the entity; all must be present for the EntityRef to be inserted |
 
@@ -80,7 +80,7 @@ service:
 ```yaml
 processors:
   swootelentityref/strip:
-    action: remove
+    action: remove_all
 
 service:
   pipelines:
@@ -92,7 +92,7 @@ service:
 
 ## Pipeline placement
 
-This processor declares `MutatesData: true` because it appends to or clears the Resource's EntityRef slice in place. The Collector's fanout connector marks a batch **read-only** before dispatching it to any pipeline branch that shares the batch with a non-mutating consumer. If `swootelentityrefprocessor` receives a read-only batch, `AppendEmpty` and `RemoveIf` will panic and crash the collector process.
+This processor declares `MutatesData: true` because it appends to or clears the Resource's EntityRef slice in place. The Collector's fanout connector marks a batch **read-only** before dispatching it to any pipeline branch that shares the batch with a non-mutating consumer. If `swootelentityrefprocessor` receives a read-only batch, it will return an error.
 
 **Safe**: linear pipeline (single consumer per batch).
 
@@ -103,7 +103,7 @@ receiver → swootelentityref → exporter
 **Unsafe**: fanout where another branch has a non-mutating consumer.
 
 ```text
-receiver → fanout connector → swootelentityref → exporter  ← panics on read-only batch
+receiver → fanout connector → swootelentityref → exporter  ← errors out on read-only batch
                            → debug exporter (MutatesData: false)
 ```
 

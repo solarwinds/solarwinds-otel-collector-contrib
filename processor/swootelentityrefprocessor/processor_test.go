@@ -45,26 +45,26 @@ func buildTestProcessor(cfg component.Config) (*swootelentityrefprocessor, error
 
 // extractEntityRefs extracts the EntityRefs from a Resource into a plain slice for assertions.
 func extractEntityRefs(resource pcommon.Resource) []struct {
-	typ    string
-	idKeys []string
+	entityType string
+	idKeys     []string
 } {
 	refs := entity.ResourceEntityRefs(resource)
 	out := make([]struct {
-		typ    string
-		idKeys []string
+		entityType string
+		idKeys     []string
 	}, refs.Len())
 	for i, ref := range refs.All() {
 		out[i] = struct {
-			typ    string
-			idKeys []string
-		}{typ: ref.Type(), idKeys: ref.IdKeys().AsRaw()}
+			entityType string
+			idKeys     []string
+		}{entityType: ref.Type(), idKeys: ref.IdKeys().AsRaw()}
 	}
 	return out
 }
 
 func collectEntityRefs(ld plog.Logs) []struct {
-	typ    string
-	idKeys []string
+	entityType string
+	idKeys     []string
 } {
 	if ld.ResourceLogs().Len() == 0 {
 		return nil
@@ -95,7 +95,7 @@ func TestInsertLogs_AllIDKeysPresent(t *testing.T) {
 
 	refs := collectEntityRefs(result)
 	require.Len(t, refs, 1)
-	assert.Equal(t, "KubernetesContainer", refs[0].typ)
+	assert.Equal(t, "KubernetesContainer", refs[0].entityType)
 	assert.Equal(t, []string{"sw.k8s.cluster.uid", "k8s.namespace.name", "k8s.pod.name", "k8s.container.name"}, refs[0].idKeys)
 }
 
@@ -156,7 +156,7 @@ func TestInsertLogs_MultipleEntries_PartialMatch(t *testing.T) {
 	require.Len(t, refs, 3)
 	types := make([]string, len(refs))
 	for i, r := range refs {
-		types[i] = r.typ
+		types[i] = r.entityType
 	}
 	assert.Contains(t, types, "KubernetesContainer")
 	assert.Contains(t, types, "KubernetesPod")
@@ -182,7 +182,7 @@ func TestInsertLogs_EmptyConfig(t *testing.T) {
 }
 
 func TestRemoveLogs_WithEntityRefs(t *testing.T) {
-	cfg := &Config{Action: ActionRemove}
+	cfg := &Config{Action: ActionRemoveAll}
 	ld := buildLogs(func(m pcommon.Map) {})
 
 	// Pre-populate EntityRefs on the resource
@@ -206,7 +206,7 @@ func TestRemoveLogs_WithEntityRefs(t *testing.T) {
 }
 
 func TestRemoveLogs_NoEntityRefs(t *testing.T) {
-	cfg := &Config{Action: ActionRemove}
+	cfg := &Config{Action: ActionRemoveAll}
 	ld := buildLogs(func(m pcommon.Map) {
 		m.PutStr("host.name", "my-host")
 	})
@@ -244,7 +244,7 @@ func TestInsertLogs_NoInferenceFromNonIdKeyAttrs(t *testing.T) {
 
 	refs := collectEntityRefs(result)
 	require.Len(t, refs, 1)
-	assert.Equal(t, "KubernetesContainer", refs[0].typ)
+	assert.Equal(t, "KubernetesContainer", refs[0].entityType)
 	// Verify host.name and service.name do not appear in any EntityRef id_keys
 	for _, ref := range refs {
 		for _, k := range ref.idKeys {
@@ -284,7 +284,7 @@ func TestInsertLogs_Idempotent_CaseInsensitive(t *testing.T) {
 	refs := collectEntityRefs(result)
 	require.Len(t, refs, 1, "case-insensitive duplicate must not be inserted")
 	// The pre-existing ref (KUBERNETESPOD) is kept; no new one added.
-	assert.Equal(t, "KUBERNETESPOD", refs[0].typ)
+	assert.Equal(t, "KUBERNETESPOD", refs[0].entityType)
 }
 
 // TestInsertLogs_Idempotent: processing the same logs twice must not duplicate EntityRefs.
@@ -311,7 +311,7 @@ func TestInsertLogs_Idempotent(t *testing.T) {
 
 	refs := collectEntityRefs(result)
 	require.Len(t, refs, 1, "duplicate EntityRef must not be inserted on second pass")
-	assert.Equal(t, "KubernetesPod", refs[0].typ)
+	assert.Equal(t, "KubernetesPod", refs[0].entityType)
 }
 
 // TestInsertLogs_MultipleResources: batch with 2 ResourceLogs — first has all IDKeys
@@ -446,8 +446,8 @@ func buildMetrics(setAttrs func(pcommon.Map)) pmetric.Metrics {
 }
 
 func collectMetricEntityRefs(md pmetric.Metrics) []struct {
-	typ    string
-	idKeys []string
+	entityType string
+	idKeys     []string
 } {
 	if md.ResourceMetrics().Len() == 0 {
 		return nil
@@ -476,7 +476,7 @@ func TestInsertMetrics_AllIDKeysPresent(t *testing.T) {
 
 	refs := collectMetricEntityRefs(result)
 	require.Len(t, refs, 1)
-	assert.Equal(t, "KubernetesContainer", refs[0].typ)
+	assert.Equal(t, "KubernetesContainer", refs[0].entityType)
 	assert.Equal(t, []string{"sw.k8s.cluster.uid", "k8s.namespace.name", "k8s.pod.name", "k8s.container.name"}, refs[0].idKeys)
 }
 
@@ -531,7 +531,7 @@ func TestInsertMetrics_MultipleEntries_PartialMatch(t *testing.T) {
 	require.Len(t, refs, 3)
 	types := make([]string, len(refs))
 	for i, r := range refs {
-		types[i] = r.typ
+		types[i] = r.entityType
 	}
 	assert.Contains(t, types, "KubernetesContainer")
 	assert.Contains(t, types, "KubernetesPod")
@@ -578,7 +578,7 @@ func TestInsertMetrics_EmptyStringAttribute(t *testing.T) {
 }
 
 func TestRemoveMetrics_WithEntityRefs(t *testing.T) {
-	cfg := &Config{Action: ActionRemove}
+	cfg := &Config{Action: ActionRemoveAll}
 	md := buildMetrics(func(m pcommon.Map) {})
 
 	resource := md.ResourceMetrics().At(0).Resource()
@@ -602,7 +602,7 @@ func TestRemoveMetrics_WithEntityRefs(t *testing.T) {
 
 // must not panic and must leave the Resource unchanged.
 func TestRemoveMetrics_NoOp(t *testing.T) {
-	cfg := &Config{Action: ActionRemove}
+	cfg := &Config{Action: ActionRemoveAll}
 	md := buildMetrics(func(m pcommon.Map) {
 		m.PutStr("host.name", "my-host")
 	})
@@ -649,7 +649,7 @@ func TestInsertMetrics_Idempotent(t *testing.T) {
 
 	refs := collectMetricEntityRefs(result)
 	require.Len(t, refs, 1, "duplicate EntityRef must not be inserted on second pass")
-	assert.Equal(t, "KubernetesPod", refs[0].typ)
+	assert.Equal(t, "KubernetesPod", refs[0].entityType)
 }
 
 // TestInsertMetrics_MultipleResources: batch with 2 ResourceMetrics — first has all IDKeys
@@ -710,7 +710,7 @@ func TestInsertMetrics_Idempotent_CaseInsensitive(t *testing.T) {
 
 	refs := collectMetricEntityRefs(result)
 	require.Len(t, refs, 1, "case-insensitive duplicate must not be inserted")
-	assert.Equal(t, "KUBERNETESPOD", refs[0].typ)
+	assert.Equal(t, "KUBERNETESPOD", refs[0].entityType)
 }
 
 // --- Traces helpers and tests ---
@@ -723,8 +723,8 @@ func buildTraces(setAttrs func(pcommon.Map)) ptrace.Traces {
 }
 
 func collectTraceEntityRefs(td ptrace.Traces) []struct {
-	typ    string
-	idKeys []string
+	entityType string
+	idKeys     []string
 } {
 	if td.ResourceSpans().Len() == 0 {
 		return nil
@@ -753,7 +753,7 @@ func TestInsertTraces_AllIDKeysPresent(t *testing.T) {
 
 	refs := collectTraceEntityRefs(result)
 	require.Len(t, refs, 1)
-	assert.Equal(t, "KubernetesContainer", refs[0].typ)
+	assert.Equal(t, "KubernetesContainer", refs[0].entityType)
 	assert.Equal(t, []string{"sw.k8s.cluster.uid", "k8s.namespace.name", "k8s.pod.name", "k8s.container.name"}, refs[0].idKeys)
 }
 
@@ -808,7 +808,7 @@ func TestInsertTraces_MultipleEntries_PartialMatch(t *testing.T) {
 	require.Len(t, refs, 3)
 	types := make([]string, len(refs))
 	for i, r := range refs {
-		types[i] = r.typ
+		types[i] = r.entityType
 	}
 	assert.Contains(t, types, "KubernetesContainer")
 	assert.Contains(t, types, "KubernetesPod")
@@ -855,7 +855,7 @@ func TestInsertTraces_EmptyStringAttribute(t *testing.T) {
 }
 
 func TestRemoveTraces_WithEntityRefs(t *testing.T) {
-	cfg := &Config{Action: ActionRemove}
+	cfg := &Config{Action: ActionRemoveAll}
 	td := buildTraces(func(m pcommon.Map) {})
 
 	resource := td.ResourceSpans().At(0).Resource()
@@ -879,7 +879,7 @@ func TestRemoveTraces_WithEntityRefs(t *testing.T) {
 
 // must not panic and must leave the Resource unchanged.
 func TestRemoveTraces_NoOp(t *testing.T) {
-	cfg := &Config{Action: ActionRemove}
+	cfg := &Config{Action: ActionRemoveAll}
 	td := buildTraces(func(m pcommon.Map) {
 		m.PutStr("host.name", "my-host")
 	})
@@ -926,7 +926,7 @@ func TestInsertTraces_Idempotent(t *testing.T) {
 
 	refs := collectTraceEntityRefs(result)
 	require.Len(t, refs, 1, "duplicate EntityRef must not be inserted on second pass")
-	assert.Equal(t, "KubernetesPod", refs[0].typ)
+	assert.Equal(t, "KubernetesPod", refs[0].entityType)
 }
 
 // TestInsertTraces_MultipleResources: batch with 2 ResourceSpans — first has all IDKeys
@@ -987,5 +987,5 @@ func TestInsertTraces_Idempotent_CaseInsensitive(t *testing.T) {
 
 	refs := collectTraceEntityRefs(result)
 	require.Len(t, refs, 1, "case-insensitive duplicate must not be inserted")
-	assert.Equal(t, "KUBERNETESPOD", refs[0].typ)
+	assert.Equal(t, "KUBERNETESPOD", refs[0].entityType)
 }

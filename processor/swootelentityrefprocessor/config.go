@@ -25,8 +25,8 @@ type Action string
 const (
 	// ActionInsert appends EntityRefs to the Resource of each incoming signal.
 	ActionInsert Action = "insert"
-	// ActionRemove clears all EntityRefs from the Resource of each incoming signal.
-	ActionRemove Action = "remove"
+	// ActionRemoveAll clears all EntityRefs from the Resource of each incoming signal.
+	ActionRemoveAll Action = "remove_all"
 )
 
 // EntityRefConfig holds the static configuration for a single EntityRef entry.
@@ -45,7 +45,7 @@ type EntityRefConfig struct {
 
 // Config is the configuration for the swootelentityref processor.
 type Config struct {
-	// Action is the operation to perform: "insert" or "remove".
+	// Action is the operation to perform: "insert" or "remove_all".
 	Action Action `mapstructure:"action"`
 	// EntityRefs is the list of EntityRef entries to evaluate when Action is "insert".
 	EntityRefs []EntityRefConfig `mapstructure:"entity_refs"`
@@ -54,12 +54,12 @@ type Config struct {
 // Validate returns an error if the configuration is invalid.
 func (c *Config) Validate() error {
 	switch c.Action {
-	case ActionInsert, ActionRemove:
+	case ActionInsert, ActionRemoveAll:
 	default:
-		return fmt.Errorf("invalid action %q: must be %q or %q", c.Action, ActionInsert, ActionRemove)
+		return fmt.Errorf("invalid action %q: must be %q or %q", c.Action, ActionInsert, ActionRemoveAll)
 	}
-	if c.Action == ActionRemove && len(c.EntityRefs) > 0 {
-		return fmt.Errorf("entity_refs must be empty when action is %q", ActionRemove)
+	if c.Action == ActionRemoveAll && len(c.EntityRefs) > 0 {
+		return fmt.Errorf("entity_refs must be empty when action is %q", ActionRemoveAll)
 	}
 	seen := make(map[string]int, len(c.EntityRefs))
 	for i := range c.EntityRefs {
