@@ -14,6 +14,8 @@
 
 package shared
 
+import "maps"
+
 import "sync"
 
 // Process incoming attributes from a particular channel.
@@ -39,7 +41,5 @@ func mergeAttributes(
 	increment Attributes,
 	result Attributes,
 ) {
-	for k, v := range increment {
-		result[k] = v
-	}
+	maps.Copy(result, increment)
 }
