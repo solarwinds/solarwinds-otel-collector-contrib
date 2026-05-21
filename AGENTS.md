@@ -22,3 +22,11 @@ This is how you proceed if you want to get CircleCI build failure logs:
 * If you are provided with just PullRequest link, you should first get it directly based on branch: 
     * projectSlug: `gh/solarwinds/solarwinds-otel-collector-contrib` 
     * branch: actual branch of PR (can be extracted using #get_pull_request).
+
+## Multi-Signal OTel Processor Pattern
+
+When a processor must handle logs, metrics, AND traces:
+
+1. **`metadata.yaml`**: list all three in stability — `development: [logs, metrics, traces]`
+2. **`factory.go`**: register all three — `xprocessor.WithLogs(...)`, `xprocessor.WithMetrics(...)`, `xprocessor.WithTraces(...)`
+3. **`processor.go`**: implement `processLogs`, `processMetrics`, `processTraces` all delegating to a shared `processResource(pcommon.Resource)` helper — avoids duplication
