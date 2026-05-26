@@ -116,16 +116,16 @@ func (r *swok8sdiscoveryReceiver) publishRelationShip(ctx context.Context, ev da
 	attrs.PutStr(otelEntityRelationType, discoveredRelationshipType)
 
 	// source entity
-	attrs.PutStr(otelEntityRelationSourceType, "Kubernetes"+ev.WorkloadKind)
+	attrs.PutStr(otelEntityRelationSourceType, discoveredDatabaseEntityType)
 	src_ids := attrs.PutEmptyMap(otelEntityRelationSourceID)
-	src_ids.PutStr("k8s."+strings.ToLower(ev.WorkloadKind)+".name", ev.WorkloadName)
-	src_ids.PutStr(k8sNamespace, ev.Namespace)
-	src_ids.PutStr(swK8sClusterUid, r.clusterUid)
+	dbKeys.CopyTo(src_ids)
 
 	// destination entity
-	attrs.PutStr(otelEntityRelationDestinationType, discoveredDatabaseEntityType)
+	attrs.PutStr(otelEntityRelationDestinationType, "Kubernetes"+ev.WorkloadKind)
 	dst_ids := attrs.PutEmptyMap(otelEntityRelationDestinationID)
-	dbKeys.CopyTo(dst_ids)
+	dst_ids.PutStr("k8s."+strings.ToLower(ev.WorkloadKind)+".name", ev.WorkloadName)
+	dst_ids.PutStr(k8sNamespace, ev.Namespace)
+	dst_ids.PutStr(swK8sClusterUid, r.clusterUid)
 
 	return r.consumer.ConsumeLogs(ctx, logs)
 }
