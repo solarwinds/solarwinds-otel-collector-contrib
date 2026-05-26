@@ -99,7 +99,7 @@ func (r *swok8sdiscoveryReceiver) performDiscoveryCycle(ctx context.Context) {
 
 	var wg sync.WaitGroup
 	wg.Go(func() { r.discoverDatabasesByImages(ctx, pods, services) })
-	wg.Go(func() { r.discoverDatabasesByDomains(ctx, pods, services) })
+	wg.Go(func() { r.discoverDatabasesByDomains(ctx, services) })
 
 	wg.Wait()
 	if r.cycleCallback != nil {
