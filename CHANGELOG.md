@@ -2,6 +2,8 @@
 
 ## vNext
 - Updates OpenTelemetry modules to [v1.58.0/v0.152.0](https://github.com/open-telemetry/opentelemetry-collector/releases/tag/v0.152.0)
+
+## v0.150.4
 - **Added** `swootelentityrefprocessor` for manipulating EntityRefs
 
 ## v0.150.3
