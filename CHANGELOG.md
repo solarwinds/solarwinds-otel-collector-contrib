@@ -1,6 +1,8 @@
 # Changelog
 
 ## vNext
+
+## v0.150.4
 - **Added** `swootelentityrefprocessor` for manipulating EntityRefs
 
 ## v0.150.3
