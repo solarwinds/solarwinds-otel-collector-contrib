@@ -1,6 +1,6 @@
 module github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swok8sobjectsreceiver
 
-go 1.25.10
+go 1.25.11
 
 require (
 	github.com/google/uuid v1.6.0
