@@ -1,6 +1,6 @@
 module github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension
 
-go 1.25.11
+go 1.26.4
 
 require (
 	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil v0.152.1
