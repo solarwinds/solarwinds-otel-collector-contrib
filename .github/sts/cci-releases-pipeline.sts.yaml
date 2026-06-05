@@ -1,5 +1,0 @@
-issuer: https://oidc.circleci.com/org/a942ef45-8daa-4e55-934d-370a708aabc8
-subject_pattern: org/solarwinds-cloud/project/solarwinds-otel-collector-releases/user/.*
-permissions:
-  contents: write
-  pull_requests: write

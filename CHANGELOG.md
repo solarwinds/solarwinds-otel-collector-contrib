@@ -3,6 +3,33 @@
 ## vNext
 - **Added** `dnsqueryreceiver` New OTel Collector receiver replacing the Telegraf `dns_query` input plugin. Emits `dns.query.duration_milliseconds`, `dns.query.result`, and `dns.query.response_time_ms` metrics. (NH-134035)
 
+## v0.152.1
+- No changes
+
+## v0.152.0
+- Updates OpenTelemetry modules to [v1.58.0/v0.152.0](https://github.com/open-telemetry/opentelemetry-collector/releases/tag/v0.152.0)
+
+## v0.150.4
+- **Added** `swootelentityrefprocessor` for manipulating EntityRefs
+
+## v0.150.3
+- No changes
+
+## v0.150.2
+- No changes
+
+## v0.150.1
+- No changes
+
+## v0.150.0
+- Updates OpenTelemetry modules to [v1.56.0/v0.150.0](https://github.com/open-telemetry/opentelemetry-collector/releases/tag/v0.150.0)
+
+### Breaking Changes
+- ⚠️ **swok8sdiscovery receiver** : The `sw.discovery.dbo.address` attribute now includes the port number in the format `hostname.namespace:port` (e.g., `mongo-svc.db:27017`) instead of just `hostname.namespace`. This makes the address connection-ready and unambiguous. Discovered database entities are now only created when exactly one port is detected.
+
+## v0.145.11
+- No changes
+
 ## v0.145.10
 - **Added** `k8seventgenerationprocessor` Add `sw.k8s.cluster.uid` attribute to entity state events for `KubernetesContainerImage`.
 

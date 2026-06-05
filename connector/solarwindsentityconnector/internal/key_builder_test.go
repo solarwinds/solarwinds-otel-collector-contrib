@@ -150,7 +150,7 @@ func TestBuildKey_Consistency(t *testing.T) {
 	kb := NewKeyBuilder()
 	// Generate the key multiple times
 	keys := make([]string, 5)
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		key, err := kb.BuildEntityKey(entity)
 		require.NoError(t, err)
 		keys[i] = key
