@@ -2,6 +2,9 @@
 
 ## vNext
 
+## v0.152.2
+- No changes
+
 ## v0.152.1
 - No changes
 
