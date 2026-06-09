@@ -1,6 +1,6 @@
 module github.com/solarwinds/solarwinds-otel-collector-contrib/processor/swootelentityrefprocessor
 
-go 1.25.11
+go 1.26.4
 
 require (
 	github.com/stretchr/testify v1.11.1

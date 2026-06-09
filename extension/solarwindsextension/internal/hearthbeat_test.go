@@ -93,8 +93,7 @@ func TestHeartbeatEmittingMetrics(t *testing.T) {
 	hb.beatInterval = beatInterval
 
 	// Start the heartbeat.
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	err := hb.Start(ctx, componenttest.NewNopHost())
 	require.NoError(t, err)
 
