@@ -41,7 +41,7 @@ func (m *metricSwoHardwareinventoryCPU) init() {
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 }
 
-func (m *metricSwoHardwareinventoryCPU) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, processorNameAttributeValue string, processorCaptionAttributeValue string, processorManufacturerAttributeValue string, processorModelAttributeValue string, processorSteppingAttributeValue string, processorCoresAttributeValue string, processorThreadsAttributeValue string) {
+func (m *metricSwoHardwareinventoryCPU) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, processorNameAttributeValue string, processorCaptionAttributeValue string, processorManufacturerAttributeValue string, processorModelAttributeValue string, processorSteppingAttributeValue string, processorCoresAttributeValue string, processorThreadsAttributeValue string, processorDeviceIDAttributeValue string) {
 	if !m.config.Enabled {
 		return
 	}
@@ -56,6 +56,7 @@ func (m *metricSwoHardwareinventoryCPU) recordDataPoint(start pcommon.Timestamp,
 	dp.Attributes().PutStr("processor.stepping", processorSteppingAttributeValue)
 	dp.Attributes().PutStr("processor.cores", processorCoresAttributeValue)
 	dp.Attributes().PutStr("processor.threads", processorThreadsAttributeValue)
+	dp.Attributes().PutStr("processor.device_id", processorDeviceIDAttributeValue)
 }
 
 // updateCapacity saves max length of data point slices that will be used for the slice capacity.
@@ -76,6 +77,7 @@ func (m *metricSwoHardwareinventoryCPU) emit(metrics pmetric.MetricSlice) {
 
 func newMetricSwoHardwareinventoryCPU(cfg MetricConfig) metricSwoHardwareinventoryCPU {
 	m := metricSwoHardwareinventoryCPU{config: cfg}
+
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()
@@ -207,8 +209,8 @@ func (mb *MetricsBuilder) Emit(options ...ResourceMetricsOption) pmetric.Metrics
 }
 
 // RecordSwoHardwareinventoryCPUDataPoint adds a data point to swo.hardwareinventory.cpu metric.
-func (mb *MetricsBuilder) RecordSwoHardwareinventoryCPUDataPoint(ts pcommon.Timestamp, val int64, processorNameAttributeValue string, processorCaptionAttributeValue string, processorManufacturerAttributeValue string, processorModelAttributeValue string, processorSteppingAttributeValue string, processorCoresAttributeValue string, processorThreadsAttributeValue string) {
-	mb.metricSwoHardwareinventoryCPU.recordDataPoint(mb.startTime, ts, val, processorNameAttributeValue, processorCaptionAttributeValue, processorManufacturerAttributeValue, processorModelAttributeValue, processorSteppingAttributeValue, processorCoresAttributeValue, processorThreadsAttributeValue)
+func (mb *MetricsBuilder) RecordSwoHardwareinventoryCPUDataPoint(ts pcommon.Timestamp, val int64, processorNameAttributeValue string, processorCaptionAttributeValue string, processorManufacturerAttributeValue string, processorModelAttributeValue string, processorSteppingAttributeValue string, processorCoresAttributeValue string, processorThreadsAttributeValue string, processorDeviceIDAttributeValue string) {
+	mb.metricSwoHardwareinventoryCPU.recordDataPoint(mb.startTime, ts, val, processorNameAttributeValue, processorCaptionAttributeValue, processorManufacturerAttributeValue, processorModelAttributeValue, processorSteppingAttributeValue, processorCoresAttributeValue, processorThreadsAttributeValue, processorDeviceIDAttributeValue)
 }
 
 // Reset resets metrics builder to its initial state. It should be used when external metrics source is restarted,

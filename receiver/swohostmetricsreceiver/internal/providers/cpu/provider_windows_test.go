@@ -18,89 +18,162 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/shirou/gopsutil/v4/cpu"
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/wmi"
-
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
 
-func Test_Provide_ProvidesCompleteDataAndChannelIsClosedAfterDelivery(t *testing.T) {
-	wmiOutput := []Win32_Processor{
-		{
-			Name:                      "Proc 1",
-			Manufacturer:              "Manufacturer 1",
-			CurrentClockSpeed:         10,
-			NumberOfCores:             4,
-			NumberOfLogicalProcessors: 5,
-			Stepping:                  "1",
-			Caption:                   "Some Caption With No Extra Data",
-		},
-		{
-			Name:                      "Proc 2",
-			Manufacturer:              "Manufacturer 2",
-			CurrentClockSpeed:         3,
-			NumberOfCores:             2,
-			NumberOfLogicalProcessors: 6,
-			Stepping:                  "",
-			Caption:                   "Some Caption With Model X and Stepping 50",
-		},
-	}
-	expectedProcessors := []Processor{
-		{
-			Name:         "Proc 1",
-			Manufacturer: "Manufacturer 1",
-			Speed:        10,
-			Cores:        4,
-			Threads:      5,
-			Model:        "",
-			Stepping:     "1",
-		},
-		{
-			Name:         "Proc 2",
-			Manufacturer: "Manufacturer 2",
-			Speed:        3,
-			Cores:        2,
-			Threads:      6,
-			Model:        "X",
-			Stepping:     "50",
-		},
-	}
-	expectedModel := Container{
-		Processors: expectedProcessors,
-		Error:      nil,
-	}
-
-	sut := provider{
-		wmi:    wmi.CreateWmiExecutorMock([]interface{}{&wmiOutput}, nil),
-		logger: zap.NewNop(),
-	}
-
-	ch := sut.Provide()
-	actualModel := <-ch
-	_, open := <-ch // secondary receive
-
-	assert.Equal(t, expectedModel, actualModel)
-	assert.False(t, open, "channel must be closed")
+// cpuInfoExecutorMock implements cpuInfoExecutor for tests.
+type cpuInfoExecutorMock struct {
+	infos []cpu.InfoStat
+	err   error
 }
 
-func Test_Provide_FailsAndProvidesEmptyObjectAndChannelIsClosedAfterDelivery(t *testing.T) {
-	err := fmt.Errorf("processor error")
-	expectedModel := Container{
-		Processors: nil,
-		Error:      fmt.Errorf("wmi query failed: %w", err),
+var _ cpuInfoExecutor = (*cpuInfoExecutorMock)(nil)
+
+func (m *cpuInfoExecutorMock) Info() ([]cpu.InfoStat, error) {
+	return m.infos, m.err
+}
+
+// Test helpers — build a provider with mocked dependencies.
+func newTestProvider(infos []cpu.InfoStat, infoErr error, wmiResults []interface{}, wmiErr map[interface{}]error, countsFn func(bool) (int, error)) *provider {
+	return &provider{
+		wmi:      wmi.CreateWmiExecutorMock(wmiResults, wmiErr),
+		cpuInfo:  &cpuInfoExecutorMock{infos: infos, err: infoErr},
+		countsFn: countsFn,
+		logger:   zap.NewNop(),
+	}
+}
+
+func fixedCounts(n int) func(bool) (int, error) {
+	return func(bool) (int, error) { return n, nil }
+}
+
+// Test_Provide_HappyPath — two gopsutil sockets, one WMI descriptor (NumberOfCores=48).
+// Expects two Processor entries sharing same Name/Manufacturer, Cores=48 from WMI,
+// Threads derived from total-logical/socket-count, DeviceID synthesized as CPU0/CPU1.
+func Test_Provide_HappyPath_TwoSocketsOneWMIDescriptor(t *testing.T) {
+	infos := []cpu.InfoStat{
+		{PhysicalID: "0"},
+		{PhysicalID: "1"},
+	}
+	// 96 logical threads / 2 sockets = 48 threads per socket.
+	wmiOutput := []Win32_Processor{
+		{
+			Name:              "Intel Xeon Gold",
+			Manufacturer:      "GenuineIntel",
+			CurrentClockSpeed: 2600,
+			NumberOfCores:     48,
+			Stepping:          "5",
+			Caption:           "Intel64 Family 6 Model 85 Stepping 5",
+		},
 	}
 
-	sut := provider{
-		wmi: wmi.CreateWmiExecutorMock(nil, map[interface{}]error{
-			&[]Win32_Processor{}: err,
-		}),
-		logger: zap.NewNop(),
-	}
-
+	sut := newTestProvider(infos, nil, []interface{}{&wmiOutput}, nil, fixedCounts(96))
 	ch := sut.Provide()
-	actualModel := <-ch
-	_, open := <-ch // secondary receive
+	result := <-ch
+	_, open := <-ch
 
-	assert.Equal(t, expectedModel, actualModel)
 	assert.False(t, open, "channel must be closed")
+	assert.Nil(t, result.Error)
+	assert.Len(t, result.Processors, 2)
+
+	for i, p := range result.Processors {
+		assert.Equal(t, fmt.Sprintf("CPU%d", i), p.DeviceID)
+		assert.Equal(t, "Intel Xeon Gold", p.Name)
+		assert.Equal(t, "GenuineIntel", p.Manufacturer)
+		assert.Equal(t, uint32(48), p.Cores)
+		assert.Equal(t, float64(2600), p.Speed)
+		assert.Equal(t, "5", p.Stepping)
+		assert.Equal(t, uint32(48), p.Threads)
+	}
+	assert.Equal(t, "85", result.Processors[0].Model)
+}
+
+// Test_Provide_WMIZeroResults — gopsutil returns 4 sockets, WMI returns 0 rows.
+// Expects 4 Processor entries with DeviceID populated but empty descriptive fields.
+func Test_Provide_WMIZeroResults_GracefulDegradation(t *testing.T) {
+	infos := []cpu.InfoStat{
+		{PhysicalID: "0"},
+		{PhysicalID: "1"},
+		{PhysicalID: "2"},
+		{PhysicalID: "3"},
+	}
+	emptyWmi := []Win32_Processor{}
+
+	sut := newTestProvider(infos, nil, []interface{}{&emptyWmi}, nil, fixedCounts(16))
+	ch := sut.Provide()
+	result := <-ch
+	_, open := <-ch
+
+	assert.False(t, open, "channel must be closed")
+	assert.Nil(t, result.Error)
+	assert.Len(t, result.Processors, 4)
+
+	for i, p := range result.Processors {
+		assert.Equal(t, fmt.Sprintf("CPU%d", i), p.DeviceID)
+		assert.Empty(t, p.Name)
+		assert.Empty(t, p.Manufacturer)
+		assert.Equal(t, uint32(0), p.Cores)
+	}
+}
+
+// Test_Provide_GopsutilError — Info() returns error → Container{Error}.
+func Test_Provide_GopsutilInfoError_PropagatesError(t *testing.T) {
+	infoErr := fmt.Errorf("SMBIOS unavailable")
+
+	sut := newTestProvider(nil, infoErr, nil, nil, fixedCounts(4))
+	ch := sut.Provide()
+	result := <-ch
+	_, open := <-ch
+
+	assert.False(t, open, "channel must be closed")
+	assert.ErrorIs(t, result.Error, infoErr)
+	assert.Nil(t, result.Processors)
+}
+
+// Test_Provide_WMIError — WMI query returns error → Container{Error}.
+func Test_Provide_WMIQueryError_PropagatesError(t *testing.T) {
+	infos := []cpu.InfoStat{{PhysicalID: "0"}}
+	wmiErr := fmt.Errorf("WMI access denied")
+
+	sut := newTestProvider(infos, nil, nil, map[interface{}]error{
+		&[]Win32_Processor{}: wmiErr,
+	}, fixedCounts(4))
+	ch := sut.Provide()
+	result := <-ch
+	_, open := <-ch
+
+	assert.False(t, open, "channel must be closed")
+	assert.NotNil(t, result.Error)
+	assert.Nil(t, result.Processors)
+}
+
+// Test_Provide_EmptyInfos — Info() returns empty slice (no error) → empty container.
+func Test_Provide_EmptyGopsutilInfos_ReturnsEmptyContainer(t *testing.T) {
+	sut := newTestProvider([]cpu.InfoStat{}, nil, nil, nil, fixedCounts(4))
+	ch := sut.Provide()
+	result := <-ch
+	_, open := <-ch
+
+	assert.False(t, open, "channel must be closed")
+	assert.Nil(t, result.Error)
+	assert.Empty(t, result.Processors)
+}
+
+// Test_Provide_ZeroLogicalCounts — countsFn returns 0 → Container{Error}.
+func Test_Provide_ZeroLogicalCounts_ReturnsError(t *testing.T) {
+	infos := []cpu.InfoStat{{PhysicalID: "0"}}
+	wmiOutput := []Win32_Processor{}
+
+	sut := newTestProvider(infos, nil, []interface{}{&wmiOutput}, nil, fixedCounts(0))
+	ch := sut.Provide()
+	result := <-ch
+	_, open := <-ch
+
+	assert.False(t, open, "channel must be closed")
+	assert.NotNil(t, result.Error)
+	assert.Contains(t, result.Error.Error(), "non-positive")
+	assert.Nil(t, result.Processors)
 }

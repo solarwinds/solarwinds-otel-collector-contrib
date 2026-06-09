@@ -2,6 +2,28 @@
 
 ## vNext
 
+- **Fixed** `hardwareinventoryreceiver` (`hardwareinventory.cpu`): now reports all physical CPU sockets on multi-socket Windows machines with more than 64 logical processors; core and thread counts are correct across all processor groups. Added `processor.device_id` attribute to disambiguate per-socket data points.
+
+## v0.152.0
+- Updates OpenTelemetry modules to [v1.58.0/v0.152.0](https://github.com/open-telemetry/opentelemetry-collector/releases/tag/v0.152.0)
+
+## v0.150.4
+- **Added** `swootelentityrefprocessor` for manipulating EntityRefs
+
+## v0.150.3
+- No changes
+
+## v0.150.2
+- No changes
+
+## v0.150.1
+- No changes
+
+## v0.150.0
+- Updates OpenTelemetry modules to [v1.56.0/v0.150.0](https://github.com/open-telemetry/opentelemetry-collector/releases/tag/v0.150.0)
+
+### Breaking Changes
+- ⚠️ **swok8sdiscovery receiver** : The `sw.discovery.dbo.address` attribute now includes the port number in the format `hostname.namespace:port` (e.g., `mongo-svc.db:27017`) instead of just `hostname.namespace`. This makes the address connection-ready and unambiguous. Discovered database entities are now only created when exactly one port is detected.
 ## v0.145.11
 - No changes
 

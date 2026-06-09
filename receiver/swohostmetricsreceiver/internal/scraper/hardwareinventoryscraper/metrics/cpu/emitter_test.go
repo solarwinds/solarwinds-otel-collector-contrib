@@ -36,6 +36,7 @@ func Test_Initialize_NotFailing(t *testing.T) {
 type cpuProviderMock struct {
 	err             error
 	emptyProcessors bool
+	processors      []cpu.Processor
 }
 
 func (p *cpuProviderMock) Provide() <-chan cpu.Container {
@@ -43,7 +44,12 @@ func (p *cpuProviderMock) Provide() <-chan cpu.Container {
 
 	if p.emptyProcessors {
 		ch <- cpu.Container{
-			Processors: []cpu.Processor{}, // Empty processors slice
+			Processors: []cpu.Processor{},
+			Error:      p.err,
+		}
+	} else if p.processors != nil {
+		ch <- cpu.Container{
+			Processors: p.processors,
 			Error:      p.err,
 		}
 	} else {
@@ -57,6 +63,7 @@ func (p *cpuProviderMock) Provide() <-chan cpu.Container {
 					Threads:      12,
 					Model:        "78",
 					Stepping:     "2",
+					DeviceID:     "CPU0",
 				},
 				{
 					Name:         "Processor 2",
@@ -66,6 +73,7 @@ func (p *cpuProviderMock) Provide() <-chan cpu.Container {
 					Threads:      2,
 					Model:        "76",
 					Stepping:     "1",
+					DeviceID:     "CPU1",
 				},
 			},
 			Error: p.err,
@@ -123,6 +131,7 @@ func Test_GetEmittingFunction_ProvidesFunctionCapableOfMetricEmitting(t *testing
 	m1["processor.threads"] = "12"
 	m1["processor.model"] = "78"
 	m1["processor.stepping"] = "2"
+	m1["processor.device_id"] = "CPU0"
 	assert.EqualValues(t, m1, attr1.AsRaw())
 
 	attr2 := dps.At(1).Attributes()
@@ -133,5 +142,35 @@ func Test_GetEmittingFunction_ProvidesFunctionCapableOfMetricEmitting(t *testing
 	m2["processor.threads"] = "2"
 	m2["processor.model"] = "76"
 	m2["processor.stepping"] = "1"
+	m2["processor.device_id"] = "CPU1"
 	assert.EqualValues(t, m2, attr2.AsRaw())
+}
+
+func Test_GetEmittingFunction_EmptyDeviceID_NotEmittedAsAttribute(t *testing.T) {
+	cpuProvider := &cpuProviderMock{
+		processors: []cpu.Processor{
+			{
+				Name:         "Processor 1",
+				Manufacturer: "Manufacturer 1",
+				Speed:        100,
+				Cores:        2,
+				Threads:      4,
+				Model:        "M1",
+				Stepping:     "1",
+				// DeviceID intentionally zero value — Linux/Darwin path
+			},
+		},
+	}
+	sut := createCPUEmitter(cpuProvider)
+
+	res := sut.Emit()
+	assert.Nil(t, res.Error)
+
+	dps := res.Data.At(0).Gauge().DataPoints()
+	assert.Equal(t, 1, dps.Len())
+
+	attrs := dps.At(0).Attributes().AsRaw()
+	assert.NotContains(t, attrs, "processor.device_id", "device_id must be omitted when empty")
+	assert.Contains(t, attrs, "processor.name")
+	assert.Contains(t, attrs, "processor.manufacturer")
 }
