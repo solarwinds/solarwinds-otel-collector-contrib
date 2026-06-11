@@ -119,7 +119,7 @@ const (
 	stepping     = `processor.stepping`
 	cores        = `processor.cores`
 	threads      = `processor.threads`
-	deviceID     = `processor.device_id`
+	socketID     = `processor.socket_id`
 )
 
 func generateAttributes(processor cpuProvider.Processor) shared.Attributes {
@@ -142,8 +142,8 @@ func generateAttributes(processor cpuProvider.Processor) shared.Attributes {
 	if processor.Threads != 0 {
 		m[threads] = strconv.FormatUint(uint64(processor.Threads), 10)
 	}
-	if processor.DeviceID != "" {
-		m[deviceID] = processor.DeviceID
+	if processor.SocketID != "" {
+		m[socketID] = processor.SocketID
 	}
 	return m
 }

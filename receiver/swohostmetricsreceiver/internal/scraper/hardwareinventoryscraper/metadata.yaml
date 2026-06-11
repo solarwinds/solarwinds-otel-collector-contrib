@@ -29,6 +29,9 @@ attributes:
   processor.threads:
     description: "Number of logical units (with hyper-threading enabled, the processor will have more threads then cores)."
     type: string
+  processor.socket_id:
+    description: "Physical socket identifier (e.g. CPU0, CPU1). Distinguishes metrics from separate sockets on multi-socket machines."
+    type: string
 
 metrics:
   swo.hardwareinventory.cpu:
@@ -44,4 +47,5 @@ metrics:
       - processor.model
       - processor.stepping
       - processor.cores
+      - processor.socket_id
       - processor.threads
