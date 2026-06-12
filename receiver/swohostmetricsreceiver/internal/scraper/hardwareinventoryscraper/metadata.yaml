@@ -8,11 +8,11 @@ status:
 sem_conv_version: 1.9.0
 
 attributes:
-  processor.name:
-    description: "Processor Name."
-    type: string
   processor.caption:
     description: "Short description of the processor."
+    type: string
+  processor.cores:
+    description: "Number of physical cores."
     type: string
   processor.manufacturer:
     description: "Processor Manufacturer."
@@ -20,11 +20,14 @@ attributes:
   processor.model:
     description: "Processor Model."
     type: string
+  processor.name:
+    description: "Processor Name."
+    type: string
+  processor.socket_id:
+    description: "Physical socket identifier (e.g. CPU0, CPU1). Distinguishes metrics from separate sockets on multi-socket machines."
+    type: string
   processor.stepping:
     description: "Revision level of the processor in the processor family."
-    type: string
-  processor.cores:
-    description: "Number of physical cores."
     type: string
   processor.threads:
     description: "Number of logical units (with hyper-threading enabled, the processor will have more threads then cores)."
@@ -33,15 +36,17 @@ attributes:
 metrics:
   swo.hardwareinventory.cpu:
     enabled: true
+    stability: development
     description: CPU current clock speed in MHz.
     unit: MHz
     gauge:
       value_type: int
     attributes:
-      - processor.name
       - processor.caption
+      - processor.cores
       - processor.manufacturer
       - processor.model
+      - processor.name
+      - processor.socket_id
       - processor.stepping
-      - processor.cores
       - processor.threads

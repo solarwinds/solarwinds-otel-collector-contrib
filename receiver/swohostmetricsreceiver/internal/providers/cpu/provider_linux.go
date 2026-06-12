@@ -70,6 +70,7 @@ func (p *provider) Provide() <-chan Container {
 					Threads:      0,
 					Model:        infoStat.Model,
 					Stepping:     strconv.FormatInt(int64(infoStat.Stepping), 10),
+					SocketID:     infoStat.PhysicalID,
 				}
 			}
 
