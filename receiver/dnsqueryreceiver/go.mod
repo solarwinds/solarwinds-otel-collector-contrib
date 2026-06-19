@@ -1,6 +1,6 @@
 module github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/dnsqueryreceiver
 
-go 1.25.8
+go 1.26.4
 
 require (
 	github.com/google/go-cmp v0.7.0
@@ -11,7 +11,6 @@ require (
 	go.opentelemetry.io/collector/confmap v1.56.0
 	go.opentelemetry.io/collector/consumer v1.56.0
 	go.opentelemetry.io/collector/consumer/consumertest v0.150.0
-	go.opentelemetry.io/collector/filter v0.150.0
 	go.opentelemetry.io/collector/pdata v1.56.0
 	go.opentelemetry.io/collector/receiver v1.56.0
 	go.opentelemetry.io/collector/receiver/receivertest v0.150.0
