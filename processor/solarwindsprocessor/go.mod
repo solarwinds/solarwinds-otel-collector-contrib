@@ -1,13 +1,13 @@
 module github.com/solarwinds/solarwinds-otel-collector-contrib/processor/solarwindsprocessor
 
-go 1.25.11
+go 1.26.4
 
 require (
 	github.com/google/go-cmp v0.7.0
-	github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension v0.152.1
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/attributesdecorator v0.152.1
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/container v0.152.1
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/extensionfinder v0.152.1
+	github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwindsextension v0.152.3
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/attributesdecorator v0.152.3
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/container v0.152.3
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/extensionfinder v0.152.3
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/collector/component v1.58.0
 	go.opentelemetry.io/collector/component/componenttest v0.152.0
@@ -48,7 +48,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.152.1 // indirect
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.152.3 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/collector v0.152.0 // indirect
 	go.opentelemetry.io/collector/client v1.58.0 // indirect
@@ -93,7 +93,7 @@ require (
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/crypto v0.52.0 // indirect
 	golang.org/x/net v0.55.0 // indirect
-	golang.org/x/sys v0.45.0 // indirect
+	golang.org/x/sys v0.46.0 // indirect
 	golang.org/x/text v0.37.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260406210006-6f92a3bedf2d // indirect
 	google.golang.org/grpc v1.81.0 // indirect

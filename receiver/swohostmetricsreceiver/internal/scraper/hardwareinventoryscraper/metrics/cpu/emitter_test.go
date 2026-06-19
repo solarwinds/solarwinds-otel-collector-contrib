@@ -57,6 +57,7 @@ func (p *cpuProviderMock) Provide() <-chan cpu.Container {
 					Threads:      12,
 					Model:        "78",
 					Stepping:     "2",
+					SocketID:     "CPU0",
 				},
 				{
 					Name:         "Processor 2",
@@ -66,6 +67,7 @@ func (p *cpuProviderMock) Provide() <-chan cpu.Container {
 					Threads:      2,
 					Model:        "76",
 					Stepping:     "1",
+					SocketID:     "CPU1",
 				},
 			},
 			Error: p.err,
@@ -123,6 +125,7 @@ func Test_GetEmittingFunction_ProvidesFunctionCapableOfMetricEmitting(t *testing
 	m1["processor.threads"] = "12"
 	m1["processor.model"] = "78"
 	m1["processor.stepping"] = "2"
+	m1["processor.socket_id"] = "CPU0"
 	assert.EqualValues(t, m1, attr1.AsRaw())
 
 	attr2 := dps.At(1).Attributes()
@@ -133,5 +136,6 @@ func Test_GetEmittingFunction_ProvidesFunctionCapableOfMetricEmitting(t *testing
 	m2["processor.threads"] = "2"
 	m2["processor.model"] = "76"
 	m2["processor.stepping"] = "1"
+	m2["processor.socket_id"] = "CPU1"
 	assert.EqualValues(t, m2, attr2.AsRaw())
 }

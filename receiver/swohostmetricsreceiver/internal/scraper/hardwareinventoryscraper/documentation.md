@@ -16,18 +16,19 @@ metrics:
 
 CPU current clock speed in MHz.
 
-| Unit | Metric Type | Value Type |
-| ---- | ----------- | ---------- |
-| MHz | Gauge | Int |
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| MHz | Gauge | Int | Development |
 
 #### Attributes
 
-| Name | Description | Values |
-| ---- | ----------- | ------ |
-| processor.name | Processor Name. | Any Str |
-| processor.caption | Short description of the processor. | Any Str |
-| processor.manufacturer | Processor Manufacturer. | Any Str |
-| processor.model | Processor Model. | Any Str |
-| processor.stepping | Revision level of the processor in the processor family. | Any Str |
-| processor.cores | Number of physical cores. | Any Str |
-| processor.threads | Number of logical units (with hyper-threading enabled, the processor will have more threads then cores). | Any Str |
+| Name | Description | Values | Requirement Level | Semantic Convention |
+| ---- | ----------- | ------ | ----------------- | ------------------- |
+| processor.caption | Short description of the processor. | Any Str | Recommended | - |
+| processor.cores | Number of physical cores. | Any Str | Recommended | - |
+| processor.manufacturer | Processor Manufacturer. | Any Str | Recommended | - |
+| processor.model | Processor Model. | Any Str | Recommended | - |
+| processor.name | Processor Name. | Any Str | Recommended | - |
+| processor.socket_id | Physical socket identifier (e.g. CPU0, CPU1). Distinguishes metrics from separate sockets on multi-socket machines. | Any Str | Recommended | - |
+| processor.stepping | Revision level of the processor in the processor family. | Any Str | Recommended | - |
+| processor.threads | Number of logical units (with hyper-threading enabled, the processor will have more threads then cores). | Any Str | Recommended | - |

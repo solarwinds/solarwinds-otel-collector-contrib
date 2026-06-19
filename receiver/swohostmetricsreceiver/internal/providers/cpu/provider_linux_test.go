@@ -125,6 +125,7 @@ func Test_Generate_AttributesAreGenerated(t *testing.T) {
 			Cores:        uint32(3),
 			Threads:      uint32(4),
 			Speed:        float64(123456),
+			SocketID:     "processor1",
 		},
 		"Processor Name 2": {
 			Name:         "Processor Name 2",
@@ -134,6 +135,7 @@ func Test_Generate_AttributesAreGenerated(t *testing.T) {
 			Cores:        uint32(2),
 			Threads:      uint32(2),
 			Speed:        float64(478),
+			SocketID:     "processor2",
 		},
 	}
 

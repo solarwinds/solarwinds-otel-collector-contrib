@@ -3,6 +3,12 @@
 ## vNext
 - **Added** `dnsqueryreceiver` New OTel Collector receiver replacing the Telegraf `dns_query` input plugin. Emits `dns.query.duration_milliseconds`, `dns.query.result`, and `dns.query.response_time_ms` metrics. (NH-134035)
 
+## v0.152.3
+- **Fixed** `swohostmetricsreceiver`: `swo.hardwareinventory.cpu` now reports all physical sockets on multi-socket Windows and Linux machines; adds `processor.socket_id` attribute to disambiguate per-socket data points
+
+## v0.152.2
+- No changes
+
 ## v0.152.1
 - No changes
 

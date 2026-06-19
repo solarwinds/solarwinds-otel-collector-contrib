@@ -34,6 +34,7 @@ func Test_Provide_ProvidesCompleteDataAndChannelIsClosedAfterDelivery(t *testing
 			NumberOfLogicalProcessors: 5,
 			Stepping:                  "1",
 			Caption:                   "Some Caption With No Extra Data",
+			DeviceID:                  "CPU0",
 		},
 		{
 			Name:                      "Proc 2",
@@ -43,6 +44,7 @@ func Test_Provide_ProvidesCompleteDataAndChannelIsClosedAfterDelivery(t *testing
 			NumberOfLogicalProcessors: 6,
 			Stepping:                  "",
 			Caption:                   "Some Caption With Model X and Stepping 50",
+			DeviceID:                  "CPU1",
 		},
 	}
 	expectedProcessors := []Processor{
@@ -54,6 +56,7 @@ func Test_Provide_ProvidesCompleteDataAndChannelIsClosedAfterDelivery(t *testing
 			Threads:      5,
 			Model:        "",
 			Stepping:     "1",
+			SocketID:     "CPU0",
 		},
 		{
 			Name:         "Proc 2",
@@ -63,6 +66,7 @@ func Test_Provide_ProvidesCompleteDataAndChannelIsClosedAfterDelivery(t *testing
 			Threads:      6,
 			Model:        "X",
 			Stepping:     "50",
+			SocketID:     "CPU1",
 		},
 	}
 	expectedModel := Container{
