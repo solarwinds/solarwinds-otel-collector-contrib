@@ -2,6 +2,9 @@
 
 ## vNext
 
+## v0.152.4
+- No changes
+
 ## v0.152.3
 - **Fixed** `swohostmetricsreceiver`: `swo.hardwareinventory.cpu` now reports all physical sockets on multi-socket Windows and Linux machines; adds `processor.socket_id` attribute to disambiguate per-socket data points
 
