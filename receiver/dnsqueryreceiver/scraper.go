@@ -91,12 +91,14 @@ func (s *dnsQueryScraper) ScrapeMetrics(ctx context.Context) (pmetric.Metrics, e
 	now := pcommon.NewTimestampFromTime(time.Now())
 
 	for _, r := range results {
+		recordType := metadata.MapAttributeDNSQueryRecordType[s.config.RecordType]
+		result := metadata.MapAttributeDNSQueryResult[r.resultStr]
 		s.mb.RecordDNSQueryQueryTimeMsDataPoint(now, r.queryTimeMs,
-			r.domain, r.rcodeStr, s.config.RecordType, r.resultStr, r.server)
+			r.domain, r.rcodeStr, recordType, result, r.server)
 		s.mb.RecordDNSQueryResultCodeDataPoint(now, r.resultCode,
-			r.domain, r.rcodeStr, s.config.RecordType, r.resultStr, r.server)
+			r.domain, r.rcodeStr, recordType, result, r.server)
 		s.mb.RecordDNSQueryRcodeValueDataPoint(now, r.rcodeValue,
-			r.domain, r.rcodeStr, s.config.RecordType, r.resultStr, r.server)
+			r.domain, r.rcodeStr, recordType, result, r.server)
 
 		s.mb.Emit().ResourceMetrics().MoveAndAppendTo(out.ResourceMetrics())
 	}
