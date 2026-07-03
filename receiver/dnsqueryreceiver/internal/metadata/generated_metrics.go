@@ -11,6 +11,98 @@ import (
 	"go.opentelemetry.io/collector/receiver"
 )
 
+// AttributeDNSQueryRecordType specifies the value dns_query.record_type attribute.
+type AttributeDNSQueryRecordType int
+
+const (
+	_ AttributeDNSQueryRecordType = iota
+	AttributeDNSQueryRecordTypeA
+	AttributeDNSQueryRecordTypeAAAA
+	AttributeDNSQueryRecordTypeANY
+	AttributeDNSQueryRecordTypeCNAME
+	AttributeDNSQueryRecordTypeMX
+	AttributeDNSQueryRecordTypeNS
+	AttributeDNSQueryRecordTypePTR
+	AttributeDNSQueryRecordTypeSOA
+	AttributeDNSQueryRecordTypeSPF
+	AttributeDNSQueryRecordTypeSRV
+	AttributeDNSQueryRecordTypeTXT
+)
+
+// String returns the string representation of the AttributeDNSQueryRecordType.
+func (av AttributeDNSQueryRecordType) String() string {
+	switch av {
+	case AttributeDNSQueryRecordTypeA:
+		return "A"
+	case AttributeDNSQueryRecordTypeAAAA:
+		return "AAAA"
+	case AttributeDNSQueryRecordTypeANY:
+		return "ANY"
+	case AttributeDNSQueryRecordTypeCNAME:
+		return "CNAME"
+	case AttributeDNSQueryRecordTypeMX:
+		return "MX"
+	case AttributeDNSQueryRecordTypeNS:
+		return "NS"
+	case AttributeDNSQueryRecordTypePTR:
+		return "PTR"
+	case AttributeDNSQueryRecordTypeSOA:
+		return "SOA"
+	case AttributeDNSQueryRecordTypeSPF:
+		return "SPF"
+	case AttributeDNSQueryRecordTypeSRV:
+		return "SRV"
+	case AttributeDNSQueryRecordTypeTXT:
+		return "TXT"
+	}
+	return ""
+}
+
+// MapAttributeDNSQueryRecordType is a helper map of string to AttributeDNSQueryRecordType attribute value.
+var MapAttributeDNSQueryRecordType = map[string]AttributeDNSQueryRecordType{
+	"A":     AttributeDNSQueryRecordTypeA,
+	"AAAA":  AttributeDNSQueryRecordTypeAAAA,
+	"ANY":   AttributeDNSQueryRecordTypeANY,
+	"CNAME": AttributeDNSQueryRecordTypeCNAME,
+	"MX":    AttributeDNSQueryRecordTypeMX,
+	"NS":    AttributeDNSQueryRecordTypeNS,
+	"PTR":   AttributeDNSQueryRecordTypePTR,
+	"SOA":   AttributeDNSQueryRecordTypeSOA,
+	"SPF":   AttributeDNSQueryRecordTypeSPF,
+	"SRV":   AttributeDNSQueryRecordTypeSRV,
+	"TXT":   AttributeDNSQueryRecordTypeTXT,
+}
+
+// AttributeDNSQueryResult specifies the value dns_query.result attribute.
+type AttributeDNSQueryResult int
+
+const (
+	_ AttributeDNSQueryResult = iota
+	AttributeDNSQueryResultSuccess
+	AttributeDNSQueryResultTimeout
+	AttributeDNSQueryResultError
+)
+
+// String returns the string representation of the AttributeDNSQueryResult.
+func (av AttributeDNSQueryResult) String() string {
+	switch av {
+	case AttributeDNSQueryResultSuccess:
+		return "success"
+	case AttributeDNSQueryResultTimeout:
+		return "timeout"
+	case AttributeDNSQueryResultError:
+		return "error"
+	}
+	return ""
+}
+
+// MapAttributeDNSQueryResult is a helper map of string to AttributeDNSQueryResult attribute value.
+var MapAttributeDNSQueryResult = map[string]AttributeDNSQueryResult{
+	"success": AttributeDNSQueryResultSuccess,
+	"timeout": AttributeDNSQueryResultTimeout,
+	"error":   AttributeDNSQueryResultError,
+}
+
 var MetricsInfo = metricsInfo{
 	DNSQueryQueryTimeMs: metricInfo{
 		Name: "dns_query.query_time_ms",
@@ -330,18 +422,18 @@ func (mb *MetricsBuilder) Emit(options ...ResourceMetricsOption) pmetric.Metrics
 }
 
 // RecordDNSQueryQueryTimeMsDataPoint adds a data point to dns_query.query_time_ms metric.
-func (mb *MetricsBuilder) RecordDNSQueryQueryTimeMsDataPoint(ts pcommon.Timestamp, val float64, dnsQueryDomainAttributeValue string, dnsQueryRcodeAttributeValue string, dnsQueryRecordTypeAttributeValue string, dnsQueryResultAttributeValue string, dnsQueryServerAttributeValue string) {
-	mb.metricDNSQueryQueryTimeMs.recordDataPoint(mb.startTime, ts, val, dnsQueryDomainAttributeValue, dnsQueryRcodeAttributeValue, dnsQueryRecordTypeAttributeValue, dnsQueryResultAttributeValue, dnsQueryServerAttributeValue)
+func (mb *MetricsBuilder) RecordDNSQueryQueryTimeMsDataPoint(ts pcommon.Timestamp, val float64, dnsQueryDomainAttributeValue string, dnsQueryRcodeAttributeValue string, dnsQueryRecordTypeAttributeValue AttributeDNSQueryRecordType, dnsQueryResultAttributeValue AttributeDNSQueryResult, dnsQueryServerAttributeValue string) {
+	mb.metricDNSQueryQueryTimeMs.recordDataPoint(mb.startTime, ts, val, dnsQueryDomainAttributeValue, dnsQueryRcodeAttributeValue, dnsQueryRecordTypeAttributeValue.String(), dnsQueryResultAttributeValue.String(), dnsQueryServerAttributeValue)
 }
 
 // RecordDNSQueryRcodeValueDataPoint adds a data point to dns_query.rcode_value metric.
-func (mb *MetricsBuilder) RecordDNSQueryRcodeValueDataPoint(ts pcommon.Timestamp, val int64, dnsQueryDomainAttributeValue string, dnsQueryRcodeAttributeValue string, dnsQueryRecordTypeAttributeValue string, dnsQueryResultAttributeValue string, dnsQueryServerAttributeValue string) {
-	mb.metricDNSQueryRcodeValue.recordDataPoint(mb.startTime, ts, val, dnsQueryDomainAttributeValue, dnsQueryRcodeAttributeValue, dnsQueryRecordTypeAttributeValue, dnsQueryResultAttributeValue, dnsQueryServerAttributeValue)
+func (mb *MetricsBuilder) RecordDNSQueryRcodeValueDataPoint(ts pcommon.Timestamp, val int64, dnsQueryDomainAttributeValue string, dnsQueryRcodeAttributeValue string, dnsQueryRecordTypeAttributeValue AttributeDNSQueryRecordType, dnsQueryResultAttributeValue AttributeDNSQueryResult, dnsQueryServerAttributeValue string) {
+	mb.metricDNSQueryRcodeValue.recordDataPoint(mb.startTime, ts, val, dnsQueryDomainAttributeValue, dnsQueryRcodeAttributeValue, dnsQueryRecordTypeAttributeValue.String(), dnsQueryResultAttributeValue.String(), dnsQueryServerAttributeValue)
 }
 
 // RecordDNSQueryResultCodeDataPoint adds a data point to dns_query.result_code metric.
-func (mb *MetricsBuilder) RecordDNSQueryResultCodeDataPoint(ts pcommon.Timestamp, val int64, dnsQueryDomainAttributeValue string, dnsQueryRcodeAttributeValue string, dnsQueryRecordTypeAttributeValue string, dnsQueryResultAttributeValue string, dnsQueryServerAttributeValue string) {
-	mb.metricDNSQueryResultCode.recordDataPoint(mb.startTime, ts, val, dnsQueryDomainAttributeValue, dnsQueryRcodeAttributeValue, dnsQueryRecordTypeAttributeValue, dnsQueryResultAttributeValue, dnsQueryServerAttributeValue)
+func (mb *MetricsBuilder) RecordDNSQueryResultCodeDataPoint(ts pcommon.Timestamp, val int64, dnsQueryDomainAttributeValue string, dnsQueryRcodeAttributeValue string, dnsQueryRecordTypeAttributeValue AttributeDNSQueryRecordType, dnsQueryResultAttributeValue AttributeDNSQueryResult, dnsQueryServerAttributeValue string) {
+	mb.metricDNSQueryResultCode.recordDataPoint(mb.startTime, ts, val, dnsQueryDomainAttributeValue, dnsQueryRcodeAttributeValue, dnsQueryRecordTypeAttributeValue.String(), dnsQueryResultAttributeValue.String(), dnsQueryServerAttributeValue)
 }
 
 // Reset resets metrics builder to its initial state. It should be used when external metrics source is restarted,

@@ -25,9 +25,9 @@ The time taken to complete the DNS query in milliseconds. Zero on timeout or err
 | Name | Description | Values | Requirement Level | Semantic Convention |
 | ---- | ----------- | ------ | ----------------- | ------------------- |
 | dns_query.domain | The domain that was queried. | Any Str | Recommended | - |
-| dns_query.rcode | The DNS response code name (e.g. NOERROR, NXDOMAIN, SERVFAIL). | Any Str | Recommended | - |
-| dns_query.record_type | The DNS record type that was queried (e.g. A, AAAA, NS). | Any Str | Recommended | - |
-| dns_query.result | The query outcome: success, timeout, or error. | Any Str | Recommended | - |
+| dns_query.rcode | The DNS response code name (e.g. NOERROR, NXDOMAIN, SERVFAIL). Empty string on timeout or error. | Any Str | Recommended | - |
+| dns_query.record_type | The DNS record type that was queried (e.g. A, AAAA, NS). | Str: ``A``, ``AAAA``, ``ANY``, ``CNAME``, ``MX``, ``NS``, ``PTR``, ``SOA``, ``SPF``, ``SRV``, ``TXT`` | Recommended | - |
+| dns_query.result | The query outcome: success, timeout, or error. | Str: ``success``, ``timeout``, ``error`` | Recommended | - |
 | dns_query.server | The DNS server that was queried. | Any Str | Recommended | - |
 
 ### dns_query.rcode_value
@@ -43,9 +43,9 @@ The numeric DNS response code (rcode). 0=NOERROR, 3=NXDOMAIN, etc. Zero on timeo
 | Name | Description | Values | Requirement Level | Semantic Convention |
 | ---- | ----------- | ------ | ----------------- | ------------------- |
 | dns_query.domain | The domain that was queried. | Any Str | Recommended | - |
-| dns_query.rcode | The DNS response code name (e.g. NOERROR, NXDOMAIN, SERVFAIL). | Any Str | Recommended | - |
-| dns_query.record_type | The DNS record type that was queried (e.g. A, AAAA, NS). | Any Str | Recommended | - |
-| dns_query.result | The query outcome: success, timeout, or error. | Any Str | Recommended | - |
+| dns_query.rcode | The DNS response code name (e.g. NOERROR, NXDOMAIN, SERVFAIL). Empty string on timeout or error. | Any Str | Recommended | - |
+| dns_query.record_type | The DNS record type that was queried (e.g. A, AAAA, NS). | Str: ``A``, ``AAAA``, ``ANY``, ``CNAME``, ``MX``, ``NS``, ``PTR``, ``SOA``, ``SPF``, ``SRV``, ``TXT`` | Recommended | - |
+| dns_query.result | The query outcome: success, timeout, or error. | Str: ``success``, ``timeout``, ``error`` | Recommended | - |
 | dns_query.server | The DNS server that was queried. | Any Str | Recommended | - |
 
 ### dns_query.result_code
@@ -61,7 +61,7 @@ The result code of the DNS query: 0=success, 1=timeout, 2=error.
 | Name | Description | Values | Requirement Level | Semantic Convention |
 | ---- | ----------- | ------ | ----------------- | ------------------- |
 | dns_query.domain | The domain that was queried. | Any Str | Recommended | - |
-| dns_query.rcode | The DNS response code name (e.g. NOERROR, NXDOMAIN, SERVFAIL). | Any Str | Recommended | - |
-| dns_query.record_type | The DNS record type that was queried (e.g. A, AAAA, NS). | Any Str | Recommended | - |
-| dns_query.result | The query outcome: success, timeout, or error. | Any Str | Recommended | - |
+| dns_query.rcode | The DNS response code name (e.g. NOERROR, NXDOMAIN, SERVFAIL). Empty string on timeout or error. | Any Str | Recommended | - |
+| dns_query.record_type | The DNS record type that was queried (e.g. A, AAAA, NS). | Str: ``A``, ``AAAA``, ``ANY``, ``CNAME``, ``MX``, ``NS``, ``PTR``, ``SOA``, ``SPF``, ``SRV``, ``TXT`` | Recommended | - |
+| dns_query.result | The query outcome: success, timeout, or error. | Str: ``success``, ``timeout``, ``error`` | Recommended | - |
 | dns_query.server | The DNS server that was queried. | Any Str | Recommended | - |

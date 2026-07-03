@@ -13,14 +13,16 @@ attributes:
     description: "The domain that was queried."
     type: string
   dns_query.rcode:
-    description: "The DNS response code name (e.g. NOERROR, NXDOMAIN, SERVFAIL)."
+    description: "The DNS response code name (e.g. NOERROR, NXDOMAIN, SERVFAIL). Empty string on timeout or error."
     type: string
   dns_query.record_type:
     description: "The DNS record type that was queried (e.g. A, AAAA, NS)."
     type: string
+    enum: [A, AAAA, ANY, CNAME, MX, NS, PTR, SOA, SPF, SRV, TXT]
   dns_query.result:
     description: "The query outcome: success, timeout, or error."
     type: string
+    enum: [success, timeout, error]
   dns_query.server:
     description: "The DNS server that was queried."
     type: string

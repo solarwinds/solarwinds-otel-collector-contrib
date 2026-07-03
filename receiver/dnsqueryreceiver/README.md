@@ -106,7 +106,9 @@ The `dns_query.result_code` metric and the `dns_query.result` attribute encode t
 
 ## DNS Response Codes (rcode_value)
 
-When `dns_query.result_code` is `0` (success), `dns_query.rcode_value` holds the numeric DNS rcode from the server response. Common values:
+When `dns_query.result_code` is `0` (success), `dns_query.rcode_value` holds the numeric DNS rcode from the server response and `dns_query.rcode` holds the corresponding name string. Both are `0` / empty string on timeout or error.
+
+Values are sourced from [`miekg/dns.RcodeToString`](https://pkg.go.dev/github.com/miekg/dns#pkg-variables):
 
 | Value | Name | Meaning |
 |---|---|---|
@@ -114,7 +116,22 @@ When `dns_query.result_code` is `0` (success), `dns_query.rcode_value` holds the
 | `1` | FORMERR | DNS server could not interpret the query. |
 | `2` | SERVFAIL | DNS server failed to complete the request. |
 | `3` | NXDOMAIN | The queried domain does not exist. |
+| `4` | NOTIMP | Query type not supported by the server. |
 | `5` | REFUSED | DNS server refused to respond to the query. |
+| `6` | YXDOMAIN | Name exists when it should not. |
+| `7` | YXRRSET | RR Set exists when it should not. |
+| `8` | NXRRSET | RR Set that should exist does not. |
+| `9` | NOTAUTH | Server not authoritative for zone. |
+| `10` | NOTZONE | Name not contained in zone. |
+| `15` | DSOTYPENI | DSO-Type Not Implemented (miekg extension). |
+| `16` | BADSIG | TSIG Signature Failure (also BADVERS per RFC 6891). |
+| `17` | BADKEY | Key not recognized. |
+| `18` | BADTIME | Signature out of time window. |
+| `19` | BADMODE | Bad TKEY Mode. |
+| `20` | BADNAME | Duplicate key name. |
+| `21` | BADALG | Algorithm not supported. |
+| `22` | BADTRUNC | Bad Truncation. |
+| `23` | BADCOOKIE | Bad/missing Server Cookie. |
 
 ## Example configuration
 

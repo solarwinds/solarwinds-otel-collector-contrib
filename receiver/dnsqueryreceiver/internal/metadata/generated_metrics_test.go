@@ -60,15 +60,15 @@ func TestMetricsBuilder(t *testing.T) {
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordDNSQueryQueryTimeMsDataPoint(ts, 1, "dns_query.domain-val", "dns_query.rcode-val", "dns_query.record_type-val", "dns_query.result-val", "dns_query.server-val")
+			mb.RecordDNSQueryQueryTimeMsDataPoint(ts, 1, "dns_query.domain-val", "dns_query.rcode-val", AttributeDNSQueryRecordTypeA, AttributeDNSQueryResultSuccess, "dns_query.server-val")
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordDNSQueryRcodeValueDataPoint(ts, 1, "dns_query.domain-val", "dns_query.rcode-val", "dns_query.record_type-val", "dns_query.result-val", "dns_query.server-val")
+			mb.RecordDNSQueryRcodeValueDataPoint(ts, 1, "dns_query.domain-val", "dns_query.rcode-val", AttributeDNSQueryRecordTypeA, AttributeDNSQueryResultSuccess, "dns_query.server-val")
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordDNSQueryResultCodeDataPoint(ts, 1, "dns_query.domain-val", "dns_query.rcode-val", "dns_query.record_type-val", "dns_query.result-val", "dns_query.server-val")
+			mb.RecordDNSQueryResultCodeDataPoint(ts, 1, "dns_query.domain-val", "dns_query.rcode-val", AttributeDNSQueryRecordTypeA, AttributeDNSQueryResultSuccess, "dns_query.server-val")
 
 			res := pcommon.NewResource()
 			metrics := mb.Emit(WithResource(res))
@@ -118,10 +118,10 @@ func TestMetricsBuilder(t *testing.T) {
 					assert.Equal(t, "dns_query.rcode-val", dnsQueryRcodeAttrVal.Str())
 					dnsQueryRecordTypeAttrVal, ok := dp.Attributes().Get("dns_query.record_type")
 					assert.True(t, ok)
-					assert.Equal(t, "dns_query.record_type-val", dnsQueryRecordTypeAttrVal.Str())
+					assert.Equal(t, "A", dnsQueryRecordTypeAttrVal.Str())
 					dnsQueryResultAttrVal, ok := dp.Attributes().Get("dns_query.result")
 					assert.True(t, ok)
-					assert.Equal(t, "dns_query.result-val", dnsQueryResultAttrVal.Str())
+					assert.Equal(t, "success", dnsQueryResultAttrVal.Str())
 					dnsQueryServerAttrVal, ok := dp.Attributes().Get("dns_query.server")
 					assert.True(t, ok)
 					assert.Equal(t, "dns_query.server-val", dnsQueryServerAttrVal.Str())
@@ -145,10 +145,10 @@ func TestMetricsBuilder(t *testing.T) {
 					assert.Equal(t, "dns_query.rcode-val", dnsQueryRcodeAttrVal.Str())
 					dnsQueryRecordTypeAttrVal, ok := dp.Attributes().Get("dns_query.record_type")
 					assert.True(t, ok)
-					assert.Equal(t, "dns_query.record_type-val", dnsQueryRecordTypeAttrVal.Str())
+					assert.Equal(t, "A", dnsQueryRecordTypeAttrVal.Str())
 					dnsQueryResultAttrVal, ok := dp.Attributes().Get("dns_query.result")
 					assert.True(t, ok)
-					assert.Equal(t, "dns_query.result-val", dnsQueryResultAttrVal.Str())
+					assert.Equal(t, "success", dnsQueryResultAttrVal.Str())
 					dnsQueryServerAttrVal, ok := dp.Attributes().Get("dns_query.server")
 					assert.True(t, ok)
 					assert.Equal(t, "dns_query.server-val", dnsQueryServerAttrVal.Str())
@@ -172,10 +172,10 @@ func TestMetricsBuilder(t *testing.T) {
 					assert.Equal(t, "dns_query.rcode-val", dnsQueryRcodeAttrVal.Str())
 					dnsQueryRecordTypeAttrVal, ok := dp.Attributes().Get("dns_query.record_type")
 					assert.True(t, ok)
-					assert.Equal(t, "dns_query.record_type-val", dnsQueryRecordTypeAttrVal.Str())
+					assert.Equal(t, "A", dnsQueryRecordTypeAttrVal.Str())
 					dnsQueryResultAttrVal, ok := dp.Attributes().Get("dns_query.result")
 					assert.True(t, ok)
-					assert.Equal(t, "dns_query.result-val", dnsQueryResultAttrVal.Str())
+					assert.Equal(t, "success", dnsQueryResultAttrVal.Str())
 					dnsQueryServerAttrVal, ok := dp.Attributes().Get("dns_query.server")
 					assert.True(t, ok)
 					assert.Equal(t, "dns_query.server-val", dnsQueryServerAttrVal.Str())
