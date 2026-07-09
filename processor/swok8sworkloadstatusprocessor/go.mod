@@ -1,6 +1,6 @@
 module github.com/solarwinds/solarwinds-otel-collector-contrib/processor/swok8sworkloadstatusprocessor
 
-go 1.26.4
+go 1.26.5
 
 require (
 	github.com/stretchr/testify v1.11.1
