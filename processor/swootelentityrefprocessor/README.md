@@ -28,6 +28,8 @@ The `swootelentityref` processor inserts or removes [OpenTelemetry Entity Refere
 
 When `action: insert` is configured, the processor evaluates each `entity_refs` entry against the Resource attributes of every incoming signal (log record, metric resource, or trace resource). An EntityRef is appended to the Resource only when **all** attribute keys listed in `id_keys` are present. This means a single processor instance can hold a full static mapping (e.g. all Kubernetes entity types) and will only populate the entries that are actually supported by the attributes available on each resource.
 
+If a Resource already contains an EntityRef with a matching type, the processor leaves it untouched — it does not update `id_keys`, `description_keys`, or any other field on the existing ref.
+
 When `action: remove_all` is configured, all EntityRefs are cleared from the Resource of each signal.
 
 ## Configuration
@@ -38,6 +40,7 @@ When `action: remove_all` is configured, all EntityRefs are cleared from the Res
 | `entity_refs` | list | required when `action: insert` | List of EntityRef entries to evaluate. Must be empty when `action: remove_all`. Duplicate types (case-insensitive) are rejected at startup. |
 | `entity_refs[*].type` | string | ✅ | Entity type name (e.g. `KubernetesContainer`) |
 | `entity_refs[*].id_keys` | list of string | ✅ | Resource attribute keys that identify the entity; all must be present for the EntityRef to be inserted |
+| `entity_refs[*].description_keys` | list of string | ❌ | Resource attribute keys with additional entity information; only found keys are included in the EntityRef |
 
 ## Examples
 
@@ -52,6 +55,7 @@ processors:
     entity_refs:
       - type: KubernetesContainer
         id_keys: [sw.k8s.cluster.uid, k8s.namespace.name, k8s.pod.name, k8s.container.name]
+        description_keys: ["container.image.name"]
       - type: KubernetesPod
         id_keys: [sw.k8s.cluster.uid, k8s.namespace.name, k8s.pod.name]
       - type: KubernetesNode
