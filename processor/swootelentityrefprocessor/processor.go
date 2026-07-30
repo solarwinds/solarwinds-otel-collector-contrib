@@ -89,7 +89,8 @@ func (p *swootelentityrefprocessor) processResource(resource pcommon.Resource) {
 		}
 		attrs := resource.Attributes()
 		for _, ercfg := range p.cfg.EntityRefs {
-			if !allKeysPresent(attrs, ercfg.IDKeys) {
+			// Only insert the EntityRef if all of its ID keys are present in the resource attributes.
+			if !p.allKeysPresent(attrs, ercfg.IDKeys) {
 				continue
 			}
 			if _, exists := existingTypes[ercfg.normalizedType]; exists {
@@ -98,11 +99,20 @@ func (p *swootelentityrefprocessor) processResource(resource pcommon.Resource) {
 			ref := refs.AppendEmpty()
 			ref.SetType(ercfg.Type)
 			idKeys := ref.IdKeys()
-			for _, k := range ercfg.IDKeys {
-				idKeys.Append(k)
-			}
+			idKeys.Append(ercfg.IDKeys...)
 			existingTypes[ercfg.normalizedType] = struct{}{}
-			p.logger.Debug("added entity ref", zap.String("type", ercfg.Type), zap.Any("idKeys", ercfg.IDKeys))
+
+			descKeys := ref.DescriptionKeys()
+			for _, k := range ercfg.DescriptionKeys {
+				// Only append description keys if they are present in the resource attributes.
+				if p.containsKey(attrs, k) {
+					descKeys.Append(k)
+				}
+			}
+
+			if ce := p.logger.Check(zap.DebugLevel, "added entity ref"); ce != nil {
+				ce.Write(zap.String("type", ercfg.Type), zap.Any("idKeys", ercfg.IDKeys), zap.Any("descriptionKeys", descKeys.AsRaw()))
+			}
 		}
 	case ActionRemoveAll:
 		// EntityRefSlice has no RemoveAll; RemoveIf with a tautological predicate is the standard clear pattern.
@@ -110,15 +120,16 @@ func (p *swootelentityrefprocessor) processResource(resource pcommon.Resource) {
 	}
 }
 
-func allKeysPresent(attrs pcommon.Map, keys []string) bool {
-	if len(keys) == 0 {
-		return false
-	}
+func (p *swootelentityrefprocessor) allKeysPresent(attrs pcommon.Map, keys []string) bool {
 	for _, k := range keys {
-		v, ok := attrs.Get(k)
-		if !ok || v.Type() != pcommon.ValueTypeStr || v.Str() == "" {
+		if !p.containsKey(attrs, k) {
 			return false
 		}
 	}
 	return true
+}
+
+func (p *swootelentityrefprocessor) containsKey(attrs pcommon.Map, key string) bool {
+	v, ok := attrs.Get(key)
+	return ok && v.Type() == pcommon.ValueTypeStr && v.Str() != ""
 }

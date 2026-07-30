@@ -1,6 +1,7 @@
 # Changelog
 
 ## vNext
+- **Added** `swootelentityrefprocessor`: EntityRefs can now contain `description_keys`
 
 ## v0.152.8
 - No changes
