@@ -92,7 +92,7 @@ func runImageCycle(t *testing.T, cfg *Config, objects ...runtime.Object) []plog.
 	require.NoError(t, rec.Start(ctx, componenttest.NewNopHost()))
 
 	<-done
-	rec.Shutdown(ctx)
+	require.NoError(t, rec.Shutdown(ctx))
 
 	return cap.logs
 }
@@ -183,10 +183,10 @@ func TestDomainDiscovery_SingleMatch(t *testing.T) {
 
 	relAttrs := collectAttrs(logs, otelEntityEventType, relationshipState)
 	require.Len(t, relAttrs, 1, "expected relationship when workload resolved")
-	checkAttr(t, relAttrs[0], otelEntityRelationSourceType, "KubernetesService")
-	srcIDs := getAttrMap(t, relAttrs[0], otelEntityRelationSourceID)
-	checkAttr(t, srcIDs, "k8s.service.name", "redis-ext")
-	checkAttr(t, srcIDs, k8sNamespace, "db")
+	checkAttr(t, relAttrs[0], otelEntityRelationDestinationType, "KubernetesService")
+	destIDs := getAttrMap(t, relAttrs[0], otelEntityRelationDestinationID)
+	checkAttr(t, destIDs, "k8s.service.name", "redis-ext")
+	checkAttr(t, destIDs, k8sNamespace, "db")
 }
 
 func TestDomainDiscovery_SingleMatchCustomPort(t *testing.T) {
@@ -335,16 +335,16 @@ func TestImageDiscovery_SingleMatch(t *testing.T) {
 	relationAttrs := collectAttrs(logs, otelEntityEventType, relationshipState)
 	require.Len(t, relationAttrs, 1)
 	checkAttr(t, relationAttrs[0], otelEntityRelationType, discoveredRelationshipType)
-	checkAttr(t, relationAttrs[0], otelEntityRelationSourceType, "KubernetesDaemonSet")
-	source_ids := getAttrMap(t, relationAttrs[0], otelEntityRelationSourceID)
-	checkAttr(t, source_ids, "k8s.daemonset.name", "mongo-ds")
-	checkAttr(t, source_ids, k8sNamespace, "db")
-	checkAttr(t, source_ids, swK8sClusterUid, testClusterUid)
-
-	checkAttr(t, relationAttrs[0], otelEntityRelationDestinationType, discoveredDatabaseEntityType)
+	checkAttr(t, relationAttrs[0], otelEntityRelationDestinationType, "KubernetesDaemonSet")
 	dst_ids := getAttrMap(t, relationAttrs[0], otelEntityRelationDestinationID)
-	checkAttr(t, dst_ids, swDiscoveryDbAddress, "mongo-svc.db:27017")
-	checkAttr(t, dst_ids, swDiscoveryDbType, "mongo")
+	checkAttr(t, dst_ids, "k8s.daemonset.name", "mongo-ds")
+	checkAttr(t, dst_ids, k8sNamespace, "db")
+	checkAttr(t, dst_ids, swK8sClusterUid, testClusterUid)
+
+	checkAttr(t, relationAttrs[0], otelEntityRelationSourceType, discoveredDatabaseEntityType)
+	src_ids := getAttrMap(t, relationAttrs[0], otelEntityRelationSourceID)
+	checkAttr(t, src_ids, swDiscoveryDbAddress, "mongo-svc.db:27017")
+	checkAttr(t, src_ids, swDiscoveryDbType, "mongo")
 }
 
 func TestImageDiscovery_NonDefaultPortMatch(t *testing.T) {
