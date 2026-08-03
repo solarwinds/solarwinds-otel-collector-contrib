@@ -2,6 +2,7 @@
 
 ## vNext
 - Updates OpenTelemetry modules to [v1.63.0/v0.157.0](https://github.com/open-telemetry/opentelemetry-collector/releases/tag/v0.157.0)
+- **Added** `swootelentityrefprocessor`: EntityRefs can now contain `description_keys`
 
 ## v0.152.8
 - No changes

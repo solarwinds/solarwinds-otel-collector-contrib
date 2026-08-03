@@ -10,7 +10,7 @@ Describe what testing was performed and which tests were added.
 
 ### Contribution Checklist
 
-Please ensure your PR meets the following requirements (see [CONTRIBUTING.md](../CONTRIBUTING.md)):
+Please ensure your PR meets the following requirements (see [CONTRIBUTING.md](https://github.com/solarwinds/solarwinds-otel-collector-contrib/blob/main/CONTRIBUTING.md)):
 
 **General:**
 - [ ] **CHANGELOG updated** - Added entry under `## vNext` (chore PRs are a possible exemption)
@@ -20,7 +20,7 @@ Please ensure your PR meets the following requirements (see [CONTRIBUTING.md](..
 **For new components:**
 - [ ] **Codeowners** - Approver/maintainer assigned
 - [ ] **Use case documented** - Reasoning, telemetry types, configuration options described in issue
-- [ ] `mdatagen` has been used to autogenerate tests, update README.md and more (see [CONTRIBUTING.md](../CONTRIBUTING.md)):
+- [ ] `mdatagen` has been used to autogenerate tests, update README.md and more (see [CONTRIBUTING.md](https://github.com/solarwinds/solarwinds-otel-collector-contrib/blob/main/CONTRIBUTING.md)):
 - [ ] README.md contains complete configuration documentation
 - [ ] **Telemetry names registered** - New metrics registered (if applicable)
 > [!NOTE]  
