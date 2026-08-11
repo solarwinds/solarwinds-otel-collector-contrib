@@ -1,9 +1,11 @@
 # Changelog
 
 ## vNext
+- **Added** `dnsqueryreceiver` accepts `tcp-tls` as a `network` value, enabling DNS over TLS queries. Reaches parity with the Telegraf `dns_query` input plugin, which also supports it. (NH-134036)
+- **Fixed** `dnsqueryreceiver` changelog entry for v0.152.6 listed metric names the receiver never emitted.
 
 ## v0.152.6
-- **Added** `dnsqueryreceiver` New OTel Collector receiver replacing the Telegraf `dns_query` input plugin. Emits `dns.query.duration_milliseconds`, `dns.query.result`, and `dns.query.response_time_ms` metrics. (NH-134035)
+- **Added** `dnsqueryreceiver` New OTel Collector receiver replacing the Telegraf `dns_query` input plugin. Emits `dns_query.query_time_ms`, `dns_query.rcode_value`, and `dns_query.result_code` metrics. (NH-134035)
 
 ## v0.152.5
 - No changes
