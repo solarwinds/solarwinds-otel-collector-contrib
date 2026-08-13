@@ -93,6 +93,19 @@ func TestValidate_ValidMinimal(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestValidate_AllNetworks(t *testing.T) {
+	networks := []string{"udp", "tcp", "tcp-tls"}
+	for _, network := range networks {
+		t.Run(network, func(t *testing.T) {
+			cfg := defaultTestConfig()
+			cfg.Servers = []string{"8.8.8.8"}
+			cfg.Network = network
+			err := cfg.Validate()
+			require.NoError(t, err)
+		})
+	}
+}
+
 func TestValidate_AllRecordTypes(t *testing.T) {
 	recordTypes := []string{"A", "AAAA", "ANY", "CNAME", "MX", "NS", "PTR", "SOA", "SPF", "SRV", "TXT"}
 	for _, rt := range recordTypes {

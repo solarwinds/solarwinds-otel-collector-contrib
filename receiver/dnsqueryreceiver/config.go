@@ -33,7 +33,7 @@ type Config struct {
 	Domains []string `mapstructure:"domains"`
 	// RecordType is the DNS record type to query. Default: "NS"
 	RecordType string `mapstructure:"record_type"`
-	// Network is the network protocol to use: "udp" or "tcp". Default: "udp"
+	// Network is the network protocol to use: "udp", "tcp" or "tcp-tls". Default: "udp"
 	Network string `mapstructure:"network"`
 	// Port is the DNS server port. Default: 53
 	Port int `mapstructure:"port"`
@@ -46,8 +46,12 @@ var allowedRecordTypes = map[string]bool{
 	"NS": true, "PTR": true, "SOA": true, "SPF": true, "SRV": true, "TXT": true,
 }
 
+// WARNING: "tcp-tls" (DNS over TLS) servers usually listen on port 853, not the
+// default 53 — the port must be set explicitly. TLS is negotiated with the default
+// client configuration, so the server certificate must be valid for the configured
+// server address.
 var allowedNetworks = map[string]bool{
-	"udp": true, "tcp": true,
+	"udp": true, "tcp": true, "tcp-tls": true,
 }
 
 // Validate checks the configuration for errors.
@@ -64,7 +68,7 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("record_type %q is not valid; allowed values: A, AAAA, ANY, CNAME, MX, NS, PTR, SOA, SPF, SRV, TXT", c.RecordType)
 	}
 	if !allowedNetworks[c.Network] {
-		return fmt.Errorf("network %q is not valid; allowed values: udp, tcp", c.Network)
+		return fmt.Errorf("network %q is not valid; allowed values: udp, tcp, tcp-tls", c.Network)
 	}
 	if c.Port < 1 || c.Port > 65535 {
 		return fmt.Errorf("port %d is not valid; must be between 1 and 65535", c.Port)
