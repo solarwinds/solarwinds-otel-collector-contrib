@@ -1,6 +1,7 @@
 # Changelog
 
 ## vNext
+- **Added** `solarwindsextension`: emits `sw.otelcol.collector.distribution` resource attribute on the `sw.otelcol.uptime` heartbeat metric, derived from the collector binary name by stripping the `solarwinds-otel-collector-` prefix
 
 ## v0.157.1
 - No changes
