@@ -3,7 +3,7 @@ module github.com/solarwinds/solarwinds-otel-collector-contrib/processor/swok8sw
 go 1.26.6
 
 require (
-	github.com/stretchr/testify v1.12.0
+	github.com/stretchr/testify v1.12.1
 	go.opentelemetry.io/collector/component v1.63.0
 	go.opentelemetry.io/collector/consumer v1.63.0
 	go.opentelemetry.io/collector/consumer/consumertest v0.157.0
@@ -39,6 +39,7 @@ require (
 	go.opentelemetry.io/proto/slim/otlp v1.11.0 // indirect
 	go.opentelemetry.io/proto/slim/otlp/collector/profiles/v1development v0.4.0 // indirect
 	go.opentelemetry.io/proto/slim/otlp/profiles/v1development v0.4.0 // indirect
+	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
 	golang.org/x/term v0.43.0 // indirect
 	golang.org/x/time v0.11.0 // indirect
