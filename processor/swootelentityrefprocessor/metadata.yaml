@@ -14,3 +14,4 @@ tests:
     entity_refs:
       - type: KubernetesPod
         id_keys: [sw.k8s.cluster.uid, k8s.namespace.name, k8s.pod.name]
+        description_keys: [k8s.cluster.name]

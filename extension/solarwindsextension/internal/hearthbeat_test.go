@@ -16,18 +16,16 @@ package internal
 
 import (
 	"context"
-
-	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/consumer"
-	"go.opentelemetry.io/collector/exporter"
-
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
+	"go.opentelemetry.io/collector/consumer"
+	"go.opentelemetry.io/collector/exporter"
 	"go.opentelemetry.io/collector/extension/extensiontest"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 )
@@ -112,4 +110,94 @@ func TestHeartbeatEmittingMetrics(t *testing.T) {
 
 	err = hb.Shutdown(ctx)
 	require.NoError(t, err)
+}
+
+func TestDistributionAttributeDerivation(t *testing.T) {
+	tests := []struct {
+		command  string
+		expected string
+	}{
+		{command: "solarwinds-otel-collector-verified", expected: "verified"},
+		{command: "solarwinds-otel-collector-k8s", expected: "k8s"},
+		{command: "solarwinds-otel-collector-playground", expected: "playground"},
+		// Unknown or custom commands do not carry the well-known prefix: no
+		// distribution attribute should be emitted, so distribution is empty.
+		{command: "my-custom-collector", expected: ""},
+		{command: "", expected: ""},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.command, func(t *testing.T) {
+			set := extensiontest.NewNopSettings(extensiontest.NopType)
+			set.BuildInfo = component.BuildInfo{Command: tc.command}
+
+			hb := newHeartbeatWithExporter(set, &Config{WithoutEntity: true}, newMockExporter())
+			assert.Equal(t, tc.expected, hb.distribution)
+		})
+	}
+}
+
+func TestDistributionAttributeNotEmittedForUnknownCommand(t *testing.T) {
+	set := extensiontest.NewNopSettings(extensiontest.NopType)
+	set.BuildInfo = component.BuildInfo{Command: "my-custom-collector"}
+
+	mockExp := newMockExporter()
+	hb := newHeartbeatWithExporter(set, &Config{WithoutEntity: true}, mockExp)
+
+	ctx := t.Context()
+	err := hb.Start(ctx, componenttest.NewNopHost())
+	require.NoError(t, err)
+
+	assert.Eventuallyf(
+		t,
+		func() bool { return mockExp.pushedLen() >= 1 },
+		500*time.Millisecond,
+		10*time.Millisecond,
+		"expected at least one heartbeat",
+	)
+
+	err = hb.Shutdown(ctx)
+	require.NoError(t, err)
+
+	mockExp.mPushed.Lock()
+	defer mockExp.mPushed.Unlock()
+	require.NotEmpty(t, mockExp.pushed)
+
+	attrs := mockExp.pushed[0].ResourceMetrics().At(0).Resource().Attributes()
+	_, ok := attrs.Get(CollectorDistributionAttribute)
+	assert.False(t, ok, "distribution attribute must not be emitted for unknown command")
+}
+
+func TestDistributionAttributeEmitted(t *testing.T) {
+	set := extensiontest.NewNopSettings(extensiontest.NopType)
+	set.BuildInfo = component.BuildInfo{Command: "solarwinds-otel-collector-verified"}
+
+	mockExp := newMockExporter()
+	hb := newHeartbeatWithExporter(set, &Config{WithoutEntity: true}, mockExp)
+
+	ctx := t.Context()
+	err := hb.Start(ctx, componenttest.NewNopHost())
+	require.NoError(t, err)
+
+	assert.Eventuallyf(
+		t,
+		func() bool { return mockExp.pushedLen() >= 1 },
+		500*time.Millisecond,
+		10*time.Millisecond,
+		"expected at least one heartbeat",
+	)
+
+	err = hb.Shutdown(ctx)
+	require.NoError(t, err)
+
+	mockExp.mPushed.Lock()
+	defer mockExp.mPushed.Unlock()
+	require.NotEmpty(t, mockExp.pushed)
+
+	rms := mockExp.pushed[0].ResourceMetrics()
+	require.Equal(t, 1, rms.Len())
+	attrs := rms.At(0).Resource().Attributes()
+	val, ok := attrs.Get(CollectorDistributionAttribute)
+	require.True(t, ok, "attribute %s must be present", CollectorDistributionAttribute)
+	assert.Equal(t, "verified", val.Str())
 }

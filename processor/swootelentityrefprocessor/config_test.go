@@ -137,3 +137,49 @@ func TestValidate_EntityRef_DuplicateIDKey(t *testing.T) {
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "duplicate id_key")
 }
+
+func TestValidate_EntityRef_DuplicateDescriptionKey(t *testing.T) {
+	cfg := &Config{
+		Action: ActionInsert,
+		EntityRefs: []EntityRefConfig{
+			{
+				Type:            "KubernetesPod",
+				IDKeys:          []string{"sw.k8s.cluster.uid", "k8s.pod.name"},
+				DescriptionKeys: []string{"k8s.cluster.name", "k8s.cluster.name"},
+			},
+		},
+	}
+	err := cfg.Validate()
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "duplicate description_key")
+}
+
+func TestValidate_EntityRef_DescriptionKeys_Valid(t *testing.T) {
+	cfg := &Config{
+		Action: ActionInsert,
+		EntityRefs: []EntityRefConfig{
+			{
+				Type:            "KubernetesPod",
+				IDKeys:          []string{"sw.k8s.cluster.uid", "k8s.pod.name"},
+				DescriptionKeys: []string{"k8s.cluster.name"},
+			},
+		},
+	}
+	require.NoError(t, cfg.Validate())
+}
+
+func TestValidate_EntityRef_KeyOverlapBetweenIDKeysAndDescriptionKeys(t *testing.T) {
+	cfg := &Config{
+		Action: ActionInsert,
+		EntityRefs: []EntityRefConfig{
+			{
+				Type:            "KubernetesPod",
+				IDKeys:          []string{"sw.k8s.cluster.uid", "k8s.pod.name"},
+				DescriptionKeys: []string{"k8s.cluster.name", "k8s.pod.name"},
+			},
+		},
+	}
+	err := cfg.Validate()
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "appears in both id_keys and description_keys")
+}

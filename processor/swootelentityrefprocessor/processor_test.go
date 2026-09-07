@@ -45,26 +45,30 @@ func buildTestProcessor(cfg component.Config) (*swootelentityrefprocessor, error
 
 // extractEntityRefs extracts the EntityRefs from a Resource into a plain slice for assertions.
 func extractEntityRefs(resource pcommon.Resource) []struct {
-	entityType string
-	idKeys     []string
+	entityType      string
+	idKeys          []string
+	descriptionKeys []string
 } {
 	refs := entity.ResourceEntityRefs(resource)
 	out := make([]struct {
-		entityType string
-		idKeys     []string
+		entityType      string
+		idKeys          []string
+		descriptionKeys []string
 	}, refs.Len())
 	for i, ref := range refs.All() {
 		out[i] = struct {
-			entityType string
-			idKeys     []string
-		}{entityType: ref.Type(), idKeys: ref.IdKeys().AsRaw()}
+			entityType      string
+			idKeys          []string
+			descriptionKeys []string
+		}{entityType: ref.Type(), idKeys: ref.IdKeys().AsRaw(), descriptionKeys: ref.DescriptionKeys().AsRaw()}
 	}
 	return out
 }
 
 func collectEntityRefs(ld plog.Logs) []struct {
-	entityType string
-	idKeys     []string
+	entityType      string
+	idKeys          []string
+	descriptionKeys []string
 } {
 	if ld.ResourceLogs().Len() == 0 {
 		return nil
@@ -395,6 +399,148 @@ func TestInsertLogs_NonStringAttribute(t *testing.T) {
 	assert.Empty(t, refs, "non-string id_key attribute must not produce an EntityRef")
 }
 
+// TestInsertLogs_DescriptionKeys_AllPresent: description_keys present in resource
+// attributes must all be appended to the inserted EntityRef.
+func TestInsertLogs_DescriptionKeys_AllPresent(t *testing.T) {
+	cfg := &Config{
+		Action: ActionInsert,
+		EntityRefs: []EntityRefConfig{
+			{
+				Type:            "KubernetesPod",
+				IDKeys:          []string{"sw.k8s.cluster.uid", "k8s.pod.name"},
+				DescriptionKeys: []string{"k8s.cluster.name", "k8s.namespace.name"},
+			},
+		},
+	}
+	ld := buildLogs(func(m pcommon.Map) {
+		m.PutStr("sw.k8s.cluster.uid", "cluster-1")
+		m.PutStr("k8s.pod.name", "my-pod")
+		m.PutStr("k8s.cluster.name", "my-cluster")
+		m.PutStr("k8s.namespace.name", "default")
+	})
+
+	p, err := buildTestProcessor(cfg)
+	require.NoError(t, err)
+	result, err := p.processLogs(context.Background(), ld)
+	require.NoError(t, err)
+
+	refs := collectEntityRefs(result)
+	require.Len(t, refs, 1)
+	assert.Equal(t, []string{"k8s.cluster.name", "k8s.namespace.name"}, refs[0].descriptionKeys)
+}
+
+// TestInsertLogs_DescriptionKeys_PartiallyPresent: only description_keys whose
+// attribute is present in the resource must be appended; missing ones are skipped.
+func TestInsertLogs_DescriptionKeys_PartiallyPresent(t *testing.T) {
+	cfg := &Config{
+		Action: ActionInsert,
+		EntityRefs: []EntityRefConfig{
+			{
+				Type:            "KubernetesPod",
+				IDKeys:          []string{"sw.k8s.cluster.uid", "k8s.pod.name"},
+				DescriptionKeys: []string{"k8s.cluster.name", "k8s.namespace.name"},
+			},
+		},
+	}
+	ld := buildLogs(func(m pcommon.Map) {
+		m.PutStr("sw.k8s.cluster.uid", "cluster-1")
+		m.PutStr("k8s.pod.name", "my-pod")
+		m.PutStr("k8s.cluster.name", "my-cluster")
+		// k8s.namespace.name intentionally absent
+	})
+
+	p, err := buildTestProcessor(cfg)
+	require.NoError(t, err)
+	result, err := p.processLogs(context.Background(), ld)
+	require.NoError(t, err)
+
+	refs := collectEntityRefs(result)
+	require.Len(t, refs, 1)
+	assert.Equal(t, []string{"k8s.cluster.name"}, refs[0].descriptionKeys)
+}
+
+// TestInsertLogs_DescriptionKeys_NoneConfigured: an EntityRefConfig without
+// DescriptionKeys must insert an EntityRef with no description keys.
+func TestInsertLogs_DescriptionKeys_NoneConfigured(t *testing.T) {
+	cfg := &Config{
+		Action: ActionInsert,
+		EntityRefs: []EntityRefConfig{
+			{Type: "KubernetesPod", IDKeys: []string{"sw.k8s.cluster.uid", "k8s.pod.name"}},
+		},
+	}
+	ld := buildLogs(func(m pcommon.Map) {
+		m.PutStr("sw.k8s.cluster.uid", "cluster-1")
+		m.PutStr("k8s.pod.name", "my-pod")
+	})
+
+	p, err := buildTestProcessor(cfg)
+	require.NoError(t, err)
+	result, err := p.processLogs(context.Background(), ld)
+	require.NoError(t, err)
+
+	refs := collectEntityRefs(result)
+	require.Len(t, refs, 1)
+	assert.Empty(t, refs[0].descriptionKeys)
+}
+
+// TestInsertLogs_DescriptionKeys_EmptyStringAttribute: a description_key attribute
+// present with an empty string value must not be appended.
+func TestInsertLogs_DescriptionKeys_EmptyStringAttribute(t *testing.T) {
+	cfg := &Config{
+		Action: ActionInsert,
+		EntityRefs: []EntityRefConfig{
+			{
+				Type:            "KubernetesPod",
+				IDKeys:          []string{"sw.k8s.cluster.uid", "k8s.pod.name"},
+				DescriptionKeys: []string{"k8s.cluster.name"},
+			},
+		},
+	}
+	ld := buildLogs(func(m pcommon.Map) {
+		m.PutStr("sw.k8s.cluster.uid", "cluster-1")
+		m.PutStr("k8s.pod.name", "my-pod")
+		m.PutStr("k8s.cluster.name", "") // present but empty
+	})
+
+	p, err := buildTestProcessor(cfg)
+	require.NoError(t, err)
+	result, err := p.processLogs(context.Background(), ld)
+	require.NoError(t, err)
+
+	refs := collectEntityRefs(result)
+	require.Len(t, refs, 1)
+	assert.Empty(t, refs[0].descriptionKeys)
+}
+
+// TestInsertLogs_DescriptionKeys_NonStringAttribute: a description_key attribute
+// present with a non-string value must not be appended to the EntityRef.
+func TestInsertLogs_DescriptionKeys_NonStringAttribute(t *testing.T) {
+	cfg := &Config{
+		Action: ActionInsert,
+		EntityRefs: []EntityRefConfig{
+			{
+				Type:            "KubernetesPod",
+				IDKeys:          []string{"sw.k8s.cluster.uid", "k8s.pod.name"},
+				DescriptionKeys: []string{"k8s.cluster.name"},
+			},
+		},
+	}
+	ld := buildLogs(func(m pcommon.Map) {
+		m.PutStr("sw.k8s.cluster.uid", "cluster-1")
+		m.PutStr("k8s.pod.name", "my-pod")
+		m.PutInt("k8s.cluster.name", 42) // non-string attribute
+	})
+
+	p, err := buildTestProcessor(cfg)
+	require.NoError(t, err)
+	result, err := p.processLogs(context.Background(), ld)
+	require.NoError(t, err)
+
+	refs := collectEntityRefs(result)
+	require.Len(t, refs, 1)
+	assert.Empty(t, refs[0].descriptionKeys, "non-string description_key attribute must not be appended")
+}
+
 // TestInsertLogs_ReadOnly: a read-only batch must return errReadOnlyBatch, not panic.
 func TestInsertLogs_ReadOnly(t *testing.T) {
 	cfg := &Config{
@@ -446,8 +592,9 @@ func buildMetrics(setAttrs func(pcommon.Map)) pmetric.Metrics {
 }
 
 func collectMetricEntityRefs(md pmetric.Metrics) []struct {
-	entityType string
-	idKeys     []string
+	entityType      string
+	idKeys          []string
+	descriptionKeys []string
 } {
 	if md.ResourceMetrics().Len() == 0 {
 		return nil
@@ -713,6 +860,34 @@ func TestInsertMetrics_Idempotent_CaseInsensitive(t *testing.T) {
 	assert.Equal(t, "KUBERNETESPOD", refs[0].entityType)
 }
 
+func TestInsertMetrics_DescriptionKeys_PartiallyPresent(t *testing.T) {
+	cfg := &Config{
+		Action: ActionInsert,
+		EntityRefs: []EntityRefConfig{
+			{
+				Type:            "KubernetesPod",
+				IDKeys:          []string{"sw.k8s.cluster.uid", "k8s.pod.name"},
+				DescriptionKeys: []string{"k8s.cluster.name", "k8s.namespace.name"},
+			},
+		},
+	}
+	md := buildMetrics(func(m pcommon.Map) {
+		m.PutStr("sw.k8s.cluster.uid", "cluster-1")
+		m.PutStr("k8s.pod.name", "my-pod")
+		m.PutStr("k8s.cluster.name", "my-cluster")
+		// k8s.namespace.name intentionally absent
+	})
+
+	p, err := buildTestProcessor(cfg)
+	require.NoError(t, err)
+	result, err := p.processMetrics(context.Background(), md)
+	require.NoError(t, err)
+
+	refs := collectMetricEntityRefs(result)
+	require.Len(t, refs, 1)
+	assert.Equal(t, []string{"k8s.cluster.name"}, refs[0].descriptionKeys)
+}
+
 // --- Traces helpers and tests ---
 
 func buildTraces(setAttrs func(pcommon.Map)) ptrace.Traces {
@@ -723,8 +898,9 @@ func buildTraces(setAttrs func(pcommon.Map)) ptrace.Traces {
 }
 
 func collectTraceEntityRefs(td ptrace.Traces) []struct {
-	entityType string
-	idKeys     []string
+	entityType      string
+	idKeys          []string
+	descriptionKeys []string
 } {
 	if td.ResourceSpans().Len() == 0 {
 		return nil
@@ -988,4 +1164,32 @@ func TestInsertTraces_Idempotent_CaseInsensitive(t *testing.T) {
 	refs := collectTraceEntityRefs(result)
 	require.Len(t, refs, 1, "case-insensitive duplicate must not be inserted")
 	assert.Equal(t, "KUBERNETESPOD", refs[0].entityType)
+}
+
+func TestInsertTraces_DescriptionKeys_PartiallyPresent(t *testing.T) {
+	cfg := &Config{
+		Action: ActionInsert,
+		EntityRefs: []EntityRefConfig{
+			{
+				Type:            "KubernetesPod",
+				IDKeys:          []string{"sw.k8s.cluster.uid", "k8s.pod.name"},
+				DescriptionKeys: []string{"k8s.cluster.name", "k8s.namespace.name"},
+			},
+		},
+	}
+	td := buildTraces(func(m pcommon.Map) {
+		m.PutStr("sw.k8s.cluster.uid", "cluster-1")
+		m.PutStr("k8s.pod.name", "my-pod")
+		m.PutStr("k8s.cluster.name", "my-cluster")
+		// k8s.namespace.name intentionally absent
+	})
+
+	p, err := buildTestProcessor(cfg)
+	require.NoError(t, err)
+	result, err := p.processTraces(context.Background(), td)
+	require.NoError(t, err)
+
+	refs := collectTraceEntityRefs(result)
+	require.Len(t, refs, 1)
+	assert.Equal(t, []string{"k8s.cluster.name"}, refs[0].descriptionKeys)
 }

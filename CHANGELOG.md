@@ -4,6 +4,28 @@
 - **Added** `dnsqueryreceiver` accepts `tcp-tls` as a `network` value, enabling DNS over TLS queries. Reaches parity with the Telegraf `dns_query` input plugin, which also supports it. (NH-134036)
 - **Fixed** `dnsqueryreceiver` changelog entry for v0.152.6 listed metric names the receiver never emitted.
 
+## v0.157.4
+- No changes
+
+## v0.157.3
+- **Added** `solarwindsextension`: emits `sw.otelcol.collector.distribution` resource attribute on the `sw.otelcol.uptime` heartbeat metric, derived from the collector binary name by stripping the `solarwinds-otel-collector-` prefix
+
+## v0.157.2
+- Updates golang to 1.26.6
+
+## v0.157.1
+- No changes
+
+## v0.157.0
+- Updates OpenTelemetry modules to [v1.63.0/v0.157.0](https://github.com/open-telemetry/opentelemetry-collector/releases/tag/v0.157.0)
+- **Added** `swootelentityrefprocessor`: EntityRefs can now contain `description_keys`
+
+## v0.152.8
+- No changes
+
+## v0.152.7
+- No changes
+
 ## v0.152.6
 - **Added** `dnsqueryreceiver` New OTel Collector receiver replacing the Telegraf `dns_query` input plugin. Emits `dns_query.query_time_ms`, `dns_query.rcode_value`, and `dns_query.result_code` metrics. (NH-134035)
 

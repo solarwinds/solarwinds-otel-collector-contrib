@@ -8,7 +8,7 @@ updates:
       - Skip Changelog
     schedule:
       interval: weekly
-      day: saturday
+      day: thursday
     commit-message:
       prefix: "chore: "
 

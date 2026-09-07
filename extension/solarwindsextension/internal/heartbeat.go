@@ -17,6 +17,7 @@ package internal
 import (
 	"context"
 	"errors"
+	"strings"
 	"sync"
 	"time"
 
@@ -30,11 +31,13 @@ import (
 )
 
 const (
-	defaultHeartbeatInterval  = 30 * time.Second
-	CollectorNameAttribute    = "sw.otelcol.collector.name"
-	CollectorVersionAttribute = "sw.otelcol.collector.version"
-	EntityCreation            = "sw.otelcol.collector.entity_creation"
-	EntityCreationValue       = "on"
+	defaultHeartbeatInterval       = 30 * time.Second
+	CollectorNameAttribute         = "sw.otelcol.collector.name"
+	CollectorVersionAttribute      = "sw.otelcol.collector.version"
+	CollectorDistributionAttribute = "sw.otelcol.collector.distribution"
+	EntityCreation                 = "sw.otelcol.collector.entity_creation"
+	EntityCreationValue            = "on"
+	collectorCommandPrefix         = "solarwinds-otel-collector-"
 )
 
 type Heartbeat struct {
@@ -46,6 +49,7 @@ type Heartbeat struct {
 	metric        *UptimeMetric
 	exporter      exporter.Metrics
 	collectorName string
+	distribution  string
 	withoutEntity bool
 
 	beatInterval time.Duration
@@ -74,11 +78,23 @@ func newHeartbeatWithExporter(
 		logger:        set.Logger,
 		metric:        newUptimeMetric(set.Logger),
 		collectorName: cfg.CollectorName,
+		distribution:  distributionFromCommand(set.BuildInfo.Command),
 		exporter:      exporter,
 		beatInterval:  defaultHeartbeatInterval,
 		resource:      cfg.Resource,
 		withoutEntity: cfg.WithoutEntity,
 	}
+}
+
+// distributionFromCommand derives the distribution name by stripping the
+// well-known solarwinds-otel-collector- prefix from the collector binary
+// command. Returns an empty string when the command does not carry the prefix,
+// meaning no distribution attribute should be emitted for custom builds.
+func distributionFromCommand(command string) string {
+	if !strings.HasPrefix(command, collectorCommandPrefix) {
+		return ""
+	}
+	return strings.TrimPrefix(command, collectorCommandPrefix)
 }
 
 func (h *Heartbeat) Start(ctx context.Context, host component.Host) error {
@@ -169,5 +185,8 @@ func (h *Heartbeat) decorateResourceAttributes(resource pcommon.Resource) error 
 		resource.Attributes().PutStr(EntityCreation, EntityCreationValue)
 	}
 	resource.Attributes().PutStr(CollectorVersionAttribute, version.Version)
+	if h.distribution != "" {
+		resource.Attributes().PutStr(CollectorDistributionAttribute, h.distribution)
+	}
 	return nil
 }
