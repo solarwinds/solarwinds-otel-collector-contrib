@@ -6,10 +6,10 @@ require (
 	github.com/go-ole/go-ole v1.3.0
 	github.com/google/go-cmp v0.7.0
 	github.com/shirou/gopsutil/v4 v4.26.8
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/registry v0.157.4
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil v0.157.4
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.157.4
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/wmi v0.157.4
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/registry v0.157.5
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil v0.157.5
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.157.5
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/wmi v0.157.5
 	github.com/stretchr/testify v1.12.1
 	go.opentelemetry.io/collector/component v1.63.0
 	go.opentelemetry.io/collector/component/componenttest v0.157.0
@@ -72,8 +72,8 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.44.0 // indirect
 	go.opentelemetry.io/otel/trace v1.44.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478 // indirect
-	google.golang.org/grpc v1.82.1 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa // indirect
+	google.golang.org/grpc v1.83.1 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 )
 

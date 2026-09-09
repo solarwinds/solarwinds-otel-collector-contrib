@@ -45,8 +45,13 @@ jobs:
         uses: actions/checkout@v7
         with:
           submodules: true
+          # WHY: license check diffs PR-changed files against the base branch,
+          # which requires the base ref to be present in the checkout.
+          fetch-depth: 0
       - name: Check licenses
-        run: make ci-check-licenses
+        run: |
+          export LICENSE_YEAR=$(date +%Y)
+          make ci-check-licenses
       - name: Check that the release version is synced across the repo
         run: |
           make prepare-release version=$(grep -oP '(?<=const Version = ")[^"]+' "./pkg/version/version.go")
