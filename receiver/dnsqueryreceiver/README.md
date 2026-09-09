@@ -39,10 +39,11 @@ receivers:
     record_type: NS
 
     # Network protocol. Default: udp
-    # Allowed: udp, tcp
+    # Allowed: udp, tcp, tcp-tls
     network: udp
 
     # DNS server port. Default: 53
+    # DNS over TLS (network: tcp-tls) servers usually listen on 853.
     port: 53
 
     # Query timeout. Default: 2s
@@ -59,8 +60,18 @@ receivers:
 | `servers` | `[]string` | — | Yes | DNS servers to query. Each entry is an IP address or hostname. |
 | `domains` | `[]string` | `["."]` | No | Domains to resolve. The root domain `"."` queries for root NS records. |
 | `record_type` | `string` | `NS` | No | DNS record type to query. Allowed: `A`, `AAAA`, `ANY`, `CNAME`, `MX`, `NS`, `PTR`, `SOA`, `SPF`, `SRV`, `TXT`. |
-| `network` | `string` | `udp` | No | Transport protocol. Allowed: `udp`, `tcp`. |
+| `network` | `string` | `udp` | No | Transport protocol. Allowed: `udp`, `tcp`, `tcp-tls`. |
 | `port` | `int` | `53` | No | DNS server port. Must be between 1 and 65535. |
+
+### DNS over TLS
+
+Setting `network: tcp-tls` performs the query over DNS over TLS. Two things to be aware of:
+
+- **Port.** DoT resolvers listen on 853, while `port` defaults to 53 — set `port: 853` explicitly.
+- **Certificate validation.** TLS is negotiated with the default client configuration, which derives the
+  expected server name from the configured `servers` entry. Querying an IP address therefore requires the
+  resolver's certificate to carry a matching IP SAN; prefer the resolver's hostname (e.g. `dns.google`)
+  when it has one. There are no receiver-level TLS settings.
 | `timeout` | `duration` | `2s` | No | Per-query timeout. Must be a positive duration. |
 | `collection_interval` | `duration` | `60s` | No | How frequently to run the scrape cycle. |
 

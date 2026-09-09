@@ -1,4 +1,4 @@
-// Copyright 2025 SolarWinds Worldwide, LLC. All rights reserved.
+// Copyright 2026 SolarWinds Worldwide, LLC. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -91,6 +91,19 @@ func TestValidate_ValidMinimal(t *testing.T) {
 	cfg.Servers = []string{"8.8.8.8"}
 	err := cfg.Validate()
 	require.NoError(t, err)
+}
+
+func TestValidate_AllNetworks(t *testing.T) {
+	networks := []string{"udp", "tcp", "tcp-tls"}
+	for _, network := range networks {
+		t.Run(network, func(t *testing.T) {
+			cfg := defaultTestConfig()
+			cfg.Servers = []string{"8.8.8.8"}
+			cfg.Network = network
+			err := cfg.Validate()
+			require.NoError(t, err)
+		})
+	}
 }
 
 func TestValidate_AllRecordTypes(t *testing.T) {
