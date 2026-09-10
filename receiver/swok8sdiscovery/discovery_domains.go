@@ -26,7 +26,7 @@ import (
 )
 
 // discoverDatabasesByDomains matches ExternalName services to domain rules.
-func (r *swok8sdiscoveryReceiver) discoverDatabasesByDomains(ctx context.Context, pods []corev1.Pod, services []corev1.Service) {
+func (r *swok8sdiscoveryReceiver) discoverDatabasesByDomains(ctx context.Context, services []corev1.Service) {
 	if r.config.Database == nil || len(r.config.Database.DomainRules) == 0 {
 		r.setting.Logger.Info("Domain-based database discovery skipped",
 			zap.Bool("database_config_present", r.config.Database != nil),
