@@ -19,7 +19,7 @@ import (
 	"fmt"
 
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/confmap/xconfmap"
+	"go.opentelemetry.io/collector/confmap"
 )
 
 type Schema struct {
@@ -27,8 +27,8 @@ type Schema struct {
 	Events   Events   `mapstructure:"events"`
 }
 
-// By implementing the xconfmap.Validator, we ensure it's validated by the collector automatically
-var _ xconfmap.Validator = (*Schema)(nil)
+// By implementing the confmap.Validator, we ensure it's validated by the collector automatically
+var _ confmap.Validator = (*Schema)(nil)
 
 func (s *Schema) Validate() error {
 	var errs error

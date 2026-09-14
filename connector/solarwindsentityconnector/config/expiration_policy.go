@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"time"
 
-	"go.opentelemetry.io/collector/confmap/xconfmap"
+	"go.opentelemetry.io/collector/confmap"
 )
 
 const (
@@ -35,8 +35,8 @@ type ExpirationSettings struct {
 	CacheConfiguration CacheConfiguration `mapstructure:"cache_configuration"`
 }
 
-// By implementing the xconfmap.Validator, we ensure it's validated by the collector automatically
-var _ xconfmap.Validator = (*ExpirationSettings)(nil)
+// By implementing the confmap.Validator, we ensure it's validated by the collector automatically
+var _ confmap.Validator = (*ExpirationSettings)(nil)
 
 type CacheConfiguration struct {
 	MaxCapacity int64 `mapstructure:"max_capacity"`
