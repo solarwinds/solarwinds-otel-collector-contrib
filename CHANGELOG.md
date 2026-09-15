@@ -1,6 +1,8 @@
 # Changelog
 
 ## vNext
+
+## v0.157.6
 - **Added** `dnsqueryreceiver` accepts `tcp-tls` as a `network` value, enabling DNS over TLS queries. Reaches parity with the Telegraf `dns_query` input plugin, which also supports it. (NH-134036)
 - **Fixed** `dnsqueryreceiver` changelog entry for v0.152.6 listed metric names the receiver never emitted.
 
