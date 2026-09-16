@@ -1,4 +1,4 @@
-// Copyright 2025 SolarWinds Worldwide, LLC. All rights reserved.
+// Copyright 2026 SolarWinds Worldwide, LLC. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -103,7 +103,7 @@ func (s *solarwindsentity) ConsumeMetrics(ctx context.Context, metrics pmetric.M
 			for k := 0; k < scopeMetric.Metrics().Len(); k++ {
 				metric := scopeMetric.Metrics().At(k)
 
-				tc := ottlmetric.NewTransformContextPtr(resourceMetric, scopeMetric, metric)
+				tc := ottlmetric.NewTransformContext(resourceMetric, scopeMetric, metric)
 				events, err := s.metricEventDetector.Detect(ctx, attrs, tc)
 
 				if err != nil {
@@ -143,7 +143,7 @@ func (s *solarwindsentity) ConsumeLogs(ctx context.Context, logs plog.Logs) erro
 			for k := 0; k < scopeLog.LogRecords().Len(); k++ {
 				logRecord := scopeLog.LogRecords().At(k)
 
-				tc := ottllog.NewTransformContextPtr(resourceLog, scopeLog, logRecord)
+				tc := ottllog.NewTransformContext(resourceLog, scopeLog, logRecord)
 				events, err := s.logEventDetector.Detect(ctx, attrs, tc)
 
 				if err != nil {
