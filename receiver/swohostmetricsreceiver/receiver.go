@@ -1,4 +1,4 @@
-// Copyright 2025 SolarWinds Worldwide, LLC. All rights reserved.
+// Copyright 2026 SolarWinds Worldwide, LLC. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -127,7 +127,7 @@ func createScraperControllerOptions(
 			return nil, fmt.Errorf("creating scraper %s failed: %w", scraperName, err)
 		}
 
-		scraperControllerOptions = append(scraperControllerOptions, scraperhelper.AddScraper(scraperName, scraper))
+		scraperControllerOptions = append(scraperControllerOptions, scraperhelper.AddMetricsScraper(scraperName, scraper))
 	}
 
 	return scraperControllerOptions, nil

@@ -1,4 +1,4 @@
-// Copyright 2025 SolarWinds Worldwide, LLC. All rights reserved.
+// Copyright 2026 SolarWinds Worldwide, LLC. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"time"
 
-	"go.opentelemetry.io/collector/confmap/xconfmap"
+	"go.opentelemetry.io/collector/confmap"
 )
 
 const (
@@ -35,8 +35,8 @@ type ExpirationSettings struct {
 	CacheConfiguration CacheConfiguration `mapstructure:"cache_configuration"`
 }
 
-// By implementing the xconfmap.Validator, we ensure it's validated by the collector automatically
-var _ xconfmap.Validator = (*ExpirationSettings)(nil)
+// By implementing the confmap.Validator, we ensure it's validated by the collector automatically
+var _ confmap.Validator = (*ExpirationSettings)(nil)
 
 type CacheConfiguration struct {
 	MaxCapacity int64 `mapstructure:"max_capacity"`

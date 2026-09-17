@@ -1,6 +1,7 @@
 # Changelog
 
 ## vNext
+- Updates OpenTelemetry modules to [v1.67.0/v0.161.0](https://github.com/open-telemetry/opentelemetry-collector/releases/tag/v0.161.0)
 
 ## v0.157.6
 - **Added** `dnsqueryreceiver` accepts `tcp-tls` as a `network` value, enabling DNS over TLS queries. Reaches parity with the Telegraf `dns_query` input plugin, which also supports it. (NH-134036)

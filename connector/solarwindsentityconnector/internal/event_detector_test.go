@@ -1,4 +1,4 @@
-// Copyright 2025 SolarWinds Worldwide, LLC. All rights reserved.
+// Copyright 2026 SolarWinds Worldwide, LLC. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ func TestDetect_EntityAndRelationshipEvents(t *testing.T) {
 	rLogs := logs.ResourceLogs().AppendEmpty()
 	scopeLogs := rLogs.ScopeLogs().AppendEmpty()
 	logRecord := scopeLogs.LogRecords().AppendEmpty()
-	tc := ottllog.NewTransformContextPtr(rLogs, scopeLogs, logRecord)
+	tc := ottllog.NewTransformContext(rLogs, scopeLogs, logRecord)
 
 	attributeMapper := NewAttributeMapper(map[string]config.Entity{entity.Entity: entity})
 
@@ -135,7 +135,7 @@ func TestDetect_NoEvents(t *testing.T) {
 	rLogs := logs.ResourceLogs().AppendEmpty()
 	scopeLogs := rLogs.ScopeLogs().AppendEmpty()
 	logRecord := scopeLogs.LogRecords().AppendEmpty()
-	tc := ottllog.NewTransformContextPtr(rLogs, scopeLogs, logRecord)
+	tc := ottllog.NewTransformContext(rLogs, scopeLogs, logRecord)
 
 	attributeMapper := NewAttributeMapper(map[string]config.Entity{entity.Entity: entity})
 
@@ -179,7 +179,7 @@ func TestProcessEvents_ConditionTrue_EventsCreated(t *testing.T) {
 	rLogs := logs.ResourceLogs().AppendEmpty()
 	scopeLogs := rLogs.ScopeLogs().AppendEmpty()
 	logRecord := scopeLogs.LogRecords().AppendEmpty()
-	tc := ottllog.NewTransformContextPtr(rLogs, scopeLogs, logRecord)
+	tc := ottllog.NewTransformContext(rLogs, scopeLogs, logRecord)
 	am := NewAttributeMapper(map[string]config.Entity{})
 	ev := NewEventDetector(am, eventsGroup, zap.NewNop())
 
@@ -219,7 +219,7 @@ func TestProcessEvents_ConditionFalse_EventsNotCreated(t *testing.T) {
 	rLogs := logs.ResourceLogs().AppendEmpty()
 	scopeLogs := rLogs.ScopeLogs().AppendEmpty()
 	logRecord := scopeLogs.LogRecords().AppendEmpty()
-	tc := ottllog.NewTransformContextPtr(rLogs, scopeLogs, logRecord)
+	tc := ottllog.NewTransformContext(rLogs, scopeLogs, logRecord)
 	am := NewAttributeMapper(map[string]config.Entity{})
 	ev := NewEventDetector(am, eventsGroup, zap.NewNop())
 

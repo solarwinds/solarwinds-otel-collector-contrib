@@ -1,4 +1,4 @@
-// Copyright 2025 SolarWinds Worldwide, LLC. All rights reserved.
+// Copyright 2026 SolarWinds Worldwide, LLC. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/collector/confmap/confmaptest"
-	"go.opentelemetry.io/collector/confmap/xconfmap"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfig"
@@ -135,10 +135,10 @@ func TestInvalidConfig(t *testing.T) {
 			require.NoError(t, sub.Unmarshal(cfg))
 
 			if tt.expected == nil {
-				err = xconfmap.Validate(cfg)
+				err = confmap.Validate(cfg)
 				require.Error(t, err)
 			} else {
-				require.NoError(t, xconfmap.Validate(cfg))
+				require.NoError(t, confmap.Validate(cfg))
 				require.EqualExportedValues(t, tt.expected, cfg, "User-configurable fields should be parsed correctly")
 			}
 		})
@@ -464,7 +464,7 @@ func TestIncludingReplicaSetsWhenPreferringPodOwnersInConfig(t *testing.T) {
 
 			cfg.WorkloadMappings = tt.mappingConfigs
 
-			require.NoError(t, xconfmap.Validate(cfg))
+			require.NoError(t, confmap.Validate(cfg))
 			require.Equal(t, tt.mappedExpectedTypes, cfg.mappedExpectedTypes, "Incorrectly initialized mappedExpectedTypes")
 		})
 	}

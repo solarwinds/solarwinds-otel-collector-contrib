@@ -1,4 +1,4 @@
-// Copyright 2025 SolarWinds Worldwide, LLC. All rights reserved.
+// Copyright 2026 SolarWinds Worldwide, LLC. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import (
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottllog"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottlmetric"
-	"go.opentelemetry.io/collector/confmap/xconfmap"
+	"go.opentelemetry.io/collector/confmap"
 )
 
 const (
@@ -35,8 +35,8 @@ type Entity struct {
 	Attributes []string `mapstructure:"attributes"`
 }
 
-// By implementing the xconfmap.Validator, we ensure it's validated by the collector automatically
-var _ xconfmap.Validator = (*Entity)(nil)
+// By implementing the confmap.Validator, we ensure it's validated by the collector automatically
+var _ confmap.Validator = (*Entity)(nil)
 
 func (e *Entity) Validate() error {
 	var errs error
@@ -90,8 +90,8 @@ type RelationshipEvent struct {
 	Attributes  []string `mapstructure:"attributes"`
 }
 
-// By implementing the xconfmap.Validator, we ensure it's validated by the collector automatically
-var _ xconfmap.Validator = (*RelationshipEvent)(nil)
+// By implementing the confmap.Validator, we ensure it's validated by the collector automatically
+var _ confmap.Validator = (*RelationshipEvent)(nil)
 
 func (e *RelationshipEvent) Validate() error {
 	errs := e.validateActionAndContext()
@@ -116,8 +116,8 @@ type EntityEvent struct {
 	Entity string `mapstructure:"entity"`
 }
 
-// By implementing the xconfmap.Validator, we ensure it's validated by the collector automatically
-var _ xconfmap.Validator = (*EntityEvent)(nil)
+// By implementing the confmap.Validator, we ensure it's validated by the collector automatically
+var _ confmap.Validator = (*EntityEvent)(nil)
 
 func (e *EntityEvent) Validate() error {
 	errs := e.validateActionAndContext()
