@@ -1,6 +1,8 @@
 # Changelog
 
 ## vNext
+
+## v0.161.0
 - Updates OpenTelemetry modules to [v1.67.0/v0.161.0](https://github.com/open-telemetry/opentelemetry-collector/releases/tag/v0.161.0)
 
 ## v0.157.6
