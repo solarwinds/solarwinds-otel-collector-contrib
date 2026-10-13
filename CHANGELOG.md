@@ -1,6 +1,7 @@
 # Changelog
 
 ## vNext
+- Updates golang to 1.26.9
 
 ## v0.161.2
 - No changes
