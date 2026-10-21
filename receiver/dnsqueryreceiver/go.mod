@@ -1,6 +1,6 @@
 module github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/dnsqueryreceiver
 
-go 1.26.10
+go 1.27.3
 
 require (
 	github.com/google/go-cmp v0.7.0
