@@ -3,7 +3,7 @@ module github.com/solarwinds/solarwinds-otel-collector-contrib/receiver/swok8sdi
 go 1.27.3
 
 require (
-	github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfig v0.161.6
+	github.com/solarwinds/solarwinds-otel-collector-contrib/internal/k8sconfig v0.161.7
 	github.com/stretchr/testify v1.12.1
 	go.opentelemetry.io/collector/component v1.71.0
 	go.opentelemetry.io/collector/component/componenttest v0.165.0
