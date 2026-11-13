@@ -1,6 +1,6 @@
 module github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/wmi
 
-go 1.27.3
+go 1.27.4
 
 require github.com/yusufpapurcu/wmi v1.2.4
 
