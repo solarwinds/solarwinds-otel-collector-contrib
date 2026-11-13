@@ -2,6 +2,7 @@
 
 ## vNext
 - Updates OpenTelemetry modules to [v1.71.0/v0.165.0](https://github.com/open-telemetry/opentelemetry-collector/releases/tag/v0.165.0)
+- Updates golang to 1.27.4
 
 ## v0.161.7
 - No changes
