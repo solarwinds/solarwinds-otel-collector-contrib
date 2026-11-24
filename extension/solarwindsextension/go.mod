@@ -3,8 +3,8 @@ module github.com/solarwinds/solarwinds-otel-collector-contrib/extension/solarwi
 go 1.27.4
 
 require (
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil v0.165.0
-	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.165.0
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/testutil v0.165.1
+	github.com/solarwinds/solarwinds-otel-collector-contrib/pkg/version v0.165.1
 	github.com/stretchr/testify v1.12.1
 	go.opentelemetry.io/collector/component v1.71.0
 	go.opentelemetry.io/collector/component/componenttest v0.165.0
